@@ -201,7 +201,9 @@ logging:
 
 ### Published Tools
 
-The server publishes the following 14 tools. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
+The server publishes the following 16 tools. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
+
+Tools carry MCP behavioural annotations derived from the policy-gate classification in `addToolWithGate` (`gate.go`), so the advertised hints and the enforced behaviour share one source of truth: statically select-classified tools get `readOnlyHint: true`, mutation/lifecycle tools an explicit `destructiveHint: true`, and `pull_provider` / `reload_credentials` are marked idempotent and non-destructive (they write only local cache / process env). SQL-carrying tools (`run_select_query` included) make no read-only claim because their effect depends on the submitted statement. Annotations are advisory per the MCP spec; the policy gate remains the enforcement point.
 
 | Tool | Renderer | Description |
 |---|---|---|
@@ -219,21 +221,73 @@ The server publishes the following 14 tools. Each tool's rendered output is a ma
 | `list_registry` | Table | Providers (and their versions) available in the configured registry. Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache. Requires `provider`; `version` optional. Local cache write only. |
 | `reload_credentials` | Table | Re-source credentials from the backend's configured dotenv file into the process environment and report per-provider resolution status (issue #688). Never returns secret values. Optional `provider` scopes the report. Allowed in every mode. |
+| `query_library_search` | Table | Search the curated query library by natural-language `intent` (optional `provider`/`service`/`tags` filters, `include_mutations`, `limit`). Lexical ranking over the cached catalogue; no network call in steady state. On a miss (no hit clears the relevance threshold) the result carries a one-line pointer directing the model to author via the server instructions (discovery workflow + dialect rules) instead of guessing. Mutation entries are excluded in `read_only` mode regardless of `include_mutations`. Read-only, no credentials. |
+| `query_library_get` | KV | Retrieve one library entry by `id`. Without `params`: the teaching surface - raw template with `{{placeholder}}`s intact, param declarations, notes, doc URL. With `params`: server-side validation (unknown params rejected, missing required params reported structurally with type/description/example, `identifier` params strictly validated, `string` values escaped for their literal position) and rendered SQL plus which execution tool to call (`run_select_query` or `run_mutation_query`). Rendering happens in the server; the model never performs substitution. |
 
-### Published Prompts
+### Query Library
 
-The server publishes one static prompt:
+The query library tools retrieve curated, versioned StackQL query templates published at
+`https://stackql.io/docs/query-library` (URL contract: `manifest.json`, `index.json`,
+`queries/<id>.json`). Retrieval of a known-good template replaces the model guessing dialect
+nuances; execution still runs only through the gated query tools, and the library adds no
+execution or credential path. `run_select_query` and `run_mutation_query` accept an optional
+`source` parameter carrying the library id for attribution (recorded in the audit log).
 
-- `write_safe_select` — guidance for writing safe SELECT queries against stackql resources. The prompt body explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
+Fetch and cache behaviour: the manifest `build_id` is the cache key; a changed build discards
+cached documents. Fallback ordering is the primary site, then the raw GitHub mirror, then a
+snapshot embedded in the binary (`content/query_library_snapshot/`, a vendored copy - the library is mastered in the stackql/query-library.stackql.io repo). Stale content beats no content:
+on total fetch failure the server serves from cache or snapshot and flags the response
+`stale` rather than erroring.
 
-### Restricting Published Tools and Prompts
+Configuration (config wins over env, env over defaults):
 
-The top-level `enabled_tools` and `enabled_prompts` fields on `Config` are independent allowlists.
+| Config field (`query_library`) | Env var | Default |
+|---|---|---|
+| `base_url` | `STACKQL_QUERY_LIBRARY_BASE_URL` | `https://stackql.io/docs/query-library` |
+| `fallback_url` | - | `https://raw.githubusercontent.com/stackql/stackql-query-library/main` |
+| `offline` (forces the bundled snapshot) | `STACKQL_QUERY_LIBRARY_OFFLINE` | `false` |
+| `ttl_seconds` (manifest TTL) | `STACKQL_QUERY_LIBRARY_TTL` | `300` |
 
-- **Omitted, `null`, or empty list** — every built-in tool (or prompt) is registered. This is the default.
-- **Populated list** — only the named items are registered. Any other tool or prompt is absent from `tools/list` / `prompts/list` and the corresponding `tools/call` or `prompts/get` returns an `unknown tool`/`unknown prompt` error.
+A mock server implementing the URL contract for testing lives at
+[`test/python/stackql_test_tooling/flask/query_library/app.py`](/test/python/stackql_test_tooling/flask/query_library/app.py)
+(see its docstring for standalone usage); the Go unit tests exercise the same contract via
+`httptest`, and the robot scenarios in `mcp.robot` cover the offline snapshot path end to end.
 
-Enforcement happens at registration time in `pkg/mcp_server/server.go` via the `addToolIfEnabled` and `addPromptIfEnabled` helpers, which consult `Config.IsToolEnabled(name)` / `Config.IsPromptEnabled(name)` before delegating to the SDK. There is no runtime cost for items that are not enabled — they are never bound to the server.
+### Embedded Content: Instructions, Prompts and Resources
+
+Server instructions, prompts and resources are authored as markdown files under `pkg/mcp_server/content/` and compiled into the binary with `go:embed` (issue #696). Adding or changing published content is a markdown-only edit; no Go changes are required.
+
+- `content/instructions/*.md` - concatenated in lexical filename order (blank line separated) into the `instructions` string of the `initialize` result. No frontmatter. Suppress with the top-level `disable_instructions: true` config flag.
+- `content/prompts/*.md` - one prompt per file. YAML frontmatter carries `name`, `description` and optional `arguments` (each with `name`, `description`, `required`); the body is the prompt text. `{{argument}}` placeholders in the body are substituted with caller-supplied argument values on `prompts/get`; a placeholder that is not a declared argument fails validation.
+- `content/resources/*.md` - one resource per file. Frontmatter carries `name`, `description`, optional `uri` (default `stackql://docs/<filename-sans-extension>`) and optional `mime_type` (default `text/markdown`); the body is served by `resources/read`. The resources capability is declared only when at least one resource is published.
+
+Malformed frontmatter, duplicate names and unresolved placeholders are caught at build time by the unit tests in `embedded_content_test.go`.
+
+Currently published prompts:
+
+- `getting_started` - interactive guided tour for new users: the StackQL mental model (provider.service.resource, reads as SELECTs), credential and provider discovery, the discover/validate/query loop on a real provider, troubleshooting habits, and pointers to the other prompts and resources. Optional `provider` argument picks the tour provider; blank auto-selects from resolvable credentials and falls back to `github`, which needs none. Read-only throughout.
+- `cloud_audit` - agent-driven read-only cross-cloud (AWS/GCP/Azure + Entra) security and FinOps audit. The invoking user needs only least-privilege read-only credentials configured; the agent discovers scope (regions, projects, subscriptions), runs the checks through the MCP tools and returns an executive summary, findings table and coverage appendix. Optional `clouds` and `focus` arguments scope the run. Agent-driven counterpart of the dockerised audit in [docs/audit.md](/docs/audit.md).
+- `drift_report` - compares declared IaC intent (Terraform state/plan or a pasted inventory, supplied via the required `intent` argument) against live cloud state and classifies drift as missing, unmanaged or divergent. Optional `clouds` argument scopes the run. Read-only; remediation is left to the operator.
+- `iam_access_review` - identity and access review across AWS IAM, Entra ID, Okta and GitHub: over-privileged principals, stale keys and inactive accounts, MFA gaps, guests and outside collaborators, plus a privileged-access register of admin-equivalent principals (the SOC2/ISO access-review artifact). Optional `providers` and `stale_days` arguments scope the run.
+- `public_exposure_scan` - fast, narrow sweep for internet-reachable resources: public storage, 0.0.0.0/0 network rules, public IP attachments, public database endpoints, exposed Kubernetes endpoints, public snapshots/images. Returns an exposure table sorted most severe first. Optional `clouds` argument scopes the run.
+- `cost_cleanup` - FinOps cleanup pass that finds idle and orphaned resources (unattached volumes, unassociated IPs, stopped-but-billing compute, aged snapshots, idle load balancers), estimates monthly savings from list prices, and returns a prioritised safe-to-delete list with a dollar figure. Optional `clouds` and `min_monthly_savings` arguments scope the run. Read-only; it never deletes anything.
+- `create_deploy_stack` - guides the user through generating a [stackql-deploy](https://github.com/stackql/stackql-deploy) stack (manifest + `.iql` resource files): requirements are mapped to concrete resource types via the discovery tools, every `exists`/`statecheck`/`exports` query is live-tested through `validate_select_query`/`run_select_query` before it is baked in, and mutation anchors are only ever rendered for `stackql-deploy build --dry-run` - never executed in-session. Optional `requirements`, `provider` and `environments` arguments. Follows the `stackql://docs/deploy_stack_authoring` resource.
+
+Currently published resources:
+
+- `stackql_scope_discovery` (`stackql://docs/scope_discovery`) - per-cloud scope discovery strategy for audit-style sweeps, with the query library entry ids that carry the tested enumeration queries (query shapes live in the library, not here). Referenced by the audit-family prompts.
+- `stackql_server_instructions` (`stackql://docs/instructions`) - synthetic resource carrying the composed server instructions, byte-identical to the `initialize` payload. Exists for clients that do not surface initialize instructions to the model; the query library miss path points at it. Suppressed only when every instruction file is absent.
+- `stackql_audit_rubric` (`stackql://docs/audit_rubric`) - shared severity, drift-class and deletion-confidence definitions plus reporting conventions, so reports from the audit-family prompts stay comparable across runs.
+- `stackql_deploy_stack_authoring` (`stackql://docs/deploy_stack_authoring`) - how to author a stackql-deploy stack: project layout, manifest anatomy (providers, globals, per-env props, exports), `.iql` query anchors and the per-resource execution strategy, the live-query-testing workflow using the MCP tools, CLI commands, and the StackQL GitHub Actions for CI. Referenced by the `create_deploy_stack` prompt and the `getting_started` tour.
+
+### Restricting Published Tools, Prompts and Resources
+
+The top-level `enabled_tools`, `enabled_prompts` and `enabled_resources` fields on `Config` are independent allowlists.
+
+- **Omitted, `null`, or empty list** — every built-in tool (or prompt, or resource) is registered. This is the default.
+- **Populated list** — only the named items are registered. Any other tool or prompt is absent from `tools/list` / `prompts/list` and the corresponding `tools/call` or `prompts/get` returns an `unknown tool`/`unknown prompt` error. Likewise for `resources/list` / `resources/read`; when every resource is filtered out the resources capability is not declared at all.
+
+Enforcement happens at registration time in `pkg/mcp_server/server.go` via the `addToolIfEnabled` and `addPromptIfEnabled` helpers, which consult `Config.IsToolEnabled(name)` / `Config.IsPromptEnabled(name)` before delegating to the SDK (resources analogously via `Config.IsResourceEnabled(name)` in `registerEmbeddedResources`). There is no runtime cost for items that are not enabled — they are never bound to the server.
 
 JSON example — a single-purpose server that exposes only `server_info`:
 

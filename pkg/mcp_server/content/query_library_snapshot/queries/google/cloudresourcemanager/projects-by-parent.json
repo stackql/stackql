@@ -1,0 +1,22 @@
+{
+  "id": "google/cloudresourcemanager/projects-by-parent",
+  "title": "GCP projects under an org or folder",
+  "description": "Lists projects under a parent organization or folder; audit only ACTIVE projects.",
+  "mutation": false,
+  "status": "stable",
+  "providers": ["google"],
+  "services": ["cloudresourcemanager"],
+  "params": [
+    {
+      "name": "parent",
+      "type": "string",
+      "required": true,
+      "pattern": "^(organizations|folders)/[0-9]+$",
+      "description": "Parent container: organizations/<org_id> or folders/<folder_id>",
+      "example": "organizations/123456789012"
+    }
+  ],
+  "template": "SELECT projectId, parent, state FROM google.cloudresourcemanager.projects WHERE parent = '{{parent}}';",
+  "notes": "Recurse into ACTIVE folders via google.cloudresourcemanager.folders with the same parent form to descend a whole organization.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/google/cloudresourcemanager/projects-by-parent"
+}

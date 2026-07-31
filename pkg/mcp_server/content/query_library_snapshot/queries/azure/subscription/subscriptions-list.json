@@ -1,0 +1,13 @@
+{
+  "id": "azure/subscription/subscriptions-list",
+  "title": "Azure subscriptions",
+  "description": "Lists subscriptions visible to the credential, tenant-wide; audit only Enabled subscriptions.",
+  "mutation": false,
+  "status": "stable",
+  "providers": ["azure"],
+  "services": ["subscription"],
+  "params": [],
+  "template": "SELECT subscriptionId, state FROM azure.subscription.subscriptions;",
+  "notes": "For management-group scoping use azure.management_groups.descendants with groupId.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/azure/subscription/subscriptions-list"
+}

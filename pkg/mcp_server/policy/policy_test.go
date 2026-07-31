@@ -28,6 +28,15 @@ func TestClassifyQuery(t *testing.T) {
 		{"   exec aws.foo.bar @a='1'", policy.QueryClassLifecycle},
 		{"vacuum foo", policy.QueryClassUnknown},
 		{"-- comment then select", policy.QueryClassUnknown}, // first token is the comment marker
+		// A common table expression heading a query body is read-only.
+		{"WITH t AS (SELECT 1) SELECT * FROM t", policy.QueryClassSelect},
+		{"  with weekly as (select week from x) select * from weekly", policy.QueryClassSelect},
+		{"WITH a AS (SELECT 1), b AS (SELECT 2) SELECT * FROM a JOIN b", policy.QueryClassSelect},
+		// A CTE may also head a mutation; those must not be classed read-only.
+		{"WITH t AS (SELECT 1) DELETE FROM x WHERE id IN (SELECT * FROM t)", policy.QueryClassUnknown},
+		{"WITH t AS (SELECT 1) INSERT INTO x SELECT * FROM t", policy.QueryClassUnknown},
+		{"with t as (select 1) update x set a = 1", policy.QueryClassUnknown},
+		{"WITH", policy.QueryClassSelect}, // degenerate, no mutation keyword present
 	}
 	for _, c := range cases {
 		t.Run(c.sql, func(t *testing.T) {
