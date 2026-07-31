@@ -3,7 +3,8 @@
 Drives a `stackql mcp --mcp.server.type=stdio` child over raw byte pipes in
 binary mode with a configurable line terminator (issue #668 CRLF framing).
 Also hosts the issue #688 credential reload roundtrip against the
-`--env.file` dotenv file.
+`--env.file` dotenv file and the issue #701 malformed-frame resilience
+roundtrip.
 """
 
 import json
@@ -108,6 +109,116 @@ def run_stdio_initialize_roundtrip(
     finally:
         watchdog.cancel()
     return {
+        "stdout": b"".join(stdout_lines).decode("utf-8", errors="replace"),
+        "stderr": stderr.decode("utf-8", errors="replace"),
+        "returncode": proc.returncode,
+    }
+
+
+def run_stdio_malformed_frame_roundtrip(
+    stackql_exe,
+    registry_cfg,
+    auth_cfg,
+    malformed_frame,
+    timeout_seconds=90,
+):
+    """Issue #701: a malformed frame must be answered with a JSON-RPC error
+    (id null) and must NOT terminate the stdio session.
+
+    Runs initialize -> initialized -> <malformed_frame> -> ping, then closes
+    stdin.  Returns a dict of pre-digested assertion inputs plus raw streams:
+    error_code / error_id_is_null (from the first error response after the
+    malformed frame), ping_ok (ping answered with an empty result),
+    still_running_after_ping, and returncode (expected 0: clean EOF exit).
+    """
+    argv = [
+        stackql_exe,
+        "mcp",
+        "--mcp.server.type=stdio",
+        "--mcp.config",
+        '{"server": {"audit": {"disabled": true}} }',
+        "--registry",
+        registry_cfg,
+        "--auth",
+        auth_cfg,
+        "--tls.allowInsecure",
+    ]
+    proc = subprocess.Popen(
+        argv,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    watchdog = threading.Timer(timeout_seconds, proc.kill)
+    watchdog.start()
+    stdout_lines = []
+    stderr = b""
+    error_code = None
+    error_id_is_null = False
+    ping_ok = False
+    still_running = False
+    try:
+        def send_raw(payload):
+            try:
+                proc.stdin.write(payload)
+                proc.stdin.flush()
+            except OSError:
+                # A server that died mid-sequence breaks the pipe; fall
+                # through so the assertions see the failure.
+                pass
+
+        send_raw(_frame_messages([{
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "robot-stdio-harness", "version": "0.1.0"},
+            },
+        }], b"\n"))
+        _await_response(proc, 1, stdout_lines)
+        send_raw(_frame_messages(
+            [{"jsonrpc": "2.0", "method": "notifications/initialized"}], b"\n"))
+        send_raw(malformed_frame.encode("utf-8") + b"\n")
+        while True:
+            line = proc.stdout.readline()
+            if not line:
+                break
+            stdout_lines.append(line)
+            try:
+                decoded = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(decoded, dict) and decoded.get("error"):
+                error_code = decoded["error"].get("code")
+                error_id_is_null = "id" in decoded and decoded["id"] is None
+                break
+        send_raw(_frame_messages(
+            [{"jsonrpc": "2.0", "id": 2, "method": "ping"}], b"\n"))
+        ping_response = _await_response(proc, 2, stdout_lines)
+        ping_ok = (
+            isinstance(ping_response, dict)
+            and ping_response.get("result") == {}
+            and "error" not in ping_response
+        )
+        still_running = proc.poll() is None
+        try:
+            proc.stdin.close()
+        except OSError:
+            pass
+        stdout_lines.append(proc.stdout.read())
+        stderr = proc.stderr.read()
+        proc.wait(timeout=timeout_seconds)
+    finally:
+        watchdog.cancel()
+        if proc.poll() is None:
+            proc.kill()
+    return {
+        "error_code": error_code,
+        "error_id_is_null": error_id_is_null,
+        "ping_ok": ping_ok,
+        "still_running_after_ping": still_running,
         "stdout": b"".join(stdout_lines).decode("utf-8", errors="replace"),
         "stderr": stderr.decode("utf-8", errors="replace"),
         "returncode": proc.returncode,
