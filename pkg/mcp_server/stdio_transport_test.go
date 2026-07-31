@@ -159,9 +159,8 @@ func TestStdioConnSkipsBlankLines(t *testing.T) {
 	}
 }
 
-// A frame over the size cap is consumed, answered with -32700, and the frame
-// after it is still served.  The cap is passed in small to keep the test fast;
-// the frame also exceeds the internal read buffer to exercise chunked reads.
+// A frame over the size cap (passed in small, and exceeding the internal
+// read buffer) is consumed, answered with -32700, and the session continues.
 func TestStdioConnBoundsFrameSize(t *testing.T) {
 	oversized := `{"jsonrpc":"2.0","id":1,"method":"` + strings.Repeat("a", 2*stdioReadBufferBytes) + `"}`
 	input := oversized + "\n" + `{"jsonrpc":"2.0","id":2,"method":"ping"}` + "\n"

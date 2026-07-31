@@ -1048,12 +1048,9 @@ MCP Stdio Server Tolerates CRLF Terminated JSON RPC
 
 # ===========================================================================
 # Issue #701 scenarios.  A syntactically invalid JSON-RPC frame must be
-# answered with a -32700 parse error (id null) and must NOT terminate the
-# stdio session; a valid-JSON-but-not-JSON-RPC frame gets -32600.  Before the
-# fix the SDK's decode error propagated out of the read loop and the server
-# exited with code 1.  Each scenario completes the lifecycle, injects the bad
-# frame, asserts the error response, then proves the session survived with a
-# ping and a clean EOF shutdown.
+# answered with a -32700 parse error (id null) - and a valid-JSON-but-not-
+# JSON-RPC frame with -32600 - without terminating the stdio session; before
+# the fix the server exited with code 1 on the first such frame.
 # ===========================================================================
 
 MCP Stdio Server Answers Malformed JSON With Parse Error And Session Survives

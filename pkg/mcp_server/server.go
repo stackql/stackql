@@ -640,9 +640,8 @@ func (s *simpleMCPServer) run(ctx context.Context) error {
 	case serverTransportSSE:
 		return fmt.Errorf("SSE transport obsoleted; use streamable HTTP transport instead")
 	case serverTransportStdIO:
-		// The custom transport handles CRLF framing (issue #668) and answers
-		// malformed frames with JSON-RPC errors instead of terminating the
-		// session (issue #701); see resilientStdioTransport.
+		// Handles CRLF framing (issue #668) and malformed frames (issue
+		// #701); see resilientStdioTransport.
 		return s.server.Run(ctx, newResilientStdioTransport(s.logger))
 	default:
 		return fmt.Errorf("unsupported transport: %s", s.config.Server.Transport)
