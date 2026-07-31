@@ -483,5 +483,23 @@ def get_collaborators(org, repositoryId):
     return jsonify(collaborators), 200
 
 
+@app.route('/repos/<string:org>/<string:repositoryId>/contributors', methods=['GET'])
+def get_contributors(org, repositoryId):
+    """Static contributor set for the issue #698 window function and CTE
+    scenarios; the tied contribution counts exercise RANK vs DENSE_RANK."""
+    contributors = json.load(open(os.path.join(templates_dir, 'contributors.json'), 'r'))
+    logger.info(f"Contributors sent for org: {org}, repository: {repositoryId}")
+    return jsonify(contributors), 200
+
+
+@app.route('/repos/<string:org>/<string:repositoryId>/releases', methods=['GET'])
+def get_releases(org, repositoryId):
+    """Static release set (distinct published_at values) for the issue #698
+    offset and frame clause window function scenarios."""
+    releases = json.load(open(os.path.join(templates_dir, 'releases.json'), 'r'))
+    logger.info(f"Releases sent for org: {org}, repository: {repositoryId}")
+    return jsonify(releases), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True)

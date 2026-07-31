@@ -10283,3 +10283,321 @@ Env File Flag Creates Default Empty File When Absent And Never Touches Existing
     ...    \-\-env.file\=${envFile}
     ${after} =    Get File    ${envFile}
     Should Be Equal    ${after}    ${populated}
+
+# ===========================================================================
+# Issue #698 scenarios.  Execution-level coverage for window functions and
+# CTEs over mocked provider tables.  Assertions are header shape or
+# invariants (violation counts that are zero, existence counts that are
+# exactly one) rather than literal fixture rows, so they hold on both the
+# sqlite3 and postgres backends and survive fixture edits.  Query shapes are
+# constrained by planner limits found while writing these (multi-condition
+# CASE over a derived table/CTE, arithmetic between aggregates, chained
+# CTEs, and CTE references inside derived tables all fail to plan): checks
+# aggregate SUM(CASE ...) columns or wrap a single aggregate in a
+# single-condition CASE.
+# ===========================================================================
+
+Window Ranking Functions Execute Over Provider Table
+    [Documentation]    Issue #698: ROW_NUMBER, RANK and DENSE_RANK over a provider
+    ...                table; the fixture's tied contribution counts force RANK gaps.
+    ${shape_query} =    Catenate    SEPARATOR=${SPACE}
+    ...    SELECT login, contributions, ROW_NUMBER() OVER (ORDER BY contributions DESC) AS contribution_rank
+    ...    FROM github.repos.contributors WHERE owner = 'dummyorg' AND repo = 'dummyapp.io';
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${shape_query}
+    ...    login,contributions,contribution_rank
+    ...    \-o\=csv
+    ${invariant_query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH ranked AS (
+    ...    SELECT ROW_NUMBER() OVER (ORDER BY contributions DESC, login) AS row_num,
+    ...    RANK() OVER (ORDER BY contributions DESC) AS rnk,
+    ...    DENSE_RANK() OVER (ORDER BY contributions DESC) AS dense_rnk
+    ...    FROM github.repos.contributors WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    )
+    ...    SELECT SUM(CASE WHEN rnk > row_num THEN 1 ELSE 0 END) AS rank_violations,
+    ...    SUM(CASE WHEN dense_rnk > rnk THEN 1 ELSE 0 END) AS dense_rank_violations,
+    ...    SUM(CASE WHEN row_num = 1 THEN 1 ELSE 0 END) AS first_rows
+    ...    FROM ranked;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${invariant_query}
+    ...    rank_violations,dense_rank_violations,first_rows\n0,0,1
+    ...    \-o\=csv
+    ${tie_query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH ranked AS (
+    ...    SELECT RANK() OVER (ORDER BY contributions DESC) AS rnk,
+    ...    DENSE_RANK() OVER (ORDER BY contributions DESC) AS dense_rnk
+    ...    FROM github.repos.contributors WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    )
+    ...    SELECT CASE WHEN SUM(CASE WHEN dense_rnk < rnk THEN 1 ELSE 0 END) >= 1
+    ...    THEN 'pass' ELSE 'fail' END AS tie_check
+    ...    FROM ranked;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${tie_query}
+    ...    tie_check\npass
+    ...    \-o\=csv
+
+Window Aggregate Running Total Over Provider Table
+    [Documentation]    Issue #698: SUM with OVER (ORDER BY ...) running total and
+    ...                OVER () grand total; the running total never overshoots and
+    ...                lands on the grand total exactly once.
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH tallied AS (
+    ...    SELECT SUM(contributions) OVER (ORDER BY contributions DESC, login) AS running_total,
+    ...    SUM(contributions) OVER () AS grand_total
+    ...    FROM github.repos.contributors WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    )
+    ...    SELECT SUM(CASE WHEN running_total > grand_total THEN 1 ELSE 0 END) AS overshoot_rows,
+    ...    SUM(CASE WHEN running_total = grand_total THEN 1 ELSE 0 END) AS rows_at_grand_total
+    ...    FROM tallied;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    overshoot_rows,rows_at_grand_total\n0,1
+    ...    \-o\=csv
+
+Window Offset Functions Lag Lead Over Provider Table
+    [Documentation]    Issue #698: LAG and LEAD over releases ordered by published_at,
+    ...                wrapped in a derived table; exactly one row has no predecessor
+    ...                and one has no successor regardless of fixture size.
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    SELECT SUM(CASE WHEN prev_tag IS NULL THEN 1 ELSE 0 END) AS rows_without_predecessor,
+    ...    SUM(CASE WHEN next_tag IS NULL THEN 1 ELSE 0 END) AS rows_without_successor
+    ...    FROM (
+    ...    SELECT LAG(tag_name, 1) OVER (ORDER BY published_at) AS prev_tag,
+    ...    LEAD(tag_name, 1) OVER (ORDER BY published_at) AS next_tag
+    ...    FROM github.repos.releases WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    ) t;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    rows_without_predecessor,rows_without_successor\n1,1
+    ...    \-o\=csv
+
+Window Frame Clauses Over Provider Table
+    [Documentation]    Issue #698: explicit frame clauses; FIRST_VALUE/LAST_VALUE over an
+    ...                unbounded frame are constant and distinct, a 4-row moving average
+    ...                never exceeds the running total of positive values.
+    ${invariant_query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH framed AS (
+    ...    SELECT FIRST_VALUE(tag_name) OVER (ORDER BY published_at ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS first_tag,
+    ...    LAST_VALUE(tag_name) OVER (ORDER BY published_at ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_tag,
+    ...    AVG(id) OVER (ORDER BY published_at ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) AS moving_avg,
+    ...    SUM(id) OVER (ORDER BY published_at) AS cumulative_total
+    ...    FROM github.repos.releases WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    )
+    ...    SELECT SUM(CASE WHEN moving_avg > cumulative_total THEN 1 ELSE 0 END) AS bound_violations,
+    ...    SUM(CASE WHEN first_tag = last_tag THEN 1 ELSE 0 END) AS degenerate_rows,
+    ...    SUM(CASE WHEN first_tag IS NULL THEN 1 ELSE 0 END) AS null_first_rows
+    ...    FROM framed;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${invariant_query}
+    ...    bound_violations,degenerate_rows,null_first_rows\n0,0,0
+    ...    \-o\=csv
+    ${constancy_query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH framed AS (
+    ...    SELECT FIRST_VALUE(tag_name) OVER (ORDER BY published_at ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS first_tag,
+    ...    LAST_VALUE(tag_name) OVER (ORDER BY published_at ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_tag
+    ...    FROM github.repos.releases WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    )
+    ...    SELECT COUNT(DISTINCT first_tag) AS distinct_first_values,
+    ...    COUNT(DISTINCT last_tag) AS distinct_last_values
+    ...    FROM framed;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${constancy_query}
+    ...    distinct_first_values,distinct_last_values\n1,1
+    ...    \-o\=csv
+
+Window Distribution Functions Over Provider Table
+    [Documentation]    Issue #698: NTILE stays within its bucket bounds, PERCENT_RANK
+    ...                stays in [0,1] with exactly one zero (unique minimum), CUME_DIST
+    ...                reaches exactly 1.
+    ${bounds_query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH distributed AS (
+    ...    SELECT NTILE(4) OVER (ORDER BY contributions DESC) AS quartile,
+    ...    PERCENT_RANK() OVER (ORDER BY contributions) AS pct_rank,
+    ...    CUME_DIST() OVER (ORDER BY contributions) AS cume
+    ...    FROM github.repos.contributors WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    )
+    ...    SELECT SUM(CASE WHEN quartile < 1 THEN 1 ELSE 0 END) AS quartile_low_violations,
+    ...    SUM(CASE WHEN quartile > 4 THEN 1 ELSE 0 END) AS quartile_high_violations,
+    ...    SUM(CASE WHEN pct_rank < 0 THEN 1 ELSE 0 END) AS pct_rank_low_violations,
+    ...    SUM(CASE WHEN pct_rank > 1 THEN 1 ELSE 0 END) AS pct_rank_high_violations,
+    ...    SUM(CASE WHEN pct_rank = 0 THEN 1 ELSE 0 END) AS zero_pct_rank_rows
+    ...    FROM distributed;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${bounds_query}
+    ...    quartile_low_violations,quartile_high_violations,pct_rank_low_violations,pct_rank_high_violations,zero_pct_rank_rows\n0,0,0,0,1
+    ...    \-o\=csv
+    ${cume_query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH distributed AS (
+    ...    SELECT CUME_DIST() OVER (ORDER BY contributions) AS cume
+    ...    FROM github.repos.contributors WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    )
+    ...    SELECT CASE WHEN SUM(CASE WHEN cume = 1 THEN 1 ELSE 0 END) >= 1
+    ...    THEN 'pass' ELSE 'fail' END AS cume_dist_check
+    ...    FROM distributed;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${cume_query}
+    ...    cume_dist_check\npass
+    ...    \-o\=csv
+
+CTE With Partitioned Window Over Combined Provider Rows
+    [Documentation]    Issue #698: a UNION ALL of provider selects nested in a CTE;
+    ...                PARTITION BY restarts ranking per partition (one rank-1 row each).
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH ranked AS (
+    ...    SELECT RANK() OVER (PARTITION BY repo_name ORDER BY contributions DESC) AS rank_in_repo
+    ...    FROM (
+    ...    SELECT 'repo-a' AS repo_name, login, contributions FROM github.repos.contributors
+    ...    WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    UNION ALL
+    ...    SELECT 'repo-b' AS repo_name, login, contributions FROM github.repos.contributors
+    ...    WHERE owner = 'dummyorg' AND repo = 'dummyapp2.io'
+    ...    ) u
+    ...    )
+    ...    SELECT SUM(CASE WHEN rank_in_repo = 1 THEN 1 ELSE 0 END) AS partition_leaders
+    ...    FROM ranked;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    partition_leaders\n2
+    ...    \-o\=csv
+
+Multiple CTEs Joined Over Provider Tables
+    [Documentation]    Issue #698: two CTEs in one statement joined in the main query
+    ...                (chained CTE references currently fail to plan).
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH contributor_pool AS (
+    ...    SELECT login, contributions FROM github.repos.contributors
+    ...    WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    ), sibling_pool AS (
+    ...    SELECT login FROM github.repos.contributors
+    ...    WHERE owner = 'dummyorg' AND repo = 'dummyapp2.io'
+    ...    )
+    ...    SELECT CASE WHEN COUNT(contributor_pool.login) >= 1 THEN 'pass' ELSE 'fail' END AS multi_cte_join_check
+    ...    FROM contributor_pool INNER JOIN sibling_pool ON contributor_pool.login = sibling_pool.login;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    multi_cte_join_check\npass
+    ...    \-o\=csv
+
+CTE Window Over Grouped Aggregate Over Provider Rows
+    [Documentation]    Issue #698: DENSE_RANK over SUM(...) with GROUP BY, the grouped
+    ...                union nested in a CTE; the unique top contributor ranks 1.
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH totals AS (
+    ...    SELECT login, DENSE_RANK() OVER (ORDER BY SUM(contributions) DESC) AS rnk
+    ...    FROM (
+    ...    SELECT login, contributions FROM github.repos.contributors
+    ...    WHERE owner = 'dummyorg' AND repo = 'dummyapp.io'
+    ...    UNION ALL
+    ...    SELECT login, contributions FROM github.repos.contributors
+    ...    WHERE owner = 'dummyorg' AND repo = 'dummyapp2.io'
+    ...    ) u GROUP BY login
+    ...    )
+    ...    SELECT SUM(CASE WHEN rnk = 1 THEN 1 ELSE 0 END) AS top_ranked_logins
+    ...    FROM totals;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    top_ranked_logins\n1
+    ...    \-o\=csv
+
+Recursive CTE Is Not Supported At Execution
+    [Documentation]    Issue #698: recursive CTEs parse but do not execute (the planner
+    ...                treats the self-reference as a provider table).  This pins the
+    ...                current behaviour; if recursion gains support this fails and the
+    ...                dialect docs must be updated.
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    WITH RECURSIVE nums AS (SELECT 1 AS n UNION ALL SELECT n+1 AS n FROM nums WHERE n < 5)
+    ...    SELECT count(*) AS ct FROM nums;
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    cannot resolve ServiceHandle
