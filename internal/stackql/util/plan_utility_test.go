@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
 func mustParse(t *testing.T, sql string) sqlparser.Statement {
@@ -90,5 +91,35 @@ func TestExtractSQLNodeParams_NotInIsNotFannedOut(t *testing.T) {
 	}
 	if _, present := got[0]["firewall"]; present {
 		t.Errorf("NOT IN must not supply the parameter, got %v", got[0])
+	}
+}
+
+func TestTransformSQLRawParameters_JSONFuncExprPassesThrough(t *testing.T) {
+	// Issue #700: JSON() values must survive to the request preparator for
+	// query param transposition; other FuncExprs are still discarded here.
+	jsonFunc := &sqlparser.FuncExpr{Name: sqlparser.NewColIdent("JSON")}
+	wrappedJSONFunc := &sqlparser.FuncExpr{Name: sqlparser.NewColIdent("json")}
+	otherFunc := &sqlparser.FuncExpr{Name: sqlparser.NewColIdent("strftime")}
+	input := map[string]interface{}{
+		"InstanceRequirements": jsonFunc,
+		"WrappedRequirements":  parserutil.NewComparisonParameterMetadata(nil, wrappedJSONFunc, 0),
+		"Evaluated":            otherFunc,
+		"Scalar":               sqlparser.NewStrVal([]byte("x86_64")),
+	}
+	got, err := TransformSQLRawParameters(input, true)
+	if err != nil {
+		t.Fatalf("TransformSQLRawParameters: %v", err)
+	}
+	if got["InstanceRequirements"] != jsonFunc {
+		t.Errorf("bare JSON() not passed through: %v", got["InstanceRequirements"])
+	}
+	if got["WrappedRequirements"] != wrappedJSONFunc {
+		t.Errorf("metadata-wrapped JSON() not passed through: %v", got["WrappedRequirements"])
+	}
+	if _, present := got["Evaluated"]; present {
+		t.Errorf("non-JSON FuncExpr must be discarded, got %v", got["Evaluated"])
+	}
+	if got["Scalar"] != "x86_64" {
+		t.Errorf("scalar mishandled: %v", got["Scalar"])
 	}
 }

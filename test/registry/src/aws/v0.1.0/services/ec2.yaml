@@ -42398,6 +42398,11 @@ components:
       name: instance_types_from_instance_requirements
       methods:
         instance_types_from_instance_requirements_Get:
+          config:
+            queryParamTranspose:
+              algorithm: AWSCanonical
+            requestTranslate:
+              algorithm: get_query_to_post_form_utf_8
           operation:
             $ref: '#/paths/~1?Action=GetInstanceTypesFromInstanceRequirements&Version=2016-11-15/get'
           response:

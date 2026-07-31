@@ -345,6 +345,35 @@
             "Content-Type": ["text/xml"]
         }
     },
+    "POST:/:instance-requirements-700": {
+        "method": "POST",
+        "path": "/",
+        "body_conditions": {
+            "type": "PARAMETERS",
+            "parameters": {
+                "Action": [
+                    "^GetInstanceTypesFromInstanceRequirements$"
+                ],
+                "Version": [
+                    "^2016\\-11\\-15$"
+                ],
+                "InstanceRequirements.VCpuCount.Min": [
+                    "^2$"
+                ],
+                "InstanceRequirements.VCpuCount.Max": [
+                    "^8$"
+                ],
+                "InstanceRequirements.MemoryMiB.Min": [
+                    "^4096$"
+                ]
+            }
+        },
+        "template": "get_instance_types_from_instance_requirements.xml",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["text/xml"]
+        }
+    },
     "POST:/:14alt2": {
         "method": "POST",
         "path": "/",

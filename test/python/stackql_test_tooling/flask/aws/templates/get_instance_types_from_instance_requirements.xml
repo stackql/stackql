@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GetInstanceTypesFromInstanceRequirementsResponse xmlns="http://ec2.amazonaws.com/doc/2016-11-15/">
+    <requestId>00000000-0000-0000-aaaa-000000000700</requestId>
+    <instanceTypeSet>
+        <item>
+            <instanceType>c5.xlarge</instanceType>
+        </item>
+        <item>
+            <instanceType>m5.large</instanceType>
+        </item>
+        <item>
+            <instanceType>t3.large</instanceType>
+        </item>
+    </instanceTypeSet>
+</GetInstanceTypesFromInstanceRequirementsResponse>

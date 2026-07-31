@@ -238,12 +238,18 @@ func TransformSQLRawParameters(input map[string]interface{}, ignoreTuples bool) 
 	for k, v := range input {
 		switch v := v.(type) {
 		case *sqlparser.FuncExpr:
-			logging.GetLogger().Infof("%v\n", v)
+			// JSON() values pass through intact for query param transposition
+			// (issue #700); other FuncExprs are evaluated elsewhere (issue #689).
+			if isJSONFuncExpr(v) {
+				rv[k] = v
+			}
 			continue
 		case parserutil.ParameterMetadata:
 			switch t := v.GetVal().(type) { //nolint:gocritic // understandable
 			case *sqlparser.FuncExpr:
-				logging.GetLogger().Infof("%v\n", t)
+				if isJSONFuncExpr(t) {
+					rv[k] = t
+				}
 				continue
 			}
 		}
@@ -257,6 +263,10 @@ func TransformSQLRawParameters(input map[string]interface{}, ignoreTuples bool) 
 		rv[k] = r
 	}
 	return rv, nil
+}
+
+func isJSONFuncExpr(f *sqlparser.FuncExpr) bool {
+	return strings.EqualFold(f.Name.GetRawVal(), "JSON")
 }
 
 func extractRaw(raw interface{}, ignoreTuples bool) (interface{}, error) {

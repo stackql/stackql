@@ -10601,3 +10601,30 @@ Recursive CTE Is Not Supported At Execution
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
     ...    cannot resolve ServiceHandle
+
+# ===========================================================================
+# Issue #700: a required structured parameter supplied as JSON() in a SELECT
+# WHERE clause must fan out through AWSCanonical query param transposition
+# into the signed form body.  The mock route only matches when the dotted
+# InstanceRequirements.* keys arrive, so rows prove the wire shape.
+# ===========================================================================
+
+Select With JSON Structured Param Fans Out Through Query Transposition
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    SELECT instanceType FROM aws.ec2.instance_types_from_instance_requirements
+    ...    WHERE region = 'us-east-1'
+    ...    AND ArchitectureType = 'x86_64'
+    ...    AND VirtualizationType = 'hvm'
+    ...    AND InstanceRequirements = JSON('{"VCpuCount":{"Min":2,"Max":8},"MemoryMiB":{"Min":4096}}')
+    ...    ORDER BY instanceType;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    instanceType\nc5.xlarge\nm5.large\nt3.large
+    ...    \-o\=csv
