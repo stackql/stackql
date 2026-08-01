@@ -1,0 +1,63 @@
+name: openai-stdio-plugin
+
+on:
+  pull_request:
+    paths:
+      - '.agents/plugins/marketplace.json'
+      - 'packaging/openai-plugin/**'
+      - '.github/workflows/openai-plugin.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: stdio smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: python3
+            binary: stackql-plugin-smoke
+          - os: macos-latest
+            python: python3
+            binary: stackql-plugin-smoke
+          - os: windows-latest
+            python: python
+            binary: stackql-plugin-smoke.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Configure Windows C toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $mingwPath = 'C:\mingw64'
+          if (-not (Test-Path $mingwPath)) {
+            $mingwPath = 'C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64'
+          }
+          if (-not (Test-Path $mingwPath)) {
+            throw 'MinGW toolchain not found'
+          }
+          "$mingwPath\bin" | Out-File $env:GITHUB_PATH -Append
+          "CC=$mingwPath\bin\x86_64-w64-mingw32-gcc" | Out-File $env:GITHUB_ENV -Append
+          "CXX=$mingwPath\bin\x86_64-w64-mingw32-g++" | Out-File $env:GITHUB_ENV -Append
+      - name: Build StackQL
+        env:
+          CGO_ENABLED: '1'
+        run: go build --tags sqlite_stackql -o ${{ matrix.binary }} ./stackql
+      - name: Validate package
+        run: ${{ matrix.python }} packaging/openai-plugin/scripts/validate.py
+      - name: Test stdio connector
+        env:
+          STACKQL_MCP_BIN: ${{ github.workspace }}/${{ matrix.binary }}
+        run: ${{ matrix.python }} packaging/openai-plugin/scripts/smoke-test.py

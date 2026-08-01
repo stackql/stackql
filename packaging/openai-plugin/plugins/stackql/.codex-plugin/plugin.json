@@ -1,0 +1,38 @@
+{
+  "name": "stackql",
+  "version": "0.10.582",
+  "description": "Query and manage cloud infrastructure with StackQL over a local MCP stdio server.",
+  "author": {
+    "name": "StackQL Studios",
+    "url": "https://stackql.io"
+  },
+  "homepage": "https://stackql.io",
+  "repository": "https://github.com/stackql/stackql",
+  "license": "MIT",
+  "keywords": [
+    "stackql",
+    "mcp",
+    "sql",
+    "cloud",
+    "infrastructure"
+  ],
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "StackQL",
+    "shortDescription": "Query and manage cloud infrastructure with SQL",
+    "longDescription": "Use StackQL locally through MCP to discover providers, query resources, and manage cloud infrastructure with SQL. Credentials remain in the user's local StackQL environment and the MCP server communicates over stdio.",
+    "developerName": "StackQL Studios",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://stackql.io",
+    "privacyPolicyURL": "https://stackql.io/privacy",
+    "defaultPrompt": [
+      "List the cloud providers available through StackQL.",
+      "Use StackQL to inventory resources in my cloud account.",
+      "Use StackQL to investigate configuration drift in my cloud environment."
+    ]
+  }
+}
