@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -641,61 +640,12 @@ func (s *simpleMCPServer) run(ctx context.Context) error {
 	case serverTransportSSE:
 		return fmt.Errorf("SSE transport obsoleted; use streamable HTTP transport instead")
 	case serverTransportStdIO:
-		// Windows text-mode pipes CRLF-terminate JSON-RPC lines; the SDK's
-		// ndjson decoder treats the bare carriage return before the newline
-		// as trailing garbage and kills the session (issue #668).  A raw CR
-		// is illegal inside a JSON string (control characters must be
-		// escaped), so stripping every CR from the inbound stream is
-		// lossless for spec-compliant traffic.
-		if filtered, filterErr := newCRStrippedStdin(); filterErr == nil {
-			os.Stdin = filtered
-		} else {
-			s.logger.Warnf("could not install CRLF-tolerant stdin filter: %v", filterErr)
-		}
-		return s.server.Run(ctx, &mcp.StdioTransport{})
+		// Handles CRLF framing (issue #668) and malformed frames (issue
+		// #701); see resilientStdioTransport.
+		return s.server.Run(ctx, newResilientStdioTransport(s.logger))
 	default:
 		return fmt.Errorf("unsupported transport: %s", s.config.Server.Transport)
 	}
-}
-
-// crFilterReader removes carriage-return bytes from the wrapped stream.
-type crFilterReader struct {
-	r io.Reader
-}
-
-func (c *crFilterReader) Read(p []byte) (int, error) {
-	for {
-		n, err := c.r.Read(p)
-		kept := 0
-		for i := 0; i < n; i++ {
-			if p[i] == '\r' {
-				continue
-			}
-			p[kept] = p[i]
-			kept++
-		}
-		if kept > 0 || err != nil || len(p) == 0 {
-			return kept, err
-		}
-		// Every byte read was a CR; retry rather than returning (0, nil).
-	}
-}
-
-// newCRStrippedStdin returns the read end of a pipe fed by a goroutine that
-// copies the process's real stdin with all carriage returns removed.  The
-// pump goroutine lives for the remainder of the process, which matches the
-// lifetime of a stdio MCP session.
-func newCRStrippedStdin() (*os.File, error) {
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		return nil, err
-	}
-	stdin := os.Stdin
-	go func() {
-		defer pw.Close()
-		io.Copy(pw, &crFilterReader{r: stdin}) //nolint:errcheck // EOF/close terminates the session anyway
-	}()
-	return pr, nil
 }
 
 // Stop gracefully stops the MCP server and all transports.

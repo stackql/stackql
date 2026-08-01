@@ -1047,6 +1047,58 @@ MCP Stdio Server Tolerates CRLF Terminated JSON RPC
     Should Be Equal As Integers    ${result['returncode']}    0
 
 # ===========================================================================
+# Issue #701 scenarios.  A syntactically invalid JSON-RPC frame must be
+# answered with a -32700 parse error (id null) - and a valid-JSON-but-not-
+# JSON-RPC frame with -32600 - without terminating the stdio session; before
+# the fix the server exited with code 1 on the first such frame.
+# ===========================================================================
+
+MCP Stdio Server Answers Malformed JSON With Parse Error And Session Survives
+    [Documentation]    Issue #701: the literal repro frame from the work order.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${frame}=    Set Variable    {this is not json
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_malformed_frame_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $frame)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['error_code']}    -32700
+    Should Be True    ${result['error_id_is_null']}
+    Should Be True    ${result['ping_ok']}
+    Should Be True    ${result['still_running_after_ping']}
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Server Answers Truncated JSON With Parse Error And Session Survives
+    [Documentation]    Issue #701 variant: a truncated JSON document.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${frame}=    Set Variable    {"jsonrpc":
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_malformed_frame_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $frame)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['error_code']}    -32700
+    Should Be True    ${result['error_id_is_null']}
+    Should Be True    ${result['ping_ok']}
+    Should Be True    ${result['still_running_after_ping']}
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Server Answers Bare Token With Parse Error And Session Survives
+    [Documentation]    Issue #701 variant: a bare non-JSON token.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${frame}=    Set Variable    not-json-token
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_malformed_frame_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $frame)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['error_code']}    -32700
+    Should Be True    ${result['error_id_is_null']}
+    Should Be True    ${result['ping_ok']}
+    Should Be True    ${result['still_running_after_ping']}
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Server Answers Non JSONRPC Object With Invalid Request And Session Survives
+    [Documentation]    Issue #701: valid JSON that is not a JSON-RPC message
+    ...                gets -32600 (id null) instead of terminating the session.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${frame}=    Set Variable    {"jsonrpc":"2.0","nonsense":true}
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_malformed_frame_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $frame)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['error_code']}    -32600
+    Should Be True    ${result['error_id_is_null']}
+    Should Be True    ${result['ping_ok']}
+    Should Be True    ${result['still_running_after_ping']}
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+# ===========================================================================
 # Issue #669 scenarios.  Tool result text content is markdown by default; a
 # per-call `format` argument or a server-level `render` config switches it to
 # compact JSON.  The client's `prefer_text` config surfaces the text blocks
