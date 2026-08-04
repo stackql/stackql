@@ -414,6 +414,31 @@ python3 scripts/smoke-test.py --docker stackql/stackql-mcp:X.Y.Z
 For future tagged releases, set the `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`
 repo secrets and the publish workflow pushes the image automatically.
 
+## Updating the ChatGPT/Codex stdio plugin
+
+The local plugin under `packaging/openai-plugin` is an addendum to this release
+flow. It launches the npm wrapper over stdio and does not change the MCPB,
+Anthropic submission, PyPI, OCI, or MCP Registry artifacts.
+
+Update it only after `@stackql/mcp-server@X.Y.Z` is published:
+
+1. Set `version` in
+   `packaging/openai-plugin/plugins/stackql/.codex-plugin/plugin.json` to
+   `X.Y.Z`.
+2. Set the pinned `@stackql/mcp-server@X.Y.Z` in
+   `packaging/openai-plugin/plugins/stackql/bin/stackql-mcp.js`.
+3. From the repository root, run:
+
+```bash
+npm view @stackql/mcp-server@X.Y.Z version
+python3 packaging/openai-plugin/scripts/validate.py
+python3 packaging/openai-plugin/scripts/smoke-test.py
+```
+
+The plugin workflow repeats validation and the stdio smoke test on Linux,
+macOS, and Windows. The marketplace entry is version-independent and should
+not change for a routine StackQL release.
+
 ## Makefile reference
 
 ```

@@ -262,6 +262,76 @@ def _tool_result_text(response):
     return "\n".join(parts)
 
 
+def run_stdio_empty_credential_reload_roundtrip(
+    stackql_exe,
+    env_file_path,
+    timeout_seconds=90,
+):
+    """Calls reload_credentials with no explicit auth contexts."""
+    if os.path.exists(env_file_path):
+        os.remove(env_file_path)
+    argv = [
+        stackql_exe,
+        "mcp",
+        "--mcp.server.type=stdio",
+        "--mcp.config",
+        '{"server": {"audit": {"disabled": true}} }',
+        f"--env.file={env_file_path}",
+    ]
+    proc = subprocess.Popen(
+        argv,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    watchdog = threading.Timer(timeout_seconds, proc.kill)
+    watchdog.start()
+    stdout_lines = []
+    stderr = b""
+    reload_response = None
+    try:
+        def send(message):
+            proc.stdin.write(_frame_messages([message], b"\n"))
+            proc.stdin.flush()
+
+        send({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "robot-stdio-harness", "version": "0.1.0"},
+            },
+        })
+        _await_response(proc, 1, stdout_lines)
+        send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+        send({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {"name": "reload_credentials", "arguments": {}},
+        })
+        reload_response = _await_response(proc, 2, stdout_lines)
+        try:
+            proc.stdin.close()
+        except OSError:
+            pass
+        stdout_lines.append(proc.stdout.read())
+        stderr = proc.stderr.read()
+        proc.wait(timeout=timeout_seconds)
+    finally:
+        watchdog.cancel()
+        if proc.poll() is None:
+            proc.kill()
+    return {
+        "reload": _tool_result_text(reload_response),
+        "stdout": b"".join(stdout_lines).decode("utf-8", errors="replace"),
+        "stderr": stderr.decode("utf-8", errors="replace"),
+        "returncode": proc.returncode,
+    }
+
+
 def run_stdio_credential_reload_roundtrip(
     stackql_exe,
     registry_cfg,

@@ -119,4 +119,20 @@ Gotchas (all hit during the v0.10.557 release):
 - The registry JWT minted at login is short-lived - run `make registry-publish` immediately after `mcp-publisher login github`.
 - Old `mcp-publisher` versions (pre-1.2) drop `.mcpregistry_*` token files in the working directory (gitignored); current versions store the token in `~/.config/mcp-publisher/token.json`.
 
+7d. Update the ChatGPT/Codex stdio plugin
+
+After 7a confirms `@stackql/mcp-server@X.Y.Z` is live, update the local plugin in a follow-up PR:
+
+1. Set `version` in `packaging/openai-plugin/plugins/stackql/.codex-plugin/plugin.json` to `X.Y.Z`.
+2. Set the pinned `@stackql/mcp-server@X.Y.Z` in `packaging/openai-plugin/plugins/stackql/bin/stackql-mcp.js`.
+3. Run:
+
+```
+npm view @stackql/mcp-server@X.Y.Z version
+python3 packaging/openai-plugin/scripts/validate.py
+python3 packaging/openai-plugin/scripts/smoke-test.py
+```
+
+The marketplace entry is version-independent. This step does not change the MCPB, Anthropic, PyPI, OCI, or MCP Registry artifacts. See `packaging/mcpb/README.md` for the detailed addendum.
+
 8. Push the same release version tag to [stackql/releases.stackql.io](https://github.com/stackql/releases.stackql.io)

@@ -1251,6 +1251,18 @@ MCP HTTP Upstream 404 Returns Empty Result Set
 # --env.file dotenv file via the reload_credentials tool.
 # ===========================================================================
 
+MCP Stdio Reload Credentials Without Auth Contexts
+    [Documentation]    Unscoped credential reload returns an empty provider list
+    ...                when no explicit auth contexts are configured.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${env_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-reload-empty.env
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_empty_credential_reload_roundtrip($STACKQL_EXE, $env_file)    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    Should Contain        ${result['reload']}    "env_file_sourced": true
+    Should Contain        ${result['reload']}    "providers": []
+    Should Not Contain    ${result['reload']}    isError=true
+    Should Be Equal As Integers    ${result['returncode']}    0
+
 MCP Stdio Reload Credentials Sources Env File Mid Session
     [Documentation]    Issue #688: credential (re)sourcing at any point in the
     ...                MCP server lifecycle, stdio transport, cross-platform.

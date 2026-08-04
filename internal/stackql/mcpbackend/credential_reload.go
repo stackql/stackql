@@ -89,7 +89,10 @@ func (b *stackqlMCPService) ReloadCredentials(
 	_ context.Context,
 	input mcp_dto.CredentialsReloadInput,
 ) (mcp_dto.CredentialsReloadDTO, error) {
-	rv := mcp_dto.CredentialsReloadDTO{EnvFile: b.envFile}
+	rv := mcp_dto.CredentialsReloadDTO{
+		EnvFile:   b.envFile,
+		Providers: []mcp_dto.ProviderCredentialStatusDTO{},
+	}
 	sourcedVars, sourced, err := envfile.Source(b.envFile)
 	if err != nil {
 		return rv, fmt.Errorf("failed to source env file '%s': %w", b.envFile, err)

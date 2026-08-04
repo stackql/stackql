@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "stackql": {
+      "command": "node",
+      "args": [
+        "./bin/stackql-mcp.js"
+      ],
+      "cwd": "."
+    }
+  }
+}
