@@ -60,6 +60,15 @@ providerServices:
       $ref: stackql_native_test/v0.1.0/services/graphql.yaml
     title: GraphQL cursor pagination
     version: v0.1.0
+  srvvar:
+    description: Server variable env resolution via x-stackQL-envVar.
+    id: srvvar:v0.1.0
+    name: srvvar
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/srvvar.yaml
+    title: Server variable env resolution
+    version: v0.1.0
   paged:
     description: REST page_number pagination.
     id: paged:v0.1.0

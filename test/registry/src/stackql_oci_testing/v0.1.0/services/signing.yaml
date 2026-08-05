@@ -1,0 +1,92 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: OCI signing testing
+  description: |-
+    Exercises the oci_signing_v1 auth type end to end. The flask mock cracks the
+    draft-cavage Authorization header into columns (GET) and enforces the
+    six-header body-verb signing contract including the x-content-sha256 digest
+    (POST), so tests assert the signed wire shape without a real OCI tenancy.
+components:
+  schemas:
+    bucket:
+      type: object
+      properties:
+        name:
+          type: string
+        auth_scheme:
+          type: string
+        auth_version:
+          type: string
+        auth_algorithm:
+          type: string
+        auth_key_id:
+          type: string
+        auth_signed_headers:
+          type: string
+    buckets_response:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/bucket'
+  x-stackQL-resources:
+    buckets:
+      id: stackql_oci_testing.signing.buckets
+      name: buckets
+      title: Buckets (OCI signing target)
+      methods:
+        list_buckets:
+          operation:
+            $ref: '#/paths/~1oci~1buckets/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $.items
+        create_bucket:
+          operation:
+            $ref: '#/paths/~1oci~1buckets/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/buckets/methods/list_buckets'
+        insert:
+          - $ref: '#/components/x-stackQL-resources/buckets/methods/create_bucket'
+        delete: []
+        update: []
+paths:
+  /oci/buckets:
+    get:
+      operationId: oci/buckets/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/buckets_response'
+      summary: List buckets, echoing the parsed Authorization header
+    post:
+      operationId: oci/buckets/post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bucket'
+      summary: Create a bucket, enforcing the body-verb signed header set
