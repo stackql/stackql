@@ -1,3 +1,5 @@
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.stackql%2Fstackql-mcp.svg)](https://mcptoplist.com/server/io.github.stackql%2Fstackql-mcp)
+
 <!-- web assets -->
 [logo]: https://stackql.io/img/stackql-logo-bold.png "stackql logo"
 [homepage]: https://stackql.io/
