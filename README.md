@@ -1,4 +1,3 @@
-[![MCP Toplist](https://mcptoplist.com/badge/io.github.stackql%2Fstackql-mcp.svg)](https://mcptoplist.com/server/io.github.stackql%2Fstackql-mcp)
 
 <!-- web assets -->
 [logo]: https://stackql.io/img/stackql-logo-bold.png "stackql logo"
@@ -25,6 +24,7 @@
 [stars]: https://img.shields.io/github/stars/stackql/stackql?style=flat-square "GitHub Stars"
 [forks]: https://img.shields.io/github/forks/stackql/stackql?style=flat-square "GitHub Forks"
 [contributors]: https://img.shields.io/github/contributors/stackql/stackql?style=flat-square "Contributors"
+[mcptoplistbadge]: https://mcptoplist.com/server/io.github.stackql%2Fstackql-mcp](https://mcptoplist.com/badge/io.github.stackql%2Fstackql-mcp.svg "MCP Toplist"
 [mcpregistrybadge]: https://img.shields.io/badge/MCP%20Registry-io.github.stackql%2Fstackql--mcp-blue?style=flat-square "MCP Registry"
 [mcpserver]: https://img.shields.io/npm/v/@stackql/mcp-server?style=flat-square&label=mcp%20server "MCP Server"
 <!-- github links -->
@@ -41,6 +41,7 @@
 <!-- misc links -->
 [twitter]: https://twitter.com/stackql
 [mcpregistry]: https://registry.modelcontextprotocol.io/?search=stackql
+[mcptoplist]: https://mcptoplist.com/server/io.github.stackql%2Fstackql-mcp
 [npmjsmcpregistry]: https://www.npmjs.com/package/@stackql/mcp-server
 [mcpdocs]: https://stackql.io/docs
 
@@ -52,6 +53,7 @@
 ![platforms]
 ![license]
 ![build]
+[![MCP Toplist][mcptoplistbadge]][mcptoplist]
 [![MCP Registry][mcpregistrybadge]][mcpregistry]
 [![MCP Server][mcpserver]][npmjsmcpregistry]
 ![GitHub Release](https://img.shields.io/github/v/release/stackql/stackql?label=github%20release)
