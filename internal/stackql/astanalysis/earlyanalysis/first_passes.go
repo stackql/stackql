@@ -11,6 +11,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/intrinsic"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
@@ -319,6 +320,10 @@ func (sp *standardInitialPasses) initialPasses(
 	)
 	sp.isCacheExemptMaterialDetected = isCacheExemptMaterialDetected
 	for _, p := range provStrSlice {
+		// The intrinsic provider has no registry document and no auth.
+		if intrinsic.IsProvider(p) {
+			continue
+		}
 		_, isSQLDataSource := handlerCtx.GetSQLDataSource(p)
 		if isSQLDataSource {
 			continue

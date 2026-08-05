@@ -17,6 +17,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
+	"github.com/stackql/stackql/internal/stackql/intrinsic"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
@@ -94,9 +95,22 @@ func newPlanGraphBuilder(concurrencyLimit int, transactionContext txn_context.IT
 	}
 }
 
-//nolint:funlen // no big deal
+//nolint:funlen,gocyclo,cyclop // dispatch over every statement type; inherently wide
 func (pgb *standardPlanGraphBuilder) createInstructionFor(pbi planbuilderinput.PlanBuilderInput) error {
 	stmt := pbi.GetStatement()
+	// Statements routed to the intrinsic provider are planned entirely by the
+	// intrinsic package, bypassing registry-backed analysis.
+	if executor, isIntrinsic := intrinsic.GeneratePrimitiveFunc(pbi.GetHandlerCtx(), stmt); isIntrinsic {
+		pgb.planGraphHolder.CreatePrimitiveNode(
+			primitive.NewMetaDataPrimitive(
+				nil,
+				func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+					return executor()
+				},
+			),
+		)
+		return nil
+	}
 	switch stmt := stmt.(type) {
 	case *sqlparser.Auth:
 		return pgb.handleAuth(pbi)
