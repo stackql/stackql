@@ -354,6 +354,15 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       rv["YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR"] = os.environ.get('YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR')
     if os.environ.get('YOUR_OAUTH2_SOME_SYSTEM_ACCOUNT_ID') is not None:
       rv["YOUR_OAUTH2_SOME_SYSTEM_ACCOUNT_ID"] = os.environ.get('YOUR_OAUTH2_SOME_SYSTEM_ACCOUNT_ID')
+    for k in (
+        'STACKQL_OCI_TESTING_TENANCY_OCID',
+        'STACKQL_OCI_TESTING_USER_OCID',
+        'STACKQL_OCI_TESTING_FINGERPRINT',
+        'STACKQL_OCI_TESTING_PRIVATE_KEY_PATH',
+        'STACKQL_NATIVE_TEST_DEPLOYMENT',
+    ):
+      if os.environ.get(k) is not None:
+        rv[k] = os.environ.get(k)
     return rv
 
 

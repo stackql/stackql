@@ -1,0 +1,62 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070/srvvar/{deployment}
+    variables:
+      deployment:
+        description: Deployment path segment, resolvable from the environment.
+        x-stackQL-envVar: STACKQL_NATIVE_TEST_DEPLOYMENT
+info:
+  version: v0.1.0
+  title: Server variable env resolution
+  description: |-
+    Exercises x-stackQL-envVar resolution of OpenAPI server variables (issue 706).
+    The {deployment} server variable lives in a path segment (the rewrite tooling
+    only touches the host) and the flask mock echoes the segment it was hit on,
+    so tests can assert env-resolved vs WHERE-supplied precedence.
+components:
+  schemas:
+    item:
+      type: object
+      properties:
+        name:
+          type: string
+        deployment:
+          type: string
+    items_response:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/item'
+  x-stackQL-resources:
+    items:
+      id: stackql_native_test.srvvar.items
+      name: items
+      title: Items under an env-resolvable deployment segment
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1items/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items/methods/select'
+        delete: []
+        insert: []
+        update: []
+paths:
+  /items:
+    get:
+      operationId: srvvar/items/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/items_response'
+      summary: List items (deployment comes from the server variable)

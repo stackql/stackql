@@ -1,0 +1,18 @@
+id: stackql_oci_testing
+name: stackql_oci_testing
+openapi: 3.0.3
+config:
+  auth:
+    type: oci_signing_v1
+providerServices:
+  signing:
+    description: OCI request signing (oci_signing_v1) against the local mock.
+    id: signing:v0.1.0
+    name: signing
+    preferred: true
+    service:
+      $ref: stackql_oci_testing/v0.1.0/services/signing.yaml
+    title: OCI signing testing
+    version: v0.1.0
+servers: []
+version: v0.1.0

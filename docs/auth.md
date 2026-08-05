@@ -24,6 +24,34 @@ Having done this, pass the `--auth` parameter into `stackql` with Azure configur
 - SDK: https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#section-readme
 - Azure Service Principal setup: https://learn.microsoft.com/en-us/azure/developer/go/azure-sdk-authentication-service-principal?tabs=azure-cli
 
+## OCI Auth
+
+Type `oci_signing_v1` signs requests with the OCI draft-cavage HTTP signature scheme (`Authorization: Signature version="1",keyId="<tenancy_ocid>/<user_ocid>/<fingerprint>",algorithm="rsa-sha256",...`). GET/DELETE sign `date (request-target) host`; POST/PUT/PATCH additionally sign `content-length`, `content-type` and `x-content-sha256`.
+
+Credentials are supplied via the `--auth` context. Two variants:
+
+### Raw (twelve-factor) variant
+
+Supply all of tenancy OCID, user OCID, fingerprint and a private key. Every field accepts a literal key (`tenancy_ocid`, `user_ocid`, `fingerprint`, `private_key`, `private_key_path`, `passphrase`, `region`) or an env var indirection (`tenancy_ocid_env_var`, `user_ocid_env_var`, `fingerprint_env_var`, `private_key_env_var`, `private_key_path_env_var`, `passphrase_env_var`, `region_env_var`); when the `*_env_var` key is set it wins over the literal. `passphrase` and `region` are optional.
+
+```json
+{"oci": {"type": "oci_signing_v1", "tenancy_ocid_env_var": "OCI_CLI_TENANCY", "user_ocid_env_var": "OCI_CLI_USER", "fingerprint_env_var": "OCI_CLI_FINGERPRINT", "private_key_path_env_var": "OCI_CLI_KEY_FILE"}}
+```
+
+The env var names are free-form; the example uses the exact names the OCI CLI reads (`OCI_CLI_TENANCY`, `OCI_CLI_USER`, `OCI_CLI_FINGERPRINT`, `OCI_CLI_KEY_FILE`, `OCI_CLI_PASSPHRASE`, `OCI_CLI_REGION`) so an environment configured for the CLI works unchanged. Terraform users can point the `*_env_var` keys at their `TF_VAR_*` names instead, or skip env vars entirely with the config file variant below - it reads the same `~/.oci/config` as both tools.
+
+If any of the four raw values is present, all four are required; a partial set fails fast with `cannot compose OCI signing credentials: ...` and no request is sent.
+
+### Config file variant
+
+When no raw value is present, the standard OCI config file convention applies:
+
+```json
+{"oci": {"type": "oci_signing_v1", "config_file_path": "/home/user/.oci/config", "profile": "DEFAULT"}}
+```
+
+`config_file_path` defaults to `~/.oci/config` and `profile` to `DEFAULT`; `passphrase` / `passphrase_env_var` also apply to the config file key. This is the same file used by the OCI CLI and Terraform.
+
 ## k8s auth
 
 k8s supports an adaptable auth flow [client-go credential plugins](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins), which can be and is leveraged by k8s vendors.

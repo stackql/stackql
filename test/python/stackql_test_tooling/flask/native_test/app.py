@@ -13,9 +13,28 @@ Run with:
     flask --app=test/python/stackql_test_tooling/flask/native_test/app run --host 0.0.0.0 --port 1070
 """
 
+import base64
+import hashlib
 import re
 
 from flask import Flask, Response, jsonify, request
+
+
+_OCI_POST_SIGNED_HEADERS = "date (request-target) host content-length content-type x-content-sha256"
+
+
+def _oci_auth_fields(req) -> dict:
+    # Crack the draft-cavage Authorization header into columns the suite can
+    # assert on; the signature itself varies per request (date) so it is not echoed.
+    auth = req.headers.get("Authorization", "")
+    fields = dict(re.findall(r'(\w+)="([^"]*)"', auth))
+    return {
+        "auth_scheme": auth.split(" ")[0] if auth else "",
+        "auth_version": fields.get("version", ""),
+        "auth_algorithm": fields.get("algorithm", ""),
+        "auth_key_id": fields.get("keyId", ""),
+        "auth_signed_headers": fields.get("headers", ""),
+    }
 
 
 def create_app() -> Flask:
@@ -55,6 +74,33 @@ def create_app() -> Flask:
                 "echoed_query": request.query_string.decode("utf-8"),
             }
         )
+
+    # ---- OCI request signing (oci_signing_v1) target -----------------------
+
+    @app.get("/oci/buckets")
+    def oci_buckets_list():
+        return jsonify({"items": [dict(name="bucket-1", **_oci_auth_fields(request))]})
+
+    @app.post("/oci/buckets")
+    def oci_buckets_create():
+        # Enforce the OCI body-verb signing contract: the six-header signed set
+        # and a correct x-content-sha256 digest, else the insert visibly fails.
+        fields = _oci_auth_fields(request)
+        if fields["auth_signed_headers"] != _OCI_POST_SIGNED_HEADERS:
+            return jsonify({"error": f"unexpected signed headers: {fields['auth_signed_headers']}"}), 400
+        expected_digest = base64.b64encode(hashlib.sha256(request.get_data()).digest()).decode()
+        if request.headers.get("x-content-sha256") != expected_digest:
+            return jsonify({"error": "x-content-sha256 mismatch"}), 400
+        body = request.get_json(silent=True) or {}
+        return jsonify(dict(name=body.get("name", ""), **fields))
+
+    # ---- server variable env resolution target -----------------------------
+
+    @app.get("/srvvar/<deployment>/items")
+    def srvvar_items(deployment):
+        # Echo the deployment path segment so tests can assert which server
+        # variable value (env-resolved vs WHERE-supplied) reached the wire.
+        return jsonify({"items": [{"name": "item-1", "deployment": deployment}]})
 
     # ---- OData push-down target --------------------------------------------
 
@@ -268,6 +314,39 @@ def create_app() -> Flask:
         # S3 CreateBucket-style: 200 with an empty body. The walker must yield
         # zero rows rather than an mxj EOF error.
         return Response("", mimetype="text/xml")
+
+    @app.get("/xml/ec2/volumes_paged")
+    def xml_ec2_volumes_paged():
+        # Two-page fixture: page 1 carries a <nextToken> scalar sibling that the
+        # schema_driven_xml transform must pass through for pagination to
+        # traverse; page 2 is terminal (no token).
+        if request.args.get("NextToken") == "xmltok-2":
+            body = (
+                "<DescribeVolumesResponse>"
+                "<requestId>req-ec2-paged-2</requestId>"
+                "<volumeSet>"
+                "<item><volumeId>vol-p3</volumeId><size>32</size>"
+                "<encrypted>true</encrypted><state>available</state>"
+                "<cidrBlock>10.7.2.0/24</cidrBlock></item>"
+                "</volumeSet>"
+                "</DescribeVolumesResponse>"
+            )
+        else:
+            body = (
+                "<DescribeVolumesResponse>"
+                "<requestId>req-ec2-paged-1</requestId>"
+                "<volumeSet>"
+                "<item><volumeId>vol-p1</volumeId><size>8</size>"
+                "<encrypted>true</encrypted><state>available</state>"
+                "<cidrBlock>10.7.0.0/24</cidrBlock></item>"
+                "<item><volumeId>vol-p2</volumeId><size>16</size>"
+                "<encrypted>false</encrypted><state>in-use</state>"
+                "<cidrBlock>10.7.1.0/24</cidrBlock></item>"
+                "</volumeSet>"
+                "<nextToken>xmltok-2</nextToken>"
+                "</DescribeVolumesResponse>"
+            )
+        return Response(body, mimetype="text/xml")
 
     @app.get("/xml/query/stacks")
     def xml_query_stacks():

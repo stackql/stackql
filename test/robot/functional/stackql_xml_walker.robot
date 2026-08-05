@@ -176,3 +176,51 @@ Xml Empty Response Body Yields Zero Rows
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select count(*) as num from stackql_native_test.xml_ec2.volumes_empty_body;
     ...    0
+
+Xml Pagination Token Passthrough Traverses All Pages
+    [Documentation]    any-sdk #117: the <nextToken> scalar sibling survives the
+    ...    schema_driven_xml transform, so pagination follows it to page two and the
+    ...    row count spans both pages (2 + 1).
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select count(*) as num from stackql_native_test.xml_ec2.volumes_paged;
+    ...    3
+
+Xml Pagination Token Is Not A Result Column
+    [Documentation]    any-sdk #117: the token feeds traversal only; the projected rows
+    ...    carry exactly the schema columns, never nextToken.
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------|-----------|
+    ...    |${SPACE}volume_id${SPACE}|${SPACE}${SPACE}${SPACE}state${SPACE}${SPACE}${SPACE}|
+    ...    |-----------|-----------|
+    ...    |${SPACE}vol-p1${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}available${SPACE}|
+    ...    |-----------|-----------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select volume_id, state from stackql_native_test.xml_ec2.volumes_paged where volume_id \= 'vol-p1';
+    ...    ${outputStr}
+
+Xml Pagination Second Page Rows Materialise
+    [Documentation]    any-sdk #117: a row that only exists on page two is reachable.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select volume_id, size from stackql_native_test.xml_ec2.volumes_paged where volume_id \= 'vol-p3';
+    ...    vol-p3

@@ -150,3 +150,62 @@ OData Where Only Column Still Filters Rows
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name from stackql_native_test.odata.people where city \= 'NYC';
     ...    Alice
+
+OData Restricted Select Superset Includes Supported Filter Column
+    [Documentation]    any-sdk #116 with a supportedColumns allowlist: the pushed filter
+    ...                column (city, select-supported) joins the emitted $select.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_restricted where city \= 'NYC';
+    ...    $select\=name,echoed,city
+
+OData Restricted Select Superset Includes Supported Order By Column
+    [Documentation]    any-sdk #116: the pushed ORDER BY column (city, select-supported)
+    ...                joins the emitted $select and $orderby is unchanged.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_restricted order by city asc;
+    ...    $select\=name,echoed,city
+
+OData Restricted Filter Outside Select Allowlist Never Reaches Select
+    [Documentation]    any-sdk #116: age is filter-supported but outside the select
+    ...                allowlist. The filter still pushes; because stackql unions the
+    ...                WHERE column into the pushdown projection, the all-or-nothing
+    ...                allowlist gate suppresses $select entirely rather than emit an
+    ...                incoherent one (the trailing cell boundary proves its absence).
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_restricted where age \= 30;
+    ...    $filter\=age eq 30${SPACE}|
+
+OData Restricted Select Star Emits No Select
+    [Documentation]    any-sdk #116: an empty projection (SELECT *) with a pushed filter
+    ...                must not conjure a $select; the echoed query terminates at the filter.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from stackql_native_test.odata.people_restricted where city \= 'NYC';
+    ...    eq 'NYC'${SPACE}|

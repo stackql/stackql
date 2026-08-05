@@ -62,6 +62,41 @@ components:
         delete: []
         insert: []
         update: []
+    people_restricted:
+      id: stackql_native_test.odata.people_restricted
+      name: people_restricted
+      title: People with per-capability supportedColumns allowlists ($select superset guard)
+      config:
+        queryParamPushdown:
+          select:
+            dialect: odata
+            supportedColumns:
+              - name
+              - echoed
+              - city
+          filter:
+            dialect: odata
+            supportedColumns:
+              - city
+              - age
+          orderBy:
+            dialect: odata
+            supportedColumns:
+              - city
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1odata~1people/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: value
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/people_restricted/methods/select'
+        delete: []
+        insert: []
+        update: []
 paths:
   /odata/people:
     get:
