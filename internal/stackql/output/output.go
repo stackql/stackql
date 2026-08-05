@@ -56,10 +56,13 @@ func GetOutputWriter(
 		errWriter = os.Stdout
 	}
 	ci := pgtype.NewConnInfo()
-	switch outputCtx.RuntimeContext.OutputFormat {
+	switch strings.ToLower(outputCtx.RuntimeContext.OutputFormat) {
 	case constants.JSONStr:
 		jsonWriter := NewJSONWriter(writer, errWriter)
 		return jsonWriter, nil
+	case "jsonl", "ndjson":
+		jsonlWriter := NewJSONLWriter(writer, errWriter)
+		return jsonlWriter, nil
 	case constants.TableStr:
 		tablewriter := TableWriter{
 			AbstractTabularWriter{
@@ -111,8 +114,24 @@ type JSONWriter struct {
 	errWriter io.Writer
 }
 
+type JSONLWriter struct {
+	writer    io.Writer
+	errWriter io.Writer
+}
+
+type writeFlusher interface {
+	Flush() error
+}
+
 func NewJSONWriter(writer io.Writer, errWriter io.Writer) IOutputWriter {
 	return &JSONWriter{
+		writer:    writer,
+		errWriter: errWriter,
+	}
+}
+
+func NewJSONLWriter(writer io.Writer, errWriter io.Writer) IOutputWriter {
+	return &JSONLWriter{
 		writer:    writer,
 		errWriter: errWriter,
 	}
@@ -184,6 +203,63 @@ func (jw *JSONWriter) Write(res sqldata.ISQLResultStream) error {
 }
 
 func (jw *JSONWriter) WriteError(err error, errorPresentation string) error {
+	if errorPresentation == stderrPressentationStr {
+		return writeStderrError(jw.errWriter, err)
+	}
+	rows := make([]map[string]interface{}, 0, 1)
+	rows = append(rows,
+		map[string]interface{}{
+			errorKey: err.Error(),
+		},
+	)
+	return jw.writeRows(rows)
+}
+
+func (jw *JSONLWriter) writeRowsFromResult(res sqldata.ISQLResultStream) error {
+	for {
+		r, err := res.Read()
+		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				rowsArr := r.ToArr()
+				return jw.writeRows(rowsArr)
+			}
+			return err
+		}
+		rowsArr := r.ToArr()
+		if err = jw.writeRows(rowsArr); err != nil {
+			return err
+		}
+	}
+}
+
+func (jw *JSONLWriter) writeRows(rows []map[string]interface{}) error {
+	for _, row := range rows {
+		jsonBytes, jsonErr := json.Marshal(row)
+		if jsonErr != nil {
+			return jsonErr
+		}
+		bytesWritten, writeErr := jw.writer.Write(append(jsonBytes, '\n'))
+		if writeErr != nil {
+			return writeErr
+		}
+		if bytesWritten != len(jsonBytes)+1 {
+			return errors.New("incorrect number of bytes written")
+		}
+		if flusher, ok := jw.writer.(writeFlusher); ok {
+			if flushErr := flusher.Flush(); flushErr != nil {
+				return flushErr
+			}
+		}
+	}
+	return nil
+}
+
+func (jw *JSONLWriter) Write(res sqldata.ISQLResultStream) error {
+	return jw.writeRowsFromResult(res)
+}
+
+func (jw *JSONLWriter) WriteError(err error, errorPresentation string) error {
 	if errorPresentation == stderrPressentationStr {
 		return writeStderrError(jw.errWriter, err)
 	}
