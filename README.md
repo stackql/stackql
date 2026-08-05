@@ -24,7 +24,7 @@
 [stars]: https://img.shields.io/github/stars/stackql/stackql?style=flat-square "GitHub Stars"
 [forks]: https://img.shields.io/github/forks/stackql/stackql?style=flat-square "GitHub Forks"
 [contributors]: https://img.shields.io/github/contributors/stackql/stackql?style=flat-square "Contributors"
-[mcptoplistbadge]: https://mcptoplist.com/server/io.github.stackql%2Fstackql-mcp](https://mcptoplist.com/badge/io.github.stackql%2Fstackql-mcp.svg "MCP Toplist"
+[mcptoplistbadge]: https://mcptoplist.com/badge/io.github.stackql%2Fstackql-mcp.svg "MCP Toplist"
 [mcpregistrybadge]: https://img.shields.io/badge/MCP%20Registry-io.github.stackql%2Fstackql--mcp-blue?style=flat-square "MCP Registry"
 [mcpserver]: https://img.shields.io/npm/v/@stackql/mcp-server?style=flat-square&label=mcp%20server "MCP Server"
 <!-- github links -->
