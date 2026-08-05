@@ -35,8 +35,10 @@ Credentials are supplied via the `--auth` context. Two variants:
 Supply all of tenancy OCID, user OCID, fingerprint and a private key. Every field accepts a literal key (`tenancy_ocid`, `user_ocid`, `fingerprint`, `private_key`, `private_key_path`, `passphrase`, `region`) or an env var indirection (`tenancy_ocid_env_var`, `user_ocid_env_var`, `fingerprint_env_var`, `private_key_env_var`, `private_key_path_env_var`, `passphrase_env_var`, `region_env_var`); when the `*_env_var` key is set it wins over the literal. `passphrase` and `region` are optional.
 
 ```json
-{"oci": {"type": "oci_signing_v1", "tenancy_ocid_env_var": "OCI_TENANCY_OCID", "user_ocid_env_var": "OCI_USER_OCID", "fingerprint_env_var": "OCI_FINGERPRINT", "private_key_path_env_var": "OCI_PRIVATE_KEY_PATH"}}
+{"oci": {"type": "oci_signing_v1", "tenancy_ocid_env_var": "TF_VAR_tenancy_ocid", "user_ocid_env_var": "TF_VAR_user_ocid", "fingerprint_env_var": "TF_VAR_fingerprint", "private_key_path_env_var": "TF_VAR_private_key_path"}}
 ```
+
+The env var names are free-form; the example uses the exact names the Terraform OCI provider reads (`TF_VAR_tenancy_ocid`, `TF_VAR_user_ocid`, `TF_VAR_fingerprint`, `TF_VAR_private_key_path`, `TF_VAR_private_key_password`, `TF_VAR_region` - lowercase suffixes) so an existing Terraform environment works unchanged. OCI CLI users (`OCI_CLI_*` env vars) are better served by the config file variant below, which reads the same file as the CLI.
 
 If any of the four raw values is present, all four are required; a partial set fails fast with `cannot compose OCI signing credentials: ...` and no request is sent.
 
