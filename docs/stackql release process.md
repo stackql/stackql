@@ -27,13 +27,13 @@ Download the signed, notarized package file:
 
 4. Push a tag and create a release
 
-Push a tag using the semver, `{major}.{minor}.{build_number}`, for example `0.10.557`  
+Push a tag using the semver, `{major}.{minor}.{build_number}`, for example `0.10.591`  
 
 The `build_number` is the latest successful GitHub Actions build number for the `build` job on a merge to `main`  
 
 ```
-git tag v0.10.557
-git push origin v0.10.557
+git tag v0.10.591
+git push origin v0.10.591
 ```
 
 Create a release from the tag (set to latest)
@@ -52,7 +52,17 @@ Create a release from the tag (set to latest)
 
 Invoke the `mcp-packaging` workflow in [stackql/stackql](https://github.com/stackql/stackql)
 
-7. Publish the MCP wrapper packages (manual last mile)
+7. Make the release available via **releases.stackql.io**
+
+Push a tag to [releases.stackql.io](https://github.com/stackql/releases.stackql.io), eg:
+
+> note: the tag needs to match the tag for the release
+
+```
+git tag v0.10.591 && git push origin v0.10.591
+```
+
+8. Publish the MCP wrapper packages (manual last mile)
 
 The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) to the release and pushes the multi-arch OCI image to Docker Hub automatically. The npm and PyPI wrappers need interactive (2FA) credentials, so they are published from a local clone using the steps below (a Linux/WSL/macOS shell, from the repo root). The MCP Registry entry is then published by dispatching the `mcp-registry-publish` workflow (7c).
 
