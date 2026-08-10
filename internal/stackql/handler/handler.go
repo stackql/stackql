@@ -25,6 +25,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/garbagecollector"
+	"github.com/stackql/stackql/internal/stackql/intrinsic"
 	"github.com/stackql/stackql/internal/stackql/kstore"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
@@ -300,6 +301,10 @@ func (hc *standardHandlerContext) GetSQLDataSource(name string) (sql_datasource.
 func (hc *standardHandlerContext) GetSupportedProviders(extended bool) (map[string]map[string]interface{}, error) {
 	retVal := make(map[string]map[string]interface{})
 	provs := hc.registry.ListLocallyAvailableProviders()
+	retVal[intrinsic.ProviderName] = map[string]interface{}{
+		"name":    intrinsic.ProviderName,
+		"version": intrinsic.ProviderVersion,
+	}
 	// Supporting SQL data sources
 	// These will be overwritten by any documented providers with the same name
 	for k := range hc.sqlDataSources {
@@ -368,6 +373,9 @@ func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IPr
 		)
 		if err == nil {
 			hc.providers[providerName] = prov
+			if ds.Name == intrinsic.ProviderName {
+				return prov, nil
+			}
 			// update auth info with provider default if auth not already present
 			pr, prErr := prov.GetProvider()
 			if prErr != nil {

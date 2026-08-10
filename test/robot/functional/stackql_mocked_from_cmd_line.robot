@@ -41,7 +41,6 @@ Google IAM Policy Agg
     ...    ${GET_IAM_POLICY_AGG_ASC_EXPECTED}
     ...    \-o\=csv
 
-
 Google Select Project IAM Policy
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
@@ -251,7 +250,6 @@ AWS S3 Objects Select Simple
     ...    ${SELECT_AWS_S3_OBJECTS}
     ...    ${SELECT_AWS_S3_OBJECTS_EXPECTED}
     ...    ${CURDIR}/tmp/AWS-S3-Objects-Select-Simple.tmp
-
 
 Google Cloud Asset IAM Policies Select With Slash In Path Param
     ${inputStr} =    Catenate
@@ -869,7 +867,6 @@ AWS EC2 Insert Start Instance Exemplifies Lifecycle Insert Verb Form Encoded Req
     ...    stdout=${CURDIR}/tmp/AWS-EC2-Insert-Start-Instance-Exemplifies-Lifecycle-Insert-Verb-Form-Encoded-Request.tmp
     ...    stderr=${CURDIR}/tmp/AWS-EC2-Insert-Start-Instance-Exemplifies-Lifecycle-Insert-Verb-Form-Encoded-Request-stderr.tmp
 
-
 AWS EC2 Update Start Instance Exemplifies Lifecycle Update Verb Form Encoded Request
     ${inputStr} =    Catenate
     ...    update 
@@ -891,7 +888,6 @@ AWS EC2 Update Start Instance Exemplifies Lifecycle Update Verb Form Encoded Req
     ...    The operation was despatched successfully
     ...    stdout=${CURDIR}/tmp/AWS-EC2-Update-Start-Instance-Exemplifies-Lifecycle-Update-Verb-Form-Encoded-Request.tmp
     ...    stderr=${CURDIR}/tmp/AWS-EC2-Update-Start-Instance-Exemplifies-Lifecycle-Update-Verb-Form-Encoded-Request-stderr.tmp
-
 
 AWS Route53 Create Record Set CNAME Simple Exemplifies XML Request Body In Real Life
     ${inputStr} =    Catenate
@@ -972,7 +968,6 @@ AWS Transfer Server Insert Simple Exemplifies Empty Request Body Insert
     ...    The operation was despatched successfully
     ...    stdout=${CURDIR}/tmp/AWS-Transfer-Server-Insert-Simple-Exemplifies-Empty-Request-Body-Insert.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Transfer-Server-Insert-Simple-Exemplifies-Empty-Request-Body-Insert-stderr.tmp
-
 
 AWS Transfer Server Insert Simple Exemplifies Empty Request Body Insert Default Overwrite
     ${inputStr} =    Catenate
@@ -2018,7 +2013,6 @@ Google IAM Policy Show Insert
     ...    ${SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS}
     ...    ${SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS_EXPECTED}
 
-
 Google Compute Instance IAM Policy Show Insert Error
     Should Stackql Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
@@ -2488,8 +2482,6 @@ Left Outer Join Network Infra
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Network-Infra.tmp
 
-
-
 Left Outer Join Network Infra Enforce Dependency
     ${inputStr} =    Catenate
     ...    select 
@@ -2880,7 +2872,6 @@ Registry Pull Google Provider Implicit Latest Version
     ...    ${EMPTY}
     ...    successfully installed
 
-
 Data Flow Sequential Join Paginated Select Github 
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
@@ -2952,7 +2943,6 @@ Basic Error Query mTLS Returns Error Message
     ...    column
     ...    stdout=${CURDIR}/tmp/Basic-Error-Query-mTLS-Returns-Error-Message.tmp
     ...    stderr=${CURDIR}/tmp/Basic-Error-Query-mTLS-Returns-Error-Message-stderr.tmp
-
 
 Basic Query unencrypted Returns OK
     Should PG Client Inline Contain
@@ -3033,7 +3023,6 @@ Basic Subquery Returns Results
     ...    SELECT * FROM (select id, name, url from github.repos.repos where org \= 'stackql') some_alias ;
     ...    dummyapp.io
     ...    stdout=${CURDIR}/tmp/Basic-Subquery-Returns-Results.tmp
-
 
 Select Expression Function Expression Alias Reference Alongside Wildcard Returns Results
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    This is a genuine case of difference. Postgres does not support aliased colummns in where clauses.
@@ -3788,7 +3777,6 @@ Select With IN Scalars inside WHERE Clause Returns Expected Result
     ...    ${inputStr}
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Select-With-IN-Scalars-inside-WHERE-Clause-Returns-Expected-Result.tmp
-
 
 Select With Server Parameters inside IN Scalars inside WHERE Clause Returns Expected Result
     ${inputStr} =    Catenate
@@ -4761,7 +4749,6 @@ Describe Works For Multi Views Through Naive Approach
     ...    stdout=${CURDIR}/tmp/Describe-Works-For-Multi-Views-Through-Naive-Approach.tmp
     ...    stderr=${CURDIR}/tmp/Describe-Works-For-Multi-Views-Through-Naive-Approach-stderr.tmp
 
-
 Describe Extended Works For Multi Views Through Naive Approach
     ${inputStr} =    Catenate
     ...    describe extended aws.pseudo_s3.s3_bucket_polymorphic;
@@ -4837,7 +4824,6 @@ Describe Extended Works For Multi Views Through Naive Approach
     ...    stdout=${CURDIR}/tmp/Describe-Extended-Works-For-Multi-Views-Through-Naive-Approach.tmp
     ...    stderr=${CURDIR}/tmp/Describe-Extended-Works-For-Multi-Views-Through-Naive-Approach-stderr.tmp
 
-
 Describe Extended Works For Single Exclusive View Through Naive Approach
     ${inputStr} =    Catenate
     ...    describe extended aws.acmpca.certificate_authority_activations;
@@ -4872,7 +4858,6 @@ Describe Extended Works For Single Exclusive View Through Naive Approach
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Describe-Extended-Works-For-Single-Exclusive-View-Through-Naive-Approach.tmp
     ...    stderr=${CURDIR}/tmp/Describe-Extended-Works-For-Single-Exclusive-View-Through-Naive-Approach-stderr.tmp
-
 
 List And Details Dataflow View Works As Exemplified By AWS EC2 VPC Cloud Control
     ${sqliteInputStr} =    Catenate
@@ -4923,7 +4908,6 @@ List And Details Dataflow View Works As Exemplified By AWS EC2 VPC Cloud Control
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-EC2-VPC-Cloud-Control.tmp
     ...    stderr=${CURDIR}/tmp/List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-EC2-VPC-Cloud-Control-stderr.tmp
-
 
 Union of List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
     ${sqliteInputStr} =    Catenate
@@ -5031,7 +5015,6 @@ Union of List And Details Dataflow View Works As Exemplified By AWS KMS Key Clou
     ...    stdout=${CURDIR}/tmp/Union-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
     ...    stderr=${CURDIR}/tmp/Union-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
 
-
 Degenerate List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
     ${sqliteInputStr} =    Catenate
     ...    select json_extract(detail.Properties, '$.KeyPolicy.Id') as key_policy_id, 
@@ -5087,7 +5070,6 @@ Degenerate List And Details Dataflow View Works As Exemplified By AWS KMS Key Cl
     ...    stdout=${CURDIR}/tmp/Degenerate-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
     ...    stderr=${CURDIR}/tmp/Degenerate-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
-
 
 Union of Degenerate List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
     ${sqliteInputStr} =    Catenate
@@ -5176,7 +5158,6 @@ Union of Degenerate List And Details Dataflow View Works As Exemplified By AWS K
     ...    stdout=${CURDIR}/tmp/Union-of-Degenerate-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
     ...    stderr=${CURDIR}/tmp/Union-of-Degenerate-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
-
 
 Materialized View of Union of Degenerate List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
     ${sqliteInputStr} =    Catenate
@@ -5299,7 +5280,6 @@ Materialized View of Union of Degenerate List And Details Dataflow View Works As
     ...    stderr=${CURDIR}/tmp/Materialized-View-of-Union-of-Degenerate-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 In Clause Split of List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
     ${sqliteInputStr} =    Catenate
     ...    select 
@@ -5360,7 +5340,6 @@ In Clause Split of List And Details Dataflow View Works As Exemplified By AWS KM
     ...    stdout=${CURDIR}/tmp/In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
     ...    stderr=${CURDIR}/tmp/In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
-
 
 Materialized View of In Clause Split of List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
     ${sqliteInputStr} =    Catenate
@@ -5455,7 +5434,6 @@ Materialized View of In Clause Split of List And Details Dataflow View Works As 
     ...    stdout=${CURDIR}/tmp/Materialized-View-of-In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
     ...    stderr=${CURDIR}/tmp/Materialized-View-of-In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
-
 
 Materialized View of High Dependency In Clause Split of List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
     ${sqliteInputStr} =    Catenate
@@ -5567,7 +5545,6 @@ Materialized View of High Dependency In Clause Split of List And Details Dataflo
     ...    stderr=${CURDIR}/tmp/Materialized-View-of-High-Dependency-In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 Poly Dependency In Clause Split of List And Sublist Dimensions Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
     ${sqliteInputStr} =    Catenate
     ...    select 
@@ -5653,7 +5630,6 @@ Poly Dependency In Clause Split of List And Sublist Dimensions Dataflow View Wor
     ...    stdout=${CURDIR}/tmp/Poly-Dependency-In-Clause-Split-of-List-And-Sublist-Dimensions-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
     ...    stderr=${CURDIR}/tmp/Poly-Dependency-In-Clause-Split-of-List-And-Sublist-Dimensions-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
-
 
 Materialized View Beware Keywords of Poly Dependency In Clause Split of List And Sublist Dimensions Dataflow View Works As Exemplified By Google KMS Key
     ${sqliteInputStr} =    Catenate
@@ -5771,7 +5747,6 @@ Materialized View Beware Keywords of Poly Dependency In Clause Split of List And
     ...    stderr=${CURDIR}/tmp/Materialized-View-Beware-Keywords-of-Poly-Dependency-In-Clause-Split-of-List-And-Sublist-Dimensions-Dataflow-View-Works-As-Exemplified-By-Google-KMS-Key-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 View No Where Clause Beware Keywords of Poly Dependency In Clause Split of List And Sublist Dimensions Dataflow View Works As Exemplified By Google KMS Key
     ${sqliteInputStr} =    Catenate
     ...    create or replace view dev_gen_03
@@ -5888,7 +5863,6 @@ View No Where Clause Beware Keywords of Poly Dependency In Clause Split of List 
     ...    stderr=${CURDIR}/tmp/View-No-Where-Clause-Beware-Keywords-of-Poly-Dependency-In-Clause-Split-of-List-And-Sublist-Dimensions-Dataflow-View-Works-As-Exemplified-By-Google-KMS-Key-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 Doc Based View of List And Detail Dataflow Works As Exemplified By AWS S3 Bucket
     ${inputStr} =    Catenate
     ...    select * from aws.pseudo_s3.s3_bucket_list_and_detail order by bucket_name asc;
@@ -5939,7 +5913,6 @@ Doc Based View of List And Detail Dataflow Works As Exemplified By AWS S3 Bucket
     ...    stdout=${CURDIR}/tmp/Doc-Based-View-of-List-And-Detail-Dataflow-Works-As-Exemplified-By-AWS-S3-Bucket.tmp
     ...    stderr=${CURDIR}/tmp/Doc-Based-View-of-List-And-Detail-Dataflow-Works-As-Exemplified-By-AWS-S3-Bucket-stderr.tmp
     ...    stackql_dataflow_permissive=True
-
 
 View of Table Valued Function List And Detail Dataflow Works As Exemplified By AWS S3 Bucket
     ${sqliteInputStr} =    Catenate
@@ -6079,7 +6052,6 @@ View of Table Valued Function List And Detail Dataflow Works As Exemplified By A
     ...    stderr=${CURDIR}/tmp/View-of-Table-Valued-Function-List-And-Detail-Dataflow-Works-As-Exemplified-By-AWS-S3-Bucket-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 Doc Based View of Table Valued Function List And Detail Dataflow Works As Exemplified By AWS S3 Bucket
     ${inputStr} =    Catenate
     ...    select region, bucket_name, tag_key, tag_value from aws.pseudo_s3.s3_extravogant_bucket_list_and_detail order by region asc, bucket_name asc, tag_key asc, tag_value asc;
@@ -6135,7 +6107,6 @@ Doc Based View of Table Valued Function List And Detail Dataflow Works As Exempl
     ...    stdout=${CURDIR}/tmp/Doc-Based-View-of-Table-Valued-Function-List-And-Detail-Dataflow-Works-As-Exemplified-By-AWS-S3-Bucket.tmp
     ...    stderr=${CURDIR}/tmp/Doc-Based-View-of-Table-Valued-Function-List-And-Detail-Dataflow-Works-As-Exemplified-By-AWS-S3-Bucket-stderr.tmp
     ...    stackql_dataflow_permissive=True
-
 
 Aggregation of View of Table Valued Function List And Detail Dataflow Works As Exemplified By AWS S3 Bucket
     ${sqliteInputStr} =    Catenate
@@ -6265,7 +6236,6 @@ Aggregation of View of Table Valued Function List And Detail Dataflow Works As E
     ...    stderr=${CURDIR}/tmp/Aggregation-of-View-of-Table-Valued-Function-List-And-Detail-Dataflow-Works-As-Exemplified-By-AWS-S3-Bucket-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 Aggregation of Doc Based View of Table Valued Function List And Detail Dataflow Works As Exemplified By AWS S3 Bucket
     ${sqliteInputStr} =    Catenate
     ...    select 
@@ -6380,7 +6350,6 @@ Multi Dependency List And Detail Dataflow Works As Exemplified By Azure Vault an
     ...    stderr=${CURDIR}/tmp/Multi-Dependency-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 Multi Dependency Multiple List And Detail Dataflow Works As Exemplified By Azure Vault and Keys and Key Details
     ${sqliteInputStr} =    Catenate
     ...    select
@@ -6451,7 +6420,6 @@ Multi Dependency Multiple List And Detail Dataflow Works As Exemplified By Azure
     ...    stdout=${CURDIR}/tmp/Multi-Dependency-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details.tmp
     ...    stderr=${CURDIR}/tmp/Multi-Dependency-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
     ...    stackql_dataflow_permissive=True
-
 
 Multi Dependency Multi Dependent Multiple List And Detail Dataflow Works As Exemplified By Azure Vault and Keys and Key Details
     ${sqliteInputStr} =    Catenate
@@ -6604,7 +6572,6 @@ Error GTE 400 Response Code Does Not Stop The World As Exemplified By AWS Subnet
     ...    stderr=${CURDIR}/tmp/Error-GTE-400-Response-Code-Does-Not-Stop-The-World-As-Exemplified-By-AWS-Subnet-Route-Associations-List-And-Detail-Pattern-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 View Not Found Does Not Cause Crash and View Param Indeterminate Scenario
     ${inputStr} =    Catenate
     ...    select * from aws.ec2_nextgen.vpcs_list_only where region in ('ap-southeast-1', 'ap-southeast-2') order by vpc_id asc;
@@ -6681,7 +6648,6 @@ View Not Found Does Not Cause Crash and View Param Indeterminate Scenario
     ...    stderr=${CURDIR}/tmp/View-Not-Found-Does-Not-Cause-Crash-and-View-Param-Indeterminate-Scenario-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
-
 Repeated View Invocation to Guard Prior View Param Indeterminate Scenario
     ${inputStr} =    Catenate
     ...    select * from aws.ec2_nextgen.vpcs where region = 'ap-southeast-1' order by vpc_id asc;
@@ -6713,7 +6679,6 @@ Repeated View Invocation to Guard Prior View Param Indeterminate Scenario
     ...    stderr=${CURDIR}/tmp/Repeated-View-Invocation-to-Guard-Prior-View-Param-Indeterminate-Scenario-stderr.tmp
     ...    stackql_dataflow_permissive=True
     ...    repeat_count=30
-
 
 Static Input Read Many Multi Dependency Multi Dependent Multiple List And Detail Dataflow Works As Exemplified By Azure Vault and Keys and Key Details
     ${sqliteInputStr} =    Catenate
@@ -6789,7 +6754,6 @@ Static Input Read Many Multi Dependency Multi Dependent Multiple List And Detail
     ...    stdout=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details.tmp
     ...    stderr=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
 
-
 Self Join Polymorphic Works As Exemplified By Azure VPN List and Details
     ${sqliteInputStr} =    Catenate
     ...    select 
@@ -6839,7 +6803,6 @@ Self Join Polymorphic Works As Exemplified By Azure VPN List and Details
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-By-Azure-VPN-List-and-Details.tmp
     ...    stderr=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-By-Azure-VPN-List-and-Details-stderr.tmp
-
 
 Self Join Polymorphic Works As Exemplified In Real World By Azure Virtual Network Gateways List and Details
     ${sqliteInputStr} =    Catenate
@@ -7627,11 +7590,13 @@ Alternate App Root Persists All Temp Materials in Alotted Directory
     ...    registry pull google v0.1.2;
     ...    show providers;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    |--------|---------|
-    ...    |${SPACE}${SPACE}name${SPACE}${SPACE}|${SPACE}version${SPACE}|
-    ...    |--------|---------|
-    ...    |${SPACE}google${SPACE}|${SPACE}v0.1.2${SPACE}${SPACE}|
-    ...    |--------|---------|
+    ...    |-----------------|----------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}version${SPACE}${SPACE}|
+    ...    |-----------------|----------|
+    ...    |${SPACE}google${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}v0.1.2${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------|----------|
+    ...    |${SPACE}stackql_preview${SPACE}|${SPACE}internal${SPACE}|
+    ...    |-----------------|----------|
     ${outputErrStr} =    Catenate    SEPARATOR=\n
     ...    google provider, version 'v0.1.2' successfully installed
     Should Stackql Exec Inline Equal Both Streams
@@ -7724,7 +7689,6 @@ Google Buckets List With Date Logic Exemplifies Use of SQLite Math Functions
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Google-Buckets-List-With-Date-Logic-Exemplifies-Use-of-SQLite-Math-Functions.tmp
     ...    stderr=${CURDIR}/tmp/Google-Buckets-List-With-Date-Logic-Exemplifies-Use-of-SQLite-Math-Functions-stderr.tmp
-
 
 AWS Materialized View And Query on Resource Costs Exemplifies Functions On Materialized Views
     [Tags]    registry    tls_proxied
@@ -7826,7 +7790,6 @@ Contains Check AWS Materialized View and Cast and Multiple Function Query on Res
     ...    DDL Execution Completed
     ...    stdout=${CURDIR}/tmp/Contains-Check-AWS-Materialized-View-And-Cast-and-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Cast-and-Multiple-Functions-on-Materialized-Views.tmp
     ...    stderr=${CURDIR}/tmp/Contains-Check-AWS-Materialized-View-And-Cast-and-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Cast-and-Multiple-Functions-on-Materialized-Views-stderr.tmp  
-
 
 Local Execution Openssl RSA Show Methods
     ${inputStr} =    Catenate
@@ -9734,7 +9697,6 @@ View Depth Limitation Error Message Shows Correct Max
     ...    stdout=${CURDIR}/tmp/View-Depth-Limitation-Error-Message-Shows-Correct-Max-stdout.tmp
     ...    stderr=${CURDIR}/tmp/View-Depth-Limitation-Error-Message-Shows-Correct-Max-stderr.tmp
 
-
 Subquery JOIN Subquery Returns Results
     ${inputStr} =    Catenate
     ...    select a.name from (select name from stackql_repositories) a inner join (select name, url from stackql_repositories) b on a.name = b.name;
@@ -10628,3 +10590,74 @@ Select With JSON Structured Param Fans Out Through Query Transposition
     ...    ${query}
     ...    instanceType\nc5.xlarge\nm5.large\nt3.large
     ...    \-o\=csv
+
+# ===========================================================================
+# The built-in "stackql_preview" provider is answered in process: meta queries
+# come from the intrinsic plan generator and its relations mirror the omnisdk
+# catalog one-for-one.
+# ===========================================================================
+
+Preview Show Services Returns Audit Service
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show services in stackql_preview;
+    ...    id,name,title\naudit:internal,audit,omnisdk audited resources
+    ...    \-o\=csv
+
+Preview Show Resources Mirrors Omnisdk Catalog
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show resources in stackql_preview.audit;
+    ...    name,id\naws_ec2_networks,stackql_preview.audit.aws_ec2_networks\naws_s3_buckets,stackql_preview.audit.aws_s3_buckets\nazure_network_subnets,stackql_preview.audit.azure_network_subnets\nazure_storage_accounts,stackql_preview.audit.azure_storage_accounts\ngcp_compute_networks,stackql_preview.audit.gcp_compute_networks\ngoogle_storage_buckets,stackql_preview.audit.google_storage_buckets\nomni_storage_buckets,stackql_preview.audit.omni_storage_buckets
+    ...    \-o\=csv
+
+
+Preview Show Methods Reports Omnisdk Required Params
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show methods in stackql_preview.audit.aws_ec2_networks;
+    ...    MethodName,RequiredParams,SQLVerb\nprovision,"region, vpc_cidr, subnet_cidr",SELECT
+    ...    \-o\=csv
+
+Preview Describe Reports Omnisdk Column Types
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    describe stackql_preview.audit.aws_s3_buckets;
+    ...    name,type\nprovider,string\nname,string\nencryption_status,string\nencryption_class,string\npublic,bool\nversioning,bool\nhttps,bool
+    ...    \-o\=csv
+
+Preview Select Without Required Params Reports Method Selection Error
+    Should StackQL Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from stackql_preview.audit.aws_ec2_networks;
+    ...    no method of 'aws.ec2.networks' has its required parameters supplied

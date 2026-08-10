@@ -9,9 +9,11 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astanalysis/earlyanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/intrinsic"
 	"github.com/stackql/stackql/internal/stackql/parser"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
+	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 )
 
@@ -101,6 +103,30 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	}
 
 	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit, pb.transactionContext)
+
+	// An omnisdk data relation streams its rows straight to the output writer,
+	// so it is not backed by a view and analysis would try, and fail, to resolve
+	// it as a registry-backed relation. Plan it here, ahead of that analysis.
+	if sel, isSelect := statement.(*sqlparser.Select); isSelect {
+		if executor, isStream := intrinsic.GenerateStreamFunc(handlerCtx, sel); isStream {
+			qPlan.SetType(sqlparser.StmtSelect)
+			qPlan.SetReadOnly(true)
+			qPlan.SetCacheable(false)
+			qPlan.SetStatement(statement)
+			pGBuilder.getPlanGraphHolder().CreatePrimitiveNode(
+				primitive.NewLocalPrimitive(
+					func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+						return executor()
+					},
+				),
+			)
+			qPlan.SetInstructions(pGBuilder.getPlanGraphHolder())
+			if optimiseErr := qPlan.GetInstructions().GetPrimitiveGraph().Optimise(); optimiseErr != nil {
+				return createErroneousPlan(handlerCtx, qPlan, rowSort, optimiseErr)
+			}
+			return qPlan, nil
+		}
+	}
 
 	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(
 		statement, handlerCtx, pGBuilder.getPlanGraphHolder())
