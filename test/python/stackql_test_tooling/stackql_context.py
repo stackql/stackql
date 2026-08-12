@@ -547,6 +547,7 @@ def get_variables(
   MOCKSERVER_JAR = os.path.join(repository_root, 'test', 'downloads', 'mockserver-netty-5.12.0-shaded.jar')
 
   JSON_INIT_FILE_PATH_GOOGLE = os.path.join(repository_root, 'test', 'mockserver', 'expectations', 'static-gcp-expectations.json')
+  MOCKSERVER_PORT_OMNISDK = 1071
   MOCKSERVER_PORT_GOOGLE = 1080
 
   JSON_INIT_FILE_PATH_GOOGLEADMIN = os.path.join(repository_root, 'test', 'mockserver', 'expectations', 'static-google-admin-expectations.json')
@@ -916,6 +917,7 @@ def get_variables(
     'MOCKSERVER_PORT_AWS':                            MOCKSERVER_PORT_AWS,
     'MOCKSERVER_PORT_AZURE':                          MOCKSERVER_PORT_AZURE,
     'MOCKSERVER_PORT_GITHUB':                         MOCKSERVER_PORT_GITHUB,
+    'MOCKSERVER_PORT_OMNISDK':                                                MOCKSERVER_PORT_OMNISDK,
     'MOCKSERVER_PORT_GOOGLE':                         MOCKSERVER_PORT_GOOGLE,
     'MOCKSERVER_PORT_GOOGLEADMIN':                    MOCKSERVER_PORT_GOOGLEADMIN,
     'MOCKSERVER_PORT_STACKQL_AUTH_TESTING':           MOCKSERVER_PORT_STACKQL_AUTH_TESTING,

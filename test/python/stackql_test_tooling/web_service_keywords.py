@@ -36,6 +36,7 @@ class web_service_keywords(Process):
     _DEFAULT_MOCKSERVER_PORT_REGISTRY                       = 1094
     _DEFAULT_MOCKSERVER_PORT_RETRY                          = 1199
     _DEFAULT_MOCKSERVER_PORT_NATIVE_TEST                    = 1070
+    _DEFAULT_MOCKSERVER_PORT_OMNISDK                        = 1071
 
     def _get_dsn(self) -> str:
         return self._sqlite_db_path
@@ -71,6 +72,7 @@ class web_service_keywords(Process):
         self._okta_app: str = f'{_app_root}/okta/app'
         self._static_auth_testing_app: str = f'{_app_root}/static_auth/app'
         self._aws_app: str = f'{_app_root}/aws/app'
+        self._omnisdk_app: str = f'{_app_root}/omnisdk/app'
         self._azure_app: str = f'{_app_root}/azure/app'
         self._digitalocean_app: str = f'{_app_root}/digitalocean/app'
         self._googleadmin_app: str = f'{_app_root}/googleadmin/app'
@@ -172,6 +174,26 @@ class web_service_keywords(Process):
             cwd=self._cwd,
         )
     
+    @keyword
+    def create_omnisdk_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Sign the input.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._omnisdk_app}',
+            'run',
+            f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
+            f'--port={port}',
+            stdout=os.path.abspath(os.path.join(self._log_root, f'omnisdk-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'omnisdk-server-{port}-stderr.txt')),
+            cwd=self._cwd,
+        )
+
     @keyword
     def create_aws_web_service(
         self,
@@ -414,6 +436,7 @@ class web_service_keywords(Process):
         self.create_google_admin_web_service(_port_dict.get('googleadmin', self._DEFAULT_MOCKSERVER_PORT_GOOGLEADMIN))
         self.create_azure_web_service(_port_dict.get('azure', self._DEFAULT_MOCKSERVER_PORT_AZURE))
         self.create_aws_web_service(_port_dict.get('aws', self._DEFAULT_MOCKSERVER_PORT_AWS))
+        self.create_omnisdk_web_service(_port_dict.get('omnisdk', self._DEFAULT_MOCKSERVER_PORT_OMNISDK))
         self.create_static_auth_web_service(_port_dict.get('static_auth_testing', self._DEFAULT_MOCKSERVER_PORT_STACKQL_AUTH_TESTING))
         self.create_okta_web_service(_port_dict.get('okta', self._DEFAULT_MOCKSERVER_PORT_OKTA))
         self.create_gcp_web_service(_port_dict.get('gcp', self._DEFAULT_MOCKSERVER_PORT_GOOGLE))
