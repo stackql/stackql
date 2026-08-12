@@ -142,6 +142,29 @@ services:
         --host 0.0.0.0 \
         --port  \
         1090
+  omnisdk_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - omnisdk.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+    ports:
+      - "1071:1071/tcp"
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/omnisdk/app \
+        run \
+        --host 0.0.0.0 \
+        --port  \
+        1071
   aws_mockserver:
     networks:
       testing-network:

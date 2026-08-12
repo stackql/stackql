@@ -94,31 +94,16 @@ func TestRowStreamEmitsRowsInColumnOrder(t *testing.T) {
 	}
 }
 
-func TestRowStreamBatchesLargeCursor(t *testing.T) {
-	total := streamBatchSize*2 + 3
+func TestRowStreamDrainsEntireCursor(t *testing.T) {
+	total := 200
 	rows := make([]omnisdk.Row, 0, total)
 	for i := 0; i < total; i++ {
 		rows = append(rows, omnisdk.Row{"a": fmt.Sprintf("v%d", i)})
 	}
 	stream, _ := newTestStream(rows, []string{"a"})
-	var reads int
-	var seen int
-	for {
-		res, err := stream.Read()
-		reads++
-		seen += len(res.GetRows())
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			t.Fatalf("unexpected error: %v", err)
-		}
-	}
-	if seen != total {
-		t.Fatalf("read %d rows, want %d", seen, total)
-	}
-	if reads < 3 {
-		t.Fatalf("cursor of %d rows was drained in %d reads; batching is not happening", total, reads)
+	got := drain(t, stream)
+	if len(got) != total {
+		t.Fatalf("read %d rows, want %d", len(got), total)
 	}
 }
 

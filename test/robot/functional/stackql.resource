@@ -10,6 +10,8 @@ ${USE_STACKQL_PREINSTALLED}            false   # to be overridden from command l
 ${SUNDRY_CONFIG}                       {}  # to be overridden from command line, with string value
 ${CWD_FOR_EXEC}                        ${REPOSITORY_ROOT}  # works for self repository, can be overwritten when shared
 ${WEB_SERVICE_LIBRARY}                 stackql_test_tooling.web_service_keywords
+${OMNISDK_MOCK_GCP_SA_HOST}            ${REPOSITORY_ROOT}${/}test${/}tmp${/}omnisdk-gcp-sa.json
+${OMNISDK_MOCK_URL}                     http://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_OMNISDK}
 ${STACKQL_INTERFACE_LIBRARY}           stackql_test_tooling.StackQLInterfaces
 ${CLOUD_INTEGRATION_LIBRARY}           stackql_test_tooling.CloudIntegration
 
@@ -43,6 +45,7 @@ Start All Mock Servers
     ...    digitalocean=${MOCKSERVER_PORT_DIGITALOCEAN}
     ...    retry=${MOCKSERVER_PORT_RETRY}
     ...    native_test=${MOCKSERVER_PORT_NATIVE_TEST}
+    ...    omnisdk=${MOCKSERVER_PORT_OMNISDK}
     Start All Webservers    port_dict=${port_dict}
 
 Reset Retry Mock Counters
@@ -192,3 +195,4 @@ Stackql Per Test Teardown
         Log     Container removed
         # Should Be Equal As Integers    ${restwo.rc}    0
     END
+
