@@ -27,6 +27,7 @@ const (
 
 type column struct {
 	name        string
+	sourceName  string
 	description string
 	dataType    string
 }

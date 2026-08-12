@@ -2,16 +2,19 @@ package intrinsic
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/lib/pq/oid"
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 
@@ -20,9 +23,9 @@ import (
 
 const methodPredicate = "method"
 
-// endpointEnvVar retargets omnisdk at a local mock. Transport configuration, so
-// it stays out of the query.
-const endpointEnvVar = "STACKQL_PREVIEW_ENDPOINT"
+const defaultBatchSize = 100
+
+const defaultFlushInterval = 50 * time.Millisecond
 
 func relationName(path string) string {
 	return strings.ReplaceAll(path, ".", "_")
@@ -145,15 +148,17 @@ func lastSegment(path string) string {
 }
 
 func openStream(
-	ctx queryContext, resourcePath string, params map[string]string) (*rowStream, error) {
+	ctx queryContext, resourcePath string, params map[string]string,
+	exprs sqlparser.SelectExprs) (*rowStream, error) {
 	method, err := pickMethod(resourcePath, params)
 	if err != nil {
 		return nil, err
 	}
+	input := previewCfg
 	args := omnisdk.Args{
 		Params:   params,
-		Auth:     omnisdkAuth(ctx, resourcePath),
-		Endpoint: os.Getenv(endpointEnvVar),
+		Auth:     omnisdkAuth(providerAuthContext(ctx, resourcePath)),
+		Endpoint: input.getEndpoint(),
 	}
 	plan, err := omnisdk.Default().New(method.Path, args)
 	if err != nil {
@@ -163,15 +168,28 @@ func openStream(
 	if err != nil {
 		return nil, err
 	}
-	return &rowStream{rows: rows, columns: schemaColumns(method.Schema)}, nil
+	selected, projectionErr := projection(exprs, schemaColumns(method.Schema))
+	if projectionErr != nil {
+		return nil, projectionErr
+	}
+	return &rowStream{
+		rows:          rows,
+		columns:       selected,
+		batchSize:     input.getBatchSize(),
+		flushInterval: input.getFlushInterval(),
+	}, nil
 }
 
 type rowStream struct {
-	rows    omnisdk.Rows
-	columns []column
-	table   sqldata.ISQLTable
-	typCfg  columnFactory
-	done    bool
+	rows          omnisdk.Rows
+	batchSize     int
+	flushInterval time.Duration
+	produced      chan omnisdk.Row
+	producerOnce  sync.Once
+	columns       []column
+	table         sqldata.ISQLTable
+	typCfg        columnFactory
+	done          bool
 }
 
 type columnFactory interface {
@@ -182,15 +200,62 @@ func (rs *rowStream) Read() (sqldata.ISQLResult, error) {
 	if rs.done {
 		return rs.result(nil), io.EOF
 	}
-	rs.done = true
-	var batch []omnisdk.Row
-	for rs.rows.Next() {
-		batch = append(batch, rs.rows.Row())
+	rs.startProducer()
+	size := rs.batchSize
+	if size < 1 {
+		size = defaultBatchSize
 	}
-	if err := rs.rows.Err(); err != nil {
-		return rs.result(nil), err
+	batch := make([]omnisdk.Row, 0, size)
+	// Block for the first row, then take whatever else has arrived within the
+	// flush interval. A batch is therefore a cap, not a threshold: a result
+	// smaller than the batch still reaches the caller promptly.
+	row, ok := <-rs.produced
+	if !ok {
+		rs.done = true
+		if err := rs.rows.Err(); err != nil {
+			return rs.result(nil), err
+		}
+		return rs.result(nil), io.EOF
 	}
-	return rs.result(batch), io.EOF
+	batch = append(batch, row)
+	deadline := time.After(rs.flushIntervalOrDefault())
+	for len(batch) < size {
+		select {
+		case next, more := <-rs.produced:
+			if !more {
+				rs.done = true
+				if err := rs.rows.Err(); err != nil {
+					return rs.result(batch), err
+				}
+				return rs.result(batch), io.EOF
+			}
+			batch = append(batch, next)
+		case <-deadline:
+			return rs.result(batch), nil
+		}
+	}
+	return rs.result(batch), nil
+}
+
+func (rs *rowStream) flushIntervalOrDefault() time.Duration {
+	if rs.flushInterval <= 0 {
+		return defaultFlushInterval
+	}
+	return rs.flushInterval
+}
+
+// startProducer pulls the cursor on its own goroutine, so a read can bound how
+// long it waits for a batch to fill without abandoning rows already produced.
+func (rs *rowStream) startProducer() {
+	rs.producerOnce.Do(func() {
+		rs.produced = make(chan omnisdk.Row)
+		go func() {
+			defer close(rs.produced)
+			for rs.rows.Next() {
+				rs.produced <- rs.rows.Row()
+			}
+		}()
+	})
 }
 
 func (rs *rowStream) result(batch []omnisdk.Row) sqldata.ISQLResult {
@@ -207,7 +272,7 @@ func (rs *rowStream) result(batch []omnisdk.Row) sqldata.ISQLResult {
 	for _, row := range batch {
 		values := make([]interface{}, 0, len(rs.columns))
 		for _, col := range rs.columns {
-			values = append(values, textValue(row[col.name]))
+			values = append(values, textValue(row[col.sourceKey()]))
 		}
 		rows = append(rows, sqldata.NewSQLRow(values))
 	}
@@ -255,9 +320,34 @@ func selectFunc(
 	if !ok {
 		return nil, false
 	}
-	params := equalityPredicates(node.Where)
+	if unsupported := unsupportedClauses(node); len(unsupported) > 0 {
+		return func() internaldto.ExecutorOutput {
+			return internaldto.NewErroneousExecutorOutput(fmt.Errorf(
+				"relation '%s.%s.%s' streams its rows, so %s cannot be applied; remove %s from the query",
+				ProviderName, auditService, relationName(resource.Path),
+				strings.Join(unsupported, ", "), pluralClause(len(unsupported))))
+		}, true
+	}
+	_, projectionErr := projection(node.SelectExprs, schemaColumns(resource.Schema))
+	if projectionErr != nil {
+		return func() internaldto.ExecutorOutput {
+			return internaldto.NewErroneousExecutorOutput(fmt.Errorf(
+				"relation '%s.%s.%s' streams its rows: %w",
+				ProviderName, auditService, relationName(resource.Path), projectionErr))
+		}, true
+	}
+	params, badPredicates := equalityPredicates(node.Where)
+	if len(badPredicates) > 0 {
+		return func() internaldto.ExecutorOutput {
+			return internaldto.NewErroneousExecutorOutput(fmt.Errorf(
+				"relation '%s.%s.%s' streams its rows, so only equality predicates are applied; "+
+					"%s cannot be honoured",
+				ProviderName, auditService, relationName(resource.Path),
+				strings.Join(badPredicates, ", ")))
+		}, true
+	}
 	return func() internaldto.ExecutorOutput {
-		stream, err := openStream(ctx, resource.Path, params)
+		stream, err := openStream(ctx, resource.Path, params, node.SelectExprs)
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
 		}
@@ -271,10 +361,78 @@ func selectFunc(
 	}, true
 }
 
-func equalityPredicates(where *sqlparser.Where) map[string]string {
+// unsupportedClauses names the parts of a select that the streaming path cannot
+// honour. Rows never reach the SQL backend, so anything the backend would have
+// applied has to be refused rather than quietly dropped.
+func unsupportedClauses(node *sqlparser.Select) []string {
+	var out []string
+	if len(node.OrderBy) > 0 {
+		out = append(out, "ORDER BY")
+	}
+	if len(node.GroupBy) > 0 {
+		out = append(out, "GROUP BY")
+	}
+	if node.Having != nil {
+		out = append(out, "HAVING")
+	}
+	if node.Distinct {
+		out = append(out, "DISTINCT")
+	}
+	if node.Limit != nil {
+		out = append(out, "LIMIT")
+	}
+	return out
+}
+
+// projection resolves the select list against the relation's columns. A star
+// selects them all; named columns are emitted in the order asked for. Anything
+// else - an aggregate, a function, a literal - needs the SQL backend, which
+// streamed rows never reach, so it is refused rather than quietly dropped.
+func projection(exprs sqlparser.SelectExprs, available []column) ([]column, error) {
+	if len(exprs) == 1 {
+		if _, isStar := exprs[0].(*sqlparser.StarExpr); isStar {
+			return available, nil
+		}
+	}
+	byName := make(map[string]column, len(available))
+	for _, col := range available {
+		byName[strings.ToLower(col.name)] = col
+	}
+	out := make([]column, 0, len(exprs))
+	for _, expr := range exprs {
+		aliased, isAliased := expr.(*sqlparser.AliasedExpr)
+		if !isAliased {
+			return nil, fmt.Errorf("'%s' cannot be applied to a streamed relation", sqlparser.String(expr))
+		}
+		colName, isCol := aliased.Expr.(*sqlparser.ColName)
+		if !isCol {
+			return nil, fmt.Errorf("'%s' cannot be applied to a streamed relation", sqlparser.String(expr))
+		}
+		found, ok := byName[strings.ToLower(colName.Name.GetRawVal())]
+		if !ok {
+			return nil, fmt.Errorf("column '%s' does not exist", colName.Name.GetRawVal())
+		}
+		if alias := aliased.As.GetRawVal(); alias != "" {
+			found.name = alias
+			found.sourceName = colName.Name.GetRawVal()
+		}
+		out = append(out, found)
+	}
+	return out, nil
+}
+
+func pluralClause(n int) string {
+	if n == 1 {
+		return "it"
+	}
+	return "them"
+}
+
+func equalityPredicates(where *sqlparser.Where) (map[string]string, []string) {
 	params := map[string]string{}
+	var bad []string
 	if where == nil {
-		return params
+		return params, bad
 	}
 	var walk func(expr sqlparser.Expr)
 	walk = func(expr sqlparser.Expr) {
@@ -283,19 +441,19 @@ func equalityPredicates(where *sqlparser.Where) map[string]string {
 			walk(node.Left)
 			walk(node.Right)
 		case *sqlparser.ComparisonExpr:
-			if node.Operator != sqlparser.EqualStr {
-				return
-			}
 			col, isCol := node.Left.(*sqlparser.ColName)
 			val, isVal := node.Right.(*sqlparser.SQLVal)
-			if !isCol || !isVal {
+			if !isCol || !isVal || node.Operator != sqlparser.EqualStr {
+				bad = append(bad, sqlparser.String(expr))
 				return
 			}
 			params[col.Name.GetRawVal()] = string(val.Val)
+		default:
+			bad = append(bad, sqlparser.String(expr))
 		}
 	}
 	walk(where.Expr)
-	return params
+	return params, bad
 }
 
 type relationMethod struct {
@@ -353,14 +511,23 @@ var cloudProviders = map[string]string{ //nolint:gochecknoglobals // fixed mappi
 	"azure":  "azure",
 }
 
-func omnisdkAuth(ctx queryContext, resourcePath string) *omnisdk.Auth {
+// providerAuthContext is the stackql auth context for the cloud behind a
+// resource. It carries both the credentials and the tuning values.
+func providerAuthContext(ctx queryContext, resourcePath string) *dto.AuthCtx {
 	cloud, _, _ := strings.Cut(resourcePath, ".")
 	providerName, ok := cloudProviders[cloud]
 	if !ok {
 		return nil
 	}
 	authCtx, err := ctx.GetAuthContext(providerName)
-	if err != nil || authCtx == nil {
+	if err != nil {
+		return nil
+	}
+	return authCtx
+}
+
+func omnisdkAuth(authCtx *dto.AuthCtx) *omnisdk.Auth {
+	if authCtx == nil {
 		return nil
 	}
 	auth := &omnisdk.Auth{
@@ -469,4 +636,88 @@ func textValue(value any) any {
 	default:
 		return fmt.Sprintf("%v", typed)
 	}
+}
+
+// backendInput carries the tunables for a streaming run. It is read once, at
+// construction, and only read thereafter.
+type backendInput interface {
+	getBatchSize() int
+	getEndpoint() string
+	getFlushInterval() time.Duration
+}
+
+type standardBackendInput struct {
+	batchSize     int
+	endpoint      string
+	flushInterval time.Duration
+}
+
+// previewCfg is the parsed --preview argument. Cobra binds the raw string in
+// internal/stackql/cmd, which calls Init exactly once; nothing else writes it.
+//
+//nolint:gochecknoglobals // set once from the CLI, read thereafter
+var previewCfg = newBackendInput(previewCfgDTO{})
+
+// CfgRawKey is the CLI argument that configures this provider's backend.
+const CfgRawKey = "preview"
+
+// previewCfgDTO is the wire shape of the --preview argument. Endpoint accepts
+// either form omnisdk does: a base URL for every service, or an object of
+// service to override. Both ride through as the string omnisdk parses.
+type previewCfgDTO struct {
+	BatchSize     int             `json:"batchSize"`
+	FlushInterval string          `json:"flushInterval"`
+	Endpoint      json.RawMessage `json:"endpoint"`
+}
+
+func (c previewCfgDTO) endpoint() string {
+	if len(c.Endpoint) == 0 {
+		return ""
+	}
+	var asURL string
+	if err := json.Unmarshal(c.Endpoint, &asURL); err == nil {
+		return asURL
+	}
+	return string(c.Endpoint)
+}
+
+// Init records the --preview argument. It is called once, from cmd, before any
+// query runs.
+func Init(raw string) {
+	var cfg previewCfgDTO
+	if strings.TrimSpace(raw) != "" {
+		//nolint:errcheck // a malformed argument leaves the defaults in place
+		_ = json.Unmarshal([]byte(raw), &cfg)
+	}
+	previewCfg = newBackendInput(cfg)
+}
+
+func newBackendInput(cfg previewCfgDTO) backendInput {
+	rv := &standardBackendInput{
+		batchSize:     defaultBatchSize,
+		endpoint:      cfg.endpoint(),
+		flushInterval: defaultFlushInterval,
+	}
+	if cfg.BatchSize > 0 {
+		rv.batchSize = cfg.BatchSize
+	}
+	if parsed, err := time.ParseDuration(cfg.FlushInterval); err == nil && parsed > 0 {
+		rv.flushInterval = parsed
+	}
+	return rv
+}
+
+func (b *standardBackendInput) getBatchSize() int { return b.batchSize }
+
+func (b *standardBackendInput) getEndpoint() string { return b.endpoint }
+
+func (b *standardBackendInput) getFlushInterval() time.Duration { return b.flushInterval }
+
+// sourceKey is the row key a column reads from: its own name, unless an alias
+// renamed it.
+func (c column) sourceKey() string {
+	if c.sourceName != "" {
+		return c.sourceName
+	}
+	return c.name
 }

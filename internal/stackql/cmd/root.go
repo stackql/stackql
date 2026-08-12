@@ -27,6 +27,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/envfile"
+	"github.com/stackql/stackql/internal/stackql/intrinsic"
 
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
@@ -68,6 +69,12 @@ var (
 	queryCache      *lrucache.LRUCache
 	replicateCtrMgr bool = false //nolint:unused // TODO: investigate and test then remove if possible
 )
+
+// previewCfgRaw is the raw --preview argument; cobra binds it here and
+// initConfig hands it to the intrinsic package once.
+//
+//nolint:gochecknoglobals // cobra binds flags to package scope
+var previewCfgRaw string
 
 // rootCmd represents the base command when called without any subcommands.
 //
@@ -148,6 +155,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.StoreTxnCfgRaw, dto.StoreTxnCfgRawKey, "{}", "JSON / YAML string representing Txn store config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.GCCfgRaw, dto.GCCfgRawKey, "{}", "JSON / YAML string representing GC config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ACIDCfgRaw, dto.ACIDCfgRawKey, "{}", "JSON / YAML string representing ACID config")
+	rootCmd.PersistentFlags().StringVar(&previewCfgRaw, intrinsic.CfgRawKey, "{}", "JSON string configuring the "+intrinsic.ProviderName+" provider backend; keys: batchSize, flushInterval, endpoint")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.SessionCtxRaw, dto.SessionCtxKey, "{}", "JSON / YAML string representing session config")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.APIRequestTimeout, dto.APIRequestTimeoutKey, 45, "API request timeout in seconds, 0 for no timeout.") //nolint:mnd // TODO: investigate
 	rootCmd.PersistentFlags().StringVar(&dummyString, dto.ColorSchemeKey, "", "DEPRECATED: color schems no longer active")
@@ -241,6 +249,8 @@ func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	mergeConfigFromFile(&runtimeCtx, *rootCmd.PersistentFlags())
+
+	intrinsic.Init(previewCfgRaw)
 
 	// An absent --env.file is created empty (issue #691) so packaged installs
 	// have a credential store to populate; creation failure is non-fatal

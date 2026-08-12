@@ -246,6 +246,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     rv = [ f"--export.alias='{b[15:]}'" if type(b) == str and b.startswith('--export.alias=') else b for b in list(rv) ]
     rv = [ f"--http.log.enabled='{b[19:]}'" if type(b) == str and b.startswith('--http.log.enabled=') else b for b in list(rv) ]
     rv = [ f"--approot='{b[10:]}'" if type(b) == str and b.startswith('--approot=') else b for b in list(rv) ]
+    rv = [ f"--preview='{b[10:]}'" if type(b) == str and b.startswith('--preview=') else b for b in list(rv) ]
     return rv
 
   def _run_stackql_exec_command_docker(
@@ -930,6 +931,76 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         'private_key': pem,
         'token_uri': 'https://oauth2.googleapis.com/token',
       }, fh)
+
+  @keyword
+  def should_stackql_exec_stream_incrementally(
+    self,
+    stackql_exe :str,
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg,
+    auth_cfg_str :str,
+    sql_backend_cfg_str :str,
+    query :str,
+    expected_row_count :int,
+    min_spread_seconds :float = 0.2,
+    *args,
+    **cfg
+  ):
+    """
+    Assert rows reach the output stream while the query is still running.
+
+    The query is run with stdout redirected to a file, and that file is sampled
+    while the process is alive. A run that buffers its rows writes the file in
+    one go at the end, so the samples show a single jump; a run that streams
+    shows the file growing at several distinct times.
+    """
+    import threading
+    stdout_path = cfg.get('stdout')
+    if not stdout_path:
+      raise Exception('should_stackql_exec_stream_incrementally requires stdout=<path>')
+    if os.path.exists(stdout_path):
+      os.remove(stdout_path)
+    result_holder = {}
+
+    def _run():
+      try:
+        result_holder['result'] = self._run_stackql_exec_command(
+          stackql_exe, okta_secret_str, github_secret_str, k8s_secret_str,
+          registry_cfg, auth_cfg_str, sql_backend_cfg_str, query, *args, **cfg
+        )
+      except Exception as exc:
+        result_holder['error'] = exc
+
+    worker = threading.Thread(target=_run)
+    worker.start()
+    samples = []
+    while worker.is_alive():
+      size = os.path.getsize(stdout_path) if os.path.exists(stdout_path) else 0
+      if not samples or size != samples[-1][1]:
+        samples.append((time.time(), size))
+      time.sleep(0.02)
+    worker.join()
+    if 'error' in result_holder:
+      raise result_holder['error']
+
+    growth = [s for s in samples if s[1] > 0]
+    with open(stdout_path) as fh:
+      rows = [line for line in fh.read().splitlines() if line.strip()]
+    if len(rows) != int(expected_row_count):
+      raise Exception(f'expected {expected_row_count} rows, got {len(rows)}')
+    if len(growth) < 2:
+      raise Exception(
+        f'output appeared in a single write, so rows were buffered rather than streamed; '
+        f'samples={samples}'
+      )
+    spread = growth[-1][0] - growth[0][0]
+    if spread < float(min_spread_seconds):
+      raise Exception(
+        f'output arrived over {spread:.3f}s, under the {min_spread_seconds}s expected for a '
+        f'streamed result; rows are probably being buffered'
+      )
 
   @keyword
   def should_stackql_exec_inline_jsonl_set_equal(

@@ -15,6 +15,7 @@ Run: PORT=8085 python test/mock/app.py  (or via the robot suite).
 """
 
 import json
+import time
 import os
 import pathlib
 
@@ -54,8 +55,16 @@ def ec2_query():
     return Response("<Error><Code>InvalidAction</Code></Error>", status=400, mimetype=XML)
 
 
+# Local addition: an opt-in per-request delay, so a test can observe rows being
+# emitted while the upstream is still producing. Zero by default, which is the
+# upstream behaviour.
+_DELAY_SECONDS = float(os.environ.get("OMNISDK_MOCK_DELAY_MS", "0")) / 1000.0
+
+
 @app.get("/<bucket>")
 def bucket_op(bucket):
+    if _DELAY_SECONDS > 0:
+        time.sleep(_DELAY_SECONDS)
     if "versioning" in request.args:
         return Response("<VersioningConfiguration><Status>Enabled</Status></VersioningConfiguration>", mimetype=XML)
     if "publicAccessBlock" in request.args:

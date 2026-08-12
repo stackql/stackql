@@ -192,6 +192,8 @@ class web_service_keywords(Process):
             stdout=os.path.abspath(os.path.join(self._log_root, f'omnisdk-server-{port}-stdout.txt')),
             stderr=os.path.abspath(os.path.join(self._log_root, f'omnisdk-server-{port}-stderr.txt')),
             cwd=self._cwd,
+            # a delay per request, so a test can observe rows emitted mid-run
+            env=dict(os.environ, OMNISDK_MOCK_DELAY_MS='50'),
         )
 
     @keyword

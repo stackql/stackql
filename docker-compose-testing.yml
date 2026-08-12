@@ -155,6 +155,7 @@ services:
       - "1071:1071/tcp"
     environment:
       IS_DOCKER: "${IS_DOCKER:-false}"
+      OMNISDK_MOCK_DELAY_MS: "50"
     command: 
       - bash
       - -c

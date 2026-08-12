@@ -144,3 +144,58 @@ COPYFILE_DISABLE=1 tar -czvf <name>.tgz <source dir>
 # eg: COPYFILE_DISABLE=1 tar -cvzf google-v0.2.1.tgz v0.2.1
 
 ```
+
+## The `omnisdk` mock and the streaming robot test
+
+`omnisdk/` is a vendored copy of the flask mock bundled with the pinned
+`github.com/stackql-labs/omnisdk` module (the version is recorded in
+`omnisdk/OMNISDK_VERSION.txt`). It is vendored rather than resolved from the Go
+module cache because the `dockertest` and `wsltest` CI jobs download prebuilt
+binaries and have no Go toolchain.
+
+It serves the AWS, Azure and GCP legs the `stackql_preview.audit.*` relations
+call, and honours one local addition: `OMNISDK_MOCK_DELAY_MS` delays each
+per-bucket request, so a test can observe rows being emitted while the upstream
+is still producing. It defaults to zero, and is set to `50` where the mock is
+started (`docker-compose-testing.yml` and `web_service_keywords.py`).
+
+To run the streaming test on its own:
+
+```bash
+PYTHONPATH="${PWD}/test/python" robot \
+  --variable EXECUTION_PLATFORM:native \
+  --variable SQL_BACKEND:sqlite_embedded \
+  --test "Preview Rows Are Emitted Throughout The Run" \
+  test/robot/functional
+```
+
+Every `stackql_preview` scenario, including the multi-cloud row set:
+
+```bash
+PYTHONPATH="${PWD}/test/python" robot \
+  --variable EXECUTION_PLATFORM:native \
+  --variable SQL_BACKEND:sqlite_embedded \
+  --test "Preview*" \
+  test/robot/functional
+```
+
+The streaming test asserts that stdout grows at several distinct times rather
+than in one write at the end. The batch size is a provider input, not an environment variable: it rides on
+the auth context values, eg
+`--auth='{"aws":{"values":{"batch_size":["10"]}}}'`. It caps how many rows a
+read gathers; a flush interval (`flush_interval`, default `50ms`) bounds how
+long a read waits, so a result smaller than the batch still streams.
+
+To drive the mock by hand:
+
+```bash
+cd test/python/stackql_test_tooling/flask/omnisdk
+OMNISDK_MOCK_DELAY_MS=50 PORT=8085 python3 app.py
+
+# then, in another shell
+export AWS_ACCESS_KEY_ID=AK AWS_SECRET_ACCESS_KEY=SK
+export STACKQL_PREVIEW_ENDPOINT='{"aws.s3":{"scheme":"http","host":"127.0.0.1","port":"8085"}}'
+./build/stackql exec \
+  "select * from stackql_preview.audit.aws_s3_buckets where region = 'us-east-1' and method = 'list';" \
+  -o=jsonl
+```
