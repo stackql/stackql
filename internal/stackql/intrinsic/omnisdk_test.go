@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/lib/pq/oid"
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
@@ -186,3 +189,117 @@ func TestReportedTypeUsesStackqlVocabulary(t *testing.T) {
 		}
 	}
 }
+
+// pagedRows serves a first page, then blocks until released, then a second.
+// It models an upstream whose next page is slow to arrive.
+type pagedRows struct {
+	first    []omnisdk.Row
+	second   []omnisdk.Row
+	release  chan struct{}
+	idx      int
+	released bool
+}
+
+func (p *pagedRows) Next() bool {
+	if p.idx < len(p.first) {
+		p.idx++
+		return true
+	}
+	if !p.released {
+		<-p.release
+		p.released = true
+	}
+	if p.idx < len(p.first)+len(p.second) {
+		p.idx++
+		return true
+	}
+	return false
+}
+
+func (p *pagedRows) Row() omnisdk.Row {
+	if p.idx <= len(p.first) {
+		return p.first[p.idx-1]
+	}
+	return p.second[p.idx-len(p.first)-1]
+}
+
+func (p *pagedRows) Err() error   { return nil }
+func (p *pagedRows) Close() error { return nil }
+
+// The first page must reach the output writer before the second page is even
+// available upstream. Anything that buffers the whole cursor fails this.
+func TestRowsReachOutputBeforeNextPage(t *testing.T) {
+	first := []omnisdk.Row{{"a": "p1-r1"}, {"a": "p1-r2"}, {"a": "p1-r3"}}
+	second := []omnisdk.Row{{"a": "p2-r1"}}
+	cursor := &pagedRows{first: first, second: second, release: make(chan struct{})}
+	stream := &rowStream{
+		rows:      cursor,
+		batchSize: 1,
+		columns:   []column{{name: "a"}},
+		table:     sqldata.NewSQLTable(0, "t"),
+		typCfg:    fakeColumnFactory{},
+	}
+
+	var mu sync.Mutex
+	var written []string
+	sink := writerFunc(func(b []byte) (int, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		written = append(written, string(b))
+		return len(b), nil
+	})
+
+	var errBuf bytes.Buffer
+	writer, err := output.GetOutputWriter(sink, &errBuf, internaldto.OutputContext{
+		RuntimeContext: dto.RuntimeCtx{OutputFormat: "jsonl", Delimiter: ","},
+		Result:         stream,
+	})
+	if err != nil {
+		t.Fatalf("writer: %v", err)
+	}
+
+	done := make(chan error, 1)
+	go func() { done <- writer.Write(stream) }()
+
+	// The whole first page must be written while the cursor is still stalled.
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		mu.Lock()
+		count := len(written)
+		mu.Unlock()
+		if count >= len(first) {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("only %d rows reached the writer before the next page; rows are being buffered", count)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	mu.Lock()
+	beforeRelease := strings.Join(written, "")
+	mu.Unlock()
+	if strings.Contains(beforeRelease, "p2-r1") {
+		t.Fatal("second page appeared before it was released")
+	}
+	for _, want := range []string{"p1-r1", "p1-r2", "p1-r3"} {
+		if !strings.Contains(beforeRelease, want) {
+			t.Fatalf("row %s did not reach the writer before the next page: %q", want, beforeRelease)
+		}
+	}
+
+	close(cursor.release)
+	if writeErr := <-done; writeErr != nil {
+		t.Fatalf("write: %v", writeErr)
+	}
+	mu.Lock()
+	all := strings.Join(written, "")
+	mu.Unlock()
+	if !strings.Contains(all, "p2-r1") {
+		t.Fatalf("second page missing from output: %q", all)
+	}
+}
+
+type writerFunc func([]byte) (int, error)
+
+func (f writerFunc) Write(b []byte) (int, error) { return f(b) }
