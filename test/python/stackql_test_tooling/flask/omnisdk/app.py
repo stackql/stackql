@@ -35,10 +35,29 @@ NOT_FOUND = (
 )
 
 
+# Local additions: an opt-in per-request delay and an opt-in listing page cap,
+# so a test can observe rows being emitted while the upstream is still
+# producing. Both default to off, which is the upstream behaviour.
+_DELAY_SECONDS = float(os.environ.get("OMNISDK_MOCK_DELAY_MS", "0")) / 1000.0
+_PAGE_SIZE = int(os.environ.get("OMNISDK_MOCK_PAGE_SIZE", "0"))
+
+
 @app.get("/")
 def list_buckets():
-    # GET / is S3 ListBuckets.
-    return Response(render_template("list_buckets.xml.j2", buckets=BUCKETS), mimetype=XML)
+    # GET / is S3 ListBuckets. A server may return fewer buckets than asked for,
+    # marking more with a ContinuationToken; absence of the token ends the walk.
+    if _PAGE_SIZE <= 0:
+        return Response(render_template("list_buckets.xml.j2", buckets=BUCKETS), mimetype=XML)
+    if _DELAY_SECONDS > 0:
+        time.sleep(_DELAY_SECONDS)
+    start = int(request.args.get("continuation-token", "0") or "0")
+    page = BUCKETS[start:start + _PAGE_SIZE]
+    nxt = start + _PAGE_SIZE
+    token = str(nxt) if nxt < len(BUCKETS) else ""
+    return Response(
+        render_template("list_buckets.xml.j2", buckets=page, continuation_token=token),
+        mimetype=XML,
+    )
 
 
 @app.post("/")
@@ -55,18 +74,25 @@ def ec2_query():
     return Response("<Error><Code>InvalidAction</Code></Error>", status=400, mimetype=XML)
 
 
-# Local addition: an opt-in per-request delay, so a test can observe rows being
-# emitted while the upstream is still producing. Zero by default, which is the
-# upstream behaviour.
-_DELAY_SECONDS = float(os.environ.get("OMNISDK_MOCK_DELAY_MS", "0")) / 1000.0
-
-
 @app.get("/<bucket>")
 def bucket_op(bucket):
     if _DELAY_SECONDS > 0:
         time.sleep(_DELAY_SECONDS)
     if "versioning" in request.args:
         return Response("<VersioningConfiguration><Status>Enabled</Status></VersioningConfiguration>", mimetype=XML)
+    if "logging" in request.args:
+        # S3 answers 200 with an EMPTY BucketLoggingStatus when logging is off — absence of
+        # <LoggingEnabled>, not a 404, is the signal. Odd buckets log, even ones do not.
+        n = int("".join(c for c in bucket if c.isdigit()) or 0)
+        if n % 2:
+            return Response('<?xml version="1.0" encoding="UTF-8"?>'
+                            '<BucketLoggingStatus xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
+                            "<LoggingEnabled><TargetBucket>audit-logs</TargetBucket>"
+                            "<TargetPrefix>s3/</TargetPrefix></LoggingEnabled></BucketLoggingStatus>",
+                            mimetype="application/xml")
+        return Response('<?xml version="1.0" encoding="UTF-8"?>'
+                        '<BucketLoggingStatus xmlns="http://s3.amazonaws.com/doc/2006-03-01/"/>',
+                        mimetype="application/xml")
     if "publicAccessBlock" in request.args:
         return Response(
             "<PublicAccessBlockConfiguration><RestrictPublicBuckets>true</RestrictPublicBuckets>"
@@ -165,10 +191,14 @@ def azure_storage_accounts(sub):
     if (err := require_azure_token()):
         return err
     return jsonify(value=[
-        {"name": f"stor{sub}a", "properties": {
+        {"name": f"stor{sub}a",
+         "id": f"/subscriptions/{sub}/resourceGroups/rg1/providers/Microsoft.Storage/storageAccounts/stor{sub}a",
+         "properties": {
             "encryption": {"keySource": "Microsoft.Storage"},
             "allowBlobPublicAccess": False, "supportsHttpsTrafficOnly": True}},
-        {"name": f"stor{sub}b", "properties": {
+        {"name": f"stor{sub}b",
+         "id": f"/subscriptions/{sub}/resourceGroups/rg1/providers/Microsoft.Storage/storageAccounts/stor{sub}b",
+         "properties": {
             "encryption": {"keySource": "Microsoft.Keyvault"},
             "allowBlobPublicAccess": True, "supportsHttpsTrafficOnly": True}},
     ])
@@ -191,6 +221,30 @@ _GCP_PROJECTS = {
 }
 
 
+# Azure Monitor diagnostic settings for a storage account's blob service — the Azure analogue of S3
+# access logging. storsub-1a exports to a log sink; the others have none configured (empty value).
+@app.get("/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.Storage/storageAccounts/<acct>/blobServices/default/providers/Microsoft.Insights/diagnosticSettings")
+def azure_diagnostic_settings(sub, rg, acct):
+    if (err := require_azure_token()):
+        return err
+    if acct.endswith("a"):
+        return jsonify(value=[{"name": "audit", "properties": {
+            "storageAccountId": f"/subscriptions/{sub}/resourceGroups/{rg}"
+                                "/providers/Microsoft.Storage/storageAccounts/logsink"}}])
+    return jsonify(value=[])
+
+
+# Blob containers — the Azure analogue of an S3/GCS bucket. Two per account; the "b" one is public.
+@app.get("/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.Storage/storageAccounts/<acct>/blobServices/default/containers")
+def azure_containers(sub, rg, acct):
+    if (err := require_azure_token()):
+        return err
+    return jsonify(value=[
+        {"name": "data", "properties": {"publicAccess": "None"}},
+        {"name": "public-assets", "properties": {"publicAccess": "Blob"}},
+    ])
+
+
 @app.get("/v3/folders")
 def gcp_v3_folders():
     parent = request.args.get("parent", "")
@@ -211,9 +265,10 @@ def gcp_v3_projects():
 def gcp_storage_buckets():
     return jsonify(items=[
         {"name": "gcs-plain", "iamConfiguration": {"publicAccessPrevention": "inherited"},
-         "versioning": {"enabled": False}},
+         "versioning": {"enabled": False}},  # no logging block: usage logs off
         {"name": "gcs-cmek", "encryption": {"defaultKmsKeyName": "projects/p/locations/l/keyRings/r/cryptoKeys/k"},
-         "iamConfiguration": {"publicAccessPrevention": "enforced"}, "versioning": {"enabled": True}},
+         "iamConfiguration": {"publicAccessPrevention": "enforced"}, "versioning": {"enabled": True},
+         "logging": {"logBucket": "gcs-usage-logs", "logObjectPrefix": "gcs/"}},
     ])
 
 

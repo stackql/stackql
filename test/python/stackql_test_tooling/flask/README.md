@@ -180,11 +180,12 @@ PYTHONPATH="${PWD}/test/python" robot \
 ```
 
 The streaming test asserts that stdout grows at several distinct times rather
-than in one write at the end. The batch size is a provider input, not an environment variable: it rides on
-the auth context values, eg
-`--auth='{"aws":{"values":{"batch_size":["10"]}}}'`. It caps how many rows a
-read gathers; a flush interval (`flush_interval`, default `50ms`) bounds how
-long a read waits, so a result smaller than the batch still streams.
+than in one write at the end. The backend is configured by the `--preview` CLI argument, not by environment
+variables: `{"batchSize":10,"flushInterval":"50ms","endpoint":...}`. `batchSize`
+(default 100) caps how many rows a read gathers, `flushInterval` (default
+`50ms`) bounds how long a read waits, so a result smaller than the batch still
+streams. `endpoint` takes either a base URL for every service or an object of
+service to override, exactly as omnisdk does.
 
 To drive the mock by hand:
 
@@ -194,8 +195,7 @@ OMNISDK_MOCK_DELAY_MS=50 PORT=8085 python3 app.py
 
 # then, in another shell
 export AWS_ACCESS_KEY_ID=AK AWS_SECRET_ACCESS_KEY=SK
-export STACKQL_PREVIEW_ENDPOINT='{"aws.s3":{"scheme":"http","host":"127.0.0.1","port":"8085"}}'
-./build/stackql exec \
-  "select * from stackql_preview.audit.aws_s3_buckets where region = 'us-east-1' and method = 'list';" \
-  -o=jsonl
+./build/stackql exec -o=jsonl \
+  --preview='{"batchSize":1,"flushInterval":"50ms","endpoint":{"aws.s3":{"scheme":"http","host":"127.0.0.1","port":"8085"}}}' \
+  "select * from stackql_preview.audit.aws_s3_buckets where region = 'us-east-1' and method = 'list';"
 ```
