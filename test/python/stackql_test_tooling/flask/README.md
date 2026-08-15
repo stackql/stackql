@@ -147,11 +147,23 @@ COPYFILE_DISABLE=1 tar -czvf <name>.tgz <source dir>
 
 ## The `omnisdk` mock and the streaming robot test
 
-`omnisdk/` is a vendored copy of the flask mock bundled with the pinned
-`github.com/stackql-labs/omnisdk` module (the version is recorded in
-`omnisdk/OMNISDK_VERSION.txt`). It is vendored rather than resolved from the Go
-module cache because the `dockertest` and `wsltest` CI jobs download prebuilt
-binaries and have no Go toolchain.
+`omnisdk/` is a vendored copy of the flask mock bundled with the
+`github.com/stackql-labs/omnisdk` module, whose version `go.mod` pins. It is
+vendored rather than resolved from the Go module cache because the `dockertest`
+and `wsltest` CI jobs download prebuilt binaries and have no Go toolchain.
+
+Re-vendor it whenever that pin moves, and regenerate
+`test/assets/expected/preview/omni-storage-buckets.jsonl` from the module's own
+`test/mock/expected/omni-blob-org.jsonl` so the expectation stays upstream:
+
+```bash
+D="$(go list -m -f '{{.Dir}}' github.com/stackql-labs/omnisdk)"
+cp -R "${D}/test/mock/app.py" "${D}/test/mock/templates" "${D}/test/mock/collateral" \
+  test/python/stackql_test_tooling/flask/omnisdk/
+```
+
+The copy carries two local additions, both defaulting to the upstream
+behaviour, which must be re-applied after any re-vendor.
 
 It serves the AWS, Azure and GCP legs the `stackql_preview.audit.*` relations
 call, and honours one local addition: `OMNISDK_MOCK_DELAY_MS` delays each
