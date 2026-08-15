@@ -10622,7 +10622,7 @@ Preview Show Resources Mirrors Omnisdk Catalog
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    show resources in stackql_preview.audit;
-    ...    name,id\naws_ec2_networks,stackql_preview.audit.aws_ec2_networks\naws_s3_buckets,stackql_preview.audit.aws_s3_buckets\nazure_network_subnets,stackql_preview.audit.azure_network_subnets\nazure_storage_accounts,stackql_preview.audit.azure_storage_accounts\ngcp_compute_networks,stackql_preview.audit.gcp_compute_networks\ngoogle_storage_buckets,stackql_preview.audit.google_storage_buckets\nomni_storage_buckets,stackql_preview.audit.omni_storage_buckets
+    ...    name,id\naws_ec2_networks,stackql_preview.audit.aws_ec2_networks\naws_s3_buckets,stackql_preview.audit.aws_s3_buckets\nazure_network_subnets,stackql_preview.audit.azure_network_subnets\nazure_storage_containers,stackql_preview.audit.azure_storage_containers\ngcp_compute_networks,stackql_preview.audit.gcp_compute_networks\ngoogle_storage_buckets,stackql_preview.audit.google_storage_buckets\nomni_storage_buckets,stackql_preview.audit.omni_storage_buckets
     ...    \-o\=csv
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Show-Resources-Mirrors-Omnisdk-Catalog.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Show-Resources-Mirrors-Omnisdk-Catalog-stderr.tmp
@@ -10652,7 +10652,7 @@ Preview Describe Reports Omnisdk Column Types
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    describe stackql_preview.audit.aws_s3_buckets;
-    ...    name,type\nprovider,string\nname,string\nencryption_status,string\nencryption_class,string\npublic,bool\nversioning,bool\nhttps,bool
+    ...    name,type\nprovider,string\nname,string\nencryption_status,string\nencryption_class,string\npublic,bool\nversioning,bool\nhttps,bool\naccess_logging,bool\naccess_log_target,string
     ...    \-o\=csv
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Describe-Reports-Omnisdk-Column-Types.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Describe-Reports-Omnisdk-Column-Types-stderr.tmp
@@ -10683,7 +10683,7 @@ Preview Omni Storage Buckets Describe Reports Uniform Blob Shape
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    describe stackql_preview.audit.omni_storage_buckets;
-    ...    name,type\nprovider,string\nname,string\nencryption_status,string\nencryption_class,string\npublic,bool\nversioning,bool\nhttps,bool
+    ...    name,type\nprovider,string\nname,string\nencryption_status,string\nencryption_class,string\npublic,bool\nversioning,bool\nhttps,bool\naccess_logging,bool\naccess_log_target,string
     ...    \-o\=csv
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Omni-Storage-Buckets-Describe-Reports-Uniform-Blob-Shape.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Omni-Storage-Buckets-Describe-Reports-Uniform-Blob-Shape-stderr.tmp
@@ -10730,7 +10730,7 @@ Preview Jsonl Row Set Is Order Insensitive
     ...    {"id":"stackql_preview.audit.aws_ec2_networks","name":"aws_ec2_networks"}
     ...    {"id":"stackql_preview.audit.google_storage_buckets","name":"google_storage_buckets"}
     ...    {"id":"stackql_preview.audit.azure_network_subnets","name":"azure_network_subnets"}
-    ...    {"id":"stackql_preview.audit.azure_storage_accounts","name":"azure_storage_accounts"}
+    ...    {"id":"stackql_preview.audit.azure_storage_containers","name":"azure_storage_containers"}
     Should StackQL Exec Inline Jsonl Set Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

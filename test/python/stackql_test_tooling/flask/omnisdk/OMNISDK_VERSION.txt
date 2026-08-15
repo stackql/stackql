@@ -1,1 +1,1 @@
-omnisdk@v0.1.0-alpha06
+omnisdk@v0.1.0-alpha07

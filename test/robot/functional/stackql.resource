@@ -202,7 +202,7 @@ Remove Preview Mock Environment
     FOR    ${name}    IN
     ...    AWS_ACCESS_KEY_ID    AWS_SECRET_ACCESS_KEY
     ...    AZURE_TENANT_ID    AZURE_CLIENT_ID    AZURE_CLIENT_SECRET
-    ...    GOOGLE_APPLICATION_CREDENTIALS    STACKQL_PREVIEW_ENDPOINT
+    ...    GOOGLE_APPLICATION_CREDENTIALS
         Remove Environment Variable    ${name}
     END
 
