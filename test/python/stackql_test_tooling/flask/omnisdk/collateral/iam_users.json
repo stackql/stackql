@@ -1,0 +1,30 @@
+[
+  {
+    "name": "audit-reviewer",
+    "id": "AIDAEXAMPLEREVIEWER01",
+    "created": "2024-01-05T00:00:00Z",
+    "policies": [
+      "ReadOnlyAccess"
+    ],
+    "mfa": [
+      "arn:aws:iam::000000000000:mfa/audit-reviewer"
+    ]
+  },
+  {
+    "name": "ci-deployer",
+    "id": "AIDAEXAMPLEDEPLOYER02",
+    "created": "2024-02-11T00:00:00Z",
+    "policies": [
+      "AmazonS3FullAccess",
+      "IAMReadOnlyAccess"
+    ],
+    "mfa": []
+  },
+  {
+    "name": "no-grants-user",
+    "id": "AIDAEXAMPLENOGRANTS03",
+    "created": "2024-03-19T00:00:00Z",
+    "policies": [],
+    "mfa": []
+  }
+]

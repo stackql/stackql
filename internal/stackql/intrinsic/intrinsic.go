@@ -35,6 +35,7 @@ type column struct {
 type table struct {
 	service     string
 	name        string
+	isData      bool
 	description string
 	columns     []column
 }
@@ -48,6 +49,7 @@ type queryContext interface {
 	SetCurrentProvider(string)
 	GetTypingConfig() typing.Config
 	GetAuthContext(providerName string) (*dto.AuthCtx, error)
+	GetRuntimeContext() dto.RuntimeCtx
 }
 
 func GeneratePrimitiveFunc(
@@ -76,7 +78,11 @@ func GenerateStreamFunc(
 }
 
 func IsProvider(name string) bool {
-	return strings.EqualFold(strings.TrimSpace(name), ProviderName)
+	if strings.EqualFold(strings.TrimSpace(name), ProviderName) {
+		return true
+	}
+	_, isDoc := docProvider(name)
+	return isDoc
 }
 
 func resolveProvider(providerName string, currentProvider string) string {
@@ -132,17 +138,34 @@ func showFunc(
 	extended := isExtended(node.Extended)
 	switch strings.ToUpper(strings.TrimSpace(node.Type)) {
 	case "SERVICES":
-		if !IsProvider(resolveProvider(node.OnTable.Name.GetRawVal(), currentProvider)) {
+		provider := resolveProvider(node.OnTable.Name.GetRawVal(), currentProvider)
+		if bundle, isDoc := docProvider(provider); isDoc {
+			return func() internaldto.ExecutorOutput { return showDocServices(ctx, bundle, extended) }, true
+		}
+		if !IsProvider(provider) {
 			return nil, false
 		}
 		return func() internaldto.ExecutorOutput { return showServices(ctx, extended) }, true
 	case "RESOURCES":
 		serviceStr := node.OnTable.Name.GetRawVal()
+		if bundle, isDoc := docProvider(resolveProvider(node.OnTable.Qualifier.GetRawVal(), currentProvider)); isDoc {
+			return func() internaldto.ExecutorOutput {
+				return showDocResources(ctx, bundle, serviceStr, extended)
+			}, true
+		}
 		if !isService(node.OnTable.Qualifier.GetRawVal(), serviceStr, currentProvider) {
 			return nil, false
 		}
 		return func() internaldto.ExecutorOutput { return showResources(ctx, serviceStr, extended) }, true
 	case "METHODS":
+		if bundle, isDoc := docProvider(
+			resolveProvider(node.OnTable.QualifierSecond.GetRawVal(), currentProvider)); isDoc {
+			service := node.OnTable.Qualifier.GetRawVal()
+			resource := node.OnTable.Name.GetRawVal()
+			return func() internaldto.ExecutorOutput {
+				return showDocMethods(ctx, bundle, service, resource, extended)
+			}, true
+		}
 		tbl, ok := lookupTable(
 			node.OnTable.QualifierSecond.GetRawVal(),
 			node.OnTable.Qualifier.GetRawVal(),
