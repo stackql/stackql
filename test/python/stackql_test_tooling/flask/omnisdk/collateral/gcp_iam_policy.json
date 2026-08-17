@@ -1,0 +1,17 @@
+{
+  "bindings": [
+    {
+      "role": "roles/viewer",
+      "members": [
+        "user:reviewer@example.invalid"
+      ]
+    },
+    {
+      "role": "roles/editor",
+      "members": [
+        "serviceAccount:ci@example-project.iam.gserviceaccount.com",
+        "user:operator@example.invalid"
+      ]
+    }
+  ]
+}

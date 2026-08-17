@@ -1,0 +1,21 @@
+[
+  {
+    "userPrincipalName": "reviewer@example.invalid",
+    "id": "00000000-0000-0000-0000-000000000001",
+    "accountEnabled": true,
+    "createdDateTime": "2024-01-05T00:00:00Z",
+    "roles": [
+      "Global Reader"
+    ]
+  },
+  {
+    "userPrincipalName": "operator@example.invalid",
+    "id": "00000000-0000-0000-0000-000000000002",
+    "accountEnabled": false,
+    "createdDateTime": "2024-04-02T00:00:00Z",
+    "roles": [
+      "Directory Readers",
+      "Application Administrator"
+    ]
+  }
+]

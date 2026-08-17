@@ -7590,13 +7590,15 @@ Alternate App Root Persists All Temp Materials in Alotted Directory
     ...    registry pull google v0.1.2;
     ...    show providers;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    |-----------------|----------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}version${SPACE}${SPACE}|
-    ...    |-----------------|----------|
-    ...    |${SPACE}google${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}v0.1.2${SPACE}${SPACE}${SPACE}|
-    ...    |-----------------|----------|
-    ...    |${SPACE}stackql_preview${SPACE}|${SPACE}internal${SPACE}|
-    ...    |-----------------|----------|
+    ...    |-------------------------|----------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}version${SPACE}${SPACE}|
+    ...    |-------------------------|----------|
+    ...    |${SPACE}google${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}v0.1.2${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------|----------|
+    ...    |${SPACE}stackql_preview${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}internal${SPACE}|
+    ...    |-------------------------|----------|
+    ...    |${SPACE}stackql_unstable_google${SPACE}|${SPACE}internal${SPACE}|
+    ...    |-------------------------|----------|
     ${outputErrStr} =    Catenate    SEPARATOR=\n
     ...    google provider, version 'v0.1.2' successfully installed
     Should Stackql Exec Inline Equal Both Streams
@@ -10622,7 +10624,7 @@ Preview Show Resources Mirrors Omnisdk Catalog
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    show resources in stackql_preview.audit;
-    ...    name,id\naws_ec2_networks,stackql_preview.audit.aws_ec2_networks\naws_s3_buckets,stackql_preview.audit.aws_s3_buckets\nazure_network_subnets,stackql_preview.audit.azure_network_subnets\nazure_storage_containers,stackql_preview.audit.azure_storage_containers\ngcp_compute_networks,stackql_preview.audit.gcp_compute_networks\ngoogle_storage_buckets,stackql_preview.audit.google_storage_buckets\nomni_storage_buckets,stackql_preview.audit.omni_storage_buckets
+    ...    name,id\naws_ec2_networks,stackql_preview.audit.aws_ec2_networks\naws_iam_principals,stackql_preview.audit.aws_iam_principals\naws_s3_buckets,stackql_preview.audit.aws_s3_buckets\nazure_network_subnets,stackql_preview.audit.azure_network_subnets\nazure_storage_containers,stackql_preview.audit.azure_storage_containers\nentra_identities,stackql_preview.audit.entra_identities\ngcp_compute_networks,stackql_preview.audit.gcp_compute_networks\ngcp_iam_principals,stackql_preview.audit.gcp_iam_principals\ngoogle_storage_buckets,stackql_preview.audit.google_storage_buckets\nomni_iam_principals,stackql_preview.audit.omni_iam_principals\nomni_storage_buckets,stackql_preview.audit.omni_storage_buckets
     ...    \-o\=csv
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Show-Resources-Mirrors-Omnisdk-Catalog.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Show-Resources-Mirrors-Omnisdk-Catalog-stderr.tmp
@@ -10725,12 +10727,16 @@ Preview Jsonl Row Set Is Order Insensitive
     ...                emit, so an order-sensitive comparison would fail here.
     ${expected} =    Catenate    SEPARATOR=\n
     ...    {"id":"stackql_preview.audit.omni_storage_buckets","name":"omni_storage_buckets"}
-    ...    {"id":"stackql_preview.audit.aws_s3_buckets","name":"aws_s3_buckets"}
-    ...    {"id":"stackql_preview.audit.gcp_compute_networks","name":"gcp_compute_networks"}
-    ...    {"id":"stackql_preview.audit.aws_ec2_networks","name":"aws_ec2_networks"}
+    ...    {"id":"stackql_preview.audit.omni_iam_principals","name":"omni_iam_principals"}
     ...    {"id":"stackql_preview.audit.google_storage_buckets","name":"google_storage_buckets"}
-    ...    {"id":"stackql_preview.audit.azure_network_subnets","name":"azure_network_subnets"}
+    ...    {"id":"stackql_preview.audit.gcp_iam_principals","name":"gcp_iam_principals"}
+    ...    {"id":"stackql_preview.audit.gcp_compute_networks","name":"gcp_compute_networks"}
+    ...    {"id":"stackql_preview.audit.entra_identities","name":"entra_identities"}
     ...    {"id":"stackql_preview.audit.azure_storage_containers","name":"azure_storage_containers"}
+    ...    {"id":"stackql_preview.audit.azure_network_subnets","name":"azure_network_subnets"}
+    ...    {"id":"stackql_preview.audit.aws_s3_buckets","name":"aws_s3_buckets"}
+    ...    {"id":"stackql_preview.audit.aws_iam_principals","name":"aws_iam_principals"}
+    ...    {"id":"stackql_preview.audit.aws_ec2_networks","name":"aws_ec2_networks"}
     Should StackQL Exec Inline Jsonl Set Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -10779,7 +10785,7 @@ Preview Omni Storage Buckets Jsonl Row Set Matches Expectation
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
     ...    ${K8S_SECRET_STR}
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
@@ -10840,3 +10846,126 @@ Preview Order By Is Refused Rather Than Ignored
     ...    streams its rows, so ORDER BY cannot be applied; remove it from the query
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Order-By-Is-Refused-Rather-Than-Ignored.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Order-By-Is-Refused-Rather-Than-Ignored-stderr.tmp
+
+Preview Omni Iam Principals Jsonl Row Set Matches Expectation
+    [Documentation]    The cross-cloud access review, order-insensitive. Every
+    ...                identity source the fan-out touches is retargeted at the
+    ...                mock: AWS IAM, the Entra login exchange and Graph, and the
+    ...                GCP oauth exchange and CRM policy read. No ORDER BY,
+    ...                because a streamed relation never reaches the SQL backend.
+    [Setup]    Write Gcp Service Account    ${OMNISDK_MOCK_GCP_SA_HOST}
+    [Teardown]    Remove Preview Mock Environment
+    ${expected} =    OperatingSystem.Get File
+    ...    ${CURDIR}${/}..${/}..${/}assets${/}expected${/}preview${/}omni-iam-principals.jsonl
+    ${gcp_sa} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"
+    ...    /opt/test/tmp/omnisdk-gcp-sa.json    ${OMNISDK_MOCK_GCP_SA_HOST}
+    Set Environment Variable    AWS_ACCESS_KEY_ID    AK
+    Set Environment Variable    AWS_SECRET_ACCESS_KEY    SK
+    Set Environment Variable    AZURE_TENANT_ID    mock-tenant
+    Set Environment Variable    AZURE_CLIENT_ID    mock-client
+    Set Environment Variable    AZURE_CLIENT_SECRET    mock-secret
+    Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${gcp_sa}
+    ${mock} =    Set Variable    {"scheme":"http","host":"${LOCAL_HOST_ALIAS}","port":"${MOCKSERVER_PORT_OMNISDK}"}
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":{"aws.iam":${mock},
+    ...    "azure.login":${mock},"azure.graph":${mock},
+    ...    "gcp.oauth":${mock},"gcp.crm":${mock}}}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select * from stackql_preview.audit.omni_iam_principals
+    ...    where region = 'us-east-1' and google_org = '123456789' and method = 'access';
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Omni-Iam-Principals-Jsonl-Row-Set-Matches-Expectation.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Omni-Iam-Principals-Jsonl-Row-Set-Matches-Expectation-stderr.tmp
+
+
+
+Unstable Github Org Members Jsonl Row Set Matches Expectation
+    [Documentation]    A document-derived SELECT: the provider document the
+    ...                registry ships, run against the existing github mock. The
+    ...                document declares no ordering, so the rows are asserted as
+    ...                an unordered set, declared here in an order the query does
+    ...                not emit.
+    [Teardown]    Remove Preview Mock Environment
+    ${approot_gh} =    Normalize Path    ${REPOSITORY_ROOT}${/}test${/}registry-mocked-native
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    {"id":"1","login":"some-jimbo-10","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-9","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-8","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-7","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-6","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-5","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-4","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-3","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-2","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-1","type":"User"}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, id, type from stackql_unstable_github.orgs.members
+    ...    where org = 'dummyorg';
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stackql_approot=${approot_gh}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-stderr.tmp
+
+Unstable Google Storage Buckets Jsonl Row Set Matches Expectation
+    [Documentation]    The document-derived counterpart of the registry-backed
+    ...                `google.storage.buckets` listing, run against the same
+    ...                google mock. The document declares no ordering, so rows
+    ...                are asserted as an unordered set.
+    [Setup]    Write Gcp Service Account    ${OMNISDK_MOCK_GCP_SA_HOST}
+    [Teardown]    Remove Preview Mock Environment
+    ${gcp_sa} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"
+    ...    /opt/test/tmp/omnisdk-gcp-sa.json    ${OMNISDK_MOCK_GCP_SA_HOST}
+    Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${gcp_sa}
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GOOGLE}",
+    ...    "insecureSkipTLSVerify":true}
+    # The suite's google credentials are PKCS1; omnisdk needs PKCS8, so this
+    # points at the key the setup generates.
+    ${auth} =    Set Variable    {"google":{"credentialsfilepath":"${gcp_sa}"}}
+    # A private copy: a shared app root is written to by other tests, and which
+    # google bundle is on disk decides whether this resource has a select verb.
+    ${approot} =    Normalize Path    ${CURDIR}${/}tmp${/}unstable-google-approot
+    Remove Directory    ${approot}    recursive=True
+    Copy Directory
+    ...    ${REPOSITORY_ROOT}${/}test${/}registry-mocked-native${/}src${/}googleapis.com
+    ...    ${approot}${/}src${/}googleapis.com
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select kind, project from stackql_unstable_google.storage.buckets
+    ...    where project = 'stackql-demo';
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${auth}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    {"kind":"storage#buckets","project":"stackql-demo"}
+    ...    --preview\=${preview}
+    ...    stackql_approot=${approot}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Google-Storage-Buckets.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Google-Storage-Buckets-stderr.tmp
