@@ -1,0 +1,6 @@
+# Never commit real credentials
+audit/.env.audit
+
+# Ignore any audit output artefacts
+audit/output/*
+!audit/output/.gitkeep
