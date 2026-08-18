@@ -20,8 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Version + sha256 pins shipped inside the assembly. -->
-    <EmbeddedResource Include="pins.json" LogicalName="StackQL.Mcp.pins.json" />
+    <!-- Version + baseUrl + sha256 pins shipped inside the assembly. Rendered
+         (gitignored) by packaging/mcpb/scripts/render-platforms.sh:
+         make dotnet-manifest VERSION=X.Y.Z -->
+    <EmbeddedResource Include="platforms.json" LogicalName="StackQL.Mcp.platforms.json" />
   </ItemGroup>
 
   <!-- Vendored acquisition: when StackqlVendorBundle is set (typically by a

@@ -1,4 +1,4 @@
-# stackql-mcp-dotnet
+# StackQL.Mcp (embedded StackQL MCP server for .NET)
 
 Embedded StackQL MCP server for .NET. A NuGet library that gives .NET agentic
 apps an in-process StackQL MCP server: query and provision cloud and SaaS
@@ -11,11 +11,18 @@ the canonical launch args; this library is the polish layer on top - a native
 builder, single-file vendoring, and a one-call bridge into Agent Framework's
 tool abstraction.
 
+Source of truth is [packaging/mcpb/dotnet](https://github.com/stackql/stackql/tree/main/packaging/mcpb/dotnet)
+in stackql/stackql. The package version equals the stackql release it embeds
+(pin the minor, e.g. `0.10.*`), and its per-platform sha256 pins come from
+`platforms.json`, rendered by `packaging/mcpb/scripts/render-platforms.sh`
+from the published `.mcpb.sha256` release assets - the same manifest the npm,
+PyPI and other SDK wrappers use.
+
 ## Requirements
 
 .NET 8 or later. Both packages ship `net8.0` and `net9.0` build targets; the .NET
 8 floor is set by the official C# MCP SDK (`ModelContextProtocol.Core`). The
-`driftwatch` sample and the test project target `net9.0` only - that is a
+`Launcher` sample and the test project target `net9.0` only - that is a
 sample/dev choice and does not raise the floor for consumers of the library.
 
 ## Packages
@@ -94,8 +101,10 @@ var argv = await StackqlServer.ResolveCommandAsync(StackqlMode.ReadOnly);
 One API, two modes, mirroring the rest of the family.
 
 1. **Sidecar (default).** On first run the platform's `.mcpb` bundle is
-   downloaded, verified by sha256 against pins baked into the package, extracted
-   into the shared cache, and spawned over stdio.
+   downloaded from `https://releases.stackql.io` (User-Agent
+   `stackql-mcp-server-dotnet/<version>`), verified by sha256 against the
+   `platforms.json` pins embedded in the package, extracted into the shared
+   cache, and spawned over stdio.
 2. **Vendored.** Embed the bundle as a build resource so
    `dotnet publish -p:PublishSingleFile=true` produces a self-contained
    executable carrying the binary - the single-artifact story:
@@ -118,24 +127,24 @@ one runtime is reused by the others.
 | `WithApproot(dir)` | Override the approot (default `~/.stackql`). |
 | `WithCommand(argv)` | Take full control of the launch command. |
 
-> The pinned sha256 values in `src/StackQL.Mcp/pins.json` ship as placeholders
-> until populated from a release's `.sha256` assets. Until then, set
-> `STACKQL_MCP_BIN` or `STACKQL_MCP_BUNDLE` for local development; an
-> unconfigured sidecar download fails the integrity check on purpose rather than
-> running an unverified binary.
+## Samples
 
-## Sample: driftwatch
+[`samples/Launcher`](samples/Launcher) is the conformance launcher: it resolves
+the server (sidecar path) and runs it with the canonical arguments and inherited
+stdio, forwarding extra argv. `packaging/mcpb/scripts/smoke-test.py` drives it:
 
-[`samples/driftwatch`](samples/driftwatch) is a .NET Worker Service that embeds
-the read-only StackQL server and, on a schedule, runs a suite of SQL drift
-checks (public exposure, missing tags/licenses, baseline drift) and posts the
-findings to a Teams Adaptive Card - each finding showing the exact SQL that
-produced it. It runs against the github `null_auth` provider with zero
-credentials, so it works out of the box.
+```bash
+python scripts/smoke-test.py --cmd "dotnet run --project dotnet/samples/Launcher --"
+```
+
+`driftwatch`, the scheduled drift-check Worker Service demo that used to live
+here, now lives in [stackql-labs](https://github.com/stackql-labs) and depends on
+the published packages.
 
 ## Build and test
 
 ```bash
+make dotnet-manifest VERSION=X.Y.Z   # from packaging/mcpb: render platforms.json (embedded resource, gitignored)
 dotnet build StackQL.Mcp.sln -c Release
 dotnet test  StackQL.Mcp.sln -c Release
 ```
@@ -143,8 +152,8 @@ dotnet test  StackQL.Mcp.sln -c Release
 Unit tests (pin parse, cache path, launch-arg construction) run everywhere. The
 conformance integration test (initialize -> tools/list -> pull github -> list
 services) runs when a StackQL binary is available via `STACKQL_MCP_BUNDLE` /
-`STACKQL_MCP_BIN`; CI downloads the platform bundle to activate it across Linux,
-Windows, and macOS.
+`STACKQL_MCP_BIN`; the `mcp-packaging` workflow in stackql/stackql activates it
+across Linux, Windows, and macOS.
 
 ## License
 

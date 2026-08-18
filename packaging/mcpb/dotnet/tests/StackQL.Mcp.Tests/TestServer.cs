@@ -2,9 +2,9 @@ namespace StackQL.Mcp.Tests;
 
 /// <summary>
 /// Helpers for the integration tests that need a real StackQL binary. The binary
-/// is only available when a developer/CI set STACKQL_MCP_BIN or STACKQL_MCP_BUNDLE,
-/// or once pins.json carries real release shas. Until then these tests skip rather
-/// than fail, so the unit suite stays green everywhere.
+/// is only available when a developer/CI set STACKQL_MCP_BIN or STACKQL_MCP_BUNDLE
+/// (the unit suite must stay offline). Otherwise these tests skip rather than
+/// fail, so the unit suite stays green everywhere.
 /// </summary>
 internal static class TestServer
 {

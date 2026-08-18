@@ -27,10 +27,6 @@ internal sealed class BinaryResolver
         _http = http;
     }
 
-    /// <summary>Base URL for release bundles. Overridable for testing/mirrors.</summary>
-    public string ReleaseBaseUrl { get; init; } =
-        "https://github.com/stackql/stackql/releases/download";
-
     /// <summary>
     /// Resolves the executable path, performing acquisition if needed.
     /// </summary>
@@ -58,10 +54,11 @@ internal sealed class BinaryResolver
         var cacheDir = Platform.BinCacheDir(_pins.Version, platformKey);
         var cachedBinary = Path.Combine(cacheDir, Platform.BinaryFileName());
 
-        // 3. Already extracted in the shared cache (cross-runtime reuse).
-        if (File.Exists(cachedBinary))
+        // 3. Already extracted in the shared cache (cross-runtime reuse). The
+        //    bundle's entry point is server/<binary>, so look there too.
+        if (TryFindCached(cacheDir, cachedBinary) is { } cached)
         {
-            return cachedBinary;
+            return cached;
         }
 
         // 4. Explicit bundle, then STACKQL_MCP_BUNDLE.
@@ -88,10 +85,13 @@ internal sealed class BinaryResolver
 
     private async Task<byte[]> DownloadBundleAsync(string platformKey, CancellationToken ct)
     {
-        var asset = Pins.BundleAssetName(platformKey);
-        var url = $"{ReleaseBaseUrl}/v{_pins.Version}/{asset}";
+        // platforms.json baseUrl is the releases.stackql.io front door; the
+        // per-vector User-Agent lets the proxy attribute the download.
+        var url = _pins.BundleUrlFor(platformKey);
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        req.Headers.TryAddWithoutValidation("User-Agent", _pins.UserAgent);
 
-        using var resp = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+        using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         resp.EnsureSuccessStatusCode();
         return await resp.Content.ReadAsByteArrayAsync(ct);
     }
@@ -116,8 +116,8 @@ internal sealed class BinaryResolver
             {
                 throw new InvalidOperationException(
                     $"StackQL bundle sha256 mismatch for {platformKey}: expected {expected}, got {actual}. " +
-                    "Refusing to run an unverified binary. If the pins are not yet populated, set " +
-                    "STACKQL_MCP_BIN or STACKQL_MCP_BUNDLE for local development.");
+                    "Refusing to run an unverified binary. Set STACKQL_MCP_BIN or " +
+                    "STACKQL_MCP_BUNDLE to run a local build instead.");
             }
         }
 
@@ -242,6 +242,23 @@ internal sealed class BinaryResolver
         using var ms = new MemoryStream();
         stream.CopyTo(ms);
         return ms.ToArray();
+    }
+
+    private static string? TryFindCached(string cacheDir, string preferred)
+    {
+        if (File.Exists(preferred))
+        {
+            return preferred;
+        }
+
+        if (!Directory.Exists(cacheDir))
+        {
+            return null;
+        }
+
+        return Directory
+            .EnumerateFiles(cacheDir, Path.GetFileName(preferred), SearchOption.AllDirectories)
+            .FirstOrDefault();
     }
 
     private static string RequireExisting(string path, string source)

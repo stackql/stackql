@@ -55,3 +55,6 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# rendered by packaging/mcpb/scripts/render-platforms.sh
+src/StackQL.Mcp/platforms.json

@@ -22,12 +22,18 @@
     <IncludeSymbols>false</IncludeSymbols>
   </PropertyGroup>
 
+  <!-- Version-locked to the stackql release the package embeds; stamped by
+       packaging/mcpb/scripts/render-platforms.sh (make dotnet-manifest). -->
+  <PropertyGroup Label="Version">
+    <Version>0.10.601</Version>
+  </PropertyGroup>
+
   <PropertyGroup Label="Package metadata defaults">
     <Authors>StackQL Studios</Authors>
     <Company>StackQL Studios</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/stackql/stackql-mcp-dotnet</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/stackql/stackql-mcp-dotnet</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/stackql/stackql/tree/main/packaging/mcpb/dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/stackql/stackql</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Copyright>Copyright (c) 2026 StackQL Studios</Copyright>
