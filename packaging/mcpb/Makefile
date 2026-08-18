@@ -11,9 +11,10 @@
 #                                      Use this on a Mac to build only the
 #                                      darwin-universal bundle.
 #   make signed VERSION=X.Y.Z       build with MCPB_SELF_SIGN=true
-#   make publish VERSION=X.Y.Z      upload all dist/*.mcpb (+ .sha256) to the
-#                                   stackql/stackql release matching v<VERSION>,
-#                                   with --clobber for idempotent re-runs.
+#   make publish VERSION=X.Y.Z      upload dist/*.mcpb (+ .sha256) to the
+#                                   stackql/stackql release matching v<VERSION>;
+#                                   assets already on the release are skipped
+#                                   (immutable once pinned; FORCE=1 overwrites).
 #                                   Requires 'gh auth login' with contents:write
 #                                   on stackql/stackql.
 #   make server-json VERSION=X.Y.Z  render registry/server.json from the template,
@@ -238,9 +239,14 @@ pypi-build: pypi-manifest
 	cd pypi && python -m build
 	@echo "dist ready under pypi/dist/ - publish manually with: python -m twine upload pypi/dist/*"
 
-# Upload everything that landed in dist/ to the matching tag on stackql/stackql.
-# Idempotent via --clobber, so running this from two machines (one with the
-# darwin bundle, one with the rest) is safe in either order.
+# Upload whatever landed in dist/ to the matching tag on stackql/stackql.
+# Release assets are IMMUTABLE once published: every wrapper (npm, PyPI, the
+# SDKs, the registry entry) pins their sha256, and releases.stackql.io caches
+# them under an immutable key. Rebuilt bundles are never byte-identical, so an
+# asset that already exists on the release is SKIPPED, not overwritten - which
+# also makes the two-machine flow (darwin from a Mac, the rest from a
+# workstation) and CI re-dispatches safe. FORCE=1 overwrites anyway (only for
+# a release nothing has pinned yet); otherwise cut a new patch release.
 publish: check-version
 	@command -v gh >/dev/null 2>&1 || { echo "error: gh CLI required (https://cli.github.com)" >&2; exit 2; }
 	@shopt -s nullglob; \
@@ -248,9 +254,22 @@ publish: check-version
 	  if [ $${#files[@]} -eq 0 ]; then \
 	    echo "error: nothing in $(DIST_DIR)/ to publish" >&2; exit 1; \
 	  fi; \
-	  echo "publishing $${#files[@]} file(s) to stackql/stackql release v$(VERSION):"; \
-	  for f in "$${files[@]}"; do echo "  $$f"; done; \
-	  gh release upload "v$(VERSION)" "$${files[@]}" --clobber --repo stackql/stackql
+	  existing="$$(gh release view "v$(VERSION)" --repo stackql/stackql --json assets -q '.assets[].name')"; \
+	  upload=(); \
+	  for f in "$${files[@]}"; do \
+	    name="$$(basename "$$f")"; \
+	    if grep -qxF "$$name" <<<"$$existing" && [ "$${FORCE:-}" != "1" ]; then \
+	      echo "  skip $$name (already on release v$(VERSION); assets are immutable, FORCE=1 to overwrite)"; \
+	    else \
+	      upload+=("$$f"); \
+	    fi; \
+	  done; \
+	  if [ $${#upload[@]} -eq 0 ]; then \
+	    echo "nothing to publish: all assets already on release v$(VERSION)"; exit 0; \
+	  fi; \
+	  echo "publishing $${#upload[@]} file(s) to stackql/stackql release v$(VERSION):"; \
+	  for f in "$${upload[@]}"; do echo "  $$f"; done; \
+	  gh release upload "v$(VERSION)" "$${upload[@]}" $${FORCE:+--clobber} --repo stackql/stackql
 
 # Single-target builds: temporarily hide the other artefacts so package.sh
 # skips them. Uses a sentinel dir under bin/ so nothing leaves the tree.

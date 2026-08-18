@@ -70,7 +70,7 @@ Order matters and is strictly one-way: 7a, 7b and 7d-7f (any order among themsel
 
 Every wrapper follows one contract: wrapper version == stackql release version, and its per-platform sha256 pins are data in a `platforms.json` rendered by `packaging/mcpb/scripts/render-platforms.sh` (`make manifests VERSION=X.Y.Z` renders all nine vectors, `make <vector>-manifest` one) from the published `.sha256` release assets - so render only after step 6 completes, and never pin locally built bundle hashes. The renderer also stamps the version into each vector's manifest file (`npm/package.json`, `pypi/pyproject.toml`, `cargo/Cargo.toml`, `dotnet/Directory.Build.props`, `gleam/gleam.toml`, `kotlin/gradle.properties`, `swift/Sources/StackQLMCP/Version.swift`) in place - commit or revert the stamps afterwards.
 
-Standing rule: release assets are immutable once a wrapper has pinned them. If a `.mcpb` bundle must be rebuilt, cut a new patch release; never re-upload over an existing asset (the v0.10.500 re-upload of 2026-06-20 broke every published sidecar wrapper's sha256 check at once).
+Standing rule: release assets are immutable once a wrapper has pinned them. If a `.mcpb` bundle must be rebuilt, cut a new patch release; never re-upload over an existing asset (the v0.10.500 re-upload of 2026-06-20 broke every published sidecar wrapper's sha256 check at once, and a re-dispatch on 2026-08-18 briefly did the same to v0.10.601 before the originals were restored from the run artifacts). `make publish` now enforces this - it skips assets already on the release (`FORCE=1` overrides, for a release nothing has pinned yet) - so re-dispatching `mcp-packaging` for an existing release is safe.
 
 7a. npm (`@stackql/mcp-server`)
 

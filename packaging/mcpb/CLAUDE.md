@@ -134,7 +134,7 @@ The registry validates pypi packages via the `mcp-name: io.github.stackql/stackq
 
 The smoke test gates all four vectors: `smoke-test.py <bundle>` (manifest-driven args), `--docker <image>`, and `--cmd "<command>"`. Registry namespace validation is baked in: the npm package.json carries `mcpName: io.github.stackql/stackql-mcp` and the Dockerfile carries the `io.modelcontextprotocol.server.name` label - the Official MCP Registry checks both before accepting the oci/npm package entries in server.json.
 
-Upload everything in `dist/` to the matching `stackql/stackql` release (requires `gh auth login` with `contents:write` on `stackql/stackql`; idempotent via `--clobber`):
+Upload everything in `dist/` to the matching `stackql/stackql` release (requires `gh auth login` with `contents:write` on `stackql/stackql`). Assets already on the release are skipped - they are immutable once anything has pinned them; `FORCE=1` overwrites (only for a release nothing has pinned yet, otherwise cut a new patch release):
 
 ```bash
 make publish VERSION=X.Y.Z
@@ -192,7 +192,7 @@ python scripts/smoke-test.py dist/stackql-mcp-darwin-universal.mcpb
 make publish VERSION=X.Y.Z   # uploads just that one bundle + sha
 ```
 
-Each machine runs `gh auth login` once with a token that has `contents:write` on `stackql/stackql`. `make publish` uses `gh release upload --clobber`, so it is idempotent and the order between the two machines does not matter. Re-running either step is safe.
+Each machine runs `gh auth login` once with a token that has `contents:write` on `stackql/stackql`. `make publish` uploads only the assets not yet on the release, so the order between the two machines does not matter and re-running either step is safe - and a rebuilt bundle can never silently replace a published one (rebuilds are not byte-identical; every wrapper and the proxy cache pin the published bytes).
 
 The Mac machine only needs Node.js (for `mcpb` via `npx`) on top of the default macOS toolchain - `make`, `curl`, `unzip`, `pkgutil`, `shasum`, `find` are all preinstalled.
 
