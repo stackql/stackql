@@ -374,7 +374,7 @@ gleam-publish: gleam-manifest
 	@if curl -fsSL "https://hex.pm/api/packages/stackql_mcp/releases/$(VERSION)" >/dev/null 2>&1; then \
 	  echo "hex.pm already has stackql_mcp $(VERSION) - skipping"; \
 	else \
-	  cd gleam && gleam publish --yes && echo "published https://hex.pm/packages/stackql_mcp/$(VERSION)"; \
+	  cd gleam && HEXPM_API_KEY="$$HEX_API_KEY" gleam publish --yes && echo "published https://hex.pm/packages/stackql_mcp/$(VERSION)"; \
 	fi
 
 # kotlin (Maven Central: io.stackql:stackql-mcp)
