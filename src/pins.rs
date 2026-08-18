@@ -10,7 +10,7 @@ use crate::platform::Platform;
 
 /// The stackql release this crate version pins (release.yaml in the
 /// packaging repo, leading v stripped).
-pub const STACKQL_VERSION: &str = "0.10.500";
+pub const STACKQL_VERSION: &str = "0.10.601";
 
 /// A pinned bundle: name and sha256 as published on the GitHub release.
 #[derive(Clone, Copy, Debug)]
@@ -24,22 +24,22 @@ pub const PINS: &[Pin] = &[
     Pin {
         platform_key: "linux-x64",
         bundle_name: "stackql-mcp-linux-x64.mcpb",
-        sha256: "6615737747156b1a8413a976afb23af2e7eec29ebc98a6f0a0f65d1b153c44be",
+        sha256: "4a1cad1345fba1aae1f31269fd96aebed7a7825b38f6509466c1c995ce114e52",
     },
     Pin {
         platform_key: "linux-arm64",
         bundle_name: "stackql-mcp-linux-arm64.mcpb",
-        sha256: "594bedbabc3096dc3563c907724e845ce0b61a67de4b3fed4158b40c0363786c",
+        sha256: "518b2be638fa2b31438e39ed7adafc1621d7397f6700016e9f2d516e500d3cd1",
     },
     Pin {
         platform_key: "windows-x64",
         bundle_name: "stackql-mcp-windows-x64.mcpb",
-        sha256: "d2ce895e88f9c6b557df07073158629808f56d75598f3a701164d65506b791b0",
+        sha256: "35ed2c66ff6aa5551b9fd7976cc6c49e370cb2b619eb2b5047c3bdbd33076eab",
     },
     Pin {
         platform_key: "darwin-universal",
         bundle_name: "stackql-mcp-darwin-universal.mcpb",
-        sha256: "4eed70af5cfa67295ae0b42fa3a6dca71ac9acabd0d67914fd96ad1247a9b4cc",
+        sha256: "1cb60eba9dbc849ad9d505eb4992d0a348e4088ab51c8856b5206b7cc389995d",
     },
 ];
 
@@ -102,7 +102,7 @@ mod tests {
         let pin = pin_for(Platform::LinuxX64).unwrap();
         assert_eq!(
             bundle_url(pin),
-            "https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-linux-x64.mcpb"
+            "https://github.com/stackql/stackql/releases/download/v0.10.601/stackql-mcp-linux-x64.mcpb"
         );
     }
 }

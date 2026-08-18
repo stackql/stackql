@@ -4,7 +4,7 @@ resolver = "3"
 
 [package]
 name = "stackql-mcp"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 # Effective MSRV is set by rmcp 1.x (let-chains): 1.88.
 rust-version = "1.88"
