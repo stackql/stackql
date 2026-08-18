@@ -10,7 +10,52 @@ This repo does NOT build or sign the stackql binaries - that happens upstream in
 
 The server packed into each bundle is the `stackql` binary itself, launched as `stackql mcp --mcp.server.type=stdio` (see [manifest/manifest.template.json](manifest/manifest.template.json)). The `--mcp.server.type=stdio` flag is required - without it the MCP server does not produce JSON-RPC on stdout. The separate `stackql_mcp_client` binary is a test client and is NOT packaged.
 
+## The nine wrapper vectors and the ordering rules
+
+Around the `.mcpb` bundles this directory owns nine thin, version-locked wrappers, all on one contract:
+
+| Vector | Dir | Registry / coordinate | Publish |
+|---|---|---|---|
+| npm | `npm/` | `@stackql/mcp-server` | manual (2FA), `make npm-pack` |
+| pypi | `pypi/` | `stackql-mcp-server` | manual (token), `make pypi-build` |
+| oci | `oci/` | `stackql/stackql-mcp` | CI dispatch, `make oci-push` |
+| cargo | `cargo/` | crates.io `stackql-mcp` | CI dispatch / `make cargo-publish` |
+| go | `go/` | module `github.com/stackql/stackql-mcp-go` (mirror repo, tag `v<version>`) | CI dispatch / `make go-publish` |
+| dotnet | `dotnet/` | NuGet `StackQL.Mcp`, `StackQL.Mcp.AgentFramework` | CI dispatch / `make dotnet-publish` |
+| gleam | `gleam/` | hex `stackql_mcp` | PREVIEW: CI-validated, not published (`make gleam-publish` exists, no CI job) |
+| kotlin | `kotlin/` | Maven Central `io.stackql:stackql-mcp` | PREVIEW: CI-validated, not published (`make kotlin-publish` exists, no CI job) |
+| swift | `swift/` | SwiftPM `StackQLMCP` (mirror repo `stackql/stackql-mcp-swift`, tag `v<version>`) | PREVIEW: CI-validated, not published (`make swift-publish` exists, no CI job) |
+
+Two tiers: the published tier (npm, pypi, oci, cargo, go, dotnet) is the release train; the preview tier (gleam, kotlin, swift) is in tree on the same contract and renderer and is validated by the same `sdk` CI matrix, but is not published and carries no registry commitment. Promoting a preview vector = adding its publish job to `mcp-packaging.yml`, its secrets, and its row in the release doc.
+
+Plus the Official MCP Registry entry (`registry/`), published last, which lists only the npm/pypi/oci/mcpb packages (the registry has no package types for the SDKs - do not add them to `server.json`).
+
+The contract every wrapper follows:
+
+- Wrapper version == stackql release version. Never hand-chosen; the renderer stamps it.
+- Pins are data: `platforms.json` `{version, baseUrl, platforms{<key>:{bundle, sha256}}}`, written by `scripts/render-platforms.sh` (`make manifests VERSION=X.Y.Z`, or `make <vector>-manifest`) from the published `.mcpb.sha256` release assets. It is the ONLY pin source: there is no hand-written pin table anywhere (Rust `build.rs` renders consts from it, Go `go:embed`s it, .NET/Kotlin/Swift embed it as a resource, Gleam gets a generated `pins.gleam`). The rendered files are gitignored; every vector's build fails loudly with a pointer at `make <vector>-manifest` when it is missing.
+- Runtime download from `platforms.json.baseUrl` (`https://releases.stackql.io/stackql/<version>`, the attribution proxy) with `User-Agent: stackql-mcp-server-<vector>/<version>`. No GitHub API calls at runtime, no `latest` resolution, no version override env var.
+- Shared cache `~/.stackql/mcp-server-bin/<version>/<platform-key>/`; keys `linux-x64 | linux-arm64 | windows-x64 | darwin-universal`.
+- Overrides `STACKQL_MCP_BIN` (run this binary) and `STACKQL_MCP_BUNDLE` (extract this local `.mcpb`, no pin check); nothing else.
+- Canonical launch argv `mcp --mcp.server.type=stdio --approot <home>/.stackql --mcp.config {"server":{"mode":"<mode>","audit":{"disabled":true}}} [--auth=<json>]`; SDKs default to `read_only`.
+- Every SDK ships a launcher `scripts/smoke-test.py --cmd` can drive with no code (`make <vector>-smoke`): cargo `cargo run --example launcher --`, go `go run ./cmd/stackql-mcp-launch`, dotnet `dotnet run --project samples/Launcher --`, gleam `gleam run -m stackql_mcp/launcher --`, kotlin `launcher/build/install/stackql-mcp-launch/bin/stackql-mcp-launch` (or `java -cp .../lib/* io.stackql.mcp.launcher.MainKt`), swift `swift run stackql-mcp-launch`. Extra argv passes through to the server.
+
+Ordering rules (one-way, see `docs/stackql release process.md` step 7):
+
+1. Bundles first: `.mcpb` + `.sha256` on the GitHub release (`mcp-packaging` dispatch, or `make publish`).
+2. Only then render (`make manifests VERSION=`) - the renderer fetches the canonical `.sha256` from the release; never pin locally built bundle hashes.
+3. Then publish wrappers in any order (npm, pypi manual; oci + the published-tier SDKs cargo/go/dotnet from the `mcp-packaging` dispatch, which validates every SDK slice - preview tier included - with a real proxy download before any publish job runs).
+4. The registry entry strictly last (`mcp-registry-publish`).
+5. Release assets are immutable once a wrapper has pinned them; if a bundle must be rebuilt, cut a new patch release.
+
+Git-resolved ecosystems (Go module proxy, SwiftPM) cannot consume a package from a monorepo subdirectory cleanly, so `go/` and `swift/` are the source of truth here and `scripts/publish-mirror.sh` pushes the rendered subtree to the pre-existing mirror repos and tags `v<version>` (idempotent, immutable). Demo apps (auditron, stackql-agent, sandboxctl, driftwatch, pipewatch, costgate*, CloudLens*) do NOT live here; they belong in stackql-labs and depend on the published packages.
+
+Cache layout note: the npm/PyPI wrappers extract only the entry point (`<key>/stackql`); the Rust, .NET and Kotlin SDKs extract the whole bundle (`<key>/server/stackql`, plus manifest/README) into the same directory. Same directory, different file layout - they coexist but do not reuse each other's binary. Go, Gleam and Swift extract only the entry point like npm.
+
 ## Common commands
+
+SDK vector targets (all take `VERSION=X.Y.Z`; see "The nine wrapper vectors" above): `make manifests`, `make <vector>-manifest`, `make <vector>-build` (lint + unit tests + package), `make <vector>-smoke` (`smoke-test.py --cmd` against the launcher; `PYTHON=python` on Windows), `make <vector>-publish` (credentials from the environment, listed in the Makefile header). Toolchains: Rust stable (MSRV 1.88), Go 1.25, .NET 8+9 SDKs, Erlang/OTP 27 + Gleam 1.17, JDK 17+ (Gradle wrapper), Swift 6.1 / Xcode 16.4 (macOS only).
+
 
 A [Makefile](Makefile) wraps `scripts/package.sh` for the common flows. The script is still the source of truth; `make` is convenience.
 

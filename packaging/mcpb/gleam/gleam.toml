@@ -1,0 +1,39 @@
+name = "stackql_mcp"
+version = "0.10.601"
+
+# Erlang/BEAM only for v1. The MCP client and the robust subprocess/port story
+# are Erlang-target, and the entire strategic thesis IS the BEAM. The JS target
+# would just be a worse version of the existing npm wrapper.
+target = "erlang"
+
+licences = ["MIT"]
+description = "Embedded StackQL MCP server for Gleam / BEAM: run cloud queries and provisioning over SQL across AWS, Azure, Google, GitHub, Databricks, and 40+ providers, as a supervised OTP process."
+repository = { type = "github", user = "stackql", repo = "stackql", path = "packaging/mcpb/gleam" }
+
+links = [
+  { title = "StackQL", href = "https://stackql.io" },
+  { title = "Packaging (source of truth)", href = "https://github.com/stackql/stackql/tree/main/packaging/mcpb" },
+]
+
+# mcp-name reference: io.github.stackql/stackql-mcp
+gleam = ">= 1.14.0"
+
+# Acquisition uses OTP's httpc/ssl/crypto/zip/json via the FFI (OTP 27+).
+[erlang]
+extra_applications = ["inets", "ssl", "crypto", "public_key"]
+
+[dependencies]
+gleam_stdlib = ">= 0.67.0 and < 2.0.0"
+gleam_erlang = ">= 1.3.0 and < 2.0.0"
+gleam_otp = ">= 1.2.0 and < 2.0.0"
+# mcp_client 0.1.x requires gleam_json >= 3.0.0; track the same major.
+gleam_json = ">= 3.0.0 and < 4.0.0"
+# The load-bearing dep: MCP over JSON-RPC 2.0 / STDIO. Pre-1.0; pinned tight.
+# It spawns and owns the subprocess and performs the initialize handshake.
+mcp_client = ">= 0.1.0 and < 0.2.0"
+
+[dev-dependencies]
+gleeunit = ">= 1.6.0 and < 2.0.0"
+# Cross-platform env reading for the conformance test only. The library core
+# takes a getenv function as a parameter and has no env dependency itself.
+envoy = ">= 1.0.0 and < 2.0.0"

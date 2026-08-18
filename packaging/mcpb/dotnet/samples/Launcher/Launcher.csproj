@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Conformance launcher: resolves the StackQL MCP server binary (sidecar
+       path: STACKQL_MCP_BIN / STACKQL_MCP_BUNDLE, the shared cache, or a
+       pin-verified download) and runs it with the canonical launch arguments
+       and inherited stdio. Extra argv is forwarded to the server. This is what
+       packaging/mcpb/scripts/smoke-test.py drives (see Program.cs). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>StackQL.Mcp.Launcher</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\StackQL.Mcp\StackQL.Mcp.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -6,6 +6,13 @@
 # push tag -> create release -> attach signed assets -> dispatch.
 # The npm / PyPI wrappers need interactive (2FA) credentials and are
 # published from a local clone - see step 7 of docs/stackql release process.md.
+# The six embedded SDK wrappers (cargo, go, dotnet, gleam, kotlin, swift) are
+# validated here on every packaging PR (against the latest release, smoke
+# tests fed the freshly built bundle via STACKQL_MCP_BUNDLE) and, on
+# dispatch, validated with real downloads through releases.stackql.io.
+# Only the published tier (cargo, go, dotnet) then publishes from repo
+# secrets (see the sdk / *-publish jobs); gleam, kotlin and swift are the
+# preview tier: in tree and CI-validated, not published.
 # The MCP Registry entry is published LAST, via the separate
 # mcp-registry-publish workflow: the registry validates that the npm/PyPI/OCI
 # packages already exist at the exact version, so it cannot run from here.
@@ -225,3 +232,157 @@ jobs:
           echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker buildx create --use
           make oci-push VERSION=${{ needs.version.outputs.version }}
+
+  # --- embedded SDK wrappers -------------------------------------------------
+  # One job per (vector, runner). Each: toolchain, render platforms.json for
+  # the version under test (needs the .mcpb.sha256 assets on the release, so
+  # on dispatch this runs after 'publish'), lint + unit tests + package, then
+  # scripts/smoke-test.py --cmd against the vector's launcher. On PRs the
+  # launcher extracts the bundle built by this run (STACKQL_MCP_BUNDLE, no
+  # network); on dispatch it downloads through releases.stackql.io and
+  # verifies the pin for real.
+  sdk:
+    name: sdk ${{ matrix.vector }} (${{ matrix.runner }})
+    needs: [version, bundle, bundle-windows, publish]
+    # 'publish' is skipped on PRs; run when it succeeded or was skipped.
+    if: >-
+      !cancelled()
+      && needs.bundle.result == 'success'
+      && needs.bundle-windows.result == 'success'
+      && (needs.publish.result == 'success' || needs.publish.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { vector: cargo,  runner: ubuntu-latest,  target: linux-x64,        py: python3 }
+          - { vector: cargo,  runner: windows-latest, target: windows-x64,      py: python }
+          - { vector: cargo,  runner: macos-latest,   target: darwin-universal, py: python3 }
+          - { vector: go,     runner: ubuntu-latest,  target: linux-x64,        py: python3 }
+          - { vector: go,     runner: windows-latest, target: windows-x64,      py: python }
+          - { vector: dotnet, runner: ubuntu-latest,  target: linux-x64,        py: python3 }
+          - { vector: dotnet, runner: windows-latest, target: windows-x64,      py: python }
+          - { vector: gleam,  runner: ubuntu-latest,  target: linux-x64,        py: python3 }
+          - { vector: kotlin, runner: ubuntu-latest,  target: linux-x64,        py: python3 }
+          - { vector: swift,  runner: macos-latest,   target: darwin-universal, py: python3 }
+    runs-on: ${{ matrix.runner }}
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download this run's bundle (PR smoke input)
+        uses: actions/download-artifact@v8
+        with:
+          name: stackql-mcp-${{ matrix.target }}
+          path: packaging/mcpb/dist
+      - name: Point the launcher at the local bundle on PRs
+        if: needs.version.outputs.is_publish != 'true'
+        shell: bash
+        run: echo "STACKQL_MCP_BUNDLE=${{ github.workspace }}/packaging/mcpb/dist/stackql-mcp-${{ matrix.target }}.mcpb" >> "$GITHUB_ENV"
+      - name: GNU make (windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: choco install make -y --no-progress
+      # toolchains
+      - if: matrix.vector == 'cargo'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - if: matrix.vector == 'cargo'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packaging/mcpb/cargo
+      - if: matrix.vector == 'go'
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache-dependency-path: packaging/mcpb/go/go.sum
+      - if: matrix.vector == 'dotnet'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+      - if: matrix.vector == 'gleam'
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: '27'
+          gleam-version: '1.17.0'
+      - if: matrix.vector == 'kotlin'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - if: matrix.vector == 'kotlin'
+        uses: gradle/actions/setup-gradle@v4
+      - if: matrix.vector == 'swift'
+        name: Select Xcode (Swift 6.1+)
+        run: |
+          if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app; fi
+          swift --version
+      # render -> build/test/lint/package -> smoke
+      - name: Render platforms.json + version stamp
+        shell: bash
+        run: make ${{ matrix.vector }}-manifest VERSION="$VERSION"
+      - name: Build, lint, unit tests, package
+        shell: bash
+        run: make ${{ matrix.vector }}-build VERSION="$VERSION"
+      - name: Smoke test (launcher via scripts/smoke-test.py --cmd)
+        shell: bash
+        run: make ${{ matrix.vector }}-smoke VERSION="$VERSION" PYTHON=${{ matrix.py }}
+
+  # --- SDK publish (dispatch only, after every sdk slice is green) ----------
+  # Published tier only: cargo, go, dotnet. (gleam/kotlin/swift have
+  # 'make <vector>-publish' targets for an out-of-band publish, no CI job.)
+  # Idempotent where the registry allows (skip if the version already exists);
+  # each prints the resulting coordinate. Ordering vs the registry entry is
+  # unchanged: mcp-registry-publish still runs last (it does not reference
+  # these packages; server.json package types are npm/pypi/oci/mcpb only).
+  cargo-publish:
+    name: publish cargo (crates.io)
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, sdk]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: make cargo-publish VERSION=${{ needs.version.outputs.version }}
+
+  # NuGet Trusted Publishing (OIDC): the nuget.org policy "stackql-mcp-packaging"
+  # (owner stackql, repo stackql/stackql, workflow mcp-packaging.yml) exchanges
+  # this job's GitHub OIDC token for a short-lived push key. No stored secret.
+  dotnet-publish:
+    name: publish dotnet (NuGet)
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, sdk]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+      - name: NuGet login (trusted publishing)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: stackql
+      - env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: make dotnet-publish VERSION=${{ needs.version.outputs.version }}
+
+  go-publish:
+    name: publish go (mirror stackql-mcp-go, tag)
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, sdk]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - env:
+          SDK_MIRROR_TOKEN: ${{ secrets.SDK_MIRROR_TOKEN }}
+        run: make go-publish VERSION=${{ needs.version.outputs.version }}
