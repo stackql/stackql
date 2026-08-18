@@ -1,6 +1,6 @@
 package embed_test
 
-// Conformance test mirroring stackql-mcpb-packaging scripts/smoke-test.py:
+// Conformance test mirroring packaging/mcpb/scripts/smoke-test.py:
 // spawn the server over stdio, complete the MCP handshake, then exercise
 // the github provider with null_auth (no credentials):
 // initialize -> tools/list -> pull_provider -> list_services.
@@ -17,7 +17,6 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	stackqlmcp "github.com/stackql/stackql-mcp-go/embed"
-	"github.com/stackql/stackql-mcp-go/internal/fetch"
 )
 
 // conformanceBinary returns a server binary for the current platform:
@@ -57,7 +56,7 @@ func conformanceBinary(t *testing.T) stackqlmcp.Binary {
 	}
 
 	t.Logf("downloading stackql-mcp-%s.mcpb v%s (cached for later runs)", key, version)
-	res, err := fetch.Bundle(nil, version, key)
+	res, err := stackqlmcp.FetchBundle(nil, key)
 	if err != nil {
 		t.Fatalf("fetching release bundle: %v", err)
 	}

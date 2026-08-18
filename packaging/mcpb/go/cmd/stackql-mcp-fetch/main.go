@@ -1,7 +1,8 @@
 // Command stackql-mcp-fetch downloads the signed stackql MCP release
-// bundle for one or more platforms, verifies each against its published
-// sha256 pin, extracts the server binary, and writes the go:embed glue
-// that exposes it as an embed.Binary.
+// bundle for one or more platforms at the module's pinned version (from
+// the embedded platforms.json), verifies each against its sha256 pin,
+// extracts the server binary, and writes the go:embed glue that exposes it
+// as an embed.Binary.
 //
 // Intended use is a go:generate directive in the package that embeds the
 // binary:
@@ -26,7 +27,6 @@ import (
 	"time"
 
 	"github.com/stackql/stackql-mcp-go/embed"
-	"github.com/stackql/stackql-mcp-go/internal/fetch"
 )
 
 var buildTags = map[string]string{
@@ -37,7 +37,6 @@ var buildTags = map[string]string{
 }
 
 func main() {
-	version := flag.String("version", embed.DefaultVersion, "stackql release version (no leading v)")
 	platform := flag.String("platform", "auto", "platform key, 'auto' for the current platform, or 'all'")
 	dir := flag.String("dir", ".", "output directory")
 	pkg := flag.String("package", "", "if set, write <dir>/stackql_mcp_<platform>_gen.go with go:embed glue for this package name")
@@ -67,7 +66,7 @@ func main() {
 
 	client := &http.Client{Timeout: 10 * time.Minute}
 	for _, key := range platforms {
-		if err := fetchOne(client, *version, key, *dir, *pkg); err != nil {
+		if err := fetchOne(client, embed.DefaultVersion, key, *dir, *pkg); err != nil {
 			fatal(fmt.Errorf("%s: %w", key, err))
 		}
 	}
@@ -75,7 +74,7 @@ func main() {
 
 func fetchOne(client *http.Client, version, key, dir, pkg string) error {
 	fmt.Fprintf(os.Stderr, "fetching stackql-mcp-%s.mcpb v%s\n", key, version)
-	res, err := fetch.Bundle(client, version, key)
+	res, err := embed.FetchBundle(client, key)
 	if err != nil {
 		return err
 	}

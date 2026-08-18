@@ -1,11 +1,18 @@
-// Package embed runs an embedded StackQL MCP server from a binary carried
-// inside the calling program.
+// Package embed runs an embedded StackQL MCP server.
 //
-// The calling program embeds the platform's signed stackql binary (see
-// cmd/stackql-mcp-fetch, which downloads it from the release bundle,
-// verifies the published sha256 pin, and generates the go:embed glue).
-// StartServer extracts the binary to the shared on-disk cache, spawns it as
-// an MCP stdio server with the canonical launch arguments, and returns a
+// Two acquisition paths behind one API:
+//
+//   - vendored: the calling program embeds the platform's signed stackql
+//     binary (see cmd/stackql-mcp-fetch, which downloads it from the release
+//     bundle, verifies the sha256 pin from platforms.json, and generates the
+//     go:embed glue) and passes it as Options.Binary
+//   - sidecar (Options.Binary unset): the binary is resolved at first run
+//     from the shared cache ~/.stackql/mcp-server-bin/<version>/<platform>/,
+//     downloading and pin-verifying the release bundle when absent
+//
+// Either way STACKQL_MCP_BIN (run this binary) and STACKQL_MCP_BUNDLE
+// (extract this local .mcpb) take precedence. StartServer spawns the binary
+// as an MCP stdio server with the canonical launch arguments and returns a
 // connected client backed by github.com/modelcontextprotocol/go-sdk.
 //
 // Because the package is named embed, import it with an alias when the
@@ -28,12 +35,11 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// moduleVersion is reported as the MCP client version.
-const moduleVersion = "0.1.0"
-
 // Options configures StartServer.
 type Options struct {
-	// Binary is the embedded server binary. Required.
+	// Binary is an embedded server binary (vendored path). When zero, the
+	// sidecar path resolves one: env overrides, the shared cache, then a
+	// pin-verified download of the release bundle.
 	Binary Binary
 
 	// Mode is the server safety mode. Defaults to ModeReadOnly; anything
@@ -70,7 +76,7 @@ type Client struct {
 	// ListTools, CallTool, and the rest of the protocol surface.
 	Session *mcp.ClientSession
 
-	// BinaryPath is where the server binary was extracted.
+	// BinaryPath is the server binary that was launched.
 	BinaryPath string
 
 	// Mode is the safety mode the server was started with.
@@ -83,11 +89,18 @@ func (c *Client) Close() error {
 }
 
 // CommandLine resolves the exact command this package would run for the
-// given options, extracting the binary to the cache first. It exists so
-// external conformance harnesses (the packaging repo's smoke-test.py --cmd
-// mode) can exercise the launcher without going through StartServer.
+// given options, acquiring the binary first. It exists so external
+// conformance harnesses (packaging/mcpb/scripts/smoke-test.py --cmd via
+// cmd/stackql-mcp-launch) can exercise the launcher without going through
+// StartServer.
 func CommandLine(opts Options) (path string, args []string, err error) {
-	path, err = EnsureExtracted(opts.CacheDir, opts.Binary)
+	if p, ok, oerr := envOverride(opts.CacheDir); ok || oerr != nil {
+		path, err = p, oerr
+	} else if len(opts.Binary.Data) > 0 {
+		path, err = EnsureExtracted(opts.CacheDir, opts.Binary)
+	} else {
+		path, err = ResolveBinary(opts.CacheDir)
+	}
 	if err != nil {
 		return "", nil, err
 	}
@@ -98,8 +111,8 @@ func CommandLine(opts Options) (path string, args []string, err error) {
 	return path, append(args, opts.ExtraArgs...), nil
 }
 
-// StartServer extracts the embedded binary, spawns it as an MCP stdio
-// server, performs the MCP handshake, and returns a connected Client.
+// StartServer acquires the binary, spawns it as an MCP stdio server,
+// performs the MCP handshake, and returns a connected Client.
 // ctx bounds the startup (extraction and handshake) only; the returned
 // Client outlives it and runs until Close.
 func StartServer(ctx context.Context, opts Options) (*Client, error) {
@@ -116,7 +129,7 @@ func StartServer(ctx context.Context, opts Options) (*Client, error) {
 
 	impl := opts.ClientInfo
 	if impl == nil {
-		impl = &mcp.Implementation{Name: "stackql-mcp-go", Version: moduleVersion}
+		impl = &mcp.Implementation{Name: "stackql-mcp-go", Version: DefaultVersion}
 	}
 	client := mcp.NewClient(impl, nil)
 	session, err := client.Connect(ctx, &mcp.CommandTransport{Command: cmd}, nil)

@@ -29,9 +29,7 @@ func cachedBinaryPath(cacheDir string, b Binary) string {
 // EnsureExtracted writes the embedded binary to the shared cache and returns
 // its absolute path. If a file with the expected sha256 is already present
 // (extracted earlier by this module or by the npm/pypi wrappers) it is
-// reused. Extraction is atomic: the binary is written to a temp file in the
-// target directory and renamed into place, so concurrent extractors are
-// safe. If cacheDir is empty, DefaultCacheDir is used.
+// reused. If cacheDir is empty, DefaultCacheDir is used.
 func EnsureExtracted(cacheDir string, b Binary) (string, error) {
 	if err := b.validate(); err != nil {
 		return "", err
@@ -43,8 +41,15 @@ func EnsureExtracted(cacheDir string, b Binary) (string, error) {
 			return "", err
 		}
 	}
-	target := cachedBinaryPath(cacheDir, b)
-	if ok, err := fileMatchesSHA256(target, b.SHA256); err != nil {
+	return installBinary(cachedBinaryPath(cacheDir, b), b.Data, b.SHA256)
+}
+
+// installBinary places data at target unless a file with wantSHA is already
+// there. Extraction is atomic: the binary is written to a temp file in the
+// target directory and renamed into place, so concurrent extractors are
+// safe.
+func installBinary(target string, data []byte, wantSHA string) (string, error) {
+	if ok, err := fileMatchesSHA256(target, wantSHA); err != nil {
 		return "", err
 	} else if ok {
 		return target, nil
@@ -60,7 +65,7 @@ func EnsureExtracted(cacheDir string, b Binary) (string, error) {
 	}
 	tmpName := tmp.Name()
 	defer os.Remove(tmpName)
-	if _, err := tmp.Write(b.Data); err != nil {
+	if _, err := tmp.Write(data); err != nil {
 		tmp.Close()
 		return "", fmt.Errorf("stackql mcp: writing binary: %w", err)
 	}
@@ -74,7 +79,7 @@ func EnsureExtracted(cacheDir string, b Binary) (string, error) {
 		// On Windows, renaming over a file another process just placed
 		// (or is holding open) fails. If the file that won the race has
 		// the right sha, use it.
-		if ok, verr := fileMatchesSHA256(target, b.SHA256); verr == nil && ok {
+		if ok, verr := fileMatchesSHA256(target, wantSHA); verr == nil && ok {
 			return target, nil
 		}
 		return "", fmt.Errorf("stackql mcp: installing binary: %w", err)
