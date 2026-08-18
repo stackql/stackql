@@ -1,8 +1,0 @@
-# gleam format emits LF. Force LF on checkout everywhere so
-# `gleam format --check` is stable on Windows runners (which default
-# core.autocrlf=true and would otherwise see CRLF as non-canonical).
-*.gleam text eol=lf
-*.erl   text eol=lf
-*.toml  text eol=lf
-*.yml   text eol=lf
-*.md    text eol=lf

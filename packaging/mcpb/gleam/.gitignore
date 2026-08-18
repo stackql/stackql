@@ -1,8 +1,0 @@
-*.beam
-*.ez
-/build
-erl_crash.dump
-
-# rendered by packaging/mcpb/scripts/render-platforms.sh
-/platforms.json
-/src/stackql_mcp/pins.gleam

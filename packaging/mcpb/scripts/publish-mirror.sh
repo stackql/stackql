@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 #
-# publish-mirror.sh - publish a git-resolved SDK vector (go, swift) by pushing
+# publish-mirror.sh - publish a git-resolved SDK vector (go) by pushing
 # the rendered subtree from packaging/mcpb/<vector> to its mirror repo and
 # tagging v<version> there.
 #
-# Go modules and SwiftPM cannot consume a package from a subdirectory of a
-# monorepo cleanly (SwiftPM needs Package.swift at the repo root; Go would
-# need packaging/mcpb/go/vX.Y.Z tags and an ugly import path), so the source
-# of truth stays here and the mirror is a publish artefact:
+# Go modules cannot be consumed cleanly from a subdirectory of a monorepo
+# (it would need packaging/mcpb/go/vX.Y.Z tags and an ugly import path), so
+# the source of truth stays here and the mirror is a publish artefact:
 #   go    -> github.com/stackql/stackql-mcp-go    (module path unchanged)
-#   swift -> github.com/stackql/stackql-mcp-swift
 #
 # Idempotent: if the mirror already has tag v<version> pointing at an
 # identical tree the push is skipped; if it points at a different tree the
@@ -41,11 +39,7 @@ case "$VECTOR" in
     MIRROR_REPO="stackql/stackql-mcp-go"
     RENDERED=(embed/platforms.json)
     ;;
-  swift)
-    MIRROR_REPO="stackql/stackql-mcp-swift"
-    RENDERED=(Sources/StackQLMCP/Resources/platforms.json Sources/StackQLMCP/Version.swift)
-    ;;
-  *) echo "error: --vector must be go or swift" >&2; exit 2 ;;
+  *) echo "error: --vector must be go" >&2; exit 2 ;;
 esac
 SRC_DIR="$ROOT_DIR/$VECTOR"
 TAG="v$VERSION"
@@ -105,5 +99,4 @@ git tag -a "$TAG" -m "stackql $TAG"
 echo "published $MIRROR_REPO@$TAG (branch $default_branch)"
 case "$VECTOR" in
   go)    echo "  go get github.com/stackql/stackql-mcp-go@$TAG" ;;
-  swift) echo "  .package(url: \"$MIRROR_URL\", exact: \"$VERSION\")" ;;
 esac

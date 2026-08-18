@@ -64,11 +64,11 @@ git tag v0.10.591 && git push origin v0.10.591
 
 8. Publish the MCP wrapper packages (manual last mile)
 
-The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) to the release, pushes the multi-arch OCI image to Docker Hub, validates the six embedded SDK wrappers, and publishes the three in the published tier (7d-7f) automatically from repo secrets. The npm and PyPI wrappers need interactive (2FA) credentials, so they are published from a local clone using the steps below (a Linux/WSL/macOS shell, from the repo root). The MCP Registry entry is then published by dispatching the `mcp-registry-publish` workflow (7c).
+The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) to the release, pushes the multi-arch OCI image to Docker Hub, and validates and publishes the three embedded SDK wrappers (7d-7f) automatically from repo secrets / OIDC. The npm and PyPI wrappers need interactive (2FA) credentials, so they are published from a local clone using the steps below (a Linux/WSL/macOS shell, from the repo root). The MCP Registry entry is then published by dispatching the `mcp-registry-publish` workflow (7c).
 
 Order matters and is strictly one-way: 7a, 7b and 7d-7f (any order among themselves) only after step 6 completes, and 7c strictly last. The registry validates every package entry in server.json against its upstream registry at the exact version when publishing - if the npm or PyPI wrapper (or the OCI image) for the version is not live yet, the registry publish is rejected. There is no cycle: nothing references the registry entry, it references everything else. The lettering is kept stable for cross-references; the textual order below is the execution order.
 
-Every wrapper follows one contract: wrapper version == stackql release version, and its per-platform sha256 pins are data in a `platforms.json` rendered by `packaging/mcpb/scripts/render-platforms.sh` (`make manifests VERSION=X.Y.Z` renders all nine vectors, `make <vector>-manifest` one) from the published `.sha256` release assets - so render only after step 6 completes, and never pin locally built bundle hashes. The renderer also stamps the version into each vector's manifest file (`npm/package.json`, `pypi/pyproject.toml`, `cargo/Cargo.toml`, `dotnet/Directory.Build.props`, `gleam/gleam.toml`, `kotlin/gradle.properties`, `swift/Sources/StackQLMCP/Version.swift`) in place - commit or revert the stamps afterwards.
+Every wrapper follows one contract: wrapper version == stackql release version, and its per-platform sha256 pins are data in a `platforms.json` rendered by `packaging/mcpb/scripts/render-platforms.sh` (`make manifests VERSION=X.Y.Z` renders all six vectors, `make <vector>-manifest` one) from the published `.sha256` release assets - so render only after step 6 completes, and never pin locally built bundle hashes. The renderer also stamps the version into each vector's manifest file (`npm/package.json`, `pypi/pyproject.toml`, `cargo/Cargo.toml`, `dotnet/Directory.Build.props`) in place - commit or revert the stamps afterwards.
 
 Standing rule: release assets are immutable once a wrapper has pinned them. If a `.mcpb` bundle must be rebuilt, cut a new patch release; never re-upload over an existing asset (the v0.10.500 re-upload of 2026-06-20 broke every published sidecar wrapper's sha256 check at once, and a re-dispatch on 2026-08-18 briefly did the same to v0.10.601 before the originals were restored from the run artifacts). `make publish` now enforces this - it skips assets already on the release (`FORCE=1` overrides, for a release nothing has pinned yet) - so re-dispatching `mcp-packaging` for an existing release is safe.
 
@@ -96,9 +96,9 @@ python -m twine check pypi/dist/*
 python -m twine upload pypi/dist/*
 ```
 
-7d-7f. Embedded SDK wrappers, published tier (cargo, go, dotnet) - dispatch handles it
+7d-7f. Embedded SDK wrappers (cargo, go, dotnet) - dispatch handles it
 
-The `mcp-packaging` dispatch from step 6 runs the `sdk` matrix for all six SDK vectors (render pins for the version, lint, unit tests, package, then `scripts/smoke-test.py --cmd` against each launcher with a real download through `releases.stackql.io`) and, when every slice is green, one publish job per published-tier vector from repo secrets:
+The `mcp-packaging` dispatch from step 6 runs the `sdk` matrix (render pins for the version, lint, unit tests, package, then `scripts/smoke-test.py --cmd` against each launcher with a real download through `releases.stackql.io`) and, when every slice is green, one publish job per vector:
 
 | Step | Vector | Registry / coordinate | Secret(s) | Verify |
 |---|---|---|---|---|
@@ -108,7 +108,6 @@ The `mcp-packaging` dispatch from step 6 runs the `sdk` matrix for all six SDK v
 
 The publish jobs are idempotent where the registry allows (they skip when the version already exists) and each prints the resulting coordinate. `SDK_MIRROR_TOKEN` is a fine-grained PAT with `contents: write` on `stackql/stackql-mcp-go`.
 
-Preview tier (gleam, kotlin, swift): in tree, rendered and CI-validated by the same `sdk` matrix on every packaging PR and dispatch, but NOT published and not part of the release train. `make gleam-publish` / `make kotlin-publish` / `make swift-publish` exist for a deliberate out-of-band publish (hex key; Central Portal + GPG; mirror push to `stackql/stackql-mcp-swift`) - if a preview vector is promoted, add its publish job to `mcp-packaging.yml` and its row above.
 
 Manual fallback (a workflow failure, or an out-of-band publish) - the same Makefile targets from a local clone, with the credentials in the environment:
 
@@ -119,7 +118,7 @@ make go-publish     VERSION=X.Y.Z   # SDK_MIRROR_TOKEN, or an already-authorised
 make dotnet-publish VERSION=X.Y.Z   # NUGET_API_KEY
 ```
 
-Each `<vector>-publish` target renders the manifest for `VERSION` first, so it also carries the ordering rule (after step 6). Validate before publishing with `make <vector>-build VERSION=X.Y.Z` and `make <vector>-smoke VERSION=X.Y.Z` (Swift needs a Mac).
+Each `<vector>-publish` target renders the manifest for `VERSION` first, so it also carries the ordering rule (after step 6). Validate before publishing with `make <vector>-build VERSION=X.Y.Z` and `make <vector>-smoke VERSION=X.Y.Z`.
 
 7c. Official MCP Registry (`io.github.stackql/stackql-mcp`) - dispatch last
 

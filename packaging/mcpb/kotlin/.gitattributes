@@ -1,3 +1,0 @@
-# Windows runners check out with core.autocrlf=true; gofmt/gradlew need LF.
-* text=auto eol=lf
-*.jar binary

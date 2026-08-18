@@ -52,16 +52,15 @@ stackql-mcpb-packaging/
   oci/Dockerfile                    # stackql/stackql-mcp image (multi-arch via TARGETARCH)
   npm/                              # @stackql/mcp-server npx wrapper package
   pypi/                             # stackql-mcp-server uvx/pip wrapper package
-  cargo/ go/ dotnet/ gleam/         # the six embedded SDK wrappers (crates.io, Go module mirror,
-  kotlin/ swift/                    #   NuGet, hex, Maven Central, SwiftPM mirror) - same contract,
-                                    #   same renderer, same CI (see CLAUDE.md "nine wrapper vectors")
+  cargo/ go/ dotnet/                # the three embedded SDK wrappers (crates.io, Go module mirror,
+                                    #   NuGet) - same contract, renderer and CI (see CLAUDE.md)
   scripts/package.sh                # build bundles from bin/ -> dist/
   scripts/clean.sh                  # wipe dist/
   scripts/render-server-json.sh     # pin SHAs into registry/server.json
   scripts/render-platforms.sh       # THE renderer: platforms.json + version stamp for every vector
   scripts/render-npm-manifest.sh    # thin wrapper: render-platforms.sh --vector npm
   scripts/render-pypi-manifest.sh   # thin wrapper: render-platforms.sh --vector pypi
-  scripts/publish-mirror.sh         # push go/ or swift/ to its mirror repo + tag v<version>
+  scripts/publish-mirror.sh         # push go/ to its mirror repo + tag v<version>
   scripts/sign.sh                   # envelope-sign dist/*.mcpb + regen .sha256
   scripts/append-signature.py       # frame an externally-produced CMS signature
   scripts/smoke-test.py             # deterministic MCP smoke test (stdlib only)
