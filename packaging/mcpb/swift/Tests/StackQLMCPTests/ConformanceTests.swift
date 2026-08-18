@@ -30,6 +30,8 @@ final class ConformanceTests: XCTestCase {
         opts.appRoot = tmp.appendingPathComponent(".stackql").path
         opts.cacheDir = tmp.appendingPathComponent("bin-cache")
         opts.auth = auth
+        // STACKQL_MCP_BIN / STACKQL_MCP_BUNDLE are read by the resolver itself;
+        // STACKQL_MCP_TEST_BINARY is the test-only spelling kept for CI.
         if let override = ProcessInfo.processInfo.environment["STACKQL_MCP_TEST_BINARY"],
            !override.isEmpty {
             opts.binaryOverride = override

@@ -22,8 +22,9 @@ public enum BinaryError: Error, CustomStringConvertible {
 
 /// Locates the StackQL server binary for the running host, in priority order:
 ///
-/// 1. An explicit override path (`STACKQL_MCP_BINARY` env var or
-///    `Options.binaryOverride`) - used by CI and tests.
+/// 1. An explicit override path (`Options.binaryOverride` or the
+///    `STACKQL_MCP_BIN` env var shared with every StackQL wrapper;
+///    `STACKQL_MCP_BINARY` is still read for one release, deprecated).
 /// 2. A binary bundled inside the calling app's `.app` (the shipping path:
 ///    `Contents/Resources/stackql` or `Contents/Helpers/stackql`). Resources
 ///    inside a notarised app are not quarantined and keep their own
@@ -64,8 +65,10 @@ public struct BinaryResolver {
         self.version = version
         self.cacheDir = try cacheDir ?? LaunchArguments.defaultCacheDir()
         self.searchBundles = searchBundles ?? BinaryResolver.defaultBundles
+        let env = ProcessInfo.processInfo.environment
         self.binaryOverride = binaryOverride
-            ?? ProcessInfo.processInfo.environment["STACKQL_MCP_BINARY"]
+            ?? env["STACKQL_MCP_BIN"]
+            ?? env["STACKQL_MCP_BINARY"]  // deprecated spelling; remove after one release
         self.fileManager = fileManager
     }
 
@@ -128,7 +131,21 @@ public struct BinaryResolver {
     /// into place, so concurrent installers race safely.
     @discardableResult
     public func installToCache(data: Data, expectedSHA256: String) throws -> URL {
-        let target = cachedBinaryPath
+        try install(data: data, expectedSHA256: expectedSHA256, at: cachedBinaryPath)
+    }
+
+    /// The install slot for a caller-supplied local bundle (STACKQL_MCP_BUNDLE):
+    /// `<cacheDir>/custom/<bundle sha256 prefix>/stackql`, keyed by content so
+    /// different bundles never collide with each other or the pinned slot.
+    public func customBinaryPath(bundleSHA256: String) -> URL {
+        cacheDir
+            .appendingPathComponent("custom")
+            .appendingPathComponent(String(bundleSHA256.prefix(16)))
+            .appendingPathComponent(platform.executableName)
+    }
+
+    @discardableResult
+    func install(data: Data, expectedSHA256: String, at target: URL) throws -> URL {
         if SHA256Hash.fileMatches(target, expected: expectedSHA256) {
             return target
         }

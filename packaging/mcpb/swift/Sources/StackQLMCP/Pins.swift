@@ -1,24 +1,79 @@
 import Foundation
 
-/// Version and sha256 pins for the StackQL MCP server bundle.
+/// Version, download base URL and sha256 pins for the StackQL MCP server
+/// bundle.
 ///
-/// Source of truth is stackql/stackql-mcpb-packaging. The pins below are the
-/// published sha256 of each release `.mcpb` bundle for `defaultVersion`,
-/// copied from the release's `.sha256` assets. They are the same values the
-/// Go and Rust siblings carry. The download path verifies bundles against
-/// these before extracting; for any other version it fetches the pin from
-/// the release at download time (see `BundleFetcher`).
+/// Nothing is hand-written here: the values are the `platforms.json` package
+/// resource, rendered by `packaging/mcpb/scripts/render-platforms.sh` from the
+/// published `.mcpb.sha256` release assets - the same manifest every other
+/// StackQL wrapper (npm, PyPI, the other SDKs) ships. Render it before
+/// building: `make swift-manifest VERSION=X.Y.Z` (from packaging/mcpb).
 public enum Pins {
-    /// The stackql release this package version was developed and
-    /// conformance-tested against.
-    public static let defaultVersion = "0.10.500"
+    /// One platform's bundle name and lowercase-hex sha256.
+    public struct PlatformPin: Sendable, Decodable {
+        public let bundle: String
+        public let sha256: String
+    }
+
+    /// The parsed platforms.json.
+    public struct Manifest: Sendable, Decodable {
+        /// The stackql release this package is version-locked to (no leading v).
+        public let version: String
+        /// Front door bundles are downloaded from
+        /// (`https://releases.stackql.io/stackql/<version>`).
+        public let baseUrl: String
+        /// Platform key -> pin.
+        public let platforms: [String: PlatformPin]
+    }
+
+    /// The embedded manifest. Missing or malformed is a build/packaging error,
+    /// not a runtime condition, so it is fatal.
+    public static let manifest: Manifest = {
+        guard let url = Bundle.module.url(forResource: "platforms", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let manifest = try? JSONDecoder().decode(Manifest.self, from: data),
+              !manifest.version.isEmpty, !manifest.baseUrl.isEmpty, !manifest.platforms.isEmpty
+        else {
+            fatalError(
+                "stackql mcp: platforms.json resource missing or invalid - render it with "
+                    + "'make swift-manifest VERSION=X.Y.Z' from packaging/mcpb")
+        }
+        return manifest
+    }()
+
+    /// The stackql release this package is version-locked to.
+    public static var defaultVersion: String { manifest.version }
+
+    /// Front door bundles are downloaded from.
+    public static var baseURL: String { manifest.baseUrl }
+
+    /// User-Agent sent to the download proxy, per vector and version.
+    public static var userAgent: String { "stackql-mcp-server-swift/\(manifest.version)" }
 
     /// sha256 of the release `.mcpb` bundle for `defaultVersion`, keyed by
     /// platform. Lowercase hex.
-    public static let bundleSHA256: [Platform: String] = [
-        .linuxX64: "6615737747156b1a8413a976afb23af2e7eec29ebc98a6f0a0f65d1b153c44be",
-        .linuxArm64: "594bedbabc3096dc3563c907724e845ce0b61a67de4b3fed4158b40c0363786c",
-        .windowsX64: "d2ce895e88f9c6b557df07073158629808f56d75598f3a701164d65506b791b0",
-        .darwinUniversal: "4eed70af5cfa67295ae0b42fa3a6dca71ac9acabd0d67914fd96ad1247a9b4cc",
-    ]
+    public static var bundleSHA256: [Platform: String] {
+        var out: [Platform: String] = [:]
+        for platform in Platform.allCases {
+            if let pin = manifest.platforms[platform.rawValue] {
+                out[platform] = pin.sha256.lowercased()
+            }
+        }
+        return out
+    }
+
+    /// The pin for a platform, or nil when none is published.
+    public static func pin(for platform: Platform) -> PlatformPin? {
+        manifest.platforms[platform.rawValue]
+    }
+
+    /// The bundle asset name for a platform (`stackql-mcp-<key>.mcpb`).
+    public static func bundleName(_ platform: Platform) -> String {
+        pin(for: platform)?.bundle ?? "stackql-mcp-\(platform.rawValue).mcpb"
+    }
+
+    /// The download URL for a platform's bundle: `<baseUrl>/<bundle>`.
+    public static func bundleURL(_ platform: Platform) -> URL {
+        URL(string: "\(baseURL)/\(bundleName(platform))")!
+    }
 }

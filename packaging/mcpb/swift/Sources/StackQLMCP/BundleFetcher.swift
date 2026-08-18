@@ -26,18 +26,16 @@ public enum FetchError: Error, CustomStringConvertible {
     }
 }
 
-/// Downloads a StackQL MCP `.mcpb` release bundle, verifies it against the
-/// published sha256 pin, and extracts the server binary named by the bundle
-/// manifest's `entry_point`. Mirrors the Go `internal/fetch` package and the
-/// Rust `download`/`bundle` modules.
+/// Downloads the StackQL MCP `.mcpb` release bundle for the package's pinned
+/// version, verifies it against the `platforms.json` sha256 pin, and extracts
+/// the server binary named by the bundle manifest's `entry_point`. Mirrors the
+/// Go `embed` fetch path and the Rust `download`/`bundle` modules.
 ///
-/// Bundles are published as assets of the matching `stackql/stackql` release:
-/// `https://github.com/stackql/stackql/releases/download/v<version>/stackql-mcp-<key>.mcpb`.
+/// Bundles are downloaded from the manifest's `baseUrl` (the
+/// `https://releases.stackql.io` front door) with a per-vector User-Agent.
+/// There is no version override: the package is version-locked to
+/// `Pins.defaultVersion`.
 public struct BundleFetcher: Sendable {
-    /// Asset download root.
-    public static let releaseURLBase =
-        "https://github.com/stackql/stackql/releases/download"
-
     let session: URLSession
 
     public init(session: URLSession = .shared) {
@@ -45,11 +43,12 @@ public struct BundleFetcher: Sendable {
     }
 
     static func bundleName(_ platform: Platform) -> String {
-        "stackql-mcp-\(platform.rawValue).mcpb"
+        Pins.bundleName(platform)
     }
 
-    static func assetURL(version: String, name: String) -> URL {
-        URL(string: "\(releaseURLBase)/v\(version)/\(name)")!
+    /// The download URL for a platform's bundle: `<baseUrl>/<bundle>`.
+    public static func bundleURL(_ platform: Platform) -> URL {
+        Pins.bundleURL(platform)
     }
 
     /// Result of a successful, verified fetch.
@@ -64,56 +63,20 @@ public struct BundleFetcher: Sendable {
         public let platform: Platform
     }
 
-    /// Resolve the published sha256 pin for a bundle. Order: the in-package
-    /// pin table (for `Pins.defaultVersion`), the consolidated
-    /// `platforms.json` release asset if present, then the per-bundle
-    /// `.sha256` asset.
-    public func resolvePin(version: String, platform: Platform) async throws -> String {
-        if version == Pins.defaultVersion, let pin = Pins.bundleSHA256[platform] {
-            return pin
+    /// The published sha256 pin for a platform's bundle, from platforms.json.
+    public func resolvePin(platform: Platform) throws -> String {
+        guard let pin = Pins.pin(for: platform) else {
+            throw FetchError.malformedPin(asset: Self.bundleName(platform))
         }
-        // try? flattens the nested optional, so this is a single String?.
-        if let pin = try? await pinFromPlatformsJSON(version: version, platform: platform) {
-            return pin
-        }
-        let name = Self.bundleName(platform) + ".sha256"
-        let raw = try await get(Self.assetURL(version: version, name: name))
-        let text = String(decoding: raw, as: UTF8.self)
-        guard let first = text.split(whereSeparator: { $0 == " " || $0 == "\n" || $0 == "\t" }).first,
-              first.count == 64 else {
-            throw FetchError.malformedPin(asset: name)
-        }
-        return first.lowercased()
+        return pin.sha256.lowercased()
     }
 
-    /// Try the consolidated `platforms.json` asset (planned by the packaging
-    /// repo). Both a flat `{ "<key>": {"sha256": ...} }` map and a
-    /// `{ "platforms": { ... } }` wrapper, with either an object or a bare
-    /// string value, are accepted. A missing asset returns nil.
-    func pinFromPlatformsJSON(version: String, platform: Platform) async throws -> String? {
-        let raw = try await get(Self.assetURL(version: version, name: "platforms.json"))
-        guard var doc = try JSONSerialization.jsonObject(with: raw) as? [String: Any] else {
-            return nil
-        }
-        if let inner = doc["platforms"] as? [String: Any] {
-            doc = inner
-        }
-        guard let entry = doc[platform.rawValue] else { return nil }
-        if let obj = entry as? [String: Any], let sha = obj["sha256"] as? String, sha.count == 64 {
-            return sha.lowercased()
-        }
-        if let bare = entry as? String, bare.count == 64 {
-            return bare.lowercased()
-        }
-        return nil
-    }
-
-    /// Download the bundle for `version`/`platform`, verify it against the
-    /// published pin, and extract the server binary.
-    public func fetch(version: String, platform: Platform) async throws -> Result {
-        let pin = try await resolvePin(version: version, platform: platform)
+    /// Download the bundle for `platform` at the pinned version, verify it
+    /// against the published pin, and extract the server binary.
+    public func fetch(platform: Platform) async throws -> Result {
+        let pin = try resolvePin(platform: platform)
         let name = Self.bundleName(platform)
-        let bundleData = try await get(Self.assetURL(version: version, name: name))
+        let bundleData = try await get(Self.bundleURL(platform))
         let bundleSHA = SHA256Hash.hex(of: bundleData)
         guard bundleSHA == pin else {
             throw FetchError.checksumMismatch(asset: name, got: bundleSHA, want: pin)
@@ -123,7 +86,7 @@ public struct BundleFetcher: Sendable {
             data: binary,
             sha256: SHA256Hash.hex(of: binary),
             bundleSHA256: pin,
-            version: version,
+            version: Pins.defaultVersion,
             platform: platform
         )
     }
@@ -182,11 +145,13 @@ public struct BundleFetcher: Sendable {
         }
     }
 
-    /// GET `url` and return the body, following redirects (release asset URLs
-    /// redirect to a CDN).
+    /// GET `url` and return the body, following redirects (the front door
+    /// redirects to the release asset), with the per-vector User-Agent.
     func get(_ url: URL) async throws -> Data {
         do {
-            let (data, response) = try await session.data(from: url)
+            var request = URLRequest(url: url)
+            request.setValue(Pins.userAgent, forHTTPHeaderField: "User-Agent")
+            let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else {
                 throw FetchError.transport(url: url.absoluteString, message: "no HTTP response")
             }

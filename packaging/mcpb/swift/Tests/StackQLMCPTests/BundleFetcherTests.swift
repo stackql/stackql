@@ -51,17 +51,19 @@ final class BundleFetcherTests: XCTestCase {
         XCTAssertThrowsError(try BundleFetcher.extractEntryPoint(fromBundle: bundle))
     }
 
-    func testAssetURLConstruction() {
-        let url = BundleFetcher.assetURL(version: "0.10.500", name: "stackql-mcp-darwin-universal.mcpb")
+    func testBundleURLIsTheProxyFrontDoorForThePinnedVersion() {
+        let v = Pins.defaultVersion
+        XCTAssertEqual(Pins.baseURL, "https://releases.stackql.io/stackql/\(v)")
         XCTAssertEqual(
-            url.absoluteString,
-            "https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-darwin-universal.mcpb"
+            BundleFetcher.bundleURL(.darwinUniversal).absoluteString,
+            "https://releases.stackql.io/stackql/\(v)/stackql-mcp-darwin-universal.mcpb"
         )
+        XCTAssertEqual(Pins.userAgent, "stackql-mcp-server-swift/\(v)")
     }
 
-    func testResolvePinUsesTableForDefaultVersion() async throws {
-        let pin = try await BundleFetcher().resolvePin(
-            version: Pins.defaultVersion, platform: .darwinUniversal)
+    func testResolvePinComesFromPlatformsJSON() throws {
+        let pin = try BundleFetcher().resolvePin(platform: .darwinUniversal)
         XCTAssertEqual(pin, Pins.bundleSHA256[.darwinUniversal])
+        XCTAssertEqual(pin.count, 64)
     }
 }

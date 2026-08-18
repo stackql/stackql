@@ -8,10 +8,6 @@ public struct Options: Sendable {
     /// explicit caller decision.
     public var mode: Mode = .readOnly
 
-    /// stackql release version to locate/download. Defaults to
-    /// `Pins.defaultVersion`.
-    public var version: String = Pins.defaultVersion
-
     /// Application root (provider registry cache, auth state). Defaults to
     /// `~/.stackql`. Must be absolute if set.
     public var appRoot: String? = nil
@@ -25,8 +21,13 @@ public struct Options: Sendable {
     public var auth: AuthDocument? = nil
 
     /// Explicit binary path, highest priority in resolution. Also settable
-    /// via the `STACKQL_MCP_BINARY` environment variable.
+    /// via the `STACKQL_MCP_BIN` environment variable.
     public var binaryOverride: String? = nil
+
+    /// A local `.mcpb` bundle to extract instead of downloading (no pin check:
+    /// an explicit override is operator intent). Also settable via the
+    /// `STACKQL_MCP_BUNDLE` environment variable.
+    public var bundleOverride: String? = nil
 
     /// Whether to download the pin-verified bundle if the binary is not found
     /// offline (bundled in the app or already cached). Defaults to true.
@@ -36,7 +37,7 @@ public struct Options: Sendable {
 
     /// MCP client identity sent in `initialize`.
     public var clientName: String = "stackql-mcp-swift"
-    public var clientVersion: String = "0.1.0"
+    public var clientVersion: String = Pins.defaultVersion
 
     /// Extra arguments appended verbatim after the canonical arguments.
     public var extraArgs: [String] = []
@@ -89,7 +90,6 @@ public final class StackQLServer: @unchecked Sendable {
         _ options: Options = Options()
     ) async throws -> (path: URL, args: [String]) {
         let resolver = try BinaryResolver(
-            version: options.version,
             cacheDir: options.cacheDir,
             binaryOverride: options.binaryOverride
         )
@@ -100,18 +100,36 @@ public final class StackQLServer: @unchecked Sendable {
         return (path, args)
     }
 
-    /// Locate the binary offline, downloading the pin-verified bundle into
-    /// the shared cache as a last resort when allowed.
+    /// Locate the binary offline, then a local bundle override
+    /// (`Options.bundleOverride` / `STACKQL_MCP_BUNDLE`), then download the
+    /// pin-verified bundle into the shared cache as a last resort when allowed.
     static func resolveBinary(resolver: BinaryResolver, options: Options) async throws -> URL {
         if let found = resolver.locateOffline() {
             return found
+        }
+        let bundleOverride = options.bundleOverride
+            ?? ProcessInfo.processInfo.environment["STACKQL_MCP_BUNDLE"]
+        if let bundlePath = bundleOverride, !bundlePath.isEmpty {
+            let bundleData: Data
+            do {
+                bundleData = try Data(contentsOf: URL(fileURLWithPath: bundlePath))
+            } catch {
+                throw ServerError.binaryUnavailable(
+                    "STACKQL_MCP_BUNDLE points to \(bundlePath): \(error.localizedDescription)")
+            }
+            let binary = try BundleFetcher.extractEntryPoint(fromBundle: bundleData)
+            let slot = resolver.customBinaryPath(bundleSHA256: SHA256Hash.hex(of: bundleData))
+            let installed = try resolver.install(
+                data: binary, expectedSHA256: SHA256Hash.hex(of: binary), at: slot)
+            Quarantine.clear(at: installed)
+            return installed
         }
         guard options.allowDownload else {
             throw ServerError.binaryUnavailable(
                 "binary not found offline and download is disabled")
         }
         let fetcher = BundleFetcher()
-        let result = try await fetcher.fetch(version: options.version, platform: resolver.platform)
+        let result = try await fetcher.fetch(platform: resolver.platform)
         let installed = try resolver.installToCache(
             data: result.data, expectedSHA256: result.sha256)
         // A freshly downloaded file may carry com.apple.quarantine; clear it

@@ -1,13 +1,18 @@
 // swift-tools-version: 6.1
 //
 // StackQLMCP: run an embedded StackQL MCP server from a binary located on
-// disk (app bundle resource, shared cache, or download), spawned over stdio
-// and returned as a connected MCP client.
+// disk (app bundle resource, shared cache, or pin-verified download),
+// spawned over stdio and returned as a connected MCP client.
+//
+// Source of truth is packaging/mcpb/swift in stackql/stackql; the
+// stackql/stackql-mcp-swift repository is the publish mirror SwiftPM
+// resolves, tagged v<stackql version>. Sources/StackQLMCP/Resources/
+// platforms.json and Sources/StackQLMCP/Version.swift are rendered by
+// packaging/mcpb/scripts/render-platforms.sh (make swift-manifest).
 //
 // The single external dependency is the official MCP Swift SDK, which sets
 // the floors: it is a swift-tools-version 6.1 package, so it needs Swift 6.1
-// (Xcode 16.3+) and macOS 13. The project CLAUDE.md mentions Swift 5.10+,
-// but the SDK requires 6.1, so that is the effective minimum.
+// (Xcode 16.3+) and macOS 13.
 
 import PackageDescription
 
@@ -18,10 +23,9 @@ let package = Package(
     ],
     products: [
         .library(name: "StackQLMCP", targets: ["StackQLMCP"]),
-        // CloudLens: the menu bar cloud sentinel demo app. Built as a SwiftPM
-        // executable so CI can compile it; the signed/notarised .app is
-        // assembled in the packaging step documented in docs/.
-        .executable(name: "CloudLens", targets: ["CloudLens"]),
+        // Conformance launcher: what packaging/mcpb/scripts/smoke-test.py
+        // --cmd "swift run stackql-mcp-launch" drives.
+        .executable(name: "stackql-mcp-launch", targets: ["stackql-mcp-launch"]),
     ],
     dependencies: [
         .package(
@@ -34,28 +38,19 @@ let package = Package(
             name: "StackQLMCP",
             dependencies: [
                 .product(name: "MCP", package: "swift-sdk")
+            ],
+            resources: [
+                // The one pin source (version, baseUrl, per-platform sha256).
+                .copy("Resources/platforms.json")
             ]
+        ),
+        .executableTarget(
+            name: "stackql-mcp-launch",
+            dependencies: ["StackQLMCP"]
         ),
         .testTarget(
             name: "StackQLMCPTests",
             dependencies: ["StackQLMCP"]
-        ),
-        // CloudLensCore holds the testable app logic (pulses, finding diff,
-        // the Anthropic agent client, Keychain access) with no SwiftUI, so it
-        // can be unit-tested on CI without a GUI.
-        .target(
-            name: "CloudLensCore",
-            dependencies: ["StackQLMCP"]
-        ),
-        // CloudLens is the thin SwiftUI MenuBarExtra shell: @main App, menu
-        // bar icon state, popover, notifications.
-        .executableTarget(
-            name: "CloudLens",
-            dependencies: ["CloudLensCore", "StackQLMCP"]
-        ),
-        .testTarget(
-            name: "CloudLensCoreTests",
-            dependencies: ["CloudLensCore"]
         ),
     ]
 )

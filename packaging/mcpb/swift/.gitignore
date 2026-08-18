@@ -60,3 +60,7 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# rendered by packaging/mcpb/scripts/render-platforms.sh
+Sources/StackQLMCP/Resources/platforms.json
+Sources/StackQLMCP/Version.swift
