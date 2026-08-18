@@ -310,7 +310,7 @@ SDK_VECTORS := cargo go dotnet gleam kotlin swift
 RENDER := bash scripts/render-platforms.sh
 PYTHON ?= python3
 SMOKE := $(PYTHON) scripts/smoke-test.py
-GRADLEW := $(if $(filter Windows_NT,$(OS)),gradlew.bat,./gradlew)
+GRADLEW := $(if $(filter Windows_NT,$(OS)),./gradlew.bat,./gradlew)
 KOTLIN_LAUNCH_CP := kotlin/launcher/build/install/stackql-mcp-launch/lib/*
 
 .PHONY: manifests $(addsuffix -manifest,$(SDK_VECTORS)) \
