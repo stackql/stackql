@@ -1,0 +1,24 @@
+# Build output
+build/
+**/build/
+.gradle/
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+out/
+
+# Java/Kotlin
+*.class
+hs_err_pid*
+replay_pid*
+*.log
+
+# Local-only: the milestone 3 publicity working copy lives here
+tmp/
+
+# Keep the Gradle wrapper jar tracked (it must be committed); the catch-all
+# *.jar rule is intentionally absent so gradle/wrapper/gradle-wrapper.jar
+# stays in the repo.

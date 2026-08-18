@@ -1,0 +1,38 @@
+# costgate intent: what this deploy intends to create, priced before it exists.
+# Run `costgate check --intent examples/costgate.yaml` (offline, no credentials)
+# or add `--live` to price against live provider data via an embedded stackql
+# server.
+provider: aws
+budget: 500/month
+
+resources:
+  - name: api servers
+    type: compute
+    size: m5.large
+    region: us-east-1
+    count: 3
+
+  - name: worker pool
+    type: compute
+    size: c5.xlarge
+    region: us-east-1
+    count: 2
+
+  - name: primary database
+    type: database
+    size: db.m5.large
+    region: us-east-1
+    count: 1
+
+  - name: data volumes
+    type: storage
+    size: gp3
+    region: us-east-1
+    count: 1
+    gb: 500
+
+  - name: ingress lb
+    type: loadbalancer
+    size: alb
+    region: us-east-1
+    count: 1
