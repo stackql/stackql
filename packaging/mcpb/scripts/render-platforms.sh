@@ -67,7 +67,7 @@ base_url="$DOWNLOAD_BASE/$VERSION"   # proxy front door (no v prefix) - written 
 fetch_sha() {
   # args: target-label -> prints the hex digest from the published .sha256
   local target="$1" line
-  line="$(curl -fsSL "$sha_base/stackql-mcp-$target.mcpb.sha256")" || {
+  line="$(curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors "$sha_base/stackql-mcp-$target.mcpb.sha256")" || {
     echo "error: could not fetch sha256 for $target - are the v$VERSION .mcpb assets published?" >&2
     exit 1
   }
