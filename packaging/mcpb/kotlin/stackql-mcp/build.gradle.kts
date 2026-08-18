@@ -39,7 +39,11 @@ tasks.named("processResources") {
 //   ORG_GRADLE_PROJECT_signingInMemoryKey / ORG_GRADLE_PROJECT_signingInMemoryKeyPassword
 mavenPublishing {
     publishToMavenCentral(automaticRelease = true)
-    signAllPublications()
+    // Sign only when a key is configured (release time), so local builds and
+    // PR CI without secrets still assemble and publishToMavenLocal.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
     coordinates("io.stackql", "stackql-mcp", version.toString())
     pom {
         name.set("stackql-mcp")
