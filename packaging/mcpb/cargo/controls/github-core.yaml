@@ -1,0 +1,127 @@
+﻿# auditron control pack: GitHub organization security posture.
+#
+# Runs against public org data using the github provider in null_auth mode,
+# so it needs zero credentials. Unauthenticated GitHub API calls are rate
+# limited to 60/hour per IP; this pack stays well under that.
+#
+# Authoring notes (stackql github provider):
+# - All result values arrive as strings; booleans render as 'true'/'false'
+# - Boolean storage varies per resource: compare with = 0 / = 1, never with
+#   the strings 'true'/'false' (repos.archived = 'false' matches nothing)
+# - Avoid OR and NOT in WHERE clauses (predicate pushdown quirks); use
+#   coalesce() and = 0 instead
+# - IN (...) on key columns fans out to one API call per value
+# - SQLite date functions work: datetime('now', '-12 months')
+schema: auditron/v1
+id: github-core
+name: GitHub Organization Security Posture
+description: >-
+  Point-in-time posture checks over public GitHub organization data.
+  Runs unauthenticated (null_auth); suitable as a demo and as a baseline
+  org hygiene pack.
+provider: github
+auth:
+  github:
+    type: null_auth
+variables:
+  # Override per run: auditron scan --var org=your-org
+  org: stackql
+  # SQL list fragment: repos whose default branch must be protected.
+  critical_repos: "'stackql', 'stackql-deploy'"
+controls:
+  - id: GH-001
+    title: Critical repos have default branch protection
+    description: >-
+      The default branch of designated critical repositories must have
+      branch protection enabled.
+    remediation: >-
+      Enable branch protection (or a ruleset) on the default branch:
+      Settings -> Branches -> Add branch protection rule. Require pull
+      request reviews and status checks before merging.
+    sql: |
+      SELECT repo, name AS branch, protected
+      FROM github.repos.branches
+      WHERE owner = '{{org}}'
+        AND repo IN ({{critical_repos}})
+        AND name IN ('main', 'master')
+        AND protected = 0
+    pass_when: no_rows
+
+  - id: GH-002
+    title: Default branch is main
+    description: >-
+      Repositories should use 'main' as the default branch for consistency
+      with org tooling and branch protection rulesets.
+    remediation: >-
+      Rename the default branch: Settings -> General -> Default branch.
+      GitHub retargets open PRs automatically.
+    sql: |
+      SELECT name, default_branch
+      FROM github.repos.repos
+      WHERE org = '{{org}}'
+        AND archived = 0
+        AND default_branch <> 'main'
+    pass_when: no_rows
+
+  - id: GH-003
+    title: Repos have a description
+    description: >-
+      Public repositories must carry a description so consumers can
+      identify supported projects.
+    remediation: >-
+      Add a one-line description in Settings -> General, or via
+      'gh repo edit <repo> --description'.
+    sql: |
+      SELECT name, visibility
+      FROM github.repos.repos
+      WHERE org = '{{org}}'
+        AND archived = 0
+        AND coalesce(description, '') = ''
+    pass_when: no_rows
+
+  - id: GH-004
+    title: Public repos declare a license
+    description: >-
+      Public, non-archived repositories must declare a license; unlicensed
+      public code is a legal risk for downstream users.
+    remediation: >-
+      Add a LICENSE file (Add file -> Create new file -> name it LICENSE
+      and pick a template), or archive the repo if it is not maintained.
+    sql: |
+      SELECT name, visibility
+      FROM github.repos.repos
+      WHERE org = '{{org}}'
+        AND archived = 0
+        AND visibility = 'public'
+        AND license IS NULL
+    pass_when: no_rows
+
+  - id: GH-005
+    title: No stale active repos
+    description: >-
+      Repositories not updated in 12 months should be archived so they are
+      read-only and clearly unmaintained.
+    remediation: >-
+      Archive the repository: Settings -> General -> Archive this
+      repository. Archiving is reversible.
+    sql: |
+      SELECT name, updated_at
+      FROM github.repos.repos
+      WHERE org = '{{org}}'
+        AND archived = 0
+        AND updated_at < datetime('now', '-12 months')
+    pass_when: no_rows
+
+  - id: GH-006
+    title: Repository inventory captured
+    description: >-
+      Evidence control: a point-in-time inventory of all organization
+      repositories with visibility and freshness, for the audit record.
+      Doubles as the run's canary: provider errors (e.g. API rate limits)
+      surface as empty result sets, which would silently pass no_rows
+      controls - but they fail this one, flagging the whole run.
+    sql: |
+      SELECT name, visibility, default_branch, archived, updated_at
+      FROM github.repos.repos
+      WHERE org = '{{org}}'
+    pass_when: rows

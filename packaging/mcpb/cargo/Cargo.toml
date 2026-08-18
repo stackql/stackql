@@ -1,0 +1,52 @@
+[workspace]
+members = ["auditron", "stackql-agent"]
+resolver = "3"
+
+[package]
+name = "stackql-mcp"
+version = "0.1.1"
+edition = "2021"
+# Effective MSRV is set by rmcp 1.x (let-chains): 1.88.
+rust-version = "1.88"
+description = "Embedded StackQL MCP server for Rust agentic apps - cloud queries and provisioning over SQL, served over MCP"
+license = "MIT"
+repository = "https://github.com/stackql/stackql-mcp-rs"
+documentation = "https://docs.rs/stackql-mcp"
+readme = "README.md"
+keywords = ["mcp", "stackql", "sql", "cloud", "agents"]
+categories = ["api-bindings", "development-tools"]
+exclude = [".github/", "CLAUDE.md", "auditron/", "controls/", "pr.md"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = ["sidecar"]
+# Download the platform .mcpb bundle at first run, verify it against the
+# sha256 pins baked into the crate, and cache it under ~/.stackql.
+sidecar = ["dep:ureq"]
+# Caller embeds the .mcpb with include_bytes! and the crate extracts it on
+# first run - no network at runtime.
+vendored = []
+
+[dependencies]
+rmcp = { version = "1.7", default-features = false, features = ["client", "transport-async-rw"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tokio = { version = "1", features = ["process", "io-util", "rt"] }
+ureq = { version = "3", optional = true }
+zip = { version = "8", default-features = false, features = ["deflate"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+
+[[example]]
+name = "minimal"
+
+[[example]]
+name = "launcher"
+
+[[example]]
+name = "fetch_bundle"
+required-features = ["sidecar"]

@@ -1,0 +1,25 @@
+[package]
+name = "stackql-agent"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+publish = false
+description = "Rust-native agent over your cloud estate: an embedded StackQL MCP server wired into a rig agent. One backend, three personas (platform engineering, SRE, audit)."
+license = "MIT"
+
+[features]
+default = []
+# Single-binary build: embed the .mcpb at compile time via
+# STACKQL_MCP_BUNDLE_FILE (see stackql_mcp::fetch_bundle).
+vendored = ["stackql-mcp/vendored"]
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+futures = "0.3"
+# rig-core's lib is `rig_core`; rename to `rig` to match rig's own docs/examples.
+rig = { package = "rig-core", version = "0.38", features = ["rmcp"] }
+rmcp = { version = "1.7", default-features = false, features = ["client"] }
+serde_json = "1"
+stackql-mcp = { path = ".." }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-std", "io-util"] }
