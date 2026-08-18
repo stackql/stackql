@@ -9,8 +9,10 @@
 # The six embedded SDK wrappers (cargo, go, dotnet, gleam, kotlin, swift) are
 # validated here on every packaging PR (against the latest release, smoke
 # tests fed the freshly built bundle via STACKQL_MCP_BUNDLE) and, on
-# dispatch, validated with real downloads through releases.stackql.io and
-# then published from repo secrets (see the sdk / *-publish jobs).
+# dispatch, validated with real downloads through releases.stackql.io.
+# Only the published tier (cargo, go, dotnet) then publishes from repo
+# secrets (see the sdk / *-publish jobs); gleam, kotlin and swift are the
+# preview tier: in tree and CI-validated, not published.
 # The MCP Registry entry is published LAST, via the separate
 # mcp-registry-publish workflow: the registry validates that the npm/PyPI/OCI
 # packages already exist at the exact version, so it cannot run from here.
@@ -261,7 +263,6 @@ jobs:
           - { vector: dotnet, runner: windows-latest, target: windows-x64,      py: python }
           - { vector: gleam,  runner: ubuntu-latest,  target: linux-x64,        py: python3 }
           - { vector: kotlin, runner: ubuntu-latest,  target: linux-x64,        py: python3 }
-          - { vector: kotlin, runner: windows-latest, target: windows-x64,      py: python }
           - { vector: swift,  runner: macos-latest,   target: darwin-universal, py: python3 }
     runs-on: ${{ matrix.runner }}
     env:
@@ -330,6 +331,8 @@ jobs:
         run: make ${{ matrix.vector }}-smoke VERSION="$VERSION" PYTHON=${{ matrix.py }}
 
   # --- SDK publish (dispatch only, after every sdk slice is green) ----------
+  # Published tier only: cargo, go, dotnet. (gleam/kotlin/swift have
+  # 'make <vector>-publish' targets for an out-of-band publish, no CI job.)
   # Idempotent where the registry allows (skip if the version already exists);
   # each prints the resulting coordinate. Ordering vs the registry entry is
   # unchanged: mcp-registry-publish still runs last (it does not reference
@@ -362,40 +365,6 @@ jobs:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: make dotnet-publish VERSION=${{ needs.version.outputs.version }}
 
-  gleam-publish:
-    name: publish gleam (hex.pm)
-    if: needs.version.outputs.is_publish == 'true'
-    needs: [version, sdk]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: erlef/setup-beam@v1
-        with:
-          otp-version: '27'
-          gleam-version: '1.17.0'
-      - env:
-          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
-        run: make gleam-publish VERSION=${{ needs.version.outputs.version }}
-
-  kotlin-publish:
-    name: publish kotlin (Maven Central)
-    if: needs.version.outputs.is_publish == 'true'
-    needs: [version, sdk]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
-      - env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
-        run: make kotlin-publish VERSION=${{ needs.version.outputs.version }}
-
   go-publish:
     name: publish go (mirror stackql-mcp-go, tag)
     if: needs.version.outputs.is_publish == 'true'
@@ -406,14 +375,3 @@ jobs:
       - env:
           SDK_MIRROR_TOKEN: ${{ secrets.SDK_MIRROR_TOKEN }}
         run: make go-publish VERSION=${{ needs.version.outputs.version }}
-
-  swift-publish:
-    name: publish swift (mirror stackql-mcp-swift, tag)
-    if: needs.version.outputs.is_publish == 'true'
-    needs: [version, sdk]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - env:
-          SDK_MIRROR_TOKEN: ${{ secrets.SDK_MIRROR_TOKEN }}
-        run: make swift-publish VERSION=${{ needs.version.outputs.version }}

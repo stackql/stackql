@@ -299,7 +299,10 @@ clean-bin:
 #   make <vector>-build VERSION=X.Y.Z     lint + unit tests + package/build (what CI runs)
 #   make <vector>-smoke VERSION=X.Y.Z     scripts/smoke-test.py --cmd against the launcher
 #   make <vector>-publish VERSION=X.Y.Z   publish at exactly VERSION (idempotent where the
-#                                         registry allows); credentials from the environment:
+#                                         registry allows). Published tier (CI dispatch): cargo,
+#                                         go, dotnet. Preview tier (gleam, kotlin, swift): targets
+#                                         exist for an out-of-band publish only. Credentials from
+#                                         the environment:
 #                                           cargo   CARGO_REGISTRY_TOKEN
 #                                           dotnet  NUGET_API_KEY
 #                                           gleam   HEX_API_KEY

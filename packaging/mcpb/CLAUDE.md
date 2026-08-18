@@ -22,9 +22,11 @@ Around the `.mcpb` bundles this directory owns nine thin, version-locked wrapper
 | cargo | `cargo/` | crates.io `stackql-mcp` | CI dispatch / `make cargo-publish` |
 | go | `go/` | module `github.com/stackql/stackql-mcp-go` (mirror repo, tag `v<version>`) | CI dispatch / `make go-publish` |
 | dotnet | `dotnet/` | NuGet `StackQL.Mcp`, `StackQL.Mcp.AgentFramework` | CI dispatch / `make dotnet-publish` |
-| gleam | `gleam/` | hex `stackql_mcp` | CI dispatch / `make gleam-publish` |
-| kotlin | `kotlin/` | Maven Central `io.stackql:stackql-mcp` | CI dispatch / `make kotlin-publish` |
-| swift | `swift/` | SwiftPM `StackQLMCP` (mirror repo `stackql/stackql-mcp-swift`, tag `v<version>`) | CI dispatch / `make swift-publish` |
+| gleam | `gleam/` | hex `stackql_mcp` | PREVIEW: CI-validated, not published (`make gleam-publish` exists, no CI job) |
+| kotlin | `kotlin/` | Maven Central `io.stackql:stackql-mcp` | PREVIEW: CI-validated, not published (`make kotlin-publish` exists, no CI job) |
+| swift | `swift/` | SwiftPM `StackQLMCP` (mirror repo `stackql/stackql-mcp-swift`, tag `v<version>`) | PREVIEW: CI-validated, not published (`make swift-publish` exists, no CI job) |
+
+Two tiers: the published tier (npm, pypi, oci, cargo, go, dotnet) is the release train; the preview tier (gleam, kotlin, swift) is in tree on the same contract and renderer and is validated by the same `sdk` CI matrix, but is not published and carries no registry commitment. Promoting a preview vector = adding its publish job to `mcp-packaging.yml`, its secrets, and its row in the release doc.
 
 Plus the Official MCP Registry entry (`registry/`), published last, which lists only the npm/pypi/oci/mcpb packages (the registry has no package types for the SDKs - do not add them to `server.json`).
 
@@ -42,7 +44,7 @@ Ordering rules (one-way, see `docs/stackql release process.md` step 7):
 
 1. Bundles first: `.mcpb` + `.sha256` on the GitHub release (`mcp-packaging` dispatch, or `make publish`).
 2. Only then render (`make manifests VERSION=`) - the renderer fetches the canonical `.sha256` from the release; never pin locally built bundle hashes.
-3. Then publish wrappers in any order (npm, pypi manual; oci + the six SDKs from the `mcp-packaging` dispatch, which validates every SDK slice with a real proxy download before any publish job runs).
+3. Then publish wrappers in any order (npm, pypi manual; oci + the published-tier SDKs cargo/go/dotnet from the `mcp-packaging` dispatch, which validates every SDK slice - preview tier included - with a real proxy download before any publish job runs).
 4. The registry entry strictly last (`mcp-registry-publish`).
 5. Release assets are immutable once a wrapper has pinned them; if a bundle must be rebuilt, cut a new patch release.
 

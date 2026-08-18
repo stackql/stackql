@@ -2,6 +2,10 @@
 
 The Kotlin/JVM member of the StackQL embedded-MCP family: `stackql-mcp` acquires the `stackql` binary (`Acquire`: overrides, local bundle, shared cache, pin-verified download via the JDK `HttpClient`), spawns it over stdio (Windows quoting fix: `jdk.lang.Process.allowAmbiguousCommands=false`) and returns a connected MCP Kotlin SDK client. Gradle wrapper 8.14, Kotlin 2.3, JDK 17 toolchain. `gradle.properties` `version=` is the stamp (`allprojects.version` reads it). Publishing uses `com.vanniktech.maven.publish` (`publishToMavenCentral`, signed when `signingInMemoryKey` is present). The `launcher` module (application plugin, not published) is the conformance launcher.
 
+## Tier: preview
+
+This vector is in tree, on the shared contract and renderer, and CI-validated by the `sdk` matrix on every packaging PR and dispatch - but it is NOT published and is not part of the release train (the published tier is cargo, go, dotnet). `make kotlin-publish` exists for a deliberate out-of-band publish; promoting this vector means adding a publish job to `mcp-packaging.yml`, its secrets, and its row in `docs/stackql release process.md`.
+
 ## The contract (do not deviate)
 
 Owned by [packaging/mcpb](../CLAUDE.md) in stackql/stackql - read "The nine wrapper vectors and the ordering rules" there first. In short:

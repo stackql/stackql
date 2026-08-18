@@ -2,6 +2,10 @@
 
 The Gleam / BEAM member of the StackQL embedded-MCP family: `stackql_mcp` acquires the `stackql` binary (`stackql_mcp/acquire`: overrides, shared cache, httpc download + sha256 verify + entry-point extraction via the Erlang FFI in `src/stackql_mcp_ffi.erl`), spawns it through `mcp_client`, and exposes both a simple `start`/`call_tool`/`stop` API and an OTP `child_spec` for the caller's supervision tree. Erlang target only, OTP 27+ (the FFI uses the `json` module). `resolve_command` stays pure (names the binary, no acquisition) so the unit suite is offline; `start` acquires.
 
+## Tier: preview
+
+This vector is in tree, on the shared contract and renderer, and CI-validated by the `sdk` matrix on every packaging PR and dispatch - but it is NOT published and is not part of the release train (the published tier is cargo, go, dotnet). `make gleam-publish` exists for a deliberate out-of-band publish; promoting this vector means adding a publish job to `mcp-packaging.yml`, its secrets, and its row in `docs/stackql release process.md`.
+
 ## The contract (do not deviate)
 
 Owned by [packaging/mcpb](../CLAUDE.md) in stackql/stackql - read "The nine wrapper vectors and the ordering rules" there first. In short:
