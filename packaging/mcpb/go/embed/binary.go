@@ -15,7 +15,7 @@ type Binary struct {
 	// Data is the raw server binary for the target platform.
 	Data []byte
 	// Version is the stackql release version, without the leading v
-	// (for example "0.10.500"). It namespaces the shared cache.
+	// (for example "0.10.601"). It namespaces the shared cache.
 	Version string
 	// PlatformKey is one of the packaging platform keys
 	// (linux-x64, linux-arm64, windows-x64, darwin-universal).

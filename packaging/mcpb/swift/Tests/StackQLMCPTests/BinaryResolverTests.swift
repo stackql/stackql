@@ -13,9 +13,9 @@ final class BinaryResolverTests: XCTestCase {
     func testCachedBinaryPathLayout() throws {
         let cache = try tempDir()
         let resolver = try BinaryResolver(
-            platform: .darwinUniversal, version: "0.10.500", cacheDir: cache)
+            platform: .darwinUniversal, version: "1.2.3", cacheDir: cache)
         let expected = cache
-            .appendingPathComponent("0.10.500")
+            .appendingPathComponent("1.2.3")
             .appendingPathComponent("darwin-universal")
             .appendingPathComponent("stackql")
         XCTAssertEqual(resolver.cachedBinaryPath.path, expected.path)
@@ -73,7 +73,7 @@ final class BinaryResolverTests: XCTestCase {
 
         let resolver = try BinaryResolver(
             platform: .darwinUniversal,
-            version: "0.10.500",
+            version: "1.2.3",
             cacheDir: try tempDir(),
             binaryOverride: exe.path
         )
@@ -83,7 +83,7 @@ final class BinaryResolverTests: XCTestCase {
     func testLocateOfflineReturnsNilWhenNothingPresent() throws {
         let resolver = try BinaryResolver(
             platform: .darwinUniversal,
-            version: "0.10.500",
+            version: "1.2.3",
             cacheDir: try tempDir(),
             searchBundles: [],
             binaryOverride: ""

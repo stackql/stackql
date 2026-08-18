@@ -48,8 +48,8 @@ mod tests {
 
     #[test]
     fn cache_dir_matches_the_shared_layout() {
-        let dir = bundle_cache_dir("0.10.500", "linux-x64").unwrap();
-        let suffix: PathBuf = [".stackql", "mcp-server-bin", "0.10.500", "linux-x64"]
+        let dir = bundle_cache_dir("1.2.3", "linux-x64").unwrap();
+        let suffix: PathBuf = [".stackql", "mcp-server-bin", "1.2.3", "linux-x64"]
             .iter()
             .collect();
         assert!(

@@ -56,11 +56,11 @@ public class PinsAndPlatformTests
     [Fact]
     public void Platform_BinCacheDir_MatchesSharedFamilyLayout()
     {
-        var dir = Platform.BinCacheDir("0.10.500", "windows-x64");
+        var dir = Platform.BinCacheDir("1.2.3", "windows-x64");
 
         // ~/.stackql/mcp-server-bin/<version>/<platform-key>/
         var normalized = dir.Replace('\\', '/');
-        Assert.Contains(".stackql/mcp-server-bin/0.10.500/windows-x64", normalized);
+        Assert.Contains(".stackql/mcp-server-bin/1.2.3/windows-x64", normalized);
     }
 
     [Fact]
