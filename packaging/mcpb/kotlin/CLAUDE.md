@@ -1,88 +1,35 @@
-# CLAUDE.md - stackql-mcp-kotlin (embedded StackQL MCP server for Kotlin/JVM)
+# CLAUDE.md - packaging/mcpb/kotlin (Maven Central `io.stackql:stackql-mcp`)
 
-## What this project is
+The Kotlin/JVM member of the StackQL embedded-MCP family: `stackql-mcp` acquires the `stackql` binary (`Acquire`: overrides, local bundle, shared cache, pin-verified download via the JDK `HttpClient`), spawns it over stdio (Windows quoting fix: `jdk.lang.Process.allowAmbiguousCommands=false`) and returns a connected MCP Kotlin SDK client. Gradle wrapper 8.14, Kotlin 2.3, JDK 17 toolchain. `gradle.properties` `version=` is the stamp (`allprojects.version` reads it). Publishing uses `com.vanniktech.maven.publish` (`publishToMavenCentral`, signed when `signingInMemoryKey` is present). The `launcher` module (application plugin, not published) is the conformance launcher.
 
-The JVM member of the StackQL embedded-MCP family: a Kotlin library plus a
-build-pipeline product demo. Target repo: `stackql/stackql-mcp-kotlin`,
-published to Maven Central as `io.stackql:stackql-mcp` (coordinate
-availability and the io.stackql namespace verification on Central are
-research task one; Central publishing is manual/2FA-ish via the portal,
-consistent with the npm/PyPI stance).
+## The contract (do not deviate)
 
-Layers:
+Owned by [packaging/mcpb](../CLAUDE.md) in stackql/stackql - read "The nine wrapper vectors and the ordering rules" there first. In short:
 
-1. Library `stackql-mcp`: locate-or-install the binary (classpath/JAR
-   resource first if vendored, then shared cache, then download with sha
-   verification), spawn over stdio, return a connected client via the
-   official MCP Kotlin SDK (`modelcontextprotocol/kotlin-sdk`)
-2. Demo: see below - a Gradle plugin, because the JVM community's agentic
-   surface area is the BUILD, and nobody is doing agentic checks there yet
+- Package version == stackql release version; stamped by `scripts/render-platforms.sh` (`make kotlin-manifest VERSION=X.Y.Z` from `packaging/mcpb`), never hand-edited.
+- Pins are data: `platforms.json` `{version, baseUrl, platforms{<key>:{bundle, sha256}}}` rendered from the published `.mcpb.sha256` release assets. `stackql-mcp/src/main/resources/platforms.json` on the classpath, parsed lazily by `Pins`. No hand-written pin table anywhere. The rendered files are gitignored - render before building.
+- Runtime download from `baseUrl` (`https://releases.stackql.io/stackql/<version>`) with `User-Agent: stackql-mcp-server-kotlin/<version>`. No GitHub API calls, no `latest`, no version override.
+- Shared cache `~/.stackql/mcp-server-bin/<version>/<platform-key>/`; keys `linux-x64 | linux-arm64 | windows-x64 | darwin-universal`.
+- Overrides `STACKQL_MCP_BIN` and `STACKQL_MCP_BUNDLE` (local `.mcpb`, no pin check); nothing else.
+- Canonical argv `mcp --mcp.server.type=stdio --approot <home>/.stackql --mcp.config {"server":{"mode":"<mode>","audit":{"disabled":true}}} [--auth=<json>]`; default mode `read_only`.
+- Launcher for `scripts/smoke-test.py --cmd`: `./gradlew -q :launcher:installDist` then `launcher/build/install/stackql-mcp-launch/bin/stackql-mcp-launch` (or `java -cp .../lib/* io.stackql.mcp.launcher.MainKt`); `ConformanceTest` is the in-repo port (`-PrunIntegration=true`).
 
-## The embedding contract (do not deviate)
+## Build, test, publish
 
-Source of truth: stackql/stackql-mcpb-packaging (the packaging repo).
+```
+cd packaging/mcpb
+make kotlin-manifest VERSION=X.Y.Z   # render pins + version stamp (after the .mcpb assets are on the release)
+make kotlin-build    VERSION=X.Y.Z   # lint + unit tests + package
+make kotlin-smoke    VERSION=X.Y.Z   # smoke-test.py --cmd against the launcher
+make kotlin-publish  VERSION=X.Y.Z   # `./gradlew :stackql-mcp:publishToMavenCentral` (ORG_GRADLE_PROJECT_mavenCentral*/signingInMemory* env); skips if the version is on Maven Central
+```
 
-- Per-version sha256 pins from the release .sha256 assets (consolidated
-  platforms.json release asset planned - prefer once present); pins baked
-  into the library's resources at render time
-- Canonical launch args (cwd-independence mandatory):
-  `mcp --mcp.server.type=stdio --approot <home>/.stackql
-   --mcp.config {"server": {"mode": "<mode>", "audit": {"disabled": true}}}`
-- Default `read_only`; escalation is explicit opt-in
-- Shared cache: `~/.stackql/mcp-server-bin/<version>/<platform-key>/`
-  (same as the npm/pypi wrappers - check before downloading)
-- Platform keys: linux-x64, linux-arm64, windows-x64, darwin-universal
-- Env overrides honored: STACKQL_MCP_BIN, STACKQL_MCP_BUNDLE
-- Conformance: packaging repo scripts/smoke-test.py --cmd passes against
-  the library's launcher main; mirror as JUnit integration tests
+CI: the `sdk` matrix and `kotlin-publish` job in `.github/workflows/mcp-packaging.yml`.
 
-## Demo: `costgate` - the cloud cost gate for CI/CD pipelines
+## Out of scope here
 
-Business use case: platform teams want deploys blocked (or flagged) when the
-infrastructure being shipped will blow the budget - BEFORE it exists.
-Today's answer is post-hoc billing surprise; costgate makes cost a build
-check, like tests or lint.
+Demo apps (costgate, costgate-cli, costgate-gradle, examples/) live in stackql-labs and depend on the published package. No new features beyond the contract; parity items go on the backlog as separate PRs.
 
-Shape: a Gradle plugin + standalone CLI (same core):
+## Writing style
 
-1. `gradle costgate` (or `costgate check --budget 500/month`): reads a
-   declared resource intent file (start simple: costgate.yaml listing
-   resource types/sizes/regions; terraform-plan ingestion is a v2 research
-   item, not v1 scope)
-2. The agent uses read_only stackql tools to price the intent against live
-   provider pricing data and current account context (existing commitments,
-   region factors)
-3. Emits a cost report (console + JUnit-style XML so CI UIs render it) and
-   exits non-zero over budget - the gate
-4. `--explain` mode: the agent narrates the top cost drivers and cheaper
-   alternatives (different instance family/region), with the SQL shown
-5. Demo fixture: pricing queries need no account credentials for some
-   providers - verify which pricing surfaces are anonymous; otherwise use a
-   sandbox account and the github null_auth fixture for the no-creds CI test
-
-This also bridges to the GitHub Action story: costgate in a workflow is the
-JVM-native sibling of setup-stackql-mcp.
-
-## Build and test
-
-- Kotlin 2.x, Gradle (version catalog), JDK 17 baseline; deps:
-  modelcontextprotocol/kotlin-sdk + kotlinx-serialization; keep it lean
-- Tests: JUnit5 - unit (pins/extract/cache/args), integration (spawn +
-  initialize + tools/list via the github null_auth fixture); CI matrix
-  linux+macos+windows on GitHub Actions
-- Publishing: Maven Central via the central portal; Gradle plugin portal
-  for the plugin (separate listing - another uncrowded directory)
-
-## Milestones
-
-1. Library + conformance tests green on 3 OSes; Central namespace verified
-2. costgate CLI + Gradle plugin with a worked one-provider demo, recorded
-3. Publish library + plugin, announce (Kotlin Weekly, r/Kotlin, a JVM
-   meetup talk: "your build now knows what it costs")
-
-## Conventions
-
-- Plain hyphens only (no em dashes); ASCII arrows `->`
-- Matter-of-fact tone; no hyperbole
-- Stderr for diagnostics, stdout belongs to protocols
-- MIT license; mcp-name reference: io.github.stackql/stackql-mcp
+Plain hyphens, ASCII arrows (`->`), QWERTY characters only, matter-of-fact tone, no stacked headings.

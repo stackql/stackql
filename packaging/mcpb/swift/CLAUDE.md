@@ -1,92 +1,35 @@
-# CLAUDE.md - stackql-mcp-swift (embedded StackQL MCP server for Swift/macOS)
+# CLAUDE.md - packaging/mcpb/swift (SwiftPM `StackQLMCP`)
 
-## What this project is
+The Swift/macOS member of the StackQL embedded-MCP family: `StackQLMCP` locates the `stackql` binary (override, a copy bundled inside the host `.app` - the shipping path, since the notarised binary keeps its Developer ID signature there - the shared cache, a local bundle, or a pin-verified download; `Options.allowDownload = false` for shipping apps), spawns it over stdio and returns a connected MCP Swift SDK client. Swift 6.1 / macOS 13 (set by the SDK). The source of truth is here; `scripts/publish-mirror.sh` pushes the rendered tree to `stackql/stackql-mcp-swift` and tags `v<version>` (SwiftPM needs `Package.swift` at the repo root). `Sources/StackQLMCP/Version.swift` (`StackQLMCPVersion.current`) is the stamp. No Swift toolchain runs on Windows/Linux CI slices - the swift slice is macOS only.
 
-The Swift member of the StackQL embedded-MCP family, with a uniquely strong
-macOS story: the stackql darwin binary is Developer ID signed and Apple
-NOTARISED (verified end to end June 2026), which means a signed Mac app can
-bundle it inside its own .app and still pass notarisation - something the
-Node/Python MCP server crowd structurally cannot do. Target repo:
-`stackql/stackql-mcp-swift` (SwiftPM package + demo app).
+## The contract (do not deviate)
 
-Layers:
+Owned by [packaging/mcpb](../CLAUDE.md) in stackql/stackql - read "The nine wrapper vectors and the ordering rules" there first. In short:
 
-1. SwiftPM package `StackQLMCP`: locate-or-install the binary (app bundle
-   resource first, then shared cache, then download with sha verification),
-   spawn over stdio, return a connected client via the official MCP Swift
-   SDK (`modelcontextprotocol/swift-sdk`)
-2. Demo app (separate target in the repo): see below
+- Package version == stackql release version; stamped by `scripts/render-platforms.sh` (`make swift-manifest VERSION=X.Y.Z` from `packaging/mcpb`), never hand-edited.
+- Pins are data: `platforms.json` `{version, baseUrl, platforms{<key>:{bundle, sha256}}}` rendered from the published `.mcpb.sha256` release assets. `Sources/StackQLMCP/Resources/platforms.json` is a package resource read via `Bundle.module` by `Pins`. No hand-written pin table anywhere. The rendered files are gitignored - render before building.
+- Runtime download from `baseUrl` (`https://releases.stackql.io/stackql/<version>`) with `User-Agent: stackql-mcp-server-swift/<version>`. No GitHub API calls, no `latest`, no version override.
+- Shared cache `~/.stackql/mcp-server-bin/<version>/<platform-key>/`; keys `linux-x64 | linux-arm64 | windows-x64 | darwin-universal`.
+- Overrides `STACKQL_MCP_BIN` and `STACKQL_MCP_BUNDLE` (local `.mcpb`, no pin check); nothing else.
+- Canonical argv `mcp --mcp.server.type=stdio --approot <home>/.stackql --mcp.config {"server":{"mode":"<mode>","audit":{"disabled":true}}} [--auth=<json>]`; default mode `read_only`.
+- Launcher for `scripts/smoke-test.py --cmd`: `swift run --package-path swift stackql-mcp-launch` (`Sources/stackql-mcp-launch/main.swift`); `Tests/StackQLMCPTests/ConformanceTests.swift` is the in-package port (`STACKQL_MCP_INTEGRATION=1`).
 
-## The embedding contract (do not deviate)
+## Build, test, publish
 
-Source of truth: stackql/stackql-mcpb-packaging (the packaging repo).
+```
+cd packaging/mcpb
+make swift-manifest VERSION=X.Y.Z   # render pins + version stamp (after the .mcpb assets are on the release)
+make swift-build    VERSION=X.Y.Z   # lint + unit tests + package
+make swift-smoke    VERSION=X.Y.Z   # smoke-test.py --cmd against the launcher
+make swift-publish  VERSION=X.Y.Z   # mirror push + tag via `scripts/publish-mirror.sh` (SDK_MIRROR_TOKEN or local git auth); idempotent, immutable
+```
 
-- darwin-universal bundle covers arm64 + x86_64 in one binary
-- Per-version sha256 pins from the release .sha256 assets (consolidated
-  platforms.json release asset planned - prefer once present)
-- Canonical launch args (cwd-independence is mandatory - macOS hosts often
-  launch with cwd `/`, which is read-only; this exact failure was found and
-  fixed in Claude Desktop June 2026):
-  `mcp --mcp.server.type=stdio --approot <home>/.stackql
-   --mcp.config {"server": {"mode": "<mode>", "audit": {"disabled": true}}}`
-- Default `read_only`; escalation is explicit opt-in
-- Shared cache: `~/.stackql/mcp-server-bin/<version>/darwin-universal/`
-- Conformance: packaging repo scripts/smoke-test.py --cmd must pass against
-  the package's launcher; mirror in XCTest
+CI: the `sdk` matrix and `swift-publish` job in `.github/workflows/mcp-packaging.yml`.
 
-## macOS specifics that ARE the value of this repo
+## Out of scope here
 
-- Bundling: ship the binary at Contents/Resources/ (or Helpers/) of the
-  .app; document codesign --deep implications and that the embedded
-  binary's own Developer ID signature + notarised cdhash remain valid -
-  include the verification transcript commands (codesign --verify, spctl)
-- Sandbox reality check (research task): App Sandbox likely blocks
-  spawning + outbound network as needed -> the demo app ships
-  non-sandboxed/Developer ID distributed (document why; App Store is out of
-  scope for v1)
-- Quarantine: resources inside a notarised app are not quarantined; the
-  download-at-runtime path however must strip/handle com.apple.quarantine -
-  prefer the bundled path for shipping apps
+Demo apps (CloudLens, CloudLensCore) live in stackql-labs and depend on the published package. No new features beyond the contract; parity items go on the backlog as separate PRs.
 
-## Demo app: `CloudLens` - a menu bar cloud sentinel
+## Writing style
 
-Business use case: the always-on glanceable answer to "is anything in our
-cloud burning money or newly exposed?" - for the engineering lead who lives
-on a Mac and will not open four consoles.
-
-- Menu bar (MenuBarExtra, SwiftUI) app embedding the notarised binary
-- On a schedule (and on demand), an agent runs a small read_only check
-  suite: spend pulse (top movers), exposure pulse (public buckets, open
-  security groups), and a "new since yesterday" diff
-- Surfaces: menu bar icon state (calm/attention), a popover with the three
-  pulses, and native notifications for new findings ("S3 bucket made public
-  12 minutes ago") - notification includes the SQL behind the finding
-- Demo fixture: github provider in null_auth mode (org posture pulse) so
-  the app demos with zero cloud creds; AWS/Azure/GCP via Keychain-stored
-  credentials as the real configuration
-- Agent calls via URLSession to the Anthropic API; key in Keychain
-
-## Build and test
-
-- Swift 6.1+/Xcode 16.3+ (the MCP swift-sdk is a tools-version 6.1 package,
-  so 6.1 is the real floor), macOS 13+; SwiftPM for the package, Xcode
-  project for the app; deps: modelcontextprotocol/swift-sdk only
-- XCTest: locate/extract/cache unit tests + spawn/handshake/tools-list
-  integration against the github fixture; CI on macos-latest runners
-- Release engineering doc: signing + notarising the demo app WITH the
-  embedded binary (this doc is half the reason the repo exists)
-
-## Milestones
-
-1. SwiftPM package + conformance tests green; bundling doc with verified
-   codesign/spctl transcripts
-2. CloudLens demo with github pulse + notifications; screen recording
-3. Tag v0.1.0, announce (Swift forums, iOS/macOS dev Slack communities, a
-   CocoaHeads-style talk: "a notarised agent in your menu bar")
-
-## Conventions
-
-- Plain hyphens only (no em dashes); ASCII arrows `->`
-- Matter-of-fact tone; no hyperbole
-- Stderr/os_log for diagnostics, stdout belongs to protocols
-- MIT license; mcp-name reference: io.github.stackql/stackql-mcp
+Plain hyphens, ASCII arrows (`->`), QWERTY characters only, matter-of-fact tone, no stacked headings.
