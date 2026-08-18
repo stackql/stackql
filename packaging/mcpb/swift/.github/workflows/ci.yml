@@ -1,0 +1,64 @@
+name: ci
+
+# Work happens on long-lived feature branches (feature/**), which may stack on
+# each other rather than always targeting main. CI runs on every PR, on pushes
+# to main (the merge) and to feature branches (so stacked branches are
+# validated even when their PR base is another feature branch), and on release
+# tags. The package targets macOS and its only dependency is the MCP Swift SDK,
+# so every job runs on macOS runners.
+on:
+  pull_request:
+  push:
+    branches: [main, 'feature/**']
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      # The MCP Swift SDK is a swift-tools-version 6.1 package, so it needs
+      # Swift 6.1+ (Xcode 16.3+). Xcode 16.0 fails to compile it. 16.4 is the
+      # macos-15 default and ships Swift 6.1.2; select it explicitly so the
+      # toolchain is deterministic.
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build
+        run: swift build -v
+
+      # Build the CloudLens demo app executable explicitly so a GUI-target
+      # break is attributed clearly (swift build above already covers it).
+      - name: Build CloudLens demo app
+        run: swift build -v --product CloudLens
+
+      # Unit suite: offline. Covers the package (args/platform/pins/cache/sha/
+      # bundle-extraction) and CloudLensCore (pulse parsing, finding diff,
+      # agent prompt/response handling). The conformance tests skip themselves
+      # unless STACKQL_MCP_INTEGRATION is set, so they are inert here.
+      - name: Unit tests
+        run: swift test -v
+
+      # Integration/conformance: downloads the release bundle for
+      # darwin-universal, verifies the published sha256 pin, spawns the server
+      # over stdio, and runs the sequence the packaging repo's smoke-test.py
+      # defines (initialize -> tools/list -> pull_provider github (null_auth)
+      # -> list_services), plus the read_only mutation-refusal check.
+      - name: Conformance tests (github null_auth fixture)
+        env:
+          STACKQL_MCP_INTEGRATION: '1'
+        run: swift test -v --filter ConformanceTests
