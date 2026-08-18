@@ -286,3 +286,115 @@ clean:
 clean-bin:
 	@rm -f $(addprefix $(BIN_DIR)/,$(ASSETS))
 	@echo "cleaned downloaded artefacts from $(BIN_DIR)/"
+
+# --- SDK wrappers (cargo, go, dotnet, gleam, kotlin, swift) --------------------
+# Six more wrappers on the same contract as npm/pypi: version == stackql
+# release, pins from platforms.json rendered by scripts/render-platforms.sh
+# (AFTER the .mcpb assets are on the release), download through the proxy,
+# shared cache, STACKQL_MCP_BIN / STACKQL_MCP_BUNDLE, canonical argv, gated
+# by scripts/smoke-test.py --cmd against each vector's launcher.
+#
+#   make manifests VERSION=X.Y.Z          render platforms.json + version stamps for ALL vectors
+#   make <vector>-manifest VERSION=X.Y.Z  one vector (npm|pypi|cargo|go|dotnet|gleam|kotlin|swift)
+#   make <vector>-build VERSION=X.Y.Z     lint + unit tests + package/build (what CI runs)
+#   make <vector>-smoke VERSION=X.Y.Z     scripts/smoke-test.py --cmd against the launcher
+#   make <vector>-publish VERSION=X.Y.Z   publish at exactly VERSION (idempotent where the
+#                                         registry allows); credentials from the environment:
+#                                           cargo   CARGO_REGISTRY_TOKEN
+#                                           dotnet  NUGET_API_KEY
+#                                           gleam   HEX_API_KEY
+#                                           kotlin  ORG_GRADLE_PROJECT_mavenCentralUsername/Password,
+#                                                   ORG_GRADLE_PROJECT_signingInMemoryKey/KeyPassword
+#                                           go/swift SDK_MIRROR_TOKEN (or local git auth) - mirror push + tag
+SDK_VECTORS := cargo go dotnet gleam kotlin swift
+RENDER := bash scripts/render-platforms.sh
+PYTHON ?= python3
+SMOKE := $(PYTHON) scripts/smoke-test.py
+GRADLEW := $(if $(filter Windows_NT,$(OS)),gradlew.bat,./gradlew)
+KOTLIN_LAUNCH_CP := kotlin/launcher/build/install/stackql-mcp-launch/lib/*
+
+.PHONY: manifests $(addsuffix -manifest,$(SDK_VECTORS)) \
+        $(addsuffix -build,$(SDK_VECTORS)) $(addsuffix -smoke,$(SDK_VECTORS)) \
+        $(addsuffix -publish,$(SDK_VECTORS)) sdk-build sdk-smoke
+
+manifests: check-version
+	$(RENDER) --version $(VERSION) --vector all
+
+$(addsuffix -manifest,$(SDK_VECTORS)): %-manifest: check-version
+	$(RENDER) --version $(VERSION) --vector $*
+
+sdk-build: $(addsuffix -build,$(SDK_VECTORS))
+sdk-smoke: $(addsuffix -smoke,$(SDK_VECTORS))
+
+# cargo (crates.io: stackql-mcp)
+cargo-build: cargo-manifest
+	cd cargo && cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings \
+	  && cargo test && cargo package --allow-dirty --no-verify
+cargo-smoke: cargo-manifest
+	$(SMOKE) --cmd "cargo run -q --manifest-path cargo/Cargo.toml --example launcher --"
+cargo-publish: cargo-manifest
+	@if curl -fsSL -A "stackql-mcp-packaging" "https://crates.io/api/v1/crates/stackql-mcp/$(VERSION)" >/dev/null 2>&1; then \
+	  echo "crates.io already has stackql-mcp $(VERSION) - skipping"; \
+	else \
+	  cd cargo && cargo publish --allow-dirty && echo "published https://crates.io/crates/stackql-mcp/$(VERSION)"; \
+	fi
+
+# go (mirror: github.com/stackql/stackql-mcp-go, tag v<version>)
+go-build: go-manifest
+	cd go && test -z "$$(gofmt -l .)" && go vet ./... && go build ./... && go test -short ./...
+go-smoke: go-manifest
+	$(SMOKE) --cmd "go run -C go ./cmd/stackql-mcp-launch"
+go-publish: go-manifest
+	bash scripts/publish-mirror.sh --vector go --version $(VERSION)
+
+# dotnet (NuGet: StackQL.Mcp + StackQL.Mcp.AgentFramework)
+dotnet-build: dotnet-manifest
+	cd dotnet && dotnet restore && dotnet format StackQL.Mcp.sln --verify-no-changes --no-restore \
+	  && dotnet build StackQL.Mcp.sln -c Release --no-restore -p:ContinuousIntegrationBuild=true \
+	  && dotnet test StackQL.Mcp.sln -c Release --no-build \
+	  && rm -rf artifacts \
+	  && dotnet pack src/StackQL.Mcp/StackQL.Mcp.csproj -c Release --no-build -o artifacts \
+	  && dotnet pack src/StackQL.Mcp.AgentFramework/StackQL.Mcp.AgentFramework.csproj -c Release --no-build -o artifacts
+dotnet-smoke: dotnet-manifest
+	$(SMOKE) --cmd "dotnet run -c Release --project dotnet/samples/Launcher --"
+dotnet-publish: dotnet-build
+	@[ -n "$${NUGET_API_KEY:-}" ] || { echo "error: NUGET_API_KEY not set" >&2; exit 2; }
+	cd dotnet && dotnet nuget push "artifacts/*.nupkg" --api-key "$$NUGET_API_KEY" \
+	  --source https://api.nuget.org/v3/index.json --skip-duplicate
+	@echo "published https://www.nuget.org/packages/StackQL.Mcp/$(VERSION) and StackQL.Mcp.AgentFramework/$(VERSION)"
+
+# gleam (hex: stackql_mcp)
+gleam-build: gleam-manifest
+	cd gleam && gleam deps download && gleam format --check src test && gleam check && gleam test \
+	  && gleam export hex-tarball
+gleam-smoke: gleam-manifest
+	cd gleam && $(PYTHON) ../scripts/smoke-test.py --cmd "gleam run -m stackql_mcp/launcher --"
+gleam-publish: gleam-manifest
+	@[ -n "$${HEX_API_KEY:-}" ] || { echo "error: HEX_API_KEY not set" >&2; exit 2; }
+	@if curl -fsSL "https://hex.pm/api/packages/stackql_mcp/releases/$(VERSION)" >/dev/null 2>&1; then \
+	  echo "hex.pm already has stackql_mcp $(VERSION) - skipping"; \
+	else \
+	  cd gleam && gleam publish --yes && echo "published https://hex.pm/packages/stackql_mcp/$(VERSION)"; \
+	fi
+
+# kotlin (Maven Central: io.stackql:stackql-mcp)
+kotlin-build: kotlin-manifest
+	cd kotlin && $(GRADLEW) --no-daemon build :launcher:installDist
+kotlin-smoke: kotlin-manifest
+	cd kotlin && $(GRADLEW) --no-daemon -q :launcher:installDist
+	$(SMOKE) --cmd "java -cp $(KOTLIN_LAUNCH_CP) io.stackql.mcp.launcher.MainKt"
+kotlin-publish: kotlin-manifest
+	@if curl -fsSL "https://repo1.maven.org/maven2/io/stackql/stackql-mcp/$(VERSION)/stackql-mcp-$(VERSION).pom" >/dev/null 2>&1; then \
+	  echo "Maven Central already has io.stackql:stackql-mcp:$(VERSION) - skipping"; \
+	else \
+	  cd kotlin && $(GRADLEW) --no-daemon :stackql-mcp:publishToMavenCentral --no-configuration-cache \
+	    && echo "published io.stackql:stackql-mcp:$(VERSION) (Central Portal; propagation to search takes a while)"; \
+	fi
+
+# swift (mirror: github.com/stackql/stackql-mcp-swift, tag v<version>)
+swift-build: swift-manifest
+	cd swift && swift build && swift test
+swift-smoke: swift-manifest
+	$(SMOKE) --cmd "swift run --package-path swift stackql-mcp-launch"
+swift-publish: swift-manifest
+	bash scripts/publish-mirror.sh --vector swift --version $(VERSION)
