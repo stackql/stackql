@@ -3,7 +3,7 @@
 //!
 //! ```text
 //! BUNDLE=$(cargo run --example fetch_bundle)
-//! STACKQL_MCP_BUNDLE_FILE=$BUNDLE cargo build -p auditron --features vendored --release
+//! STACKQL_MCP_BUNDLE_FILE=$BUNDLE cargo build --features vendored --release
 //! ```
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

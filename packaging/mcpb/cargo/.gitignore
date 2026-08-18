@@ -21,3 +21,5 @@ target
 #.idea/
 
 tmp/
+# rendered by packaging/mcpb/scripts/render-platforms.sh
+/platforms.json

@@ -23,10 +23,13 @@ pub fn download_verified(url: &str, expected_sha256: &str, dest: &Path) -> Resul
     let tmp = dest.with_extension(format!("part-{}", std::process::id()));
 
     let result = (|| -> Result<()> {
-        let mut response = ureq::get(url).call().map_err(|e| Error::Http {
-            url: url.to_string(),
-            message: e.to_string(),
-        })?;
+        let mut response = ureq::get(url)
+            .header("User-Agent", &crate::pins::user_agent())
+            .call()
+            .map_err(|e| Error::Http {
+                url: url.to_string(),
+                message: e.to_string(),
+            })?;
         let mut reader = response.body_mut().as_reader();
         let mut file = fs::File::create(&tmp)?;
 

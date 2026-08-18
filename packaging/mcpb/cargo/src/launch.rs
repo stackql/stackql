@@ -1,6 +1,6 @@
 //! Canonical launch arguments for the embedded server.
 //!
-//! The arg shape is the embedding contract from stackql/stackql-mcpb-packaging
+//! The arg shape is the embedding contract from stackql/stackql packaging/mcpb
 //! and must stay cwd-independent:
 //!
 //! ```text

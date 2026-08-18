@@ -2,7 +2,7 @@ use crate::error::{Error, Result};
 
 /// A platform the packaging repo publishes a .mcpb bundle for.
 ///
-/// Keys mirror stackql/stackql-mcpb-packaging: linux-x64, linux-arm64,
+/// Keys mirror stackql/stackql packaging/mcpb: linux-x64, linux-arm64,
 /// windows-x64, darwin-universal.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Platform {

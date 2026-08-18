@@ -1,16 +1,12 @@
 //! Per-platform sha256 pins for the packaged stackql release.
 //!
-//! Rendered from the .sha256 assets on the stackql/stackql release that the
-//! packaging repo (stackql/stackql-mcpb-packaging) targets. Update this table
-//! when bumping STACKQL_VERSION. Once the packaging repo publishes a
-//! consolidated platforms.json release asset, prefer rendering from that.
+//! The pins are NOT hand-written here: `build.rs` renders them from
+//! `platforms.json`, which `packaging/mcpb/scripts/render-platforms.sh` writes
+//! from the published `.mcpb.sha256` release assets. The same manifest drives
+//! every wrapper vector (npm, PyPI, and the other SDKs).
 
 use crate::error::{Error, Result};
 use crate::platform::Platform;
-
-/// The stackql release this crate version pins (release.yaml in the
-/// packaging repo, leading v stripped).
-pub const STACKQL_VERSION: &str = "0.10.601";
 
 /// A pinned bundle: name and sha256 as published on the GitHub release.
 #[derive(Clone, Copy, Debug)]
@@ -20,28 +16,8 @@ pub struct Pin {
     pub sha256: &'static str,
 }
 
-pub const PINS: &[Pin] = &[
-    Pin {
-        platform_key: "linux-x64",
-        bundle_name: "stackql-mcp-linux-x64.mcpb",
-        sha256: "4a1cad1345fba1aae1f31269fd96aebed7a7825b38f6509466c1c995ce114e52",
-    },
-    Pin {
-        platform_key: "linux-arm64",
-        bundle_name: "stackql-mcp-linux-arm64.mcpb",
-        sha256: "518b2be638fa2b31438e39ed7adafc1621d7397f6700016e9f2d516e500d3cd1",
-    },
-    Pin {
-        platform_key: "windows-x64",
-        bundle_name: "stackql-mcp-windows-x64.mcpb",
-        sha256: "35ed2c66ff6aa5551b9fd7976cc6c49e370cb2b619eb2b5047c3bdbd33076eab",
-    },
-    Pin {
-        platform_key: "darwin-universal",
-        bundle_name: "stackql-mcp-darwin-universal.mcpb",
-        sha256: "1cb60eba9dbc849ad9d505eb4992d0a348e4088ab51c8856b5206b7cc389995d",
-    },
-];
+// STACKQL_VERSION, BASE_URL, PINS
+include!(concat!(env!("OUT_DIR"), "/pins_gen.rs"));
 
 /// Look up the pin for a platform. Every `Platform` variant has a pin; a miss
 /// here is a crate bug, so it surfaces as `UnsupportedPlatform`.
@@ -54,13 +30,15 @@ pub fn pin_for(platform: Platform) -> Result<&'static Pin> {
         })
 }
 
-/// Download URL for a pinned bundle. Bundles are attached to the matching
-/// stackql/stackql release.
+/// Download URL for a pinned bundle: `<baseUrl>/<bundle>` from platforms.json.
 pub fn bundle_url(pin: &Pin) -> String {
-    format!(
-        "https://github.com/stackql/stackql/releases/download/v{STACKQL_VERSION}/{}",
-        pin.bundle_name
-    )
+    format!("{BASE_URL}/{}", pin.bundle_name)
+}
+
+/// User-Agent for bundle downloads, so the download proxy can attribute
+/// traffic to this vector and version.
+pub fn user_agent() -> String {
+    format!("stackql-mcp-server-cargo/{STACKQL_VERSION}")
 }
 
 #[cfg(test)]
@@ -98,11 +76,17 @@ mod tests {
     }
 
     #[test]
-    fn bundle_url_points_at_the_pinned_release() {
+    fn bundle_url_is_the_proxy_front_door_for_the_pinned_version() {
         let pin = pin_for(Platform::LinuxX64).unwrap();
         assert_eq!(
             bundle_url(pin),
-            "https://github.com/stackql/stackql/releases/download/v0.10.601/stackql-mcp-linux-x64.mcpb"
+            format!(
+                "https://releases.stackql.io/stackql/{STACKQL_VERSION}/stackql-mcp-linux-x64.mcpb"
+            )
+        );
+        assert_eq!(
+            user_agent(),
+            format!("stackql-mcp-server-cargo/{STACKQL_VERSION}")
         );
     }
 }

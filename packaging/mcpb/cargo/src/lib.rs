@@ -8,7 +8,8 @@
 //! Two acquisition modes behind one API:
 //!
 //! - sidecar (default feature): download the platform's .mcpb bundle at first
-//!   run, verify its sha256 against pins baked into the crate, and cache it
+//!   run, verify its sha256 against the pins rendered into the crate from
+//!   platforms.json (the manifest shared by every StackQL wrapper), and cache it
 //!   under `~/.stackql/mcp-server-bin/` (shared with the npm and PyPI
 //!   wrappers)
 //! - vendored (`vendored` feature): embed the .mcpb with `include_bytes!` and
@@ -48,7 +49,7 @@ use rmcp::{RoleClient, ServiceExt};
 
 pub use cache::{ENV_BIN, ENV_BUNDLE};
 pub use error::{Error, Result};
-pub use pins::{Pin, PINS, STACKQL_VERSION};
+pub use pins::{Pin, BASE_URL, PINS, STACKQL_VERSION};
 pub use platform::Platform;
 
 /// Safety contract for query / mutation / lifecycle tools, enforced

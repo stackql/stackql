@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/stackql-mcp.svg)](https://crates.io/crates/stackql-mcp)
 [![docs.rs](https://docs.rs/stackql-mcp/badge.svg)](https://docs.rs/stackql-mcp)
-[![ci](https://github.com/stackql/stackql-mcp-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/stackql/stackql-mcp-rs/actions/workflows/ci.yml)
+[![mcp-packaging](https://github.com/stackql/stackql/actions/workflows/mcp-packaging.yml/badge.svg)](https://github.com/stackql/stackql/actions/workflows/mcp-packaging.yml)
 
 Embedded [StackQL](https://stackql.io) MCP server for Rust agentic apps. StackQL exposes cloud providers (AWS, GitHub, Google, Azure, and more) as SQL tables; this crate acquires the `stackql` binary, launches it as an MCP server over stdio, and hands you a connected [rmcp](https://crates.io/crates/rmcp) client.
 
@@ -41,7 +41,7 @@ let server = StackqlMcp::builder()
     .await?;
 ```
 
-Bundles are published per release at [stackql/stackql](https://github.com/stackql/stackql/releases) by [stackql/stackql-mcpb-packaging](https://github.com/stackql/stackql-mcpb-packaging). Platforms: linux-x64, linux-arm64, windows-x64, darwin-universal.
+Bundles are published per release at [stackql/stackql](https://github.com/stackql/stackql/releases) by [packaging/mcpb](https://github.com/stackql/stackql/tree/main/packaging/mcpb), which also owns this crate. The crate version equals the stackql release it embeds (pin the minor: `stackql-mcp = "0.10"`), and its per-platform sha256 pins come from `platforms.json`, rendered by `packaging/mcpb/scripts/render-platforms.sh` from the published `.mcpb.sha256` release assets - the same manifest the npm, PyPI and other SDK wrappers use. Downloads go through `https://releases.stackql.io` with `User-Agent: stackql-mcp-server-cargo/<version>`. Platforms: linux-x64, linux-arm64, windows-x64, darwin-universal.
 
 ## Safety modes
 
@@ -69,47 +69,24 @@ Builder equivalents: `.binary(path)`, `.bundle_path(path)`, plus `.approot(path)
 
 If you bring your own MCP stack, `Builder::command()` returns a `std::process::Command` preloaded with the canonical launch arguments instead of starting anything.
 
-## Demo app: auditron
+## Demo apps
 
-The repo ships `auditron`, a terminal compliance copilot built on this crate: point-in-time control checks with auditor-ready evidence packs. Control packs are YAML data under [controls/](controls/); the github pack runs unauthenticated, so it works with zero cloud credentials.
-
-```sh
-cargo run -p auditron -- scan                      # live TUI, github-core pack
-cargo run -p auditron -- scan --no-tui             # line output for CI/pipes
-cargo run -p auditron -- scan --var org=your-org   # point it at your org
-cargo run -p auditron -- evidence --out evidence-2026-06.zip
-```
-
-The TUI streams pass/fail/error per control and always shows the SQL that produced a finding. Select a finding and press `e` to have Claude explain it and draft remediation steps (needs `ANTHROPIC_API_KEY`). The evidence zip contains the run manifest, the exact pack and SQL, and per-control CSVs - re-runnable by an auditor.
-
-auditron is also the single-binary pitch. Build it with the server embedded:
+The demo apps that used to live alongside this crate (`auditron`, a terminal compliance copilot, and `stackql-agent`, a rig-based agent) now live in [stackql-labs](https://github.com/stackql-labs) and depend on the published crate. The vendored single-binary path they use is `fetch_bundle` + `include_bundle!`:
 
 ```sh
-BUNDLE=$(cargo run -p stackql-mcp --example fetch_bundle)
-STACKQL_MCP_BUNDLE_FILE=$BUNDLE cargo build -p auditron --features vendored --release
+BUNDLE=$(cargo run --example fetch_bundle)
+STACKQL_MCP_BUNDLE_FILE=$BUNDLE cargo build --features vendored --release
 ```
-
-The resulting binary (~80 MB) carries the StackQL server inside and runs on a clean machine with no downloads.
-
-## Demo app: stackql-agent
-
-[stackql-agent](stackql-agent) is the agentic companion: it embeds this crate and wires the StackQL MCP tools into a [rig](https://docs.rig.rs) agent. One binary becomes a platform-engineering, SRE, or audit agent by swapping a system prompt - the backend and the read-only contract are identical across all three.
-
-```sh
-export ANTHROPIC_API_KEY=sk-ant-...
-cargo run -p stackql-agent -- --persona platform   # also: sre, audit
-cargo run -p stackql-agent -- --check              # pre-flight, no model calls
-```
-
-It runs against public GitHub data with zero cloud credentials; point `--auth` at a credentialed provider for IGA, CSPM, FinOps, and AWS/Google/Azure. The integration is about ten lines: `server.list_all_tools()` plus `server.peer()` feed straight into rig's `rmcp_tools()`.
 
 ## Development
 
 ```sh
-cargo test --workspace                              # unit tests
-cargo test -p stackql-mcp --features vendored       # vendored path
-cargo test -p stackql-mcp --test conformance -- --include-ignored  # downloads the pinned bundle
-cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings
+make cargo-manifest VERSION=X.Y.Z                  # from packaging/mcpb: render platforms.json (build.rs needs it)
+cargo test                                          # unit tests
+cargo test --features vendored                      # vendored path
+cargo test --test conformance -- --include-ignored  # downloads the pinned bundle
+cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings
+python scripts/smoke-test.py --cmd "cargo run -q --manifest-path cargo/Cargo.toml --example launcher --"  # from packaging/mcpb
 ```
 
 MSRV: 1.88 (set by rmcp 1.x).
