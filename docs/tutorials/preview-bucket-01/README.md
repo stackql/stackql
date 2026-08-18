@@ -40,12 +40,8 @@ docker compose -f docker-compose.bucket.audit.yaml pull
 **3. Run the audit**
 
 ```bash
-docker compose --env-file ./audit/.env.audit -f docker-compose.bucket.audit.yaml run --rm stackql
+docker compose -f docker-compose.bucket.audit.yaml run --rm stackql
 ```
-
-The `--env-file` flag is important. Without it, Docker Compose won't substitute
-the `AWS_REGION` value into the SQL query and the run fails. Keep it in the
-command exactly as shown.
 
 On a modest account this takes about 30 seconds. Output goes straight to your
 terminal as a table.
