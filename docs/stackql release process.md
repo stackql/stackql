@@ -104,7 +104,7 @@ The `mcp-packaging` dispatch from step 6 runs the `sdk` matrix for all six SDK v
 |---|---|---|---|---|
 | 7d | cargo | crates.io `stackql-mcp` | `CARGO_REGISTRY_TOKEN` | `cargo info stackql-mcp` |
 | 7e | go | mirror `stackql/stackql-mcp-go`, tag `vX.Y.Z` | `SDK_MIRROR_TOKEN` | `go list -m github.com/stackql/stackql-mcp-go@vX.Y.Z` |
-| 7f | dotnet | NuGet `StackQL.Mcp` + `StackQL.Mcp.AgentFramework` | `NUGET_API_KEY` | `nuget list StackQL.Mcp` |
+| 7f | dotnet | NuGet `StackQL.Mcp` + `StackQL.Mcp.AgentFramework` | none - NuGet Trusted Publishing (OIDC) policy `stackql-mcp-packaging` on nuget.org; manual fallback needs a scoped API key in `NUGET_API_KEY` | `nuget list StackQL.Mcp` |
 
 The publish jobs are idempotent where the registry allows (they skip when the version already exists) and each prints the resulting coordinate. `SDK_MIRROR_TOKEN` is a fine-grained PAT with `contents: write` on `stackql/stackql-mcp-go`.
 
