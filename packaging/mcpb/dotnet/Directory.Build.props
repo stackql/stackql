@@ -1,0 +1,40 @@
+<Project>
+
+  <!-- Shared build settings for the whole solution. Enterprise audiences check
+       for deterministic builds, Source Link, and embedded PDBs, so we turn them
+       on once here. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- CS1573: don't require a <param> tag for every parameter when some are
+         documented (cancellation tokens are self-explanatory). -->
+    <NoWarn>$(NoWarn);CS1573</NoWarn>
+  </PropertyGroup>
+
+  <!-- Reproducibility / source-link / symbols. ContinuousIntegrationBuild is
+       flipped on by CI via -p:ContinuousIntegrationBuild=true. -->
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package metadata defaults">
+    <Authors>StackQL Studios</Authors>
+    <Company>StackQL Studios</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/stackql/stackql-mcp-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/stackql/stackql-mcp-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <Copyright>Copyright (c) 2026 StackQL Studios</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

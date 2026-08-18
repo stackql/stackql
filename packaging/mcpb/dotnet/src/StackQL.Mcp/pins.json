@@ -1,0 +1,10 @@
+{
+  "_comment": "Pinned StackQL MCP server version and per-platform bundle sha256 checksums. Bump 'version' and replace the sha256 values from the release's .sha256 assets (or the consolidated platforms.json asset) at publish time. The 'PLACEHOLDER' values are intentionally invalid so an unconfigured sidecar download fails the integrity check loudly rather than running an unverified binary; set STACKQL_MCP_BIN or STACKQL_MCP_BUNDLE to bypass for local development.",
+  "version": "0.10.500",
+  "platforms": {
+    "linux-x64": "PLACEHOLDER_REPLACE_WITH_RELEASE_SHA256",
+    "linux-arm64": "PLACEHOLDER_REPLACE_WITH_RELEASE_SHA256",
+    "windows-x64": "PLACEHOLDER_REPLACE_WITH_RELEASE_SHA256",
+    "darwin-universal": "PLACEHOLDER_REPLACE_WITH_RELEASE_SHA256"
+  }
+}

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>StackQL.Mcp</PackageId>
+    <Title>StackQL embedded MCP server for .NET</Title>
+    <Description>Embeds the StackQL MCP server in a .NET app. Query and provision cloud and SaaS resources with SQL across AWS, Azure, Google, GitHub, Databricks and 40+ providers, over stdio, with a read-only-by-default safety model. Sidecar (download-and-verify) or vendored (single-file) acquisition.</Description>
+    <PackageTags>stackql;mcp;model-context-protocol;cloud;aws;azure;gcp;agent;sql;iac</PackageTags>
+    <!-- mcp-name reference: io.github.stackql/stackql-mcp -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.Core" Version="1.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Version + sha256 pins shipped inside the assembly. -->
+    <EmbeddedResource Include="pins.json" LogicalName="StackQL.Mcp.pins.json" />
+  </ItemGroup>
+
+  <!-- Vendored acquisition: when StackqlVendorBundle is set (typically by a
+       consuming app that wants single-file self-contained output), the bundle is
+       embedded as a resource and resolved at runtime without any download. -->
+  <ItemGroup Condition="'$(StackqlVendorBundle)' != ''">
+    <EmbeddedResource Include="$(StackqlVendorBundle)" LogicalName="StackQL.Mcp.vendored-bundle.mcpb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="StackQL.Mcp.Tests" />
+  </ItemGroup>
+
+</Project>

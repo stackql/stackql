@@ -1,0 +1,24 @@
+# driftwatch baseline - the declared "intended" cloud/SaaS state.
+# v1 keeps this simple: a list of expected resources and config that the drift
+# checks compare reality against. Extend with Azure resources as you wire the
+# Azure provider (see README). The github fixture below needs no credentials and
+# is what CI runs against.
+
+github:
+  org: stackql
+  # Repos that are allowed to be public. Anything public and not listed is drift.
+  expected_public_repos:
+    - stackql
+    - stackql-mcp-dotnet
+  # Every repo is expected to carry a license.
+  require_license: true
+
+# Azure section is a placeholder for the Azure-first demo coverage. Populate with
+# expected resource groups, required tags, and "no storage account may be public"
+# style invariants once Azure credentials are wired.
+azure:
+  required_tags:
+    - owner
+    - cost-center
+  # Subnets/security groups must not be open to the world.
+  forbid_public_ingress_cidr: "0.0.0.0/0"

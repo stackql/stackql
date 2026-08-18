@@ -1,0 +1,60 @@
+name: publish
+
+# Builds, validates, and publishes the NuGet packages on a version tag (vX.Y.Z).
+# Publishing requires the NUGET_API_KEY secret; the family stance is manual/keyed
+# publish, so this runs only on explicit tags, never on push to a branch.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: nuget
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Restore
+        run: dotnet restore StackQL.Mcp.sln
+
+      - name: Build
+        run: dotnet build StackQL.Mcp.sln -c Release --no-restore -p:ContinuousIntegrationBuild=true
+
+      - name: Test (unit)
+        run: dotnet test StackQL.Mcp.sln -c Release --no-build
+
+      - name: Pack
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "Packing version $version"
+          dotnet pack src/StackQL.Mcp/StackQL.Mcp.csproj -c Release -o ./artifacts \
+            -p:Version="$version" -p:ContinuousIntegrationBuild=true
+          dotnet pack src/StackQL.Mcp.AgentFramework/StackQL.Mcp.AgentFramework.csproj -c Release -o ./artifacts \
+            -p:Version="$version" -p:ContinuousIntegrationBuild=true
+
+      - name: Push to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "NUGET_API_KEY not set; skipping push (packages are in artifacts)."
+            exit 0
+          fi
+          dotnet nuget push "./artifacts/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: ./artifacts/*.nupkg
