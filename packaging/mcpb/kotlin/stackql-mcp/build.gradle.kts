@@ -4,8 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     `java-library`
-    `maven-publish`
-    signing
+    alias(libs.plugins.maven.publish)
 }
 
 description = "Embedded StackQL MCP server for Kotlin/JVM agentic apps"
@@ -22,63 +21,47 @@ dependencies {
     testRuntimeOnly(libs.slf4j.nop)
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            artifactId = "stackql-mcp"
-            pom {
-                name.set("stackql-mcp")
-                description.set(project.description)
-                url.set("https://github.com/stackql/stackql-mcp-kotlin")
-                licenses {
-                    license {
-                        name.set("MIT License")
-                        url.set("https://github.com/stackql/stackql-mcp-kotlin/blob/main/LICENSE")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("stackql")
-                        name.set("StackQL Studios")
-                        email.set("info@stackql.io")
-                    }
-                }
-                scm {
-                    url.set("https://github.com/stackql/stackql-mcp-kotlin")
-                    connection.set("scm:git:https://github.com/stackql/stackql-mcp-kotlin.git")
-                    developerConnection.set("scm:git:ssh://git@github.com/stackql/stackql-mcp-kotlin.git")
-                }
-            }
-        }
-    }
-    repositories {
-        // Maven Central via the Central Portal OSSRH staging API. Publishing
-        // is manual (portal 2FA), consistent with the npm/PyPI stance.
-        maven {
-            name = "centralPortal"
-            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
-            credentials {
-                username = System.getenv("CENTRAL_USERNAME")
-                password = System.getenv("CENTRAL_PASSWORD")
-            }
+// Fail early with a pointer at the renderer when the pin manifest is absent
+// (it is rendered, not committed).
+tasks.named("processResources") {
+    doFirst {
+        val manifest = layout.projectDirectory.file("src/main/resources/platforms.json").asFile
+        check(manifest.isFile) {
+            "missing ${manifest.path}: render it with 'make kotlin-manifest VERSION=X.Y.Z' from packaging/mcpb"
         }
     }
 }
 
-signing {
-    // Only sign when a key is configured (release time), so local and CI
-    // builds without secrets still work.
-    val signingKey = System.getenv("SIGNING_KEY")
-    val signingPassword = System.getenv("SIGNING_PASSWORD")
-    isRequired = signingKey != null
-    if (signingKey != null) {
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign(publishing.publications["maven"])
+// Maven Central via the Central Portal (gradle-maven-publish-plugin):
+//   ./gradlew :stackql-mcp:publishToMavenCentral
+// Credentials and signing key from the environment (CI: repo secrets):
+//   ORG_GRADLE_PROJECT_mavenCentralUsername / ORG_GRADLE_PROJECT_mavenCentralPassword
+//   ORG_GRADLE_PROJECT_signingInMemoryKey / ORG_GRADLE_PROJECT_signingInMemoryKeyPassword
+mavenPublishing {
+    publishToMavenCentral(automaticRelease = true)
+    signAllPublications()
+    coordinates("io.stackql", "stackql-mcp", version.toString())
+    pom {
+        name.set("stackql-mcp")
+        description.set(project.description)
+        url.set("https://github.com/stackql/stackql/tree/main/packaging/mcpb/kotlin")
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://github.com/stackql/stackql/blob/main/packaging/mcpb/kotlin/LICENSE")
+            }
+        }
+        developers {
+            developer {
+                id.set("stackql")
+                name.set("StackQL Studios")
+                email.set("info@stackql.io")
+            }
+        }
+        scm {
+            url.set("https://github.com/stackql/stackql")
+            connection.set("scm:git:https://github.com/stackql/stackql.git")
+            developerConnection.set("scm:git:ssh://git@github.com/stackql/stackql.git")
+        }
     }
 }

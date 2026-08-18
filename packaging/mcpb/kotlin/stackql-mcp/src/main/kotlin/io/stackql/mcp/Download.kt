@@ -37,6 +37,8 @@ object Download {
         try {
             val request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofMinutes(5))
+                // Per-vector User-Agent so the download proxy can attribute traffic.
+                .header("User-Agent", Pins.USER_AGENT)
                 .GET()
                 .build()
             val response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())

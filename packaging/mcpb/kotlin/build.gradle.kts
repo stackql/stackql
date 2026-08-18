@@ -8,7 +8,9 @@ plugins {
 
 allprojects {
     group = "io.stackql"
-    version = property("stackqlMcpVersion") as String
+    // Version-locked to the stackql release the library embeds; stamped into
+    // gradle.properties by packaging/mcpb/scripts/render-platforms.sh.
+    version = property("version") as String
 }
 
 subprojects {

@@ -23,10 +23,14 @@ class PinsTest {
     }
 
     @Test
-    fun bundleUrlPointsAtThePinnedRelease() {
+    fun bundleUrlIsTheProxyFrontDoorForThePinnedVersion() {
+        val v = Pins.STACKQL_VERSION
+        assertTrue(v.matches(Regex("""\d+\.\d+\.\d+""")), "version $v")
+        assertEquals("https://releases.stackql.io/stackql/$v", Pins.BASE_URL)
         assertEquals(
-            "https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-linux-x64.mcpb",
+            "https://releases.stackql.io/stackql/$v/stackql-mcp-linux-x64.mcpb",
             Pins.bundleUrl(Platform.LinuxX64),
         )
+        assertEquals("stackql-mcp-server-kotlin/$v", Pins.USER_AGENT)
     }
 }

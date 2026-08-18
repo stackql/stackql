@@ -12,8 +12,9 @@ import java.nio.file.Path
  *     explicit override is operator intent and may be a custom build.
  *  4. Builder `bundlePath` override: same.
  *  5. Shared cache: an already-extracted binary for the pinned version.
- *  6. Verified download: fetch the pinned `.mcpb`, check its sha256 against the
- *     baked-in pin, extract, cache. Subsequent starts are offline.
+ *  6. Verified download: fetch the pinned `.mcpb` from the platforms.json
+ *     baseUrl, check its sha256 against the platforms.json pin, extract,
+ *     cache. Subsequent starts are offline.
  */
 internal object Acquire {
 
@@ -22,7 +23,6 @@ internal object Acquire {
         val binary: Path? = null,
         val bundlePath: Path? = null,
         val cacheRoot: Path = Cache.defaultRoot(),
-        val version: String = Pins.STACKQL_VERSION,
     )
 
     fun resolveBinary(inputs: Inputs): Path {
@@ -55,12 +55,13 @@ internal object Acquire {
 
     private fun sidecar(inputs: Inputs): Path {
         val platform = Platform.current()
-        val dest = Cache.binaryDir(inputs.cacheRoot, inputs.version, platform)
+        val version = Pins.STACKQL_VERSION
+        val dest = Cache.binaryDir(inputs.cacheRoot, version, platform)
         BundleExtractor.cachedBinary(dest)?.let { return it }
 
         val pin = Pins.pinFor(platform)
-        val url = Pins.bundleUrl(platform, inputs.version)
-        val mcpb = inputs.cacheRoot.resolve(inputs.version).resolve(platform.bundleName)
+        val url = Pins.bundleUrl(platform)
+        val mcpb = inputs.cacheRoot.resolve(version).resolve(platform.bundleName)
         System.err.println("stackql-mcp: downloading $url (first run, cached at $dest)")
         Download.verified(url, pin, mcpb)
         val binary = BundleExtractor.extract(mcpb, dest)

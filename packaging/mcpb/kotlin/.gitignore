@@ -22,3 +22,6 @@ tmp/
 # Keep the Gradle wrapper jar tracked (it must be committed); the catch-all
 # *.jar rule is intentionally absent so gradle/wrapper/gradle-wrapper.jar
 # stays in the repo.
+
+# rendered by packaging/mcpb/scripts/render-platforms.sh
+stackql-mcp/src/main/resources/platforms.json

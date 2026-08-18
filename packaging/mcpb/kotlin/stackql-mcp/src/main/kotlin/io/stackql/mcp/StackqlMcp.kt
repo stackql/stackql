@@ -12,8 +12,11 @@ import kotlinx.serialization.json.JsonElement
 import java.nio.file.Path
 import kotlin.concurrent.thread
 
-/** The library version, reported as the MCP client version. */
-const val LIBRARY_VERSION: String = "0.1.0"
+/**
+ * The library version, reported as the MCP client version. Equal to the
+ * stackql release the library embeds ([Pins.STACKQL_VERSION]).
+ */
+val LIBRARY_VERSION: String get() = Pins.STACKQL_VERSION
 
 /**
  * A running embedded stackql MCP server and the connected client session.
@@ -55,7 +58,6 @@ class StackqlMcp internal constructor(
         private var mode: Mode = Mode.ReadOnly
         private var appRoot: Path = LaunchArgs.defaultAppRoot()
         private var cacheRoot: Path = Cache.defaultRoot()
-        private var version: String = Pins.STACKQL_VERSION
         private var auth: JsonElement? = null
         private var binary: Path? = null
         private var bundlePath: Path? = null
@@ -73,8 +75,6 @@ class StackqlMcp internal constructor(
         /** Binary extraction cache root. Default `~/.stackql/mcp-server-bin`. */
         fun cacheRoot(path: Path) = apply { this.cacheRoot = path }
 
-        /** Pinned stackql version to acquire. Default [Pins.STACKQL_VERSION]. */
-        fun version(version: String) = apply { this.version = version }
 
         /** Provider auth override, serialized into `--auth`. See [LaunchArgs.authFor]. */
         fun auth(auth: JsonElement) = apply { this.auth = auth }
@@ -102,7 +102,7 @@ class StackqlMcp internal constructor(
          */
         fun commandLine(): List<String> {
             val path = Acquire.resolveBinary(
-                Acquire.Inputs(binary, bundlePath, cacheRoot, version),
+                Acquire.Inputs(binary, bundlePath, cacheRoot),
             )
             return listOf(path.toString()) + LaunchArgs.build(mode, appRoot, auth) + extraArgs
         }

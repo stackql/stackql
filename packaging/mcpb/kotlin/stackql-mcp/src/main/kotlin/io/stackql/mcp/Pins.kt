@@ -1,35 +1,68 @@
 package io.stackql.mcp
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
 /**
- * Per-platform sha256 pins for the packaged stackql release.
+ * The pinned stackql release, download base URL and per-platform sha256 pins.
  *
- * Rendered from the `.sha256` assets on the stackql/stackql release that the
- * packaging repo (stackql/stackql-mcpb-packaging) targets. Update [pins] and
- * [STACKQL_VERSION] together when bumping the server version. Once the
- * packaging repo publishes a consolidated platforms.json release asset,
- * prefer rendering this table from that.
+ * Nothing is hand-written here: the values come from the `platforms.json`
+ * classpath resource, rendered by `packaging/mcpb/scripts/render-platforms.sh`
+ * from the published `.mcpb.sha256` release assets - the same manifest every
+ * other StackQL wrapper (npm, PyPI, the other SDKs) ships. Render it before
+ * building: `make kotlin-manifest VERSION=X.Y.Z` (from packaging/mcpb).
  */
 object Pins {
-    /** The stackql release this library version pins (leading `v` stripped). */
-    const val STACKQL_VERSION: String = "0.10.500"
+    private const val RESOURCE = "/platforms.json"
 
-    /** Asset download root: bundles are attached to the stackql/stackql release. */
-    const val RELEASE_URL_BASE: String =
-        "https://github.com/stackql/stackql/releases/download"
+    @Serializable
+    private data class Manifest(
+        val version: String,
+        val baseUrl: String,
+        val platforms: Map<String, PlatformPin>,
+    )
+
+    @Serializable
+    data class PlatformPin(val bundle: String, val sha256: String)
+
+    private val manifest: Manifest by lazy {
+        val stream = Pins::class.java.getResourceAsStream(RESOURCE)
+            ?: throw StackqlMcpException(
+                "classpath resource $RESOURCE not found - render it with " +
+                    "'make kotlin-manifest VERSION=X.Y.Z' from packaging/mcpb",
+            )
+        val text = stream.use { it.readBytes().toString(Charsets.UTF_8) }
+        Json { ignoreUnknownKeys = true }.decodeFromString<Manifest>(text).also {
+            require(it.version.isNotBlank() && it.baseUrl.isNotBlank() && it.platforms.isNotEmpty()) {
+                "platforms.json is missing version, baseUrl or platforms"
+            }
+        }
+    }
+
+    /** The stackql release this library is version-locked to (leading `v` stripped). */
+    val STACKQL_VERSION: String get() = manifest.version
+
+    /** Front door bundles are downloaded from (`https://releases.stackql.io/stackql/<version>`). */
+    val BASE_URL: String get() = manifest.baseUrl
+
+    /** User-Agent sent to the download proxy, per vector and version. */
+    val USER_AGENT: String get() = "stackql-mcp-server-kotlin/${manifest.version}"
 
     /** Lowercase hex sha256 of each platform's `.mcpb` bundle for [STACKQL_VERSION]. */
-    val pins: Map<Platform, String> = mapOf(
-        Platform.LinuxX64 to "6615737747156b1a8413a976afb23af2e7eec29ebc98a6f0a0f65d1b153c44be",
-        Platform.LinuxArm64 to "594bedbabc3096dc3563c907724e845ce0b61a67de4b3fed4158b40c0363786c",
-        Platform.WindowsX64 to "d2ce895e88f9c6b557df07073158629808f56d75598f3a701164d65506b791b0",
-        Platform.DarwinUniversal to "4eed70af5cfa67295ae0b42fa3a6dca71ac9acabd0d67914fd96ad1247a9b4cc",
-    )
+    val pins: Map<Platform, String> by lazy {
+        Platform.entries.associateWith { platform ->
+            manifest.platforms[platform.key]?.sha256
+                ?: throw StackqlMcpException("platforms.json has no pin for ${platform.key}")
+        }
+    }
 
     /** The published pin for [platform]; every platform has one. */
     fun pinFor(platform: Platform): String =
         pins[platform] ?: throw StackqlMcpException("no pin for platform ${platform.key}")
 
-    /** Download URL for [platform]'s pinned `.mcpb` bundle. */
-    fun bundleUrl(platform: Platform, version: String = STACKQL_VERSION): String =
-        "$RELEASE_URL_BASE/v$version/${platform.bundleName}"
+    /** Download URL for [platform]'s pinned `.mcpb` bundle: `<baseUrl>/<bundle>`. */
+    fun bundleUrl(platform: Platform): String {
+        val bundle = manifest.platforms[platform.key]?.bundle ?: platform.bundleName
+        return "$BASE_URL/$bundle"
+    }
 }
