@@ -311,7 +311,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     invocation_str = f"{sleep_prefix}stackql exec {' '.join(supplied_args)} '{query_escaped}'"
     if query_from_input_file_path:
       invocation_str = f"{sleep_prefix}stackql exec {' '.join(supplied_args)}"
-    res = super().run_process(
+    docker_args = (
       "docker",
       "compose",
       "-p",
@@ -323,6 +323,13 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       "bash",
       "-c",
       invocation_str,
+    )
+    if cfg.pop('start_only', False):
+      # Non-blocking, so the caller can watch stdout grow. Robot's Process
+      # library is used from the main thread; no threads are involved.
+      return super().start_process(*docker_args, **cfg)
+    res = super().run_process(
+      *docker_args,
       **cfg
     )
     self.log(res.stdout)
@@ -511,6 +518,14 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     supplied_args.append(f"--execution.concurrency.limit={self._concurrency_limit}")
     if not query_from_input_file_path:
       supplied_args.append(query)
+    if cfg.pop('start_only', False):
+      # Non-blocking, so the caller can watch stdout grow. Robot's Process
+      # library is used from the main thread; no threads are involved.
+      return super().start_process(
+        *supplied_args,
+        *args,
+        **cfg
+      )
     res = super().run_process(
       *supplied_args,
       *args,
@@ -950,39 +965,33 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     """
     Assert rows reach the output stream while the query is still running.
 
-    The query is run with stdout redirected to a file, and that file is sampled
-    while the process is alive. A run that buffers its rows writes the file in
-    one go at the end, so the samples show a single jump; a run that streams
-    shows the file growing at several distinct times.
+    The query is started without blocking and its stdout file is sampled from
+    this thread while the process is alive. A run that buffers its rows writes
+    the file once at the end, so the samples show a single jump; a run that
+    streams shows it growing at several distinct times.
     """
-    import threading
     stdout_path = cfg.get('stdout')
     if not stdout_path:
       raise Exception('should_stackql_exec_stream_incrementally requires stdout=<path>')
     if os.path.exists(stdout_path):
       os.remove(stdout_path)
-    result_holder = {}
-
-    def _run():
-      try:
-        result_holder['result'] = self._run_stackql_exec_command(
-          stackql_exe, okta_secret_str, github_secret_str, k8s_secret_str,
-          registry_cfg, auth_cfg_str, sql_backend_cfg_str, query, *args, **cfg
-        )
-      except Exception as exc:
-        result_holder['error'] = exc
-
-    worker = threading.Thread(target=_run)
-    worker.start()
+    timeout = float(cfg.pop('stream_timeout_seconds', 120))
+    handle = self._run_stackql_exec_command(
+      stackql_exe, okta_secret_str, github_secret_str, k8s_secret_str,
+      registry_cfg, auth_cfg_str, sql_backend_cfg_str, query, *args,
+      start_only=True, **cfg
+    )
     samples = []
-    while worker.is_alive():
+    deadline = time.time() + timeout
+    while self.is_process_running(handle):
+      if time.time() > deadline:
+        self.terminate_process(handle)
+        raise Exception('query did not complete within the streaming timeout')
       size = os.path.getsize(stdout_path) if os.path.exists(stdout_path) else 0
       if not samples or size != samples[-1][1]:
         samples.append((time.time(), size))
       time.sleep(0.02)
-    worker.join()
-    if 'error' in result_holder:
-      raise result_holder['error']
+    self.wait_for_process(handle, timeout=timeout)
 
     growth = [s for s in samples if s[1] > 0]
     with open(stdout_path) as fh:

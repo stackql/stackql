@@ -1146,6 +1146,9 @@ def get_variables(
     'VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED':              VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED,
     'TEST_TMP_EXEC_APP_ROOT':                                                 get_local_temp_path('.exec_app_root.stackql', execution_env),
     'TEST_TMP_EXEC_APP_ROOT_NATIVE':                                          get_local_temp_path('.exec_app_root.stackql', 'native'),
+    # Embedded in an --auth argument, so windows separators must not reach the
+    # yaml parser as escape sequences.
+    'OMNISDK_MOCK_GCP_SA_HOST':                                               get_unix_path(get_local_temp_path('omnisdk-gcp-sa.json', 'native')),
   }
   if execution_env == 'docker':
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR_DOCKER

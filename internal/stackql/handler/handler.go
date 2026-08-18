@@ -323,6 +323,15 @@ func (hc *standardHandlerContext) GetSupportedProviders(extended bool) (map[stri
 		} else {
 			retVal[pn] = getProviderMap(pn, pd)
 		}
+		// Every locally available bundle is also addressable document-first,
+		// once that has been opted into.
+		if intrinsic.IsUnstableEnabled() {
+			unstable := intrinsic.UnstablePrefix + pn
+			retVal[unstable] = map[string]interface{}{
+				"name":    unstable,
+				"version": intrinsic.ProviderVersion,
+			}
+		}
 	}
 	return retVal, nil
 }

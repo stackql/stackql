@@ -28,6 +28,9 @@ XML = "application/xml"
 app = Flask(__name__, template_folder=str(HERE / "templates"))
 BUCKETS = json.loads((COLL / "buckets.json").read_text())
 PROVISION = json.loads((COLL / "ec2" / "provision.json").read_text())
+IAM_USERS = json.loads((COLL / "iam_users.json").read_text())
+ENTRA_USERS = json.loads((COLL / "entra_users.json").read_text())
+GCP_IAM_POLICY = json.loads((COLL / "gcp_iam_policy.json").read_text())
 
 NOT_FOUND = (
     '<?xml version="1.0" encoding="UTF-8"?>'
@@ -64,6 +67,8 @@ def list_buckets():
 def ec2_query():
     # EC2 Query API: params ride the POST form body (Action, VpcId, ...).
     action = request.form.get("Action")
+    if action in ("ListUsers", "ListAttachedUserPolicies", "ListMFADevices"):
+        return _iam_query(action)
     if action == "CreateVpc":
         return Response(render_template("create_vpc.xml.j2", **PROVISION), mimetype=XML)
     if action == "CreateSubnet":
@@ -72,6 +77,63 @@ def ec2_query():
             return Response("<Error><Code>InvalidVpcID.NotFound</Code></Error>", status=400, mimetype=XML)
         return Response(render_template("create_subnet.xml.j2", **PROVISION), mimetype=XML)
     return Response("<Error><Code>InvalidAction</Code></Error>", status=400, mimetype=XML)
+
+
+def _iam_query(action):
+    # AWS IAM Query API. Left-outer by nature: a user with no policy or no MFA
+    # device still answers, with an empty member list.
+    if action == "ListUsers":
+        members = "".join(
+            f"<member><UserName>{u['name']}</UserName><UserId>{u['id']}</UserId>"
+            f"<CreateDate>{u['created']}</CreateDate>"
+            f"<Arn>arn:aws:iam::000000000000:user/{u['name']}</Arn></member>"
+            for u in IAM_USERS
+        )
+        body = (f"<ListUsersResponse><ListUsersResult><Users>{members}</Users>"
+                "<IsTruncated>false</IsTruncated></ListUsersResult></ListUsersResponse>")
+        return Response(body, mimetype=XML)
+    who = request.form.get("UserName")
+    user = next((u for u in IAM_USERS if u["name"] == who), None)
+    if action == "ListAttachedUserPolicies":
+        members = "".join(
+            f"<member><PolicyName>{p}</PolicyName>"
+            f"<PolicyArn>arn:aws:iam::aws:policy/{p}</PolicyArn></member>"
+            for p in (user or {}).get("policies", [])
+        )
+        body = ("<ListAttachedUserPoliciesResponse><ListAttachedUserPoliciesResult>"
+                f"<AttachedPolicies>{members}</AttachedPolicies>"
+                "</ListAttachedUserPoliciesResult></ListAttachedUserPoliciesResponse>")
+        return Response(body, mimetype=XML)
+    members = "".join(
+        f"<member><SerialNumber>{m}</SerialNumber><UserName>{who}</UserName></member>"
+        for m in (user or {}).get("mfa", [])
+    )
+    body = ("<ListMFADevicesResponse><ListMFADevicesResult>"
+            f"<MFADevices>{members}</MFADevices>"
+            "</ListMFADevicesResult></ListMFADevicesResponse>")
+    return Response(body, mimetype=XML)
+
+
+@app.get("/v1.0/users")
+def entra_users():
+    return jsonify({"value": [
+        {k: u[k] for k in ("userPrincipalName", "id", "accountEnabled", "createdDateTime")}
+        for u in ENTRA_USERS
+    ]})
+
+
+@app.get("/v1.0/users/<principal_id>/memberOf")
+def entra_member_of(principal_id):
+    user = next((u for u in ENTRA_USERS if u["id"] == principal_id), None)
+    return jsonify({"value": [
+        {"displayName": r, "@odata.type": "#microsoft.graph.directoryRole"}
+        for r in (user or {}).get("roles", [])
+    ]})
+
+
+@app.post("/v3/projects/<project>:getIamPolicy")
+def gcp_get_iam_policy(project):
+    return jsonify(GCP_IAM_POLICY)
 
 
 @app.get("/<bucket>")
