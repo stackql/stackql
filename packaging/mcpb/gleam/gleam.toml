@@ -1,5 +1,5 @@
 name = "stackql_mcp"
-version = "0.1.0"
+version = "0.10.601"
 
 # Erlang/BEAM only for v1. The MCP client and the robust subprocess/port story
 # are Erlang-target, and the entire strategic thesis IS the BEAM. The JS target
@@ -8,15 +8,19 @@ target = "erlang"
 
 licences = ["MIT"]
 description = "Embedded StackQL MCP server for Gleam / BEAM: run cloud queries and provisioning over SQL across AWS, Azure, Google, GitHub, Databricks, and 40+ providers, as a supervised OTP process."
-repository = { type = "github", user = "stackql", repo = "stackql-mcp-gleam" }
+repository = { type = "github", user = "stackql", repo = "stackql", path = "packaging/mcpb/gleam" }
 
 links = [
   { title = "StackQL", href = "https://stackql.io" },
-  { title = "Packaging (binary source of truth)", href = "https://github.com/stackql/stackql-mcpb-packaging" },
+  { title = "Packaging (source of truth)", href = "https://github.com/stackql/stackql/tree/main/packaging/mcpb" },
 ]
 
 # mcp-name reference: io.github.stackql/stackql-mcp
 gleam = ">= 1.14.0"
+
+# Acquisition uses OTP's httpc/ssl/crypto/zip/json via the FFI (OTP 27+).
+[erlang]
+extra_applications = ["inets", "ssl", "crypto", "public_key"]
 
 [dependencies]
 gleam_stdlib = ">= 0.67.0 and < 2.0.0"

@@ -8,10 +8,11 @@
 ////   -> pull github (null_auth)
 ////   -> list_services returns real services
 ////
-//// This needs a real stackql binary. It is GATED: when STACKQL_MCP_BIN (or a
-//// cached binary) is not available, the test logs and passes rather than
-//// failing the build. CI sets STACKQL_MCP_BIN after downloading the bundle, so
-//// the gate is closed there and the assertions run for real.
+//// This needs a real stackql binary. It is GATED: when neither STACKQL_MCP_BIN
+//// nor STACKQL_MCP_BUNDLE is set, the test logs and passes rather than
+//// failing the build (the unit suite must stay offline). CI sets one of them,
+//// so the gate is closed there and the assertions run for real; the real
+//// download path is exercised by scripts/smoke-test.py driving the launcher.
 
 import envoy
 import gleam/io
@@ -31,9 +32,9 @@ fn arch() -> String
 fn home() -> String
 
 fn binary_available() -> Bool {
-  case envoy.get("STACKQL_MCP_BIN") {
-    Ok(_) -> True
-    Error(Nil) -> False
+  case envoy.get("STACKQL_MCP_BIN"), envoy.get("STACKQL_MCP_BUNDLE") {
+    Error(Nil), Error(Nil) -> False
+    _, _ -> True
   }
 }
 
@@ -41,8 +42,8 @@ pub fn conformance_test() {
   case binary_available() {
     False -> {
       io.println(
-        "conformance_test: STACKQL_MCP_BIN unset, skipping live handshake "
-        <> "(set it in CI after downloading the bundle to run this)",
+        "conformance_test: STACKQL_MCP_BIN / STACKQL_MCP_BUNDLE unset, "
+        <> "skipping live handshake",
       )
       Nil
     }

@@ -25,9 +25,11 @@ import gleam/otp/supervision
 import gleam/result
 import mcp_client
 import mcp_client/manager
+import stackql_mcp/acquire
 import stackql_mcp/auth
 import stackql_mcp/launch
 import stackql_mcp/mode
+import stackql_mcp/pins
 import stackql_mcp/platform
 
 // Re-export the user-facing types so callers need only import this module.
@@ -50,13 +52,18 @@ pub type Auth =
 ///   - `mode`: server mode. Defaults to ReadOnly; escalation is an explicit
 ///     opt-in, never a default.
 ///   - `auth`: provider auth descriptors (e.g. github null_auth).
-///   - `binary`: explicit path to the stackql executable. When `None`, the
-///     shared cache path is used (honoring STACKQL_MCP_BIN if set).
-///   - `bundle_path`: explicit path to a `.mcpb` bundle to use offline
-///     (honoring STACKQL_MCP_BUNDLE if set).
-///   - `approot`: the directory stackql treats as its home. When `None`,
+///   - `binary`: explicit path to the stackql executable. When `Error(Nil)`,
+///     STACKQL_MCP_BIN is honoured, then the shared cache
+///     (`<home>/.stackql/mcp-server-bin/<version>/<platform-key>/`), which
+///     `start` populates on first run by downloading the platform bundle
+///     from `pins.base_url` and verifying it against the pinned sha256.
+///   - `bundle_path`: explicit path to a `.mcpb` bundle to extract instead of
+///     downloading (STACKQL_MCP_BUNDLE is honoured when `Error(Nil)`); no
+///     pin check.
+///   - `approot`: the directory stackql treats as its home. When `Error(Nil)`,
 ///     `<home>/.stackql` is used.
-///   - `version`: the pinned stackql version, used for the cache path.
+///   - `version`: the stackql version used for the cache path. Defaults to
+///     `stackql_version`; there is no download for any other version.
 pub type Config {
   Config(
     mode: Mode,
@@ -68,9 +75,11 @@ pub type Config {
   )
 }
 
-/// The pinned StackQL version this build targets. Bumped in lockstep with the
-/// sha256 pins in the packaging repo.
-pub const stackql_version = "v0.7.0"
+/// The stackql release this library is version-locked to (the library's own
+/// version is the same number). Rendered into `stackql_mcp/pins` from
+/// packaging/mcpb platforms.json, the manifest shared by every StackQL
+/// wrapper.
+pub const stackql_version = pins.version
 
 /// A sensible default configuration: ReadOnly mode, no auth, cache-resolved
 /// binary, default approot. Use record-update syntax to override fields:
@@ -110,20 +119,31 @@ pub type StartError {
   UnsupportedPlatform(String)
   /// The MCP client failed to construct or register the server.
   ClientError(String)
+  /// Acquiring the binary (override lookup, download, verification or
+  /// extraction) failed.
+  AcquireFailed(acquire.AcquireError)
 }
+
+/// Read an environment variable from the host. The pure entry points take a
+/// `getenv` function so tests can substitute their own; pass this one for
+/// the real environment.
+@external(erlang, "stackql_mcp_ffi", "getenv")
+pub fn getenv(name: String) -> Result(String, Nil)
 
 /// The server name the embedded StackQL server is registered under in the
 /// mcp_client session. Tool calls are qualified as `<name>/<tool>`.
 const server_name = "stackql"
 
 /// Resolve the canonical argv for the embedded server: the stackql executable
-/// path followed by the canonical launch arguments. Exposed for callers and
-/// harnesses that want to own the process themselves rather than let
-/// mcp_client spawn it.
+/// path followed by the canonical launch arguments. Pure: it names the binary
+/// that would be used (override or shared-cache path) without acquiring it -
+/// `start` (and `stackql_mcp/acquire.ensure_binary`) do the acquisition.
+/// Exposed for callers and harnesses that want to own the process themselves
+/// rather than let mcp_client spawn it.
 ///
 /// `home` is the user's home directory (used for the default approot and the
 /// cache-resolved binary path). `getenv` reads environment overrides
-/// (STACKQL_MCP_BIN, STACKQL_MCP_BUNDLE).
+/// (STACKQL_MCP_BIN).
 pub fn resolve_command(
   config config: Config,
   home home: String,
@@ -169,11 +189,22 @@ pub fn start(
   arch arch: String,
   getenv getenv: fn(String) -> Result(String, Nil),
 ) -> Result(Server, StartError) {
-  use argv <- result.try(resolve_command(config, home, os, arch, getenv))
-  case argv {
-    [command, ..args] -> register(command, args)
-    [] -> Error(BinaryNotFound("empty argv"))
+  use binary <- result.try(
+    acquire.ensure_binary(
+      binary: config.binary,
+      bundle_path: config.bundle_path,
+      home: home,
+      os: os,
+      arch: arch,
+      getenv: getenv,
+    )
+    |> result.map_error(AcquireFailed),
+  )
+  let approot = case config.approot {
+    Ok(a) -> a
+    Error(Nil) -> platform.default_approot(home)
   }
+  register(binary, launch.args(approot, config.mode))
 }
 
 fn register(command: String, args: List(String)) -> Result(Server, StartError) {
@@ -302,5 +333,6 @@ fn start_error_to_string(e: StartError) -> String {
     BinaryNotFound(s) -> "stackql binary not found: " <> s
     UnsupportedPlatform(s) -> "unsupported platform: " <> s
     ClientError(s) -> "mcp client error: " <> s
+    AcquireFailed(e) -> "acquisition failed: " <> acquire.error_to_string(e)
   }
 }

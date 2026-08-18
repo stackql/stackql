@@ -52,6 +52,19 @@ pub fn resolve(
   }
 }
 
+/// The shared cache root: `<home>/.stackql/mcp-server-bin`.
+pub fn cache_root(home home: String) -> String {
+  strip_trailing_slash(home) <> "/.stackql/mcp-server-bin"
+}
+
+/// The executable file name: `stackql.exe` on Windows, `stackql` elsewhere.
+pub fn binary_name(key: PlatformKey) -> String {
+  case key {
+    WindowsX64 -> "stackql.exe"
+    _ -> "stackql"
+  }
+}
+
 /// The shared cache directory for a given StackQL version and platform,
 /// rooted at the user's home directory. Always forward-slash joined; the
 /// BEAM accepts forward slashes on Windows.
@@ -77,12 +90,7 @@ pub fn binary_path(
   version version: String,
   key key: PlatformKey,
 ) -> String {
-  let dir = cache_dir(home, version, key)
-  let name = case key {
-    WindowsX64 -> "stackql.exe"
-    _ -> "stackql"
-  }
-  dir <> "/" <> name
+  cache_dir(home, version, key) <> "/" <> binary_name(key)
 }
 
 /// The default approot the launcher points stackql at: `<home>/.stackql`.

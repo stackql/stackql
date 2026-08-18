@@ -170,11 +170,26 @@ pub const base_url = "$base_url"
 /// (bundle name, sha256) for a platform key, or Error for an unknown key.
 pub fn pin(platform_key: String) -> Result(#(String, String), Nil) {
   case platform_key {
-    "linux-x64" -> Ok(#("stackql-mcp-linux-x64.mcpb", "$SHA_LINUX_X64"))
-    "linux-arm64" -> Ok(#("stackql-mcp-linux-arm64.mcpb", "$SHA_LINUX_ARM64"))
-    "windows-x64" -> Ok(#("stackql-mcp-windows-x64.mcpb", "$SHA_WINDOWS_X64"))
+    "linux-x64" ->
+      Ok(#(
+        "stackql-mcp-linux-x64.mcpb",
+        "$SHA_LINUX_X64",
+      ))
+    "linux-arm64" ->
+      Ok(#(
+        "stackql-mcp-linux-arm64.mcpb",
+        "$SHA_LINUX_ARM64",
+      ))
+    "windows-x64" ->
+      Ok(#(
+        "stackql-mcp-windows-x64.mcpb",
+        "$SHA_WINDOWS_X64",
+      ))
     "darwin-universal" ->
-      Ok(#("stackql-mcp-darwin-universal.mcpb", "$SHA_DARWIN_UNIVERSAL"))
+      Ok(#(
+        "stackql-mcp-darwin-universal.mcpb",
+        "$SHA_DARWIN_UNIVERSAL",
+      ))
     _ -> Error(Nil)
   }
 }
