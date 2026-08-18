@@ -52,16 +52,15 @@ stackql-mcpb-packaging/
   oci/Dockerfile                    # stackql/stackql-mcp image (multi-arch via TARGETARCH)
   npm/                              # @stackql/mcp-server npx wrapper package
   pypi/                             # stackql-mcp-server uvx/pip wrapper package
-  cargo/ go/ dotnet/ gleam/         # the six embedded SDK wrappers (crates.io, Go module mirror,
-  kotlin/ swift/                    #   NuGet, hex, Maven Central, SwiftPM mirror) - same contract,
-                                    #   same renderer, same CI (see CLAUDE.md "nine wrapper vectors")
+  cargo/ go/ dotnet/                # the three embedded SDK wrappers (crates.io, Go module mirror,
+                                    #   NuGet) - same contract, renderer and CI (see CLAUDE.md)
   scripts/package.sh                # build bundles from bin/ -> dist/
   scripts/clean.sh                  # wipe dist/
   scripts/render-server-json.sh     # pin SHAs into registry/server.json
   scripts/render-platforms.sh       # THE renderer: platforms.json + version stamp for every vector
   scripts/render-npm-manifest.sh    # thin wrapper: render-platforms.sh --vector npm
   scripts/render-pypi-manifest.sh   # thin wrapper: render-platforms.sh --vector pypi
-  scripts/publish-mirror.sh         # push go/ or swift/ to its mirror repo + tag v<version>
+  scripts/publish-mirror.sh         # push go/ to its mirror repo + tag v<version>
   scripts/sign.sh                   # envelope-sign dist/*.mcpb + regen .sha256
   scripts/append-signature.py       # frame an externally-produced CMS signature
   scripts/smoke-test.py             # deterministic MCP smoke test (stdlib only)
@@ -101,9 +100,9 @@ The sequence:
 1. **Upstream release happens** - `stackql/stackql` publishes `vX.Y.Z` with the core assets (per-arch zips and the notarised `.pkg`).
 2. **PR bumps the pin** - raise a PR to main changing `stackql_release` in `release.yaml`. [ci.yml](.github/workflows/ci.yml) builds all four bundles against the real release assets and runs the deterministic smoke test on a native runner per platform (`ubuntu-latest`, `ubuntu-24.04-arm`, `windows-latest`, `macos-latest` - the darwin slice runs `pkgutil` on the macos runner). A green PR means the bundles build and the embedded binaries speak MCP.
 3. **Merge to main** - nothing is published yet.
-4. **Push the matching tag** - `git tag vX.Y.Z && git push origin vX.Y.Z`. [publish.yml](.github/workflows/publish.yml) fails fast if the tag does not exactly match `release.yaml`, rebuilds and re-tests everything, then uploads all `.mcpb` + `.sha256` files to the `stackql/stackql` `vX.Y.Z` release via `make publish` (idempotent `--clobber`).
+4. **Push the matching tag** - `git tag vX.Y.Z && git push origin vX.Y.Z`. [publish.yml](.github/workflows/publish.yml) fails fast if the tag does not exactly match `release.yaml`, rebuilds and re-tests everything, then uploads the `.mcpb` + `.sha256` files not yet on the `stackql/stackql` `vX.Y.Z` release via `make publish` (existing assets are skipped: immutable once pinned).
 
-To re-publish the pinned release without moving the tag (e.g. after enabling signing secrets), run the publish workflow from the Actions tab (`workflow_dispatch`); the `confirm_release` input must be typed exactly as pinned in `release.yaml` (e.g. `v0.10.500`). It runs from current main and clobbers the existing release assets.
+To re-publish the pinned release without moving the tag (e.g. after enabling signing secrets), run the publish workflow from the Actions tab (`workflow_dispatch`); the `confirm_release` input must be typed exactly as pinned in `release.yaml` (e.g. `v0.10.500`). It runs from current main; assets already on the release are skipped (immutable once pinned - `make publish FORCE=1` locally is the only way to overwrite, and only for a release nothing has pinned yet).
 
 **If the MCP Registry entry was already published, a re-publish breaks its SHA pins.** Rebuilt bundles have new SHA-256s, and registry versions are immutable (`cannot publish duplicate version`). Recovery, after the new assets land:
 
@@ -138,7 +137,7 @@ Steps 3 and 4 of the local runbook below (MCP Registry publish and aggregator li
 
 ## Release runbook (local fallback)
 
-The pre-CI flow, kept as a supported fallback (and for the registry/listings steps CI does not cover). Releases are produced locally on two machines because the darwin target needs `pkgutil` (macOS-only). Each machine independently uploads what it built; `--clobber` makes order irrelevant and re-runs safe.
+The pre-CI flow, kept as a supported fallback (and for the registry/listings steps CI does not cover). Releases are produced locally on two machines because the darwin target needs `pkgutil` (macOS-only). Each machine independently uploads what it built; existing assets are skipped, which makes order irrelevant and re-runs safe.
 
 Throughout, `VERSION` is the stackql release minus the leading `v`. For example, tag `v0.10.500` -> `VERSION=0.10.500`. If `VERSION` is omitted, `make` defaults it from `release.yaml`.
 
@@ -393,8 +392,8 @@ python3 scripts/smoke-test.py --cmd "uvx stackql-mcp-server"
 
 ### OCI image (`docker.io/stackql/stackql-mcp`)
 
-Push locally - do NOT use the dispatch publish workflow for an existing release
-(it re-clobbers the `.mcpb` bundles and invalidates every pin). Requires
+Push locally, or re-dispatch the packaging workflow (safe for an existing
+release since `make publish` skips assets that are already published). Requires
 `docker login` with push rights on `stackql/stackql-mcp`.
 
 ```bash

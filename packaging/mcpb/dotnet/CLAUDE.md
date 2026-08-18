@@ -4,7 +4,7 @@ The .NET member of the StackQL embedded-MCP family: `StackQL.Mcp` (net8.0/net9.0
 
 ## The contract (do not deviate)
 
-Owned by [packaging/mcpb](../CLAUDE.md) in stackql/stackql - read "The nine wrapper vectors and the ordering rules" there first. In short:
+Owned by [packaging/mcpb](../CLAUDE.md) in stackql/stackql - read "The six wrapper vectors and the ordering rules" there first. In short:
 
 - Package version == stackql release version; stamped by `scripts/render-platforms.sh` (`make dotnet-manifest VERSION=X.Y.Z` from `packaging/mcpb`), never hand-edited.
 - Pins are data: `platforms.json` `{version, baseUrl, platforms{<key>:{bundle, sha256}}}` rendered from the published `.mcpb.sha256` release assets. `src/StackQL.Mcp/platforms.json` is an `EmbeddedResource` (`StackQL.Mcp.platforms.json`) parsed once by `Pins.Load()`. No hand-written pin table anywhere. The rendered files are gitignored - render before building.

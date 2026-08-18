@@ -4,7 +4,7 @@ The Rust member of the StackQL embedded-MCP family: `stackql-mcp` acquires the `
 
 ## The contract (do not deviate)
 
-Owned by [packaging/mcpb](../CLAUDE.md) in stackql/stackql - read "The nine wrapper vectors and the ordering rules" there first. In short:
+Owned by [packaging/mcpb](../CLAUDE.md) in stackql/stackql - read "The six wrapper vectors and the ordering rules" there first. In short:
 
 - Package version == stackql release version; stamped by `scripts/render-platforms.sh` (`make cargo-manifest VERSION=X.Y.Z` from `packaging/mcpb`), never hand-edited.
 - Pins are data: `platforms.json` `{version, baseUrl, platforms{<key>:{bundle, sha256}}}` rendered from the published `.mcpb.sha256` release assets. `build.rs` renders `platforms.json` into `STACKQL_VERSION` / `BASE_URL` / `PINS` consts (`src/pins.rs` only declares `Pin` and the lookup helpers). No hand-written pin table anywhere. The rendered files are gitignored - render before building.

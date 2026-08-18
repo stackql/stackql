@@ -11,9 +11,10 @@
 #                                      Use this on a Mac to build only the
 #                                      darwin-universal bundle.
 #   make signed VERSION=X.Y.Z       build with MCPB_SELF_SIGN=true
-#   make publish VERSION=X.Y.Z      upload all dist/*.mcpb (+ .sha256) to the
-#                                   stackql/stackql release matching v<VERSION>,
-#                                   with --clobber for idempotent re-runs.
+#   make publish VERSION=X.Y.Z      upload dist/*.mcpb (+ .sha256) to the
+#                                   stackql/stackql release matching v<VERSION>;
+#                                   assets already on the release are skipped
+#                                   (immutable once pinned; FORCE=1 overwrites).
 #                                   Requires 'gh auth login' with contents:write
 #                                   on stackql/stackql.
 #   make server-json VERSION=X.Y.Z  render registry/server.json from the template,
@@ -238,9 +239,14 @@ pypi-build: pypi-manifest
 	cd pypi && python -m build
 	@echo "dist ready under pypi/dist/ - publish manually with: python -m twine upload pypi/dist/*"
 
-# Upload everything that landed in dist/ to the matching tag on stackql/stackql.
-# Idempotent via --clobber, so running this from two machines (one with the
-# darwin bundle, one with the rest) is safe in either order.
+# Upload whatever landed in dist/ to the matching tag on stackql/stackql.
+# Release assets are IMMUTABLE once published: every wrapper (npm, PyPI, the
+# SDKs, the registry entry) pins their sha256, and releases.stackql.io caches
+# them under an immutable key. Rebuilt bundles are never byte-identical, so an
+# asset that already exists on the release is SKIPPED, not overwritten - which
+# also makes the two-machine flow (darwin from a Mac, the rest from a
+# workstation) and CI re-dispatches safe. FORCE=1 overwrites anyway (only for
+# a release nothing has pinned yet); otherwise cut a new patch release.
 publish: check-version
 	@command -v gh >/dev/null 2>&1 || { echo "error: gh CLI required (https://cli.github.com)" >&2; exit 2; }
 	@shopt -s nullglob; \
@@ -248,9 +254,22 @@ publish: check-version
 	  if [ $${#files[@]} -eq 0 ]; then \
 	    echo "error: nothing in $(DIST_DIR)/ to publish" >&2; exit 1; \
 	  fi; \
-	  echo "publishing $${#files[@]} file(s) to stackql/stackql release v$(VERSION):"; \
-	  for f in "$${files[@]}"; do echo "  $$f"; done; \
-	  gh release upload "v$(VERSION)" "$${files[@]}" --clobber --repo stackql/stackql
+	  existing="$$(gh release view "v$(VERSION)" --repo stackql/stackql --json assets -q '.assets[].name')"; \
+	  upload=(); \
+	  for f in "$${files[@]}"; do \
+	    name="$$(basename "$$f")"; \
+	    if grep -qxF "$$name" <<<"$$existing" && [ "$${FORCE:-}" != "1" ]; then \
+	      echo "  skip $$name (already on release v$(VERSION); assets are immutable, FORCE=1 to overwrite)"; \
+	    else \
+	      upload+=("$$f"); \
+	    fi; \
+	  done; \
+	  if [ $${#upload[@]} -eq 0 ]; then \
+	    echo "nothing to publish: all assets already on release v$(VERSION)"; exit 0; \
+	  fi; \
+	  echo "publishing $${#upload[@]} file(s) to stackql/stackql release v$(VERSION):"; \
+	  for f in "$${upload[@]}"; do echo "  $$f"; done; \
+	  gh release upload "v$(VERSION)" "$${upload[@]}" $${FORCE:+--clobber} --repo stackql/stackql
 
 # Single-target builds: temporarily hide the other artefacts so package.sh
 # skips them. Uses a sentinel dir under bin/ so nothing leaves the tree.
@@ -287,34 +306,26 @@ clean-bin:
 	@rm -f $(addprefix $(BIN_DIR)/,$(ASSETS))
 	@echo "cleaned downloaded artefacts from $(BIN_DIR)/"
 
-# --- SDK wrappers (cargo, go, dotnet, gleam, kotlin, swift) --------------------
-# Six more wrappers on the same contract as npm/pypi: version == stackql
+# --- SDK wrappers (cargo, go, dotnet) -----------------------------------------
+# Three more wrappers on the same contract as npm/pypi: version == stackql
 # release, pins from platforms.json rendered by scripts/render-platforms.sh
 # (AFTER the .mcpb assets are on the release), download through the proxy,
 # shared cache, STACKQL_MCP_BIN / STACKQL_MCP_BUNDLE, canonical argv, gated
 # by scripts/smoke-test.py --cmd against each vector's launcher.
 #
 #   make manifests VERSION=X.Y.Z          render platforms.json + version stamps for ALL vectors
-#   make <vector>-manifest VERSION=X.Y.Z  one vector (npm|pypi|cargo|go|dotnet|gleam|kotlin|swift)
+#   make <vector>-manifest VERSION=X.Y.Z  one vector (npm|pypi|cargo|go|dotnet)
 #   make <vector>-build VERSION=X.Y.Z     lint + unit tests + package/build (what CI runs)
 #   make <vector>-smoke VERSION=X.Y.Z     scripts/smoke-test.py --cmd against the launcher
 #   make <vector>-publish VERSION=X.Y.Z   publish at exactly VERSION (idempotent where the
-#                                         registry allows). Published tier (CI dispatch): cargo,
-#                                         go, dotnet. Preview tier (gleam, kotlin, swift): targets
-#                                         exist for an out-of-band publish only. Credentials from
-#                                         the environment:
+#                                         registry allows); credentials from the environment:
 #                                           cargo   CARGO_REGISTRY_TOKEN
 #                                           dotnet  NUGET_API_KEY
-#                                           gleam   HEX_API_KEY
-#                                           kotlin  ORG_GRADLE_PROJECT_mavenCentralUsername/Password,
-#                                                   ORG_GRADLE_PROJECT_signingInMemoryKey/KeyPassword
-#                                           go/swift SDK_MIRROR_TOKEN (or local git auth) - mirror push + tag
-SDK_VECTORS := cargo go dotnet gleam kotlin swift
+#                                           go      SDK_MIRROR_TOKEN (or local git auth) - mirror push + tag
+SDK_VECTORS := cargo go dotnet
 RENDER := bash scripts/render-platforms.sh
 PYTHON ?= python3
 SMOKE := $(PYTHON) scripts/smoke-test.py
-GRADLEW := $(if $(filter Windows_NT,$(OS)),./gradlew.bat,./gradlew)
-KOTLIN_LAUNCH_CP := kotlin/launcher/build/install/stackql-mcp-launch/lib/*
 
 .PHONY: manifests $(addsuffix -manifest,$(SDK_VECTORS)) \
         $(addsuffix -build,$(SDK_VECTORS)) $(addsuffix -smoke,$(SDK_VECTORS)) \
@@ -365,39 +376,3 @@ dotnet-publish: dotnet-build
 	cd dotnet && dotnet nuget push "artifacts/*.nupkg" --api-key "$$NUGET_API_KEY" \
 	  --source https://api.nuget.org/v3/index.json --skip-duplicate
 	@echo "published https://www.nuget.org/packages/StackQL.Mcp/$(VERSION) and StackQL.Mcp.AgentFramework/$(VERSION)"
-
-# gleam (hex: stackql_mcp)
-gleam-build: gleam-manifest
-	cd gleam && gleam deps download && gleam format --check src test && gleam check && gleam test \
-	  && gleam export hex-tarball
-gleam-smoke: gleam-manifest
-	cd gleam && $(PYTHON) ../scripts/smoke-test.py --cmd "gleam run -m stackql_mcp/launcher --"
-gleam-publish: gleam-manifest
-	@[ -n "$${HEX_API_KEY:-}" ] || { echo "error: HEX_API_KEY not set" >&2; exit 2; }
-	@if curl -fsSL "https://hex.pm/api/packages/stackql_mcp/releases/$(VERSION)" >/dev/null 2>&1; then \
-	  echo "hex.pm already has stackql_mcp $(VERSION) - skipping"; \
-	else \
-	  cd gleam && HEXPM_API_KEY="$$HEX_API_KEY" gleam publish --yes && echo "published https://hex.pm/packages/stackql_mcp/$(VERSION)"; \
-	fi
-
-# kotlin (Maven Central: io.stackql:stackql-mcp)
-kotlin-build: kotlin-manifest
-	cd kotlin && $(GRADLEW) --no-daemon build :launcher:installDist
-kotlin-smoke: kotlin-manifest
-	cd kotlin && $(GRADLEW) --no-daemon -q :launcher:installDist
-	$(SMOKE) --cmd "java -cp $(KOTLIN_LAUNCH_CP) io.stackql.mcp.launcher.MainKt"
-kotlin-publish: kotlin-manifest
-	@if curl -fsSL "https://repo1.maven.org/maven2/io/stackql/stackql-mcp/$(VERSION)/stackql-mcp-$(VERSION).pom" >/dev/null 2>&1; then \
-	  echo "Maven Central already has io.stackql:stackql-mcp:$(VERSION) - skipping"; \
-	else \
-	  cd kotlin && $(GRADLEW) --no-daemon :stackql-mcp:publishToMavenCentral --no-configuration-cache \
-	    && echo "published io.stackql:stackql-mcp:$(VERSION) (Central Portal; propagation to search takes a while)"; \
-	fi
-
-# swift (mirror: github.com/stackql/stackql-mcp-swift, tag v<version>)
-swift-build: swift-manifest
-	cd swift && swift build && swift test
-swift-smoke: swift-manifest
-	$(SMOKE) --cmd "swift run --package-path swift stackql-mcp-launch"
-swift-publish: swift-manifest
-	bash scripts/publish-mirror.sh --vector swift --version $(VERSION)
