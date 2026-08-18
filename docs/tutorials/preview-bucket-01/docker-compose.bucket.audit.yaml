@@ -1,0 +1,21 @@
+# Docker audit quickstart — cross-cloud StackQL security audit.
+#
+# Setup (per README.md):
+#   cp ./audit/.env.audit.example ./audit/.env.audit    # add read-only creds
+#   docker compose -f docker-compose.bucket.audit.yaml pull
+#   docker compose --env-file ./audit/.env.audit -f docker-compose.bucket.audit.yaml run --rm stackql
+#
+# stackql/stackql runs as the query engine. Empty clouds are skipped.
+# Pinned to v0.10.601 for reproducibility; override via STACKQL_IMAGE env var.
+
+services:
+  stackql:
+    image: ${STACKQL_IMAGE:-stackql/stackql:v0.10.601}
+    env_file: [./audit/.env.audit]
+    command:
+      - bash
+      - -c
+      - |
+        stackql exec \
+          --auth='{"aws":{"type":"aws_signing_v4","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY"},"google":{"type":"service_account","credentialsenvvar":"GCP_SA_JSON"},"azure":{"type":"azure_default"}}' \
+          "select * from stackql_preview.audit.omni_storage_buckets where region = '$${AWS_REGION}' and google_org = '$${GOOGLE_ORG_ID}';"

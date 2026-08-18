@@ -1,0 +1,2 @@
+# Never commit real credentials
+audit/.env.audit
