@@ -64,6 +64,11 @@ echo "cloning $MIRROR_REPO"
 "${GIT[@]}" clone --quiet "$MIRROR_URL" "$work/mirror"
 cd "$work/mirror"
 default_branch="$(git rev-parse --abbrev-ref HEAD)"
+# Identity for the sync commit and the annotated tag: a fresh clone on a CI
+# runner has no global identity, and 'git tag -a' needs one just like
+# 'git commit' (per-command -c flags would not cover the tag).
+git config user.name "stackql-release"
+git config user.email "info@stackql.io"
 
 # Replace the working tree with the tracked files of the vector plus the
 # rendered manifests (which the vector .gitignore excludes, hence add -f).
@@ -79,8 +84,7 @@ src_sha="$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown
 if git diff --cached --quiet; then
   echo "mirror tree already matches packaging/mcpb/$VECTOR"
 else
-  git -c user.name="stackql-release" -c user.email="info@stackql.io" \
-    commit --quiet -m "sync packaging/mcpb/$VECTOR from stackql/stackql@$src_sha for $TAG"
+  git commit --quiet -m "sync packaging/mcpb/$VECTOR from stackql/stackql@$src_sha for $TAG"
 fi
 new_tree="$(git rev-parse HEAD^{tree})"
 
