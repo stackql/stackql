@@ -13,6 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/pkg/astformat"
+	"github.com/stackql/stackql/pkg/textutil"
 
 	"github.com/stackql/stackql-parser/go/sqltypes"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -676,14 +677,14 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 					if !node.As.IsEmpty() {
 						viewAlias = node.As.GetRawVal()
 					}
-					templateString := fmt.Sprintf(` ( %%s ) AS "%s" `, viewAlias)
+					templateString := fmt.Sprintf(` ( %s ) AS "%s" `, textutil.IndirectQueryPlaceholder, viewAlias)
 					v.rewrittenQuery = templateString
 					v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
 					aliasHandledByIndirect = true
 				case astindirect.SubqueryType:
 					// Note: CTEs are converted to SubqueryType at AST level,
 					// so this path handles both regular subqueries and CTEs.
-					templateString := ` ( %s ) `
+					templateString := " ( " + textutil.IndirectQueryPlaceholder + " ) "
 					v.rewrittenQuery = templateString
 					v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
 				case astindirect.MaterializedViewType, astindirect.PhysicalTableType:
@@ -801,7 +802,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.hoistedOnClauseTables = append(v.hoistedOnClauseTables, lhsHoistedIntoOn...)
 		v.hoistedOnClauseTables = append(v.hoistedOnClauseTables, rhsHoistedIntoOn...)
 		if len(v.hoistedOnClauseTables) > 0 {
-			v.rewrittenQuery = fmt.Sprintf("%s %s %s ON ( %%s ) AND %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
+			v.rewrittenQuery = fmt.Sprintf("%s %s %s ON ( %s ) AND %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), textutil.ControlOnClausePlaceholder, conditionVis.GetRewrittenQuery())
 		} else {
 			v.rewrittenQuery = fmt.Sprintf("%s %s %s ON %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
 		}

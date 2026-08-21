@@ -23,6 +23,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/typing"
 
 	"github.com/stackql/stackql/pkg/serde"
+	"github.com/stackql/stackql/pkg/textutil"
 )
 
 func newSQLiteSystem(
@@ -1217,7 +1218,7 @@ func (eng *sqLiteSystem) composeSelectQuery(
 		quotedColNames = append(quotedColNames, col.CanonicalSelectionString())
 	}
 	var wq strings.Builder
-	var hoistedControlOnComparisons []any
+	var hoistedControlOnComparisons []string
 	i := 0
 	if len(hoistedTableAliases) > 0 {
 		for _, alias := range hoistedTableAliases {
@@ -1227,15 +1228,11 @@ func (eng *sqLiteSystem) composeSelectQuery(
 			)
 			i++
 		}
-		// BLOCK protect LHS string formats for indirect replacement
-		remainingStringFormats := strings.Count(fromString, `%s`)
-		diffCount := remainingStringFormats - len(hoistedControlOnComparisons)
-		if diffCount > 0 {
-			fromString = fmt.Sprintf(strings.Replace(fromString, `%s`, `%%s`, diffCount), hoistedControlOnComparisons...)
-		} else {
-			fromString = fmt.Sprintf(fromString, hoistedControlOnComparisons...)
-		}
-		// END BLOCK
+		fromString = textutil.ExpandPlaceholders(
+			fromString,
+			textutil.ControlOnClausePlaceholder,
+			hoistedControlOnComparisons,
+		)
 	}
 	var controlWhereComparisons []string
 	for _, alias := range tableAliases {

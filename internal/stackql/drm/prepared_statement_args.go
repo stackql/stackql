@@ -1,8 +1,9 @@
 package drm
 
 import (
-	"fmt"
 	"sort"
+
+	"github.com/stackql/stackql/pkg/textutil"
 )
 
 var (
@@ -82,7 +83,7 @@ func (ca *standardPreparedStatementArgs) Analyze() error {
 func (ca *standardPreparedStatementArgs) compose() (childQueryComposition, error) {
 	var varArgs []interface{}
 	query := ca.GetQuery()
-	var childQueryStrings []interface{}
+	var childQueryStrings []string
 	var keys []int
 	for i := range ca.GetChildren() {
 		keys = append(keys, i)
@@ -98,7 +99,7 @@ func (ca *standardPreparedStatementArgs) compose() (childQueryComposition, error
 		varArgs = append(varArgs, childResponse.GetVarArgs()...)
 	}
 	if len(childQueryStrings) > 0 {
-		query = fmt.Sprintf(ca.GetQuery(), childQueryStrings...)
+		query = textutil.ExpandPlaceholders(query, textutil.IndirectQueryPlaceholder, childQueryStrings)
 	}
 	varArgs = append(varArgs, ca.GetArgs()...)
 	return newChildQueryComposition(query, varArgs), nil
