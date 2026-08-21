@@ -4,7 +4,10 @@ Test Teardown     Stackql Per Test Teardown
 Documentation     Scalar-function projections over provider table columns (issue 687):
 ...               a function projection must not inherit its argument column's schema
 ...               type (typeof/date/datetime yielded 0/null and corrupted same-named
-...               siblings). Uses the no-auth stackql_native_test provider.
+...               siblings). Also covers function projections over a subquery
+...               (issue 352), where an expression that does not resolve to a source
+...               column of the subquery must not abort query rewriting.
+...               Uses the no-auth stackql_native_test provider.
 
 *** Test Cases ***
 Typeof Over Bare Integer Column Returns Underlying Type
@@ -93,3 +96,34 @@ Function Expression Containing Column Reference Stays Client Side
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select volumeId from aws.ec2.volumes where region \= lower('AP-SOUTHEAST-2') and size \= abs(size) order by volumeId asc;
     ...    vol-00200000000000000
+
+Json Extract Over Subquery Function Argument Projects Value
+    [Documentation]    Issue #352: a JSON_EXTRACT projection over a subquery whose argument
+    ...                is itself an expression previously failed with
+    ...                "query rewriting for indirection: cannot find col".
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    json_extract and json_object are sqlite-native functions; asserted on the sqlite backend.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select json_extract(json_object('vid', volume_id), '$.vid') as vid from (select volume_id from stackql_native_test.xml_ec2.volumes) foo;
+    ...    vol-1
+
+Literal Leading Function Projection Over Subquery Projects Value
+    [Documentation]    Issue #352 generalisation: a function projection over a subquery whose
+    ...                leading argument is a literal has no inferable source column and must
+    ...                still be projected, on either backend.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select coalesce('vol-fallback', volume_id) as vid from (select volume_id from stackql_native_test.xml_ec2.volumes) foo;
+    ...    vol-fallback

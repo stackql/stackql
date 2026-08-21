@@ -109,13 +109,9 @@ func (v *standardQueryRewriteAstVisitor) isJSONEachCompatible(col parserutil.Col
 	return isJSONEachCompatibleRegexp.MatchString(s)
 }
 
-func (v *standardQueryRewriteAstVisitor) isAnonymous(col parserutil.ColumnHandle) bool {
-	switch col.Expr.(type) {
-	case *sqlparser.OrExpr:
-		return true
-	default:
-		return false
-	}
+func (v *standardQueryRewriteAstVisitor) isExpressionProjection(node *sqlparser.AliasedExpr) bool {
+	_, isColumnReference := node.Expr.(*sqlparser.ColName)
+	return !isColumnReference
 }
 
 // TODO: introduce dependency on RDBMS
@@ -704,7 +700,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 					} else {
 						r, ok := indirect.GetColumnByName(col.Name)
 						if !ok {
-							if !v.isJSONEachCompatible(col) && !v.isAnonymous(col) {
+							if !v.isJSONEachCompatible(col) && !v.isExpressionProjection(node) {
 								return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
 							}
 							relationalCol = typing.NewRelationalColumn(col.Name, "").WithDecorated(col.DecoratedColumn) // TOOO: clean this up
