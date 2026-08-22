@@ -22,6 +22,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/serde"
+	"github.com/stackql/stackql/pkg/textutil"
 )
 
 func newPostgresSystem(
@@ -1093,7 +1094,7 @@ func (eng *postgresSystem) composeSelectQuery(
 	var wq strings.Builder
 	var controlWhereComparisons []string
 	i := parameterOffset
-	var hoistedControlOnComparisons []any
+	var hoistedControlOnComparisons []string
 	if len(hoistedTableAliases) > 0 {
 		for _, alias := range hoistedTableAliases {
 			hoistedControlOnComparisons = append(
@@ -1102,15 +1103,11 @@ func (eng *postgresSystem) composeSelectQuery(
 			)
 			i += len(aliasToCountersMap[alias])
 		}
-		// BLOCK protect LHS string formats for indirect replacement
-		remainingStringFormats := strings.Count(fromString, `%s`)
-		diffCount := remainingStringFormats - len(hoistedControlOnComparisons)
-		if diffCount > 0 {
-			fromString = fmt.Sprintf(strings.Replace(fromString, `%s`, `%%s`, diffCount), hoistedControlOnComparisons...)
-		} else {
-			fromString = fmt.Sprintf(fromString, hoistedControlOnComparisons...)
-		}
-		// END BLOCK
+		fromString = textutil.ExpandPlaceholders(
+			fromString,
+			textutil.ControlOnClausePlaceholder,
+			hoistedControlOnComparisons,
+		)
 	}
 	for _, alias := range tableAliases {
 		controlWhereComparisons = append(controlWhereComparisons, eng.render(alias, i, aliasToCountersMap))

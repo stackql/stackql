@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"github.com/stackql/stackql/pkg/textutil"
 )
 
 //nolint:errcheck // defer analyser uplifts
@@ -75,9 +76,9 @@ func GenerateUnionTemplateQuery(
 	v := NewFragmentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
 
 	var sb strings.Builder
-	sb.WriteString("%s ")
+	sb.WriteString(textutil.IndirectQueryPlaceholder + " ")
 	for _, unionSelect := range node.UnionSelects {
-		sb.WriteString(fmt.Sprintf("%s %%s ", unionSelect.Type))
+		sb.WriteString(fmt.Sprintf("%s %s ", unionSelect.Type, textutil.IndirectQueryPlaceholder))
 	}
 
 	var orderByStr, limitStr string

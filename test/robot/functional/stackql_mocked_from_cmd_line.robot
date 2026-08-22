@@ -3902,11 +3902,68 @@ Mutable View Select With Path Parameters inside IN Scalars inside WHERE Clause R
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Mutable-View-Select-With-Path-Parameters-inside-IN-Scalars-inside-WHERE-Clause-Returns-Expected-Result.tmp
     ...    stderr=${CURDIR}/tmp/Mutable-View-Select-With-Path-Parameters-inside-IN-Scalars-inside-WHERE-Clause-Returns-Expected-Result-stderr.tmp
-    ...    repeat_count=20 
+    ...    repeat_count=20
+
+Mutable View Select With LIKE And NOT LIKE Wildcards inside WHERE Clause Returns Expected Result
+    ${inputStr} =     Catenate
+    ...               create or replace view mutable_view_two as
+    ...               select
+    ...               kind,
+    ...               name,
+    ...               maximumCardsPerInstance,
+    ...               project
+    ...               from google.compute.acceleratorTypes
+    ...               where
+    ...               project = 'rubbish-project'
+    ...               and
+    ...               zone = 'australia-southeast1-a'
+    ...               ;
+    ...               select
+    ...               kind, name, maximumCardsPerInstance, project
+    ...               from mutable_view_two
+    ...               where project in ('testing-project', 'another-project')
+    ...               and name like '%tesla%'
+    ...               and name not like '%rubbish%'
+    ...               order by name desc, project desc
+    ...               ;
+    ...               drop view mutable_view_two
+    ...               ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}kind${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}maximumCardsPerInstance${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}compute#acceleratorType${SPACE}|${SPACE}nvidia-tesla-t4-vws${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}4${SPACE}|${SPACE}testing-project${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}compute#acceleratorType${SPACE}|${SPACE}nvidia-tesla-t4-vws${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}4${SPACE}|${SPACE}another-project${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}compute#acceleratorType${SPACE}|${SPACE}nvidia-tesla-t4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}4${SPACE}|${SPACE}testing-project${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}compute#acceleratorType${SPACE}|${SPACE}nvidia-tesla-t4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}4${SPACE}|${SPACE}another-project${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}compute#acceleratorType${SPACE}|${SPACE}nvidia-tesla-p4-vws${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}4${SPACE}|${SPACE}testing-project${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}compute#acceleratorType${SPACE}|${SPACE}nvidia-tesla-p4-vws${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}4${SPACE}|${SPACE}another-project${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}compute#acceleratorType${SPACE}|${SPACE}nvidia-tesla-p4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}4${SPACE}|${SPACE}testing-project${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    ...               |${SPACE}compute#acceleratorType${SPACE}|${SPACE}nvidia-tesla-p4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}4${SPACE}|${SPACE}another-project${SPACE}|
+    ...               |-------------------------|---------------------|-------------------------|-----------------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Mutable-View-Select-With-LIKE-And-NOT-LIKE-Wildcards-inside-WHERE-Clause-Returns-Expected-Result.tmp
+    ...    stderr=${CURDIR}/tmp/Mutable-View-Select-With-LIKE-And-NOT-LIKE-Wildcards-inside-WHERE-Clause-Returns-Expected-Result-stderr.tmp
 
 Select With Path Parameters inside IN Scalars Mixed With an Equals Parameter all inside WHERE Clause Returns Expected Result
     ${inputStr} =     Catenate
-    ...    select 
+    ...    select
     ...    id, 
     ...    name  
     ...    from google.compute.acceleratorTypes 
