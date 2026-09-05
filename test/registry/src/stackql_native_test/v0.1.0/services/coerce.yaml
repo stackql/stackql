@@ -1,0 +1,142 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: Request body coercion
+  description: |-
+    Exercises any-sdk schema-driven request body coercion (any-sdk #129,
+    stackql #725): body values are converted to the schema-declared type at
+    marshal time. The flask mock echoes the raw received body so scenarios can
+    assert the wire shape via RETURNING. Methods declare request.nativeCasing
+    camel so snake_case body keys map to the camelCase wire properties.
+components:
+  schemas:
+    settings_body:
+      type: object
+      properties:
+        backupPeriodInHours:
+          type: number
+        retryCount:
+          type: integer
+        enabled:
+          type: boolean
+        label:
+          type: string
+    settings_response:
+      type: object
+      properties:
+        serviceId:
+          type: string
+        echoed_body:
+          type: string
+        ok:
+          type: boolean
+  x-stackQL-resources:
+    settings:
+      id: stackql_native_test.coerce.settings
+      name: settings
+      title: Settings (body coercion target)
+      methods:
+        insert:
+          operation:
+            $ref: '#/paths/~1coerce~1echo/post'
+          request:
+            nativeCasing: camel
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+        update:
+          operation:
+            $ref: '#/paths/~1coerce~1echo~1{serviceId}/patch'
+          request:
+            nativeCasing: camel
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+        replace:
+          operation:
+            $ref: '#/paths/~1coerce~1echo~1{serviceId}/put'
+          request:
+            nativeCasing: camel
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select: []
+        insert:
+          - $ref: '#/components/x-stackQL-resources/settings/methods/insert'
+        update:
+          - $ref: '#/components/x-stackQL-resources/settings/methods/update'
+        replace:
+          - $ref: '#/components/x-stackQL-resources/settings/methods/replace'
+        delete: []
+paths:
+  /coerce/echo:
+    post:
+      operationId: coerce/echo/post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/settings_body'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/settings_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Echo the received body (INSERT)
+  /coerce/echo/{serviceId}:
+    patch:
+      operationId: coerce/echo/patch
+      parameters:
+        - in: path
+          name: serviceId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/settings_body'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/settings_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Echo the received body (UPDATE)
+    put:
+      operationId: coerce/echo/put
+      parameters:
+        - in: path
+          name: serviceId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/settings_body'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/settings_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Echo the received body (REPLACE)

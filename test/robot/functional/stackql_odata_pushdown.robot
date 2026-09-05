@@ -7,7 +7,9 @@ Documentation     OData query-option push-down (issue 659) via any-sdk
 ...               decoded request query so each test asserts the wire shape.
 ...               ($filter/$select/$orderby/$top/$skip/$count).
 ...               Push-down is an optimisation only: stackql's client-side WHERE/projection
-...               remain authoritative (asserted by the last case).
+...               remain authoritative. The OrderBy Syntax cases cover the non-OData
+...               orderBy renderings (any-sdk #120): prefix, suffix, column_only,
+...               direction_only, and the explicit odata syntax.
 
 *** Test Cases ***
 OData Filter Eq Pushed From Where
@@ -209,3 +211,140 @@ OData Restricted Select Star Emits No Select
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select * from stackql_native_test.odata.people_restricted where city \= 'NYC';
     ...    eq 'NYC'${SPACE}|
+
+OrderBy Syntax Direction Only Pushes Desc
+    [Documentation]    any-sdk #120: direction_only renders order=desc for the single
+    ...                allowlisted column created_at.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_direction_only order by created_at desc;
+    ...    order\=desc
+
+OrderBy Syntax Direction Only Pushes Asc
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_direction_only order by created_at asc;
+    ...    order\=asc
+
+OrderBy Syntax Prefix Pushes Signed Column
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_prefix order by created_at desc;
+    ...    sort\=-created_at${SPACE}|
+
+OrderBy Syntax Prefix Pushes Two Terms
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_prefix order by created_at desc, name asc;
+    ...    sort\=-created_at,name
+
+OrderBy Syntax Suffix Pushes Column Colon Direction
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_suffix order by created_at desc;
+    ...    sort\=created_at:desc
+
+OrderBy Syntax Column Only Pushes Bare Column
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_column_only order by created_at desc;
+    ...    sort\=created_at${SPACE}|
+
+OrderBy Syntax Direction Only Unlisted Column Stays Client Side
+    [Documentation]    Negative: name is not on the allowlist, so nothing is pushed (the
+    ...                echoed query is empty) and the client-side ORDER BY still orders
+    ...                the rows Bob, Alice, Acme.
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------|--------|
+    ...    |${SPACE}name${SPACE}${SPACE}|${SPACE}echoed${SPACE}|
+    ...    |-------|--------|
+    ...    |${SPACE}Bob${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|--------|
+    ...    |${SPACE}Alice${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|--------|
+    ...    |${SPACE}Acme${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|--------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_direction_only order by name desc;
+    ...    ${outputStr}
+
+OrderBy Syntax Direction Only Two Terms Pushes Nothing
+    [Documentation]    Negative: direction_only expresses exactly one term; two terms emit
+    ...                no parameter and ORDER BY stays client-side (Acme, Bob, Alice).
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------|--------|
+    ...    |${SPACE}name${SPACE}${SPACE}|${SPACE}echoed${SPACE}|
+    ...    |-------|--------|
+    ...    |${SPACE}Acme${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|--------|
+    ...    |${SPACE}Bob${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|--------|
+    ...    |${SPACE}Alice${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|--------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_direction_only order by created_at, name;
+    ...    ${outputStr}
+
+OrderBy Syntax Odata Explicit Matches Default Rendering
+    [Documentation]    Negative (unchanged): syntax odata renders exactly as the existing
+    ...                OData Orderby Pushed expectation.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people_sort_odata order by age asc;
+    ...    $orderby\=age asc

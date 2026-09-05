@@ -4,6 +4,10 @@ openapi: 3.0.3
 config:
   auth:
     type: oci_signing_v1
+    tenancy_ocid_envvar: STACKQL_OCI_TESTING_TENANCY_OCID
+    user_ocid_envvar: STACKQL_OCI_TESTING_USER_OCID
+    oci_fingerprint_envvar: STACKQL_OCI_TESTING_FINGERPRINT
+    oci_private_key_path_envvar: STACKQL_OCI_TESTING_PRIVATE_KEY_PATH
 providerServices:
   signing:
     description: OCI request signing (oci_signing_v1) against the local mock.

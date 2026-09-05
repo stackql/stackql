@@ -19,7 +19,7 @@ require (
 	github.com/spf13/pflag v1.0.9
 	github.com/spf13/viper v1.10.1
 	github.com/stackql-labs/omnisdk v0.1.1-alpha06
-	github.com/stackql/any-sdk v0.5.4-alpha01
+	github.com/stackql/any-sdk v0.5.5-alpha01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.2-beta01
 	github.com/stackql/stackql-parser v0.0.16-alpha02
@@ -151,7 +151,7 @@ require (
 	golang.org/x/tools v0.44.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
-	google.golang.org/grpc v1.83.0 // indirect
+	google.golang.org/grpc v1.83.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

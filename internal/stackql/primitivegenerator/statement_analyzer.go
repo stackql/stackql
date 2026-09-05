@@ -3,6 +3,7 @@ package primitivegenerator
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -516,9 +517,18 @@ func (pb *standardPrimitiveGenerator) analyzeWhere(
 	return &sqlparser.Where{Type: where.Type, Expr: retVal}, paramsSupplied, nil
 }
 
-func extractVarDefFromExec(node *sqlparser.Exec, argName string) (*sqlparser.ExecVarDef, error) {
+func extractVarDefFromExec(
+	node *sqlparser.Exec,
+	method formulation.OperationStore,
+	argName string,
+) (*sqlparser.ExecVarDef, error) {
 	for _, varDef := range node.ExecVarDefs {
-		if varDef.ColIdent.GetRawVal() == argName {
+		rawName := varDef.ColIdent.GetRawVal()
+		if rawName == argName {
+			return &varDef, nil
+		}
+		// A snake alias resolves to its wire parameter (any-sdk #131).
+		if p, ok := method.GetParameter(rawName); ok && p.GetName() == argName {
 			return &varDef, nil
 		}
 	}
@@ -594,7 +604,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	}
 	for k, param := range requiredParams {
 		logging.GetLogger().Debugln(fmt.Sprintf("param = %v", param))
-		_, err = extractVarDefFromExec(node, k)
+		_, err = extractVarDefFromExec(node, method, k)
 		if err != nil {
 			return nil, fmt.Errorf("required param not supplied for exec: %w", err)
 		}
@@ -813,6 +823,12 @@ func (pb *standardPrimitiveGenerator) parseExecPayload(
 	), nil
 }
 
+// acceptsJSONNumber: JSON numbers unmarshal as float64, so an integral value
+// also satisfies an integer property (issue #725).
+func acceptsJSONNumber(ss formulation.Schema, val float64) bool {
+	return ss.IsFloat() || (ss.IsIntegral() && val == math.Trunc(val))
+}
+
 //nolint:funlen,unparam,gocognit // TODO: refactor
 func (pb *standardPrimitiveGenerator) analyzeSchemaVsMap(
 	handlerCtx handler.HandlerContext,
@@ -820,6 +836,9 @@ func (pb *standardPrimitiveGenerator) analyzeSchemaVsMap(
 	payload map[string]interface{},
 	method formulation.OperationStore,
 ) error {
+	if schema == nil {
+		return fmt.Errorf("method '%s' has no request body schema", method.GetName())
+	}
 	requiredElements := make(map[string]bool)
 	schemas, err := schema.GetProperties()
 	if err != nil {
@@ -887,7 +906,7 @@ func (pb *standardPrimitiveGenerator) analyzeSchemaVsMap(
 			}
 			return fmt.Errorf("key '%s' expected to contain element of type 'bool' but instead it is type '%T'", k, val)
 		case float64:
-			if ss.IsFloat() {
+			if acceptsJSONNumber(ss, val) {
 				delete(requiredElements, k)
 				continue
 			}

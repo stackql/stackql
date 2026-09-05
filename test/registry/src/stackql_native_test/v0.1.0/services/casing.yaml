@@ -23,6 +23,12 @@ components:
       required: false
       schema:
         type: string
+    IPProtocol:
+      in: query
+      name: IPProtocol
+      required: false
+      schema:
+        type: string
   schemas:
     echo_response:
       type: object
@@ -40,6 +46,8 @@ components:
           type: string
         OwnerId:
           type: string
+        storageClass:
+          type: string
     create_response:
       type: object
       properties:
@@ -47,6 +55,34 @@ components:
           type: string
         ok:
           type: boolean
+    header_echo_response:
+      type: object
+      properties:
+        echoed_org:
+          type: string
+        echoed_query:
+          type: string
+    bodyless_echo_response:
+      type: object
+      properties:
+        BinaryId:
+          type: string
+        VpcId:
+          type: string
+        echoed_query:
+          type: string
+    activate_body:
+      type: object
+      properties:
+        reason:
+          type: string
+    activate_response:
+      type: object
+      properties:
+        status:
+          type: string
+        requestId:
+          type: string
   x-stackQL-resources:
     echo:
       id: stackql_native_test.casing.echo
@@ -99,6 +135,80 @@ components:
         insert: []
         delete: []
         update: []
+    echo_wire:
+      id: stackql_native_test.casing.echo_wire
+      name: echo_wire
+      title: Echo with NO request.nativeCasing (wire names presented as declared)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1casing~1echo_strict/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/echo_wire/methods/select'
+        insert: []
+        delete: []
+        update: []
+    echo_header:
+      id: stackql_native_test.casing.echo_header
+      name: echo_header
+      title: Echo of a kebab-case wire header (hyphenated snake aliasing, any-sdk #119)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1casing~1echo_header/get'
+          request:
+            nativeCasing: kebab
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/echo_header/methods/select'
+        insert: []
+        delete: []
+        update: []
+    echo_bodyless:
+      id: stackql_native_test.casing.echo_bodyless
+      name: echo_bodyless
+      title: Body-less EXEC method carrying a metadata-only request block
+      methods:
+        exec_by_id:
+          operation:
+            $ref: '#/paths/~1casing~1echo_bodyless~1{BinaryId}/get'
+          request:
+            nativeCasing: pascal
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select: []
+        insert: []
+        delete: []
+        update: []
+    activate:
+      id: stackql_native_test.casing.activate
+      name: activate
+      title: EXEC whose 200 schema lacks the exec parameter (stackql #705 / #726)
+      methods:
+        activate:
+          operation:
+            $ref: '#/paths/~1casing~1activate~1{id}/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select: []
+        insert: []
+        delete: []
+        update: []
     echo_post:
       id: stackql_native_test.casing.echo_post
       name: echo_post
@@ -128,6 +238,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/VpcId'
         - $ref: '#/components/parameters/SubnetId'
+        - $ref: '#/components/parameters/IPProtocol'
       responses:
         '200':
           description: OK
@@ -175,3 +286,67 @@ paths:
       servers:
         - url: http://localhost:1070
       summary: Echo received query parameters, VpcId required
+  /casing/echo_header:
+    get:
+      operationId: casing/echo_header/get
+      parameters:
+        - in: header
+          name: openai-organization
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/header_echo_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Echo the openai-organization request header
+  /casing/echo_bodyless/{BinaryId}:
+    get:
+      operationId: casing/echo_bodyless/get
+      parameters:
+        - in: path
+          name: BinaryId
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/VpcId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bodyless_echo_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Echo the path parameter and query, no request body
+  /casing/activate/{id}:
+    post:
+      operationId: casing/activate/post
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/activate_body'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/activate_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Lifecycle action whose response omits the id

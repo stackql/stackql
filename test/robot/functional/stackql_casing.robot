@@ -8,7 +8,11 @@ Documentation     Functional coverage for the any-sdk casing engine, exercised t
 ...               projects via any-sdk GetWireName (issue 108); (2) a snake_case WHERE key is
 ...               reverse-resolved to its PascalCase wire parameter via the native-casing param
 ...               set (issue 109); (3) PascalCase wire request parameters are transmitted as
-...               declared. Both snake and wire WHERE forms are accepted.
+...               declared. Both snake and wire WHERE forms are accepted. The tail of the
+...               suite covers any-sdk #131 / #119 surface parity: hyphenated and
+...               acronym-headed wire names, snake body keys, presentation under
+...               SHOW, body-less EXEC, wire-spelled projections and the wire-spelling
+...               backward-compatibility block.
 
 *** Test Cases ***
 Snake Case Aliases Multi Word Response Column Projects Value
@@ -151,3 +155,261 @@ Base Fallback Body Sent When No Body Params
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select echoed_body, ok from stackql_native_test.casing.echo_post;
     ...    {}
+
+Hyphenated Wire Header Resolves From Snake Where Key
+    [Documentation]    any-sdk #119: ToSnake treats '-' as a word boundary, so the
+    ...    kebab-case wire header openai-organization is addressable as
+    ...    openai_organization (method nativeCasing kebab); the mock echoes the header.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select echoed_org from stackql_native_test.casing.echo_header where openai_organization \= 'org-x';
+    ...    org-x
+
+Hyphenated Wire Header Quoted Wire Spelling Unchanged
+    [Documentation]    The quoted wire spelling keeps working alongside the snake alias.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select echoed_org from stackql_native_test.casing.echo_header where "openai-organization" \= 'org-y';
+    ...    org-y
+
+Hyphenated Wire Header Misspelt Snake Key Rejected
+    [Documentation]    Negative: a near-miss snake key is not fuzzily matched to the header.
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select echoed_org from stackql_native_test.casing.echo_header where openai_organizatoin \= 'x';
+    ...    could not locate symbol
+
+Acronym Headed Wire Parameter Resolves From Snake Where Key
+    [Documentation]    any-sdk #131: ip_protocol resolves through the declared wire
+    ...    name IPProtocol (the mechanical FromSnake form IpProtocol does not exist).
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select echoed_query from stackql_native_test.casing.echo where ip_protocol \= 'tcp';
+    ...    IPProtocol\=tcp
+
+Exec Required Path Parameter Satisfied By Snake Alias
+    [Documentation]    @binary_id satisfies the REQUIRED wire path parameter BinaryId
+    ...    (required exec args are now resolved via the method, like optional ones);
+    ...    the echoed row proves the path and query both reached the wire.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select binary_id, echoed_query from (exec stackql_native_test.casing.echo_bodyless.exec_by_id @binary_id \= 'b3', @vpc_id \= 'v3');
+    ...    | b3${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}| VpcId\=v3${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+
+Insert Snake Body Key Maps To Camel Wire Property
+    [Documentation]    data__storage_class maps to the declared wire property
+    ...    storageClass under nativeCasing pascal (declared-name resolution, not
+    ...    the mechanical StorageClass); RETURNING surfaces the echoed body.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    insert into stackql_native_test.casing.echo (data__storage_class) values ('NEARLINE') returning echoed_body;
+    ...    {"storageClass":"NEARLINE"}
+
+Insert Wire Body Key Sends Wire Property Unchanged
+    [Documentation]    data__storageClass sends the same wire body as the snake form.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    insert into stackql_native_test.casing.echo (data__storageClass) values ('NEARLINE') returning echoed_body;
+    ...    {"storageClass":"NEARLINE"}
+
+Show Methods Presents Snake Names For Native Casing Method
+    [Documentation]    SHOW METHODS renders the required wire parameter VpcId as vpc_id
+    ...    when the method declares nativeCasing and the provider enables snake aliases.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show methods in stackql_native_test.casing.echo_strict;
+    ...    | select${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}| vpc_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}| SELECT${SPACE}${SPACE}|
+
+Show Methods Keeps Wire Names Without Native Casing
+    [Documentation]    A method with no request.nativeCasing still presents wire names.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show methods in stackql_native_test.casing.echo_wire;
+    ...    | select${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}| VpcId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}| SELECT${SPACE}${SPACE}|
+
+Show Insert Renders Snake Body Keys
+    [Documentation]    SHOW INSERT presents the camelCase wire body key storageClass as
+    ...    data__storage_class for a nativeCasing method.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show insert into stackql_native_test.casing.echo;
+    ...    data__storage_class
+
+Bodyless Exec With Metadata Only Request Block Dispatches Wire Args
+    [Documentation]    A body-less method carrying request.nativeCasing (no schema)
+    ...    dispatches: GetRequestBodySchema reports nil, nil rather than an error.
+    Should Stackql Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    exec stackql_native_test.casing.echo_bodyless.exec_by_id @BinaryId \= 'b1', @VpcId \= 'v1';
+    ...    The operation was despatched successfully
+
+Bodyless Exec With Metadata Only Request Block Dispatches Snake Args
+    Should Stackql Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    exec stackql_native_test.casing.echo_bodyless.exec_by_id @binary_id \= 'b2', @vpc_id \= 'v2';
+    ...    The operation was despatched successfully
+
+Bodyless Exec Rejects Payload Without Panic
+    [Documentation]    Negative: supplying @@json to a method with no request body
+    ...    schema errors cleanly (the nil schema is guarded) instead of dereferencing nil.
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    exec stackql_native_test.casing.echo_bodyless.exec_by_id @BinaryId \= 'b4' @@json \= '{"a": 1}';
+    ...    has no request body schema
+
+Wire Spelled Projection Selects Snake Display Column
+    [Documentation]    SELECT VpcId under snake_case_aliases selects the vpc_id backend
+    ...    column (the descriptor is re-keyed to the display name) and keeps the
+    ...    wire spelling as the output header.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select VpcId from stackql_native_test.casing.echo where VpcId \= 'vpc-77';
+    ...    | vpc-77 |
+
+Wire Spelled Order By Sorts Snake Display Column
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select VpcId from stackql_native_test.casing.echo where VpcId \= 'vpc-78' order by VpcId;
+    ...    | vpc-78 |
+
+Unknown Snake Projection Still Rejected
+    [Documentation]    Negative: a column absent from the schema is not conjured by the
+    ...    display-name re-keying.
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select vpc_idz from stackql_native_test.casing.echo where VpcId \= 'vpc-77';
+    ...    no such column
+
+Backward Compat Wire Parameter In Where And Wire Column In Projection
+    [Documentation]    any-sdk #131 compatibility block: wire spellings in WHERE,
+    ...    projection and ORDER BY produce the same echoed wire shape as the snake forms.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select VpcId, echoed_query from stackql_native_test.casing.echo where IPProtocol \= 'udp' and VpcId \= 'bc-1' order by VpcId;
+    ...    IPProtocol\=udp&VpcId\=bc-1
+
+Backward Compat Wire Body Key In Insert
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    insert into stackql_native_test.casing.echo (data__DisplayName) values ('wire-name') returning echoed_body;
+    ...    {"DisplayName":"wire-name"}
+
+Backward Compat Wire Exec Argument
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select binary_id, echoed_query from (exec stackql_native_test.casing.echo_bodyless.exec_by_id @BinaryId \= 'bw', @VpcId \= 'vw');
+    ...    VpcId\=vw

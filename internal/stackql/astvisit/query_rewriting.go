@@ -757,6 +757,10 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		_, isBareCol := node.Expr.(*sqlparser.ColName)
 		if isBareCol {
 			ss, _ = schema.GetProperty(col.Name)
+			if ss != nil {
+				// A wire-spelled projection selects the display column (any-sdk #131).
+				col = col.WithDisplayName(schema.Tabulate(false, ""))
+			}
 		}
 		cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)

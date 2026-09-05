@@ -20,6 +20,8 @@ components:
           type: string
         age:
           type: integer
+        created_at:
+          type: string
         echoed:
           type: string
     people_response:
@@ -94,6 +96,123 @@ components:
       sqlVerbs:
         select:
           - $ref: '#/components/x-stackQL-resources/people_restricted/methods/select'
+        delete: []
+        insert: []
+        update: []
+    people_sort_prefix:
+      id: stackql_native_test.odata.people_sort_prefix
+      name: people_sort_prefix
+      title: People (orderBy syntax prefix, sort=-col)
+      config:
+        queryParamPushdown:
+          orderBy:
+            paramName: sort
+            syntax: prefix
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1odata~1people/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: value
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/people_sort_prefix/methods/select'
+        delete: []
+        insert: []
+        update: []
+    people_sort_suffix:
+      id: stackql_native_test.odata.people_sort_suffix
+      name: people_sort_suffix
+      title: People (orderBy syntax suffix, sort=col:desc)
+      config:
+        queryParamPushdown:
+          orderBy:
+            paramName: sort
+            syntax: suffix
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1odata~1people/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: value
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/people_sort_suffix/methods/select'
+        delete: []
+        insert: []
+        update: []
+    people_sort_column_only:
+      id: stackql_native_test.odata.people_sort_column_only
+      name: people_sort_column_only
+      title: People (orderBy syntax column_only, sort=col)
+      config:
+        queryParamPushdown:
+          orderBy:
+            paramName: sort
+            syntax: column_only
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1odata~1people/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: value
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/people_sort_column_only/methods/select'
+        delete: []
+        insert: []
+        update: []
+    people_sort_direction_only:
+      id: stackql_native_test.odata.people_sort_direction_only
+      name: people_sort_direction_only
+      title: People (orderBy syntax direction_only, order=desc)
+      config:
+        queryParamPushdown:
+          orderBy:
+            paramName: order
+            syntax: direction_only
+            supportedColumns:
+              - created_at
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1odata~1people/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: value
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/people_sort_direction_only/methods/select'
+        delete: []
+        insert: []
+        update: []
+    people_sort_odata:
+      id: stackql_native_test.odata.people_sort_odata
+      name: people_sort_odata
+      title: People (orderBy syntax odata, explicit)
+      config:
+        queryParamPushdown:
+          orderBy:
+            dialect: odata
+            syntax: odata
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1odata~1people/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: value
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/people_sort_odata/methods/select'
         delete: []
         insert: []
         update: []

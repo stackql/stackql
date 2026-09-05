@@ -4537,7 +4537,7 @@ Oauth2 CLient Credentials Auth Should Fail with Invalid Config
     Set Environment Variable    YOUR_OAUTH2_CLIENT_ID_ENV_VAR    dummy-client-id
     Set Environment Variable    YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR    dummy-client-secret
     ${outputErrStr} =    Catenate    SEPARATOR=\n
-    ...    Get "https://${LOCAL_HOST_ALIAS}:1170/api/v1/collectors/100000001?": oauth2: cannot fetch token: 401 UNAUTHORIZED
+    ...    Get "https://${LOCAL_HOST_ALIAS}:1170/api/v1/collectors/100000001": oauth2: cannot fetch token: 401 UNAUTHORIZED
     ...    Response: {"msg": "auth failed"}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
