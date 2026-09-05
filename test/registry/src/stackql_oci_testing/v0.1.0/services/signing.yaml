@@ -26,6 +26,8 @@ components:
           type: string
         auth_signed_headers:
           type: string
+        auth_request_target:
+          type: string
     buckets_response:
       type: object
       properties:

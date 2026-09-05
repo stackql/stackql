@@ -717,6 +717,15 @@ func transformOpenapiStackqlAuthToLocal(authDTO formulation.AuthDTO) *dto.AuthCt
 		AuthStyle:               authDTO.GetAuthStyle(),
 		AccountID:               authDTO.GetAccountID(),
 		AccoountIDEnvVar:        authDTO.GetAccountIDEnvVar(),
+		// Doc-level OCI env var indirections (issue #710); a runtime --auth context
+		// still wins via updateAuthContextIfNotExists.
+		OciTenancyOCIDEnvVar:        authDTO.GetOciTenancyOCIDEnvVar(),
+		OciUserOCIDEnvVar:           authDTO.GetOciUserOCIDEnvVar(),
+		OciFingerprintEnvVar:        authDTO.GetOciFingerprintEnvVar(),
+		OciPrivateKeyEnvVar:         authDTO.GetOciPrivateKeyEnvVar(),
+		OciPrivateKeyFilePathEnvVar: authDTO.GetOciPrivateKeyPathEnvVar(),
+		OciPassphraseEnvVar:         authDTO.GetOciPassphraseEnvVar(),
+		OciRegionEnvVar:             authDTO.GetOciRegionEnvVar(),
 	}
 	successor, successorExists := authDTO.GetSuccessor()
 	currentParent := rv

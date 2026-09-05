@@ -78,5 +78,32 @@ providerServices:
       $ref: stackql_native_test/v0.1.0/services/paged.yaml
     title: REST page_number pagination
     version: v0.1.0
+  linked:
+    description: Link-header (RFC 5988) pagination.
+    id: linked:v0.1.0
+    name: linked
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/linked.yaml
+    title: Link-header pagination
+    version: v0.1.0
+  cursor:
+    description: Cursor pagination requestToken encoding.
+    id: cursor:v0.1.0
+    name: cursor
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/cursor.yaml
+    title: Cursor pagination request token encoding
+    version: v0.1.0
+  coerce:
+    description: Schema-driven request body coercion.
+    id: coerce:v0.1.0
+    name: coerce
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/coerce.yaml
+    title: Request body coercion
+    version: v0.1.0
 servers: []
 version: v0.1.0

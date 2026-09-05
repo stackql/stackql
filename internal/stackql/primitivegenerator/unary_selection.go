@@ -96,6 +96,10 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 					col.Name)
 			}
 		}
+		if foundSchema != nil {
+			// A wire-spelled projection selects the display column (any-sdk #131).
+			col = col.WithDisplayName(insertTabulation)
+		}
 		selectTabulation.PushBackColumn(
 			formulation.NewColumnDescriptor(
 				col.Alias,

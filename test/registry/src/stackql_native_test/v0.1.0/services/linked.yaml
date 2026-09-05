@@ -1,0 +1,187 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: Link-header pagination
+  description: |-
+    Exercises any-sdk Link-header pagination (any-sdk #123): the mock serves
+    three pages of two items and advertises the next page as an RFC 5988
+    `Link: <url>; rel="next"` header on pages 1-2. Each row carries wire_page
+    and the raw query it was served for, so traversal and the followed URL are
+    asserted from STDOUT. Variants cover a query requestToken alongside the
+    Link token, a differently named header via algorithm link_header_next, and
+    a header carrying only rel="prev" (one page).
+components:
+  schemas:
+    linked_item:
+      type: object
+      properties:
+        name:
+          type: string
+        wire_page:
+          type: integer
+        wire_query:
+          type: string
+    linked_items_response:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/linked_item'
+  x-stackQL-resources:
+    items:
+      id: stackql_native_test.linked.items
+      name: items
+      title: Items (responseToken-only Link header)
+      config:
+        pagination:
+          responseToken:
+            key: link
+            location: header
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1linked~1items/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items/methods/select'
+        delete: []
+        insert: []
+        update: []
+    items_query_token:
+      id: stackql_native_test.linked.items_query_token
+      name: items_query_token
+      title: Items (query requestToken declared alongside the Link header)
+      config:
+        pagination:
+          requestToken:
+            key: fromName
+            location: query
+          responseToken:
+            key: Link
+            location: header
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1linked~1items/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items_query_token/methods/select'
+        delete: []
+        insert: []
+        update: []
+    items_xnext:
+      id: stackql_native_test.linked.items_xnext
+      name: items_xnext
+      title: Items (algorithm link_header_next on an X-Next-Page header)
+      config:
+        pagination:
+          algorithm: link_header_next
+          responseToken:
+            key: X-Next-Page
+            location: header
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1linked~1items_xnext/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items_xnext/methods/select'
+        delete: []
+        insert: []
+        update: []
+    items_prev_only:
+      id: stackql_native_test.linked.items_prev_only
+      name: items_prev_only
+      title: Items (Link header carries only rel="prev", one page)
+      config:
+        pagination:
+          responseToken:
+            key: Link
+            location: header
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1linked~1items_prev_only/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items_prev_only/methods/select'
+        delete: []
+        insert: []
+        update: []
+paths:
+  /linked/items:
+    get:
+      operationId: linked/items/get
+      parameters:
+        - in: query
+          name: fromName
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/linked_items_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List items across three Link-header pages
+  /linked/items_xnext:
+    get:
+      operationId: linked/items_xnext/get
+      parameters:
+        - in: query
+          name: fromName
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/linked_items_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List items, next page advertised on X-Next-Page
+  /linked/items_prev_only:
+    get:
+      operationId: linked/items_prev_only/get
+      parameters:
+        - in: query
+          name: fromName
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/linked_items_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List items, Link header carries only rel="prev"

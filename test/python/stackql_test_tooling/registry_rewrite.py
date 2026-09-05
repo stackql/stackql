@@ -171,7 +171,7 @@ def rewrite_provider(args :ProviderArgs):
               for srv in path_item_servers:
                 srv['url'] = _replace_server_url(srv['url'], args.replacement_host, args.port) 
                 path_item_servers
-            for k in ('get', 'put', 'post', 'delete', 'head'):
+            for k in ('get', 'put', 'post', 'patch', 'delete', 'head'):
               operation = path_item.get(k)
               if operation:
                 operation_servers = operation.get('servers', [])

@@ -28,13 +28,22 @@ def _oci_auth_fields(req) -> dict:
     # assert on; the signature itself varies per request (date) so it is not echoed.
     auth = req.headers.get("Authorization", "")
     fields = dict(re.findall(r'(\w+)="([^"]*)"', auth))
+    # The raw request line target is what (request-target) signs; RAW_URI keeps
+    # any dangling '?' that Flask's full_path would mask.
+    raw_uri = req.environ.get("RAW_URI") or req.environ.get("REQUEST_URI") or req.path
     return {
         "auth_scheme": auth.split(" ")[0] if auth else "",
         "auth_version": fields.get("version", ""),
         "auth_algorithm": fields.get("algorithm", ""),
         "auth_key_id": fields.get("keyId", ""),
         "auth_signed_headers": fields.get("headers", ""),
+        "auth_request_target": f"{req.method.lower()} {raw_uri}",
     }
+
+
+def _raw_query() -> str:
+    # The query string exactly as sent (still percent-encoded).
+    return request.query_string.decode("utf-8")
 
 
 def create_app() -> Flask:
@@ -60,6 +69,54 @@ def create_app() -> Flask:
                 "ok": True,
             }
         )
+
+    @app.get("/casing/echo_header")
+    def casing_echo_header_get():
+        # Kebab-case wire header; the SQL side addresses it as openai_organization.
+        return jsonify(
+            {
+                "echoed_org": request.headers.get("openai-organization"),
+                "echoed_query": _raw_query(),
+            }
+        )
+
+    @app.get("/casing/echo_bodyless/<binary_id>")
+    def casing_echo_bodyless_get(binary_id):
+        return jsonify(
+            {
+                "BinaryId": binary_id,
+                "VpcId": request.args.get("VpcId"),
+                "echoed_query": _raw_query(),
+            }
+        )
+
+    @app.post("/casing/activate/<id>")
+    def casing_activate_post(id):
+        # Response deliberately omits the id (stackql #705 / #726 shape).
+        return jsonify({"status": "ACTIVE", "requestId": "req-activate-1"})
+
+    # ---- request body coercion (any-sdk #129 / stackql #725) ---------------
+
+    def _coerce_echo(service_id):
+        return jsonify(
+            {
+                "serviceId": service_id,
+                "echoed_body": request.get_data(as_text=True),
+                "ok": True,
+            }
+        )
+
+    @app.post("/coerce/echo")
+    def coerce_echo_post():
+        return _coerce_echo("")
+
+    @app.patch("/coerce/echo/<service_id>")
+    def coerce_echo_patch(service_id):
+        return _coerce_echo(service_id)
+
+    @app.put("/coerce/echo/<service_id>")
+    def coerce_echo_put(service_id):
+        return _coerce_echo(service_id)
 
     @app.get("/casing/echo_strict")
     def casing_echo_strict_get():
@@ -110,9 +167,9 @@ def create_app() -> Flask:
         # which OData options stackql pushed down via any-sdk ApplyPushdown.
         echoed = " ".join(f"{k}={v}" for k, v in request.args.items())
         people = [
-            {"name": "Alice", "city": "NYC", "age": 30, "echoed": echoed},
-            {"name": "Acme", "city": "SF", "age": 40, "echoed": echoed},
-            {"name": "Bob", "city": "LA", "age": 25, "echoed": echoed},
+            {"name": "Alice", "city": "NYC", "age": 30, "created_at": "2024-03-01", "echoed": echoed},
+            {"name": "Acme", "city": "SF", "age": 40, "created_at": "2024-01-15", "echoed": echoed},
+            {"name": "Bob", "city": "LA", "age": 25, "created_at": "2024-02-10", "echoed": echoed},
         ]
         # Honour $top server-side so a wrongly-pushed $top is observable as an
         # under-count (the grain-change guard test relies on this).
@@ -201,6 +258,58 @@ def create_app() -> Flask:
         window = _paged_items[(page - 1) * 2:(page - 1) * 2 + 2]
         rows = [dict(item, wire_page=page) for item in window]
         return jsonify({"items": rows, "result_info": {"page": page}})
+
+    # ---- Link-header pagination (any-sdk #123) ------------------------------
+
+    _linked_pages = {
+        "": (1, ["DB1", "DB2"], "DB3"),
+        "DB3": (2, ["DB3", "DB4"], "DB5"),
+        "DB5": (3, ["DB5", "DB6"], None),
+    }
+
+    def _linked_page(header_name, rel="next"):
+        # Three pages of two, keyed by fromName; pages 1-2 carry a next link
+        # built from the host the client actually used (docker vs native).
+        page, names, next_name = _linked_pages.get(request.args.get("fromName", ""), (0, [], None))
+        rows = [{"name": n, "wire_page": page, "wire_query": _raw_query()} for n in names]
+        resp = jsonify({"items": rows})
+        if next_name is not None:
+            resp.headers[header_name] = f'<{request.host_url.rstrip("/")}{request.path}?fromName={next_name}>; rel="{rel}"'
+        return resp
+
+    @app.get("/linked/items")
+    def linked_items():
+        return _linked_page("Link")
+
+    @app.get("/linked/items_xnext")
+    def linked_items_xnext():
+        return _linked_page("X-Next-Page")
+
+    @app.get("/linked/items_prev_only")
+    def linked_items_prev_only():
+        return _linked_page("Link", rel="prev")
+
+    # ---- cursor pagination, requestToken.encoding (any-sdk #121) ------------
+
+    _cursor_pages = {
+        "": (["C1", "C2"], "page_AAAA=="),
+        "page_AAAA==": (["C3", "C4"], "page_BBBB=="),
+        "page_BBBB==": (["C5", "C6"], None),
+    }
+
+    @app.get("/cursor/items")
+    def cursor_items():
+        # A percent-escaped cursor is rejected the way strict cursor parsers do.
+        raw = _raw_query()
+        raw_page = re.search(r"(?:^|&)page=([^&]*)", raw)
+        if raw_page and "%" in raw_page.group(1):
+            return jsonify({"error": {"message": "The page token is invalid: percent-escaped cursor"}}), 400
+        names, next_page = _cursor_pages.get(request.args.get("page", ""), ([], None))
+        rows = [{"name": n, "wire_query": raw} for n in names]
+        body = {"items": rows}
+        if next_page is not None:
+            body["next_page"] = next_page
+        return jsonify(body)
 
     # ---- GraphQL pluggable cursor strategies (issue 684) --------------------
 

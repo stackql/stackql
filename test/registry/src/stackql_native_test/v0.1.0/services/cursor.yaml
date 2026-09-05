@@ -1,0 +1,105 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: Cursor pagination request token encoding
+  description: |-
+    Exercises x-stackQL-config.pagination.requestToken.encoding (any-sdk #121).
+    The mock issues base64-padded cursors (page_AAAA==) and rejects a
+    percent-escaped page value with a 400, the way strict cursor parsers do.
+    Each row carries the raw query it was served for. With encoding none the
+    cursor is appended verbatim and all three pages traverse; the default
+    (url) encoding is byte-identical to before and stops at the 400.
+components:
+  schemas:
+    cursor_item:
+      type: object
+      properties:
+        name:
+          type: string
+        wire_query:
+          type: string
+    cursor_items_response:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/cursor_item'
+        next_page:
+          type: string
+  x-stackQL-resources:
+    items:
+      id: stackql_native_test.cursor.items
+      name: items
+      title: Items (requestToken encoding none)
+      config:
+        pagination:
+          requestToken:
+            key: page
+            location: query
+            encoding: none
+          responseToken:
+            key: next_page
+            location: body
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1cursor~1items/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items/methods/select'
+        delete: []
+        insert: []
+        update: []
+    items_default_encoding:
+      id: stackql_native_test.cursor.items_default_encoding
+      name: items_default_encoding
+      title: Items (default url encoding, negative case)
+      config:
+        pagination:
+          requestToken:
+            key: page
+            location: query
+          responseToken:
+            key: next_page
+            location: body
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1cursor~1items/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items_default_encoding/methods/select'
+        delete: []
+        insert: []
+        update: []
+paths:
+  /cursor/items:
+    get:
+      operationId: cursor/items/get
+      parameters:
+        - in: query
+          name: group_by
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cursor_items_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List items across three cursor pages
