@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
 )
@@ -851,4 +852,178 @@ func readAllJSONLines(t *testing.T, path string) ([]string, error) {
 		out = append(out, line)
 	}
 	return out, nil
+}
+
+// --- Protocol revision conformance (issue #729) ---
+
+// rawClientConn drives the server over the raw JSON-RPC connection so a test
+// can speak a specific protocol revision; the SDK client always negotiates
+// the latest one.
+type rawClientConn struct {
+	t    *testing.T
+	ctx  context.Context
+	conn mcp.Connection
+}
+
+func newRawClientConn(t *testing.T, cfg *Config, backend Backend) *rawClientConn {
+	t.Helper()
+	cfg.Server.Audit.Disabled = true
+	mcpSrv, err := newMCPServer(cfg, backend, nil)
+	if err != nil {
+		t.Fatalf("newMCPServer: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	t.Cleanup(cancel)
+	t1, t2 := mcp.NewInMemoryTransports()
+	if _, err := mcpSrv.(*simpleMCPServer).server.Connect(ctx, t1, nil); err != nil {
+		t.Fatalf("server connect: %v", err)
+	}
+	conn, err := t2.Connect(ctx)
+	if err != nil {
+		t.Fatalf("client transport connect: %v", err)
+	}
+	t.Cleanup(func() { _ = conn.Close() })
+	return &rawClientConn{t: t, ctx: ctx, conn: conn}
+}
+
+func (c *rawClientConn) send(id int64, method, params string) {
+	c.t.Helper()
+	req := &jsonrpc.Request{Method: method, Params: json.RawMessage(params)}
+	if id != 0 {
+		reqID, idErr := jsonrpc.MakeID(float64(id))
+		if idErr != nil {
+			c.t.Fatalf("make id: %v", idErr)
+		}
+		req.ID = reqID
+	}
+	if err := c.conn.Write(c.ctx, req); err != nil {
+		c.t.Fatalf("write %s: %v", method, err)
+	}
+}
+
+func (c *rawClientConn) read() jsonrpc.Message {
+	c.t.Helper()
+	msg, err := c.conn.Read(c.ctx)
+	if err != nil {
+		c.t.Fatalf("read: %v", err)
+	}
+	return msg
+}
+
+// expectResponse reads the next message and asserts it is the response to id.
+func (c *rawClientConn) expectResponse(id int64) json.RawMessage {
+	c.t.Helper()
+	resp, ok := c.read().(*jsonrpc.Response)
+	if !ok {
+		c.t.Fatalf("expected a response to id %d", id)
+	}
+	if got, _ := resp.ID.Raw().(int64); got != id {
+		c.t.Fatalf("response id = %v, want %d", resp.ID.Raw(), id)
+	}
+	if resp.Error != nil {
+		c.t.Fatalf("response %d carried error: %v", id, resp.Error)
+	}
+	return resp.Result
+}
+
+const legacyMutationCall = `{"name":"run_mutation_query","arguments":{"sql":"delete from t"}}`
+
+// A 2025-06-18 client keeps the initialize handshake and receives the safe
+// mode approval as a server-initiated elicitation/create request; the SDK
+// fulfils the multi round-trip on the server side.
+func TestLegacyRevisionClient_SafeModeApprovalViaElicitationRequest(t *testing.T) {
+	be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
+	c := newRawClientConn(t, DefaultConfig(), be)
+
+	c.send(1, "initialize",
+		`{"protocolVersion":"2025-06-18","capabilities":{"elicitation":{}},"clientInfo":{"name":"legacy","version":"0"}}`)
+	var init struct {
+		ProtocolVersion string `json:"protocolVersion"`
+	}
+	if err := json.Unmarshal(c.expectResponse(1), &init); err != nil {
+		t.Fatalf("initialize result: %v", err)
+	}
+	if init.ProtocolVersion != "2025-06-18" {
+		t.Fatalf("negotiated %q, want the client's 2025-06-18", init.ProtocolVersion)
+	}
+	c.send(0, "notifications/initialized", `{}`)
+
+	c.send(2, "tools/call", legacyMutationCall)
+	elicit, ok := c.read().(*jsonrpc.Request)
+	if !ok || elicit.Method != "elicitation/create" {
+		t.Fatalf("expected an elicitation/create request, got %#v", elicit)
+	}
+	if !strings.Contains(string(elicit.Params), "delete from t") {
+		t.Fatalf("elicitation prompt should carry the SQL: %s", elicit.Params)
+	}
+	if err := c.conn.Write(c.ctx, &jsonrpc.Response{ID: elicit.ID, Result: json.RawMessage(`{"action":"accept"}`)}); err != nil {
+		t.Fatalf("write elicitation result: %v", err)
+	}
+	result := c.expectResponse(2)
+	if strings.Contains(string(result), `"isError":true`) {
+		t.Fatalf("accepted call errored: %s", result)
+	}
+	if be.lastExecQuery != "delete from t" {
+		t.Fatalf("accepted delete should reach the backend, got %q", be.lastExecQuery)
+	}
+}
+
+// A 2026-07-28 client sends no handshake: the version and capabilities
+// travel in _meta, the approval comes back as an input-required result, and
+// the retry carries the answer in inputResponses.
+func TestCurrentRevisionClient_SafeModeApprovalViaInputRequests(t *testing.T) {
+	be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
+	c := newRawClientConn(t, DefaultConfig(), be)
+	meta := `"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28",` +
+		`"io.modelcontextprotocol/clientCapabilities":{"elicitation":{"form":{}}}}`
+
+	c.send(1, "tools/call", `{`+meta+`,"name":"run_mutation_query","arguments":{"sql":"delete from t"}}`)
+	var first struct {
+		ResultType    string                     `json:"resultType"`
+		InputRequests map[string]json.RawMessage `json:"inputRequests"`
+	}
+	if err := json.Unmarshal(c.expectResponse(1), &first); err != nil {
+		t.Fatalf("first result: %v", err)
+	}
+	if first.ResultType != "input_required" || first.InputRequests[approvalInputKey] == nil {
+		t.Fatalf("expected an input_required result keyed %q, got %+v", approvalInputKey, first)
+	}
+	if be.lastExecQuery != "" {
+		t.Fatalf("backend must not run before approval, got %q", be.lastExecQuery)
+	}
+
+	c.send(2, "tools/call", `{`+meta+`,"name":"run_mutation_query","arguments":{"sql":"delete from t"},`+
+		`"inputResponses":{"`+approvalInputKey+`":{"action":"accept"}}}`)
+	result := c.expectResponse(2)
+	if strings.Contains(string(result), `"isError":true`) {
+		t.Fatalf("accepted retry errored: %s", result)
+	}
+	if be.lastExecQuery != "delete from t" {
+		t.Fatalf("accepted delete should reach the backend, got %q", be.lastExecQuery)
+	}
+
+	be.lastExecQuery = ""
+	c.send(3, "tools/call", `{`+meta+`,"name":"run_mutation_query","arguments":{"sql":"delete from t"},`+
+		`"inputResponses":{"`+approvalInputKey+`":{"action":"decline"}}}`)
+	if declined := c.expectResponse(3); !strings.Contains(string(declined), "declined approval") {
+		t.Fatalf("declined retry should refuse: %s", declined)
+	}
+	if be.lastExecQuery != "" {
+		t.Fatalf("declined delete must not reach the backend, got %q", be.lastExecQuery)
+	}
+}
+
+// A 2026-07-28 client that advertises no elicitation gets the same refusal
+// as before, read from _meta rather than the absent initialize params.
+func TestCurrentRevisionClient_SafeModeRefusesWithoutElicitation(t *testing.T) {
+	be := &testBackend{}
+	c := newRawClientConn(t, DefaultConfig(), be)
+	c.send(1, "tools/call", `{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28",`+
+		`"io.modelcontextprotocol/clientCapabilities":{}},"name":"run_mutation_query","arguments":{"sql":"delete from t"}}`)
+	if result := c.expectResponse(1); !strings.Contains(string(result), "does not support elicitation") {
+		t.Fatalf("expected the no-elicitation refusal, got %s", result)
+	}
+	if be.lastExecQuery != "" {
+		t.Fatalf("backend must not run, got %q", be.lastExecQuery)
+	}
 }

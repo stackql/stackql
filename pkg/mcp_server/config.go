@@ -160,6 +160,13 @@ type ServerConfig struct {
 
 	TransportCfg map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 
+	// Stateless serves Streamable HTTP without sessions (no Mcp-Session-Id),
+	// which is how the SDK serves protocol revision 2026-07-28 over HTTP.
+	// Off by default: a stateful server keeps legacy clients' sessions (and
+	// their elicitation capability) and negotiates 2026-07-28 clients down
+	// via server/discover. Ignored for stdio, which serves every revision.
+	Stateless bool `json:"stateless,omitempty" yaml:"stateless,omitempty"`
+
 	// Description is a human-readable description of the server.
 	Description string `json:"description" yaml:"description"`
 
@@ -199,6 +206,7 @@ type serverConfigWire struct {
 	TLSCertFile           string         `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
 	TLSKeyFile            string         `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
 	TransportCfg          map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
+	Stateless             bool           `json:"stateless,omitempty" yaml:"stateless,omitempty"`
 	Description           string         `json:"description" yaml:"description"`
 	MaxConcurrentRequests int            `json:"max_concurrent_requests" yaml:"max_concurrent_requests"`
 	RequestTimeout        Duration       `json:"request_timeout" yaml:"request_timeout"`
@@ -218,6 +226,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.TLSCertFile = w.TLSCertFile
 	s.TLSKeyFile = w.TLSKeyFile
 	s.TransportCfg = w.TransportCfg
+	s.Stateless = w.Stateless
 	s.Description = w.Description
 	s.MaxConcurrentRequests = w.MaxConcurrentRequests
 	s.RequestTimeout = w.RequestTimeout
@@ -265,9 +274,22 @@ type AuditConfig struct {
 	// implemented; other values are reserved.  Empty defaults to "file".
 	Sink string `json:"sink,omitempty" yaml:"sink,omitempty"`
 
+	// Format selects the record encoding: "jsonl" (default, one Event per
+	// line) or "otel" (OTLP/JSON log records, issue #729).
+	Format string `json:"format,omitempty" yaml:"format,omitempty"`
+
 	// File holds file-sink-specific options.  Only consulted when Sink is
 	// "file" (the default).
 	File sink.FileConfig `json:"file,omitempty" yaml:"file,omitempty"`
+}
+
+// GetFormat returns the effective log format with the default substituted
+// for empty input.
+func (a AuditConfig) GetFormat() string {
+	if a.Format == "" {
+		return audit.FormatJSONL
+	}
+	return a.Format
 }
 
 // GetFailureMode returns the effective failure-mode string with the default
@@ -392,6 +414,11 @@ func (c *Config) Validate() error {
 	}
 	if !render.IsLegalFormat(c.Server.Render) {
 		return fmt.Errorf("invalid server.render %q (legal: markdown, json)", c.Server.Render)
+	}
+	switch c.Server.Audit.GetFormat() {
+	case audit.FormatJSONL, audit.FormatOTel:
+	default:
+		return fmt.Errorf("invalid server.audit.format %q (legal: jsonl, otel)", c.Server.Audit.Format)
 	}
 	switch c.Server.Audit.GetFailureMode() {
 	case audit.FailureModeStrict, audit.FailureModeStrictMutations, audit.FailureModeBestEffort:

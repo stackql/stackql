@@ -45,4 +45,6 @@ type Event struct {
 	Args       map[string]any `json:"args,omitempty"`
 	DurationMs int64          `json:"duration_ms"`
 	Error      string         `json:"error,omitempty"`
+	// Wire is transport context serialised only by the OTel encoding.
+	Wire WireContext `json:"-"`
 }

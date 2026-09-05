@@ -157,6 +157,35 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Render-JSON.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Render-JSON-stderr.txt
+    # Issue #729: audit log in the otel (OTLP/JSON) format, selected via the
+    # --mcp.log.format flag rather than mcp.config to exercise the override.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.log.format\=otel
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9925", "mode": "full_access", "audit": {"file": {"path": "mcp-audit-otel-9925.log"}}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Audit-OTel.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Audit-OTel-stderr.txt
+    # Issue #729: sessionless Streamable HTTP (server.stateless) serves protocol
+    # revision 2026-07-28 natively; safe mode so the gated write is exercised.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9926", "stateless": true, "mode": "safe", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Stateless.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Stateless-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -1315,3 +1344,187 @@ MCP HTTP Server Query Library Get Rendered Tool
     Should Contain       ${result.stdout}       region = 'us-west-2'
     Should Contain       ${result.stdout}       run_select_query
     Should Be Equal As Integers    ${result.rc}    0
+
+# ===========================================================================
+# Issue #729 scenarios.  (1) Protocol revision 2026-07-28: stdio serves every
+# revision; Streamable HTTP serves it on the sessionless 9926 server
+# (server.stateless) while the default stateful servers negotiate current
+# clients down.  The Python harness plays a 2025-06-18 handshake client and a
+# 2026-07-28 stateless client on both transports, including the safe-mode
+# gated write.  (2) The otel audit log format: OTLP/JSON log records on 9925.
+# ===========================================================================
+
+MCP HTTP Legacy Revision Client Initialize Handshake Still Served
+    [Documentation]    A 2025-06-18 client keeps the initialize handshake and the
+    ...                Mcp-Session-Id session; the server negotiates the client's revision.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9912')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['negotiated']}    2025-06-18
+    Should Be True     ${result['session_issued']}
+    List Should Contain Value    ${result['tools']}    server_info
+    List Should Contain Value    ${result['tools']}    run_select_query
+
+MCP HTTP Current Revision Client Runs Without Handshake Or Session
+    [Documentation]    On the sessionless 9926 server a 2026-07-28 client sends no
+    ...                initialize and no session header; the revision and capabilities
+    ...                ride in _meta and tools/list is connection-invariant.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_roundtrip('http://127.0.0.1:9926')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Not Be True    ${result['session_issued']}
+    List Should Contain Value    ${result['tools']}    server_info
+    List Should Contain Value    ${result['tools']}    run_select_query
+    Should Contain    ${result['server_info']}    "version"
+
+MCP HTTP Stateless Server Still Serves Legacy Handshake Client
+    [Documentation]    Interop: a 2025-06-18 initialize is accepted on the sessionless
+    ...                server (no session is issued) and tools/list works.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9926')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['negotiated']}    2025-06-18
+    Should Not Be True    ${result['session_issued']}
+    List Should Contain Value    ${result['tools']}    server_info
+
+MCP HTTP Stateful Server Negotiates Current Client Down
+    [Documentation]    The default (stateful) HTTP server does not serve 2026-07-28: a raw
+    ...                _meta-versioned request is rejected, and the bundled client
+    ...                discovers that and negotiates a prior revision, so existing HTTP
+    ...                hosts keep sessions and elicitation unchanged.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_roundtrip('http://127.0.0.1:9912')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['tools']}    ${{[]}}
+    ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      server_info
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Stateful-negotiate.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Stateful-negotiate-stderr.txt
+    Should Be Equal As Integers    ${sel.rc}    0
+
+MCP HTTP Stateless Current Revision Client Gated Write Approved Via Input Requests
+    [Documentation]    safe mode over sessionless HTTP on 2026-07-28: input_required, then
+    ...                the retry with inputResponses accept runs the mutation.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_gated_write('http://127.0.0.1:9926', $sql, approval_action='accept')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['first_result_type']}    input_required
+    Should Be Equal    ${result['input_request_methods']}    ${{['elicitation/create']}}
+    Should Contain        ${result['retry']}    timestamp
+    Should Not Contain    ${result['retry']}    isError=true
+
+MCP HTTP Stateless Current Revision Client Gated Write Declined Via Input Requests
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_gated_write('http://127.0.0.1:9926', $sql, approval_action='decline')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['first_result_type']}    input_required
+    Should Contain    ${result['retry']}    declined approval
+
+MCP Stdio Current Revision Client Gated Write Approved Via Input Requests
+    [Documentation]    safe mode on 2026-07-28: the approval comes back as an
+    ...                input_required result carrying an elicitation/create input request;
+    ...                the retry with inputResponses accept runs the mutation.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_stateless_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $sql, approval_action='accept')    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    List Should Contain Value    ${result['tools']}    run_mutation_query
+    Should Be Equal    ${result['first_result_type']}    input_required
+    Should Be Equal    ${result['input_request_methods']}    ${{['elicitation/create']}}
+    Should Contain        ${result['retry']}    timestamp
+    Should Not Contain    ${result['retry']}    isError=true
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Current Revision Client Gated Write Declined Via Input Requests
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_stateless_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $sql, approval_action='decline')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['first_result_type']}    input_required
+    Should Contain    ${result['retry']}    declined approval
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Legacy Revision Client Gated Write Approved Via Elicitation Request
+    [Documentation]    safe mode on 2025-06-18: the same gate reaches the client as a
+    ...                server-initiated elicitation/create request (the SDK fulfils the
+    ...                multi round-trip server-side); accepting runs the mutation.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_legacy_approval_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $sql, approval_action='accept')    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    Should Be Equal    ${result['negotiated']}    2025-06-18
+    Should Contain    ${result['elicitation_message']}    Approve run_mutation_query
+    Should Contain    ${result['elicitation_message']}    deletable-firewall
+    Should Contain        ${result['call']}    timestamp
+    Should Not Contain    ${result['call']}    isError=true
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Legacy Revision Client Gated Write Declined Via Elicitation Request
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_legacy_approval_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $sql, approval_action='decline')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['negotiated']}    2025-06-18
+    Should Contain    ${result['call']}    declined approval
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP HTTP Audit OTel Format Emits OTLP JSON Log Records
+    [Documentation]    The 9925 server writes the audit log as OTLP/JSON (one LogsData per
+    ...                line) mapped to the GenAI/MCP semantic conventions; the JSONL 9923
+    ...                server keeps its byte-compatible shape.  Row values the client
+    ...                received reach neither format while the verbatim SQL (including a
+    ...                RETURNING mutation) does.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9925
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-OTel-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-OTel-select-stderr.txt
+    Should Be Equal As Integers    ${sel.rc}    0
+    ${ins}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9925
+    ...                  \-\-exec.action      run_mutation_query
+    ...                  \-\-exec.args        {"sql":"insert into google.storage.buckets( project, data__name) select 'testing\-project', 'silly\-bucket' returning projectNumber, name, location;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-OTel-insert.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-OTel-insert-stderr.txt
+    Should Be Equal As Integers    ${ins.rc}    0
+    ${ins_jsonl}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9923
+    ...                  \-\-exec.action      run_mutation_query
+    ...                  \-\-exec.args        {"sql":"insert into google.storage.buckets( project, data__name) select 'testing\-project', 'silly\-bucket' returning projectNumber, name, location;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-JSONL-insert.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-JSONL-insert-stderr.txt
+    Should Be Equal As Integers    ${ins_jsonl.rc}    0
+    Sleep         1s
+    ${otel_log}=    Get File    ${EXECDIR}${/}mcp-audit-otel-9925.log
+    ${jsonl_log}=    Get File    ${EXECDIR}${/}mcp-audit-9923.log
+    # Every line is a complete OTLP/JSON LogsData (the otlpjsonfile receiver shape).
+    ${line_count}=    Evaluate    sum(1 for l in $otel_log.splitlines() if l.strip() and 'resourceLogs' in json.loads(l))    json
+    Should Be True    ${line_count} >= 2
+    Should Contain    ${otel_log}    "gen_ai.operation.name"
+    Should Contain    ${otel_log}    "execute_tool"
+    Should Contain    ${otel_log}    "gen_ai.tool.name"
+    Should Contain    ${otel_log}    "run_mutation_query"
+    # 9925 is a stateful server, so the bundled client negotiates down to 2025-11-25.
+    Should Contain    ${otel_log}    "mcp.protocol.version"
+    Should Contain    ${otel_log}    "2025-11-25"
+    Should Contain    ${otel_log}    "stackql.query"
+    Should Contain    ${otel_log}    returning projectNumber
+    Should Contain    ${otel_log}    "stackql.rows_returned"
+    Should Contain    ${otel_log}    "service.name"
+    # The select returned bucket rows to the client; result values are never
+    # serialised in either format (redaction parity), only the statements.
+    Should Contain        ${sel.stdout}    demo-app-bucket1
+    Should Not Contain    ${otel_log}     demo-app-bucket1
+    Should Not Contain    ${jsonl_log}    demo-app-bucket1
+    Should Contain        ${jsonl_log}    returning projectNumber
+    # JSONL stays byte-compatible: no OTel or wire-context keys leak into it.
+    Should Not Contain    ${jsonl_log}    resourceLogs
+    Should Not Contain    ${jsonl_log}    rows_returned
+    Should Not Contain    ${jsonl_log}    2026-07-28

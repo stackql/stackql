@@ -84,6 +84,7 @@ func providerRegistryIdentifier(runtimeCtx dto.RuntimeCtx) string {
 var (
 	mcpServerType string // overwritten by flag
 	mcpConfig     string // overwritten by flag
+	mcpLogFormat  string // overwritten by flag; audit log encoding (issue #729)
 	envFilePath   string // overwritten by flag; sourced for every entrypoint in initConfig
 )
 
@@ -147,6 +148,9 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	json.Unmarshal([]byte(mcpConfig), &config) //nolint:errcheck // TODO: investigate
 	if config.Server.Transport == "" {
 		config.Server.Transport = mcpServerType
+	}
+	if mcpLogFormat != "" {
+		config.Server.Audit.Format = mcpLogFormat
 	}
 	// MCP clients must be able to distinguish "query ran, zero rows" from
 	// "query failed upstream" (issue #670), so data acquisition failures
