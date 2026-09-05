@@ -364,7 +364,8 @@ Wire Spelled Order By Sorts Snake Display Column
 
 Unknown Snake Projection Still Rejected
     [Documentation]    Negative: a column absent from the schema is not conjured by the
-    ...    display-name re-keying.
+    ...    display-name re-keying; the backend rejects it in its own dialect.
+    ${expected} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"    column "vpc_idz" does not exist    no such column: vpc_idz
     Should Stackql Exec Inline Contain Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -374,7 +375,7 @@ Unknown Snake Projection Still Rejected
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select vpc_idz from stackql_native_test.casing.echo where VpcId \= 'vpc-77';
-    ...    no such column
+    ...    ${expected}
 
 Backward Compat Wire Parameter In Where And Wire Column In Projection
     [Documentation]    any-sdk #131 compatibility block: wire spellings in WHERE,
