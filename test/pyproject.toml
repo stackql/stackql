@@ -13,7 +13,7 @@ packages = [
 Flask = "3.0.3"
 Jinja2 = "3.1.4"
 jsonpath-ng = "1.7.0"
-mistune = "3.0.2"
+mistune = "3.3.3"
 pyopenssl = "24.2.1"
 python = "^3.12"
 psycopg = {version = "3.2.5", extras = ["binary", "pool"]}
