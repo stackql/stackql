@@ -12,7 +12,7 @@ import (
 
 func TestNewBasicPrimitiveContext(t *testing.T) {
 	var w, ew bytes.Buffer
-	authFn := func(string) (*dto.AuthCtx, error) { return nil, nil }
+	authFn := func(string) (*dto.AuthCtx, error) { return &dto.AuthCtx{}, nil }
 
 	ctx := internaldto.NewBasicPrimitiveContext(authFn, &w, &ew)
 	if ctx == nil {
@@ -22,7 +22,7 @@ func TestNewBasicPrimitiveContext(t *testing.T) {
 
 func TestBasicPrimitiveContext_GetWriter(t *testing.T) {
 	var buf bytes.Buffer
-	authFn := func(string) (*dto.AuthCtx, error) { return nil, nil }
+	authFn := func(string) (*dto.AuthCtx, error) { return &dto.AuthCtx{}, nil }
 
 	ctx := internaldto.NewBasicPrimitiveContext(authFn, &buf, io.Discard)
 	if got := ctx.GetWriter(); got != &buf {
@@ -32,7 +32,7 @@ func TestBasicPrimitiveContext_GetWriter(t *testing.T) {
 
 func TestBasicPrimitiveContext_GetErrWriter(t *testing.T) {
 	var buf bytes.Buffer
-	authFn := func(string) (*dto.AuthCtx, error) { return nil, nil }
+	authFn := func(string) (*dto.AuthCtx, error) { return &dto.AuthCtx{}, nil }
 
 	ctx := internaldto.NewBasicPrimitiveContext(authFn, io.Discard, &buf)
 	if got := ctx.GetErrWriter(); got != &buf {
@@ -41,7 +41,7 @@ func TestBasicPrimitiveContext_GetErrWriter(t *testing.T) {
 }
 
 func TestBasicPrimitiveContext_GetWriter_NilWriter(t *testing.T) {
-	authFn := func(string) (*dto.AuthCtx, error) { return nil, nil }
+	authFn := func(string) (*dto.AuthCtx, error) { return &dto.AuthCtx{}, nil }
 
 	ctx := internaldto.NewBasicPrimitiveContext(authFn, nil, nil)
 	if got := ctx.GetWriter(); got != nil {
@@ -88,7 +88,7 @@ func TestBasicPrimitiveContext_GetAuthContext_DifferentProviders(t *testing.T) {
 	calls := make([]string, 0)
 	authFn := func(prov string) (*dto.AuthCtx, error) {
 		calls = append(calls, prov)
-		return nil, nil
+		return &dto.AuthCtx{}, nil
 	}
 
 	ctx := internaldto.NewBasicPrimitiveContext(authFn, io.Discard, io.Discard)
