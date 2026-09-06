@@ -207,18 +207,18 @@ func TestGetSortedKeysStringMap(t *testing.T) {
 			expected: []string{},
 		},
 		{
-			name:  "single element",
-			input: map[string]string{"key1": "value1"},
+			name:     "single element",
+			input:    map[string]string{"key1": "value1"},
 			expected: []string{"key1"},
 		},
 		{
-			name:  "multiple elements",
-			input: map[string]string{"zebra": "z", "apple": "a", "mango": "m"},
+			name:     "multiple elements",
+			input:    map[string]string{"zebra": "z", "apple": "a", "mango": "m"},
 			expected: []string{"apple", "mango", "zebra"},
 		},
 		{
-			name:  "already sorted",
-			input: map[string]string{"a": "1", "b": "2", "c": "3"},
+			name:     "already sorted",
+			input:    map[string]string{"a": "1", "b": "2", "c": "3"},
 			expected: []string{"a", "b", "c"},
 		},
 	}
