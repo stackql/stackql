@@ -2,7 +2,7 @@
 
 ## Description
 
-This PR adds unit tests for nine internal packages that were previously untested, addressing the unit testing coverage issues tracked in the repository. The new test files are self-contained black-box test packages (`_test` suffix) following the conventions already used elsewhere in the codebase.
+This PR adds unit tests for ten packages that were previously untested, addressing the unit testing coverage issues tracked in the repository. The new test files are self-contained black-box test packages (`_test` suffix) following the conventions already used elsewhere in the codebase.
 
 The new test files and the issues they target:
 
@@ -16,6 +16,7 @@ The new test files and the issues they target:
 | `internal/stackql/providerconfig/providerconfig_test.go` | n/a | 7 |
 | `internal/stackql/metadatavisitors/metadatavisitors_test.go` | n/a | 7 |
 | `internal/stackql/iqlerror/iqlerror_test.go` | #237 | 10 |
+| `internal/stackql/sqlstream/sqlstream_test.go` | n/a | 8 |
 | `internal/stackql/internal_data_transfer/internaldto/internaldto_test.go` | #235 | 7 |
 
 No production code was modified. Coverage is achieved through small, focused unit tests on the existing exported surface of each package:
@@ -28,6 +29,7 @@ No production code was modified. Coverage is achieved through small, focused uni
 - `providerconfig`: `ReadProviderConfig` covering valid YAML, nested YAML, empty YAML, file-not-found, invalid YAML, list values, and special characters.
 - `metadatavisitors`: `NewTemplatedProduct` / `TemplatedProduct` interface (GetBody, GetPlaceholder).
 - `iqlerror`: `GetStatementNotSupportedError` message formatting and `HandlePanic` recovery behavior.
+- `sqlstream`: `NewStaticMapStream` / `StaticMapStream` (streaming.MapStream implementation) with Write and Read operations.
 - `internaldto`: `NewBasicPrimitiveContext` / `BasicPrimitiveContext` interface (GetWriter, GetErrWriter, GetAuthContext).
 
 ## Type of change
@@ -44,7 +46,7 @@ No production code was modified. Coverage is achieved through small, focused uni
 
 ## Evidence
 
-Local unit test run, scoped to the nine new/updated packages, with the same build tag CI uses (`sqlite_stackql`):
+Local unit test run, scoped to the ten new/updated packages, with the same build tag CI uses (`sqlite_stackql`):
 
 ```
 $ go test -v --tags sqlite_stackql ./pkg/textutil/...
@@ -70,6 +72,9 @@ ok  	github.com/stackql/stackql/internal/stackql/metadatavisitors	0.029s
 
 $ go test -v --tags sqlite_stackql ./internal/stackql/iqlerror/...
 ok  	github.com/stackql/stackql/internal/stackql/iqlerror	0.004s
+
+$ go test -v --tags sqlite_stackql ./internal/stackql/sqlstream/...
+ok  	github.com/stackql/stackql/internal/stackql/sqlstream	0.013s
 
 $ go test -v --tags sqlite_stackql ./internal/stackql/internal_data_transfer/internaldto/...
 ok  	github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto	0.022s
