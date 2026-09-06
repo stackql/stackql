@@ -1,4 +1,4 @@
-package audit //nolint:testpackage // exercise the encoder directly
+package audit //nolint:testpackage // exercise the mapping directly
 
 import (
 	"context"
@@ -19,9 +19,7 @@ func (c *captureSink) Record(_ context.Context, p any) error {
 }
 func (c *captureSink) Close() error { return nil }
 
-var _ sink.Sink = &captureSink{}
-
-func attrKeys(attrs []Attribute) []string {
+func attrKeys(attrs []sink.OTelAttribute) []string {
 	keys := make([]string, 0, len(attrs))
 	for _, a := range attrs {
 		keys = append(keys, a.Key)
@@ -29,7 +27,7 @@ func attrKeys(attrs []Attribute) []string {
 	return keys
 }
 
-func attrString(t *testing.T, attrs []Attribute, key string) string {
+func attrString(t *testing.T, attrs []sink.OTelAttribute, key string) string {
 	t.Helper()
 	for _, a := range attrs {
 		if a.Key == key {
@@ -61,26 +59,12 @@ func sampleEvent() Event {
 
 // The emitted attribute set is a versioned interface: this is the schema
 // assertion for AttributeSchemaVersion 1.0.0.
-func TestOTelEncode_ToolInvocationAttributeSchema(t *testing.T) {
-	enc := NewOTelSink(&captureSink{}, "0.10.606").(*otelSink)
-	data := enc.Encode(sampleEvent())
-
-	if len(data.ResourceLogs) != 1 || len(data.ResourceLogs[0].ScopeLogs) != 1 {
-		t.Fatalf("expected one resource and one scope, got %+v", data)
+func TestEventOTelLogRecords_AttributeSchema(t *testing.T) {
+	records := sampleEvent().OTelLogRecords()
+	if len(records) != 1 {
+		t.Fatalf("an allowed call is one record, got %d", len(records))
 	}
-	rl := data.ResourceLogs[0]
-	if attrString(t, rl.Resource.Attributes, "service.name") != "stackql" ||
-		attrString(t, rl.Resource.Attributes, "service.version") != "0.10.606" {
-		t.Fatalf("resource attributes: %+v", rl.Resource.Attributes)
-	}
-	scope := rl.ScopeLogs[0]
-	if scope.Scope.Version != AttributeSchemaVersion || scope.SchemaURL != SemconvSchemaURL || rl.SchemaURL != SemconvSchemaURL {
-		t.Fatalf("scope/schema pinning wrong: %+v", scope.Scope)
-	}
-	if len(scope.LogRecords) != 1 {
-		t.Fatalf("an allowed call is one record, got %d", len(scope.LogRecords))
-	}
-	rec := scope.LogRecords[0]
+	rec := records[0]
 	want := []string{
 		"gen_ai.operation.name", "mcp.method.name", "gen_ai.tool.name", "gen_ai.tool.call.id",
 		"mcp.protocol.version", "mcp.session.id", "stackql.mode", "stackql.decision",
@@ -93,85 +77,69 @@ func TestOTelEncode_ToolInvocationAttributeSchema(t *testing.T) {
 	if attrString(t, rec.Attributes, "gen_ai.operation.name") != "execute_tool" ||
 		attrString(t, rec.Attributes, "mcp.method.name") != "tools/call" ||
 		attrString(t, rec.Attributes, "stackql.rows_returned") != "3" ||
-		attrString(t, rec.Attributes, "stackql.duration_ms") != "42" {
+		attrString(t, rec.Attributes, "stackql.duration_ms") != "42" ||
+		attrString(t, rec.Attributes, "stackql.provider") != "google" {
 		t.Fatalf("attribute values: %+v", rec.Attributes)
 	}
-	if *rec.Body.StringValue != "execute_tool run_select_query" || rec.SeverityText != "INFO" || rec.SeverityNumber != severityInfo {
+	if rec.Body != "execute_tool run_select_query" || rec.Severity != sink.OTelSeverityInfo {
 		t.Fatalf("body/severity: %+v", rec)
 	}
-	if rec.TimeUnixNano != "1788570123000000000" {
-		t.Fatalf("timeUnixNano = %s", rec.TimeUnixNano)
+	if !rec.Time.Equal(sampleEvent().Timestamp) || rec.CorrelationKey != "s1" {
+		t.Fatalf("time / correlation: %+v", rec)
 	}
-	if len(rec.TraceID) != 32 || len(rec.SpanID) != 16 {
-		t.Fatalf("generated ids must be hex trace(32)/span(16): %q %q", rec.TraceID, rec.SpanID)
+	if id := attrString(t, rec.Attributes, "gen_ai.tool.call.id"); len(id) != 2*callIDBytes {
+		t.Fatalf("call id must be %d hex chars: %q", 2*callIDBytes, id)
 	}
 }
 
-func TestOTelEncode_ElicitationDecisionRecordAndError(t *testing.T) {
-	enc := NewOTelSink(&captureSink{}, "v").(*otelSink)
+func TestEventOTelLogRecords_ElicitationDecisionAndError(t *testing.T) {
 	ev := sampleEvent()
 	ev.Tool = "run_mutation_query"
 	ev.Decision = DecisionNeedsApprovalDeclined
 	ev.Error = `tool "run_mutation_query" refused: user declined approval`
 	ev.Wire.RowsReturned = -1
-	records := enc.Encode(ev).ResourceLogs[0].ScopeLogs[0].LogRecords
+	ev.Wire.TraceParent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+	records := ev.OTelLogRecords()
 	if len(records) != 2 {
 		t.Fatalf("a gated call is two records (invocation + decision), got %d", len(records))
 	}
 	call, decision := records[0], records[1]
-	if call.SeverityText != "ERROR" || attrString(t, call.Attributes, "error.type") != DecisionNeedsApprovalDeclined {
+	if call.Severity != sink.OTelSeverityError || attrString(t, call.Attributes, "error.type") != DecisionNeedsApprovalDeclined ||
+		!strings.Contains(attrString(t, call.Attributes, "error.message"), "declined") {
 		t.Fatalf("refusal must be an ERROR record typed by decision: %+v", call)
 	}
 	if attrString(t, decision.Attributes, "mcp.method.name") != "elicitation/create" ||
 		attrString(t, decision.Attributes, "stackql.decision") != DecisionNeedsApprovalDeclined ||
-		*decision.Body.StringValue != "elicitation run_mutation_query" {
+		decision.Body != "elicitation run_mutation_query" {
 		t.Fatalf("decision record: %+v", decision)
 	}
-	if call.TraceID != decision.TraceID || call.SpanID == decision.SpanID {
-		t.Fatalf("records of one call share a trace but not a span: %+v %+v", call, decision)
-	}
 	if attrString(t, call.Attributes, "gen_ai.tool.call.id") != attrString(t, decision.Attributes, "gen_ai.tool.call.id") {
-		t.Fatalf("records of one call must share gen_ai.tool.call.id")
+		t.Fatal("records of one call must share gen_ai.tool.call.id")
 	}
-	for _, key := range []string{"stackql.rows_returned"} {
-		for _, a := range call.Attributes {
-			if a.Key == key {
-				t.Fatalf("%s must be absent when no rows were produced", key)
-			}
+	for _, r := range records {
+		if r.TraceParent != ev.Wire.TraceParent || r.CorrelationKey != "s1" {
+			t.Fatalf("trace context must reach every record: %+v", r)
 		}
 	}
-}
-
-func TestOTelEncode_TraceContext(t *testing.T) {
-	enc := NewOTelSink(&captureSink{}, "v").(*otelSink)
-	supplied := sampleEvent()
-	supplied.Wire.TraceParent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
-	rec := enc.Encode(supplied).ResourceLogs[0].ScopeLogs[0].LogRecords[0]
-	if rec.TraceID != "4bf92f3577b34da6a3ce929d0e0e4736" || rec.SpanID != "00f067aa0ba902b7" {
-		t.Fatalf("caller traceparent not honoured: %q %q", rec.TraceID, rec.SpanID)
+	for _, a := range call.Attributes {
+		if a.Key == "stackql.rows_returned" {
+			t.Fatal("stackql.rows_returned must be absent when no rows were produced")
+		}
 	}
-
-	first := enc.Encode(sampleEvent()).ResourceLogs[0].ScopeLogs[0].LogRecords[0]
-	second := enc.Encode(sampleEvent()).ResourceLogs[0].ScopeLogs[0].LogRecords[0]
-	if first.TraceID != second.TraceID {
-		t.Fatalf("records from one session must share a generated trace id")
-	}
-	if first.SpanID == second.SpanID {
-		t.Fatalf("each record gets its own span id")
-	}
-	other := sampleEvent()
-	other.Wire.SessionID = "s2"
-	if enc.Encode(other).ResourceLogs[0].ScopeLogs[0].LogRecords[0].TraceID == first.TraceID {
-		t.Fatalf("a different session must not share the trace id")
+	past := sampleEvent()
+	past.Error = "upstream 500"
+	if got := attrString(t, past.OTelLogRecords()[0].Attributes, "error.type"); got != "tool_error" {
+		t.Fatalf("failures past the gate are tool_error, got %q", got)
 	}
 }
 
 // Result values never reach the log in either format: a RETURNING secret
-// appears in neither the JSONL event nor the OTLP records.
-func TestOTelEncode_RedactionParityWithJSONL(t *testing.T) {
+// appears in neither the JSONL event nor the OTLP records, and the JSONL
+// shape carries none of the wire context.
+func TestNewOTelSink_RedactionParityWithJSONL(t *testing.T) {
 	const secret = "s3cr3t-value-from-returning"
 	capture := &captureSink{}
-	otel := NewOTelSink(capture, "v")
+	otel := NewOTelSink(capture, "0.10.606")
 	ev := sampleEvent()
 	ev.Tool = "run_mutation_query"
 	ev.SQL = "insert into t(data__name) select 'x' returning secret_key"
@@ -192,13 +160,13 @@ func TestOTelEncode_RedactionParityWithJSONL(t *testing.T) {
 	if strings.Contains(string(jsonlLine), "2026-07-28") || strings.Contains(string(jsonlLine), "rows_returned") {
 		t.Fatalf("JSONL must stay byte-compatible (no wire context fields): %s", jsonlLine)
 	}
-	if !strings.HasPrefix(string(otelLine), `{"resourceLogs":[{"resource":`) {
-		t.Fatalf("otel line is not an OTLP/JSON LogsData: %s", otelLine)
-	}
-}
-
-func TestOTelSink_RejectsForeignPayload(t *testing.T) {
-	if err := NewOTelSink(&captureSink{}, "v").Record(context.Background(), "not an event"); err == nil {
-		t.Fatal("expected an error for a non-Event payload")
+	for _, want := range []string{
+		`{"resourceLogs":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"stackql"}},{"key":"service.version","value":{"stringValue":"0.10.606"}}]}`,
+		`"scope":{"name":"` + scopeName + `","version":"` + AttributeSchemaVersion + `"}`,
+		`"schemaUrl":"` + sink.DefaultOTelSchemaURL + `"`,
+	} {
+		if !strings.Contains(string(otelLine), want) {
+			t.Fatalf("otel line lacks %s:\n%s", want, otelLine)
+		}
 	}
 }

@@ -283,7 +283,7 @@ The audit stream has two encodings, written to the same file sink:
 ./build/stackql mcp --mcp.server.type=stdio --mcp.log.format=otel    # OTLP/JSON log records
 ```
 
-The flag overrides `server.audit.format` in `mcp.config` (`"audit": {"format": "otel"}`).  `jsonl` is byte-compatible with the records described above.  `otel` writes one OTLP/JSON `LogsData` object per line, the shape the OpenTelemetry Collector's `otlp_json_file` receiver ingests as-is (verified against otelcol-contrib 0.160.0), so the stream reaches any OTLP pipeline with no transform processor:
+The flag overrides `server.audit.format` in `mcp.config` (`"audit": {"format": "otel"}`).  `jsonl` is byte-compatible with the records described above.  `otel` wraps the same sink with the generic OTLP/JSON decorator from [`pkg/sink`](/pkg/sink) (usable by any subsystem that writes records; the MCP-specific part is only the attribute mapping in `pkg/mcp_server/audit`) and writes one OTLP/JSON `LogsData` object per line, the shape the OpenTelemetry Collector's `otlp_json_file` receiver ingests as-is (verified against otelcol-contrib 0.160.0), so the stream reaches any OTLP pipeline with no transform processor:
 
 ```yaml
 receivers:

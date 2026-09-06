@@ -1,6 +1,7 @@
 // Package sink provides a generic record-and-close interface for writing
-// JSON-marshalable payloads to a destination, and the concrete implementations
-// (file, nop) the rest of the codebase consumes.
+// JSON-marshalable payloads to a destination, the concrete implementations
+// (file, nop) the rest of the codebase consumes, and the OTel decorator that
+// re-encodes any payload as OTLP/JSON log records on the way to a sink.
 //
 // The interface is deliberately payload-agnostic: callers pass any value that
 // json.Marshal can handle, and the sink takes responsibility for serialisation,
