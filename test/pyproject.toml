@@ -11,7 +11,7 @@ packages = [
 
 [tool.poetry.dependencies]
 Flask = "3.0.3"
-Jinja2 = "3.1.4"
+Jinja2 = "3.1.6"
 jsonpath-ng = "1.7.0"
 mistune = "3.3.3"
 pyopenssl = "24.2.1"
