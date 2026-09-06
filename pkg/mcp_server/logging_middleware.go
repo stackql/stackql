@@ -21,6 +21,13 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
+// Unwrap lets http.ResponseController reach the underlying Flusher, which
+// the SDK relies on to push SSE events (protocol 2026-07-28 discover/tool
+// responses otherwise sit unflushed until the handler returns).
+func (rw *responseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
 func loggingHandler(handler http.Handler, logger *logrus.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

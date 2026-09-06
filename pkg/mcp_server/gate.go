@@ -156,21 +156,31 @@ func addToolWithGate[In, Out any](
 		case policy.DecisionRefuseImmediate:
 			err := fmt.Errorf("tool %q refused: %s", t.Name, p.Reason())
 			recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
-				audit.DecisionRefuseImmediate, started, err)
+				audit.DecisionRefuseImmediate, started, err, wireContext(req, nil))
 			return nil, zero, err
 		case policy.DecisionNeedsApproval:
-			outcome, err := elicitApproval(ctx, req, t.Name, p.Reason(), sql, p.Class())
+			outcome, prompt, err := approvalOutcome(req, t.Name, p.Reason(), sql, p.Class())
+			if prompt != nil {
+				// First pass: hand the approval prompt back as an input
+				// request; the client (or the SDK, for pre-2026-07-28
+				// clients) retries the call with the user's answer.
+				return prompt, zero, nil
+			}
 			auditDecision = outcome
 			if err != nil {
 				recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
-					outcome, started, err)
+					outcome, started, err, wireContext(req, nil))
 				return nil, zero, err
 			}
 		}
 
 		result, out, err := h(ctx, req, args)
+		var produced any
+		if err == nil {
+			produced = out
+		}
 		recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
-			auditDecision, started, err)
+			auditDecision, started, err, wireContext(req, produced))
 		if err != nil {
 			return result, out, err
 		}
@@ -183,51 +193,67 @@ func addToolWithGate[In, Out any](
 	mcp.AddTool(s, t, wrapped)
 }
 
-// elicitApproval asks the user (via the client) to approve the action.
-// Returns the audit decision-outcome string and an error if the action was
-// refused.  On accept, the error is nil and execution should proceed.
-func elicitApproval(
-	ctx context.Context, req *mcp.CallToolRequest,
+// approvalInputKey is the input request id the client echoes back with the
+// user's answer (SEP-2322 multi round-trip requests).
+const approvalInputKey = "stackql_approval"
+
+// approvalOutcome resolves the gated-write approval as a multi round-trip
+// request. On the first pass it returns the elicitation prompt for the caller
+// to hand back as an input-required result; on the retry it reads the user's
+// answer from InputResponses and returns the audit decision-outcome plus an
+// error when the action was refused. The SDK middleware performs the round
+// trip on the server side for pre-2026-07-28 clients, so both lifecycle
+// models share this path.
+func approvalOutcome(
+	req *mcp.CallToolRequest,
 	toolName, reason, sql string, class policy.QueryClass,
-) (string, error) {
-	session := req.Session
-	caps := session.InitializeParams().Capabilities
+) (string, *mcp.CallToolResult, error) {
+	if answer, answered := req.Params.InputResponses[approvalInputKey]; answered {
+		res, isElicit := answer.(*mcp.ElicitResult)
+		if !isElicit {
+			return audit.DecisionNeedsApprovalDeclined,
+				nil, fmt.Errorf("tool %q refused: unexpected approval response type %T", toolName, answer)
+		}
+		switch res.Action {
+		case "accept":
+			return audit.DecisionNeedsApprovalAccepted, nil, nil
+		case "decline":
+			return audit.DecisionNeedsApprovalDeclined,
+				nil, fmt.Errorf("tool %q refused: user declined approval", toolName)
+		case "cancel":
+			return audit.DecisionNeedsApprovalCancelled,
+				nil, fmt.Errorf("tool %q refused: approval prompt was dismissed", toolName)
+		default:
+			return audit.DecisionNeedsApprovalDeclined,
+				nil, fmt.Errorf("tool %q refused: unexpected elicitation action %q", toolName, res.Action)
+		}
+	}
+	// Capabilities come from the request _meta (2026-07-28) or the
+	// initialize params (earlier revisions); the SDK resolves both.
+	caps := req.ClientCapabilities()
 	if caps == nil || caps.Elicitation == nil {
 		err := fmt.Errorf(
 			"tool %q refused: %s and the MCP client does not support elicitation. "+
 				"Restart the server in 'full_access' mode if you trust this client, "+
 				"or use an elicitation-capable client",
 			toolName, reason)
-		return audit.DecisionNeedsApprovalUnavailable, err
+		return audit.DecisionNeedsApprovalUnavailable, nil, err
 	}
 	message := fmt.Sprintf("Approve %s (%s)?", toolName, class.String())
 	if sql != "" {
 		message = fmt.Sprintf("Approve %s (%s)?\n\nSQL: %s", toolName, class.String(), sql)
 	}
-	res, err := session.Elicit(ctx, &mcp.ElicitParams{
-		Message: message,
-		RequestedSchema: map[string]any{
-			"type":       "object",
-			"properties": map[string]any{},
+	return "", &mcp.CallToolResult{
+		InputRequests: mcp.InputRequestMap{
+			approvalInputKey: &mcp.ElicitParams{
+				Message: message,
+				RequestedSchema: map[string]any{
+					"type":       "object",
+					"properties": map[string]any{},
+				},
+			},
 		},
-	})
-	if err != nil {
-		return audit.DecisionNeedsApprovalDeclined,
-			fmt.Errorf("tool %q refused: elicitation transport error: %w", toolName, err)
-	}
-	switch res.Action {
-	case "accept":
-		return audit.DecisionNeedsApprovalAccepted, nil
-	case "decline":
-		return audit.DecisionNeedsApprovalDeclined,
-			fmt.Errorf("tool %q refused: user declined approval", toolName)
-	case "cancel":
-		return audit.DecisionNeedsApprovalCancelled,
-			fmt.Errorf("tool %q refused: approval prompt was dismissed", toolName)
-	default:
-		return audit.DecisionNeedsApprovalDeclined,
-			fmt.Errorf("tool %q refused: unexpected elicitation action %q", toolName, res.Action)
-	}
+	}, nil
 }
 
 // recordAudit writes one event to the configured sink.  Audit-write failures
@@ -251,6 +277,7 @@ func recordAudit(
 	decision string,
 	started time.Time,
 	toolErr error,
+	wire audit.WireContext,
 ) {
 	if auditSink == nil {
 		return
@@ -261,6 +288,7 @@ func recordAudit(
 		Mode:       mode,
 		Decision:   decision,
 		DurationMs: time.Since(started).Milliseconds(),
+		Wire:       wire,
 	}
 	if sql != "" {
 		event.SQL = sql
@@ -277,6 +305,29 @@ func recordAudit(
 	if err := auditSink.Record(ctx, event); err != nil {
 		handleAuditFailure(cfg, class, err)
 	}
+}
+
+// wireContext collects the transport facts the OTel encoding records: the
+// negotiated revision, the session, a caller-supplied traceparent from
+// _meta, and the row count for row-returning tools.
+func wireContext(req *mcp.CallToolRequest, out any) audit.WireContext {
+	wire := audit.WireContext{RowsReturned: -1}
+	if req == nil {
+		return wire
+	}
+	wire.ProtocolVersion = req.ProtocolVersion()
+	if req.Session != nil {
+		wire.SessionID = req.Session.ID()
+	}
+	if req.Params != nil {
+		if tp, ok := req.Params.Meta["traceparent"].(string); ok {
+			wire.TraceParent = tp
+		}
+	}
+	if rows, ok := out.(dto.QueryResultDTO); ok {
+		wire.RowsReturned = len(rows.Rows)
+	}
+	return wire
 }
 
 // finalizeAudit is a placeholder hook for future strict-mode hardening.

@@ -14,6 +14,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/stackql/stackql/pkg/mcp_server/audit"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
 	"github.com/stackql/stackql/pkg/mcp_server/policy"
 	"github.com/stackql/stackql/pkg/mcp_server/render"
@@ -54,7 +55,7 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 	address := config.GetServerAddress()
 	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 		return server
-	}, nil)
+	}, &mcp.StreamableHTTPOptions{Stateless: config.Server.Stateless})
 
 	handlerWithLogging := loggingHandler(handler, s.logger)
 
@@ -145,7 +146,10 @@ func mcpDefaultAuditFilename(t time.Time) string {
 // when neither Path nor Dir is supplied in mcp.config, we default Dir to cwd
 // (".") so existing operators see the same behaviour as PR2.  The generic
 // pkg/sink package itself refuses to silently pick a directory.
-func initAuditSink(cfg *Config, logger *logrus.Logger) (sink.Sink, error) {
+//
+// The otel format wraps the same destination with the OTLP/JSON encoder
+// (issue #729); serviceVersion lands in the resource attributes.
+func initAuditSink(cfg *Config, logger *logrus.Logger, serviceVersion string) (sink.Sink, error) {
 	if !cfg.IsAuditEnabled() {
 		return sink.NewNopSink(), nil
 	}
@@ -156,17 +160,17 @@ func initAuditSink(cfg *Config, logger *logrus.Logger) (sink.Sink, error) {
 	if fileCfg.DefaultFilename == nil {
 		fileCfg.DefaultFilename = mcpDefaultAuditFilename
 	}
-	switch cfg.Server.Audit.Sink {
-	case "", "file":
-		s, err := sink.NewFileSink(fileCfg)
-		if err != nil {
-			return nil, fmt.Errorf("audit file sink: %w", err)
-		}
-		return s, nil
-	default:
+	if cfg.Server.Audit.Sink != "" && cfg.Server.Audit.Sink != "file" {
 		logger.Warnf("unknown audit sink %q; falling back to file", cfg.Server.Audit.Sink)
-		return sink.NewFileSink(fileCfg)
 	}
+	s, err := sink.NewFileSink(fileCfg)
+	if err != nil {
+		return nil, fmt.Errorf("audit file sink: %w", err)
+	}
+	if cfg.Server.Audit.GetFormat() == audit.FormatOTel {
+		return audit.NewOTelSink(s, serviceVersion), nil
+	}
+	return s, nil
 }
 
 // NewMCPServer creates a new MCP server with the provided configuration and backend.
@@ -187,7 +191,8 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		logger.SetLevel(logrus.InfoLevel)
 	}
 
-	sink, err := initAuditSink(config, logger)
+	serverInfo, _ := backend.ServerInfo(context.Background(), nil)
+	sink, err := initAuditSink(config, logger, serverInfo.Version)
 	if err != nil {
 		return nil, err
 	}

@@ -188,12 +188,33 @@ Instructions, prompts and resources are authored as markdown under `pkg/mcp_serv
 
 **Refuse** returns an error immediately.
 
-**Needs approval** uses the MCP elicitation flow:
+**Needs approval** uses the MCP elicitation flow, shaped by the negotiated protocol revision (see [Protocol revision support](#protocol-revision-support)):
 
-- If the client advertised elicitation at initialise, the server sends an `elicitation/create` request describing the action (tool name, query class, SQL).  Branch on the user response: `accept` -> proceed; `decline` or `cancel` -> return an error.
+- If the client advertised elicitation (at initialise, or in the per-request `_meta` client capabilities on 2026-07-28), the server asks the user to approve the action (tool name, query class, SQL).  On 2026-07-28 the prompt is returned as an `input_required` result carrying an `elicitation/create` input request under the id `stackql_approval`, and the client retries the call with the answer in `inputResponses`; on earlier revisions the server sends the `elicitation/create` request itself mid-call.  Branch on the user response: `accept` -> proceed; `decline` or `cancel` -> return an error.
 - If the client did **not** advertise elicitation, the tool is refused with a message that points the operator at `full_access` mode.
 
 The bundled `stackql_mcp_client` does NOT advertise elicitation, so against a `safe` or `delete_safe` server every mutation/lifecycle call is refused with the no-elicitation message.  This is by design - the bundled client exists for scripting and regression tests, not interactive use.  Elicitation-capable MCP clients (eg Claude Desktop, Cursor) prompt the user normally.
+
+## Protocol revision support
+
+The server speaks every revision the [Go MCP SDK](https://github.com/modelcontextprotocol/go-sdk) supports and negotiates per client, so a fleet of mixed clients works against one server:
+
+| Revision | Lifecycle | Approval prompt (`safe` / `delete_safe`) |
+|---|---|---|
+| `2026-07-28` (advertised) | No handshake: `server/discover`, then every request carries `io.modelcontextprotocol/protocolVersion` and `io.modelcontextprotocol/clientCapabilities` in `_meta` (plus the `Mcp-Protocol-Version` header on HTTP) | `input_required` result + retry with `inputResponses` (SEP-2322) |
+| `2025-11-25`, `2025-06-18` | `initialize` / `notifications/initialized` | Server-initiated `elicitation/create` request |
+| `2025-03-26`, `2024-11-05` | as above | as above |
+
+Transport behaviour:
+
+- **stdio** serves every revision on one process; a new-revision client's first request is served without a handshake and a legacy client's `initialize` still works.
+- **Streamable HTTP** defaults to the stateful, session-per-client model (`Mcp-Session-Id`), which the SDK serves for revisions up to `2025-11-25`; a `2026-07-28` client learns that from `server/discover` and negotiates down, so existing HTTP hosts keep their sessions and elicitation unchanged.  Set `"stateless": true` in `server` to serve `2026-07-28` natively: no `Mcp-Session-Id` is issued or read, `tools/list` / `prompts/list` / `resources/list` are connection-invariant, and gated writes use the input-required round trip.  A sessionless server still accepts a legacy `initialize` and serves reads to that client, but cannot retain the elicitation capability a legacy client declared at initialise (the SDK gives each request an ephemeral session), so legacy HTTP clients cannot approve gated writes on it.  Pick stateless for current-revision hosts, stateful for a mixed legacy fleet.
+
+```bash
+./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "stateless": true} }'
+```
+
+The server holds no cross-call state: mode, audit and provider auth are process-level configuration, so nothing needed to move behind explicit handles (SEP-2567).  The robot suite drives stdio and both HTTP models with a 2025-06-18 handshake client and a 2026-07-28 stateless client, including the gated write on each revision.
 
 ### Breaking change vs PR1
 
@@ -252,6 +273,55 @@ When the sink returns an error, the response behaviour depends on `failure_mode`
 ### Sequencing
 
 The audit write happens AFTER the tool executes (or is skipped because it was gated out) but BEFORE the response returns to the client.  In strict mode an audit-write failure on a successful DELETE means the row is gone but the client sees an error - by design.
+
+### Log format (`--mcp.log.format`)
+
+The audit stream has two encodings, written to the same file sink:
+
+```bash
+./build/stackql mcp --mcp.server.type=stdio --mcp.log.format=jsonl   # default, unchanged
+./build/stackql mcp --mcp.server.type=stdio --mcp.log.format=otel    # OTLP/JSON log records
+```
+
+The flag overrides `server.audit.format` in `mcp.config` (`"audit": {"format": "otel"}`).  `jsonl` is byte-compatible with the records described above.  `otel` wraps the same sink with the generic OTLP/JSON decorator from [`pkg/sink`](/pkg/sink) (usable by any subsystem that writes records; the MCP-specific part is only the attribute mapping in `pkg/mcp_server/audit`) and writes one OTLP/JSON `LogsData` object per line, the shape the OpenTelemetry Collector's `otlp_json_file` receiver ingests as-is (verified against otelcol-contrib 0.160.0), so the stream reaches any OTLP pipeline with no transform processor:
+
+```yaml
+receivers:
+  otlp_json_file:
+    include: [/var/log/stackql-mcp.log]
+exporters:
+  debug: {}
+service:
+  pipelines:
+    logs:
+      receivers: [otlp_json_file]
+      exporters: [debug]
+```
+
+Each tool call produces one log record; a call that went through the approval gate produces a second record for the elicitation decision.  Records of one call share `gen_ai.tool.call.id` and a trace id; a W3C `traceparent` supplied by the caller in `params._meta` is honoured, otherwise one trace id is generated per MCP session so an agent session's records correlate.
+
+The emitted attribute set is a versioned interface: the instrumentation scope is `github.com/stackql/stackql/pkg/mcp_server/audit` at version `1.0.0`, and `schemaUrl` pins the stable conventions to `https://opentelemetry.io/schemas/1.44.0`.  The `gen_ai.*` and `mcp.*` attributes follow the [GenAI](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md#execute-tool-span) and [MCP](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/mcp.md) semantic conventions, which are Development status; a unit test asserts the exact set below and the scope version is bumped when it changes.
+
+| Attribute | Record | Value |
+|---|---|---|
+| `service.name`, `service.version` | resource | `stackql`, the stackql version |
+| `gen_ai.operation.name` | tool call | `execute_tool` |
+| `mcp.method.name` | both | `tools/call` on the tool call record, `elicitation/create` on the decision record |
+| `gen_ai.tool.name` | both | tool name |
+| `gen_ai.tool.call.id` | both | generated per call, shared by both records |
+| `mcp.protocol.version` | both | negotiated revision |
+| `mcp.session.id` | both | session id (absent for stateless HTTP requests) |
+| `stackql.mode` | both | server mode |
+| `stackql.decision` | both | the `decision` value from the JSONL table |
+| `stackql.query` | tool call | verbatim SQL, for query tools |
+| `stackql.query_class` | tool call | the `query_class` value |
+| `stackql.provider` | tool call | provider, for metadata tools |
+| `stackql.query.source` | tool call | query library entry id, when supplied |
+| `stackql.duration_ms` | tool call | wall-clock duration |
+| `stackql.rows_returned` | tool call | row count, for row-returning tools |
+| `error.type`, `error.message` | tool call | on failure: the refusing decision, or `tool_error` past the gate |
+
+Body is `execute_tool <tool>` / `elicitation <tool>`; severity is `INFO`, or `ERROR` when the call failed or was refused.  The redaction contract is identical in both formats: result values are never serialised, only the statement that produced them.
 
 ### Breaking change vs PR1
 

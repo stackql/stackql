@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime/debug"
 	"strings"
 
 	"github.com/stackql/any-sdk/pkg/constants"
@@ -125,15 +126,34 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
+// vcsBuildDate reports the module's vcs.time when the linker did not stamp
+// BuildDate (issue #704), so local builds still carry a build date.
+func vcsBuildDate() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	for _, setting := range info.Settings {
+		if setting.Key == "vcs.time" {
+			return setting.Value
+		}
+	}
+	return ""
+}
+
 //nolint:lll,funlen,gochecknoinits,mnd // init is a pattern for this lib
 func init() {
+	buildDate := BuildDate
+	if buildDate == "" {
+		buildDate = vcsBuildDate()
+	}
 	buildinfo.Init(
 		BuildMajorVersion,
 		BuildMinorVersion,
 		BuildPatchVersion,
 		BuildCommitSHA,
 		BuildShortCommitSHA,
-		BuildDate,
+		buildDate,
 		BuildPlatform,
 	)
 	bi := buildinfo.Get()
@@ -232,6 +252,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&mcpConfig, "mcp.config", "{}", "MCP server config file path (YAML or JSON)")
 	rootCmd.PersistentFlags().StringVar(&mcpServerType, "mcp.server.type", "", "MCP server type (http or stdio for now)")
+	rootCmd.PersistentFlags().StringVar(&mcpLogFormat, "mcp.log.format", "", "MCP audit log format: jsonl (default) or otel (OTLP/JSON log records); overrides server.audit.format in mcp.config")
 	rootCmd.PersistentFlags().StringVar(&envFilePath, "env.file", "", "optional dotenv-style file sourced into the process environment at startup, created empty if absent; the MCP reload_credentials tool re-sources it on demand")
 }
 

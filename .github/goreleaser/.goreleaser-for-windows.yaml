@@ -24,7 +24,7 @@ builds:
     ldflags: >-
       -s -w
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{.Major}}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{.Minor}}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{.Minor}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={{.Patch}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{.FullCommit}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{.ShortCommit}}

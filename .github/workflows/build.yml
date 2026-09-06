@@ -229,6 +229,8 @@ jobs:
 
         $env:BUILDMAJORVERSION = $BuildMajorVersion
         $env:BUILDMINORVERSION = $BuildMinorVersion
+        # ISO-8601 UTC, matching the Linux/macOS jobs (issue #704).
+        $env:BUILDDATE = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
         
         echo "BUILDMAJORVERSION=$env:BUILDMAJORVERSION" >> $GITHUB_ENV
         echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
@@ -484,7 +486,7 @@ jobs:
         fi
         BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
         export BUILDSHORTCOMMITSHA
-        BUILDDATE="$(date)"
+        BUILDDATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
@@ -721,7 +723,7 @@ jobs:
         fi
         BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
         export BUILDSHORTCOMMITSHA
-        BUILDDATE="$(date)"
+        BUILDDATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
@@ -1101,7 +1103,7 @@ jobs:
         fi
         BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
         export BUILDSHORTCOMMITSHA
-        BUILDDATE="$(date)"
+        BUILDDATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
@@ -1533,7 +1535,7 @@ jobs:
         fi
         BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
         export BUILDSHORTCOMMITSHA
-        BUILDDATE="$(date)"
+        BUILDDATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
@@ -1671,7 +1673,7 @@ jobs:
         fi
         BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
         export BUILDSHORTCOMMITSHA
-        BUILDDATE="$(date)"
+        BUILDDATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
@@ -1803,7 +1805,7 @@ jobs:
           BUILDPATCHVERSION="${BUILDPATCHVERSION}"
         fi
         BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
-        BUILDDATE="$(date)"
+        BUILDDATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
@@ -2199,7 +2201,7 @@ jobs:
             SHORTHAND_DOCKER_TAG="${{ github.ref_name }}"
           fi
           BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
-          BUILDDATE="$(date)"
+          BUILDDATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           export BUILDDATE
           echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
           echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
