@@ -3,6 +3,7 @@ package primitivegraph
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -24,6 +25,7 @@ type standardBasePrimitiveGraph struct {
 	g                      *simple.WeightedDirectedGraph
 	sorted                 []graph.Node
 	txnControlCounterSlice []internaldto.TxnControlCounters
+	txnControlCounterMutex sync.Mutex // guards txnControlCounterSlice; executors append concurrently
 	errGroup               *errgroup.Group
 	errGroupCtx            context.Context
 	containsView           bool
@@ -100,10 +102,14 @@ func (pg *standardBasePrimitiveGraph) GetUndoLog() (binlog.LogEntry, bool) {
 }
 
 func (pg *standardBasePrimitiveGraph) AddTxnControlCounters(t internaldto.TxnControlCounters) {
+	pg.txnControlCounterMutex.Lock()
+	defer pg.txnControlCounterMutex.Unlock()
 	pg.txnControlCounterSlice = append(pg.txnControlCounterSlice, t)
 }
 
 func (pg *standardBasePrimitiveGraph) GetTxnControlCounterSlice() []internaldto.TxnControlCounters {
+	pg.txnControlCounterMutex.Lock()
+	defer pg.txnControlCounterMutex.Unlock()
 	return pg.txnControlCounterSlice
 }
 
