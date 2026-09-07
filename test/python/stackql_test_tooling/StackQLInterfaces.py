@@ -1081,6 +1081,83 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     return sorted(rows)
 
   @keyword
+  def should_stackql_exec_otel_snapshot(
+    self,
+    stackql_exe :str,
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg,
+    auth_cfg_str :str,
+    sql_backend_cfg_str :str,
+    query :str,
+    expected :str,
+    *args,
+    **cfg
+  ) -> typing.List[str]:
+    """
+    Run with `--output otel` and check the snapshot invariants (issue #738):
+    one LogsData per row plus one completion record, every record sharing the
+    snapshot instant, snapshot id and span. `expected` is a JSON object with
+    the known attribute values: `context` is verified on every record, `rows`
+    (in order) on the row records and `completion` on the completion record;
+    dynamic values (ids, timestamps, fingerprints) are simply left unlisted.
+    Returns the row fingerprints so a repeat run can be compared.
+    """
+    expectation = json.loads(expected)
+    result = self._run_stackql_exec_command(
+      stackql_exe, okta_secret_str, github_secret_str, k8s_secret_str,
+      registry_cfg, auth_cfg_str, sql_backend_cfg_str, query, '-o=otel', *args, **cfg
+    )
+    records = []
+    for line in result.stdout.splitlines():
+      if not line.strip():
+        continue
+      scope_logs = json.loads(line)['resourceLogs'][0]['scopeLogs'][0]
+      if scope_logs['scope']['name'] != 'github.com/stackql/stackql/internal/stackql/output':
+        raise Exception(f'unexpected scope: {scope_logs["scope"]}')
+      for rec in scope_logs['logRecords']:
+        rec['attrs'] = {a['key']: self._otel_value(a['value']) for a in rec['attributes']}
+        records.append(rec)
+    rows = [r for r in records if 'stackql.row.index' in r['attrs']]
+    completions = [r for r in records if r['attrs'].get('stackql.snapshot.complete') is True]
+    expected_rows = expectation.get('rows', [])
+    if len(rows) != len(expected_rows) or len(completions) != 1 or len(records) != len(rows) + 1:
+      raise Exception(
+        f'expected {len(expected_rows)} row records and one completion record, '
+        f'got {len(rows)} rows and {len(completions)} completions in {len(records)} records; '
+        f'stderr: {(result.stderr or "").strip()[-2000:]}'
+      )
+    for i, (rec, want) in enumerate(zip(rows + completions, expected_rows + [expectation.get('completion', {})])):
+      label = f'row {i}' if i < len(rows) else 'completion'
+      for key, value in {**expectation.get('context', {}), **want}.items():
+        if key not in rec['attrs']:
+          raise Exception(f'{label}: attribute {key!r} missing; have {sorted(rec["attrs"])}')
+        if rec['attrs'][key] != value:
+          raise Exception(f'{label}: attribute {key!r} = {rec["attrs"][key]!r}, want {value!r}')
+    for key in ('timeUnixNano', 'spanId', 'traceId'):
+      if len({r[key] for r in records}) != 1:
+        raise Exception(f'{key} differs across the records of one statement')
+    if len({r['attrs']['stackql.snapshot.id'] for r in records}) != 1:
+      raise Exception('stackql.snapshot.id differs across the records of one statement')
+    if [r['attrs']['stackql.row.index'] for r in rows] != list(range(len(rows))):
+      raise Exception(f'row indices are not sequential: {[r["attrs"]["stackql.row.index"] for r in rows]}')
+    if completions[0]['attrs']['stackql.rows_returned'] != len(rows):
+      raise Exception(f'completion rows_returned {completions[0]["attrs"]["stackql.rows_returned"]} != {len(rows)}')
+    fingerprints = [r['attrs']['stackql.row.fingerprint'] for r in rows]
+    if any(not fp.startswith('sha256:') or len(fp) != 71 for fp in fingerprints):
+      raise Exception(f'malformed fingerprints: {fingerprints}')
+    return fingerprints
+
+  @staticmethod
+  def _otel_value(any_value :dict):
+    """Decode an OTLP/JSON AnyValue to the natural python type."""
+    kind, raw = next(iter(any_value.items()))
+    if kind == 'intValue':
+      return int(raw)
+    return raw
+
+  @keyword
   def should_stackql_exec_inline_equal_both_streams(
     self, 
     stackql_exe :str, 

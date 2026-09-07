@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/public/sqlengine"
@@ -124,6 +125,7 @@ func (dr *basicStackQLDriver) ProcessDryRun(query string) {
 func (dr *basicStackQLDriver) ProcessQuery(query string) {
 	clonedCtx := dr.handlerCtx.Clone()
 	clonedCtx.SetRawQuery(query)
+	clonedCtx.SetQueryStartTime(time.Now())
 	responses, ok := dr.processQueryOrQueries(clonedCtx)
 	if ok {
 		for _, r := range responses {

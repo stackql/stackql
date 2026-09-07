@@ -1,6 +1,7 @@
 package sink
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -222,25 +223,37 @@ func genericOTelLogRecord(payload any, now time.Time) (OTelLogRecord, error) {
 		return OTelLogRecord{}, fmt.Errorf("otel sink: marshal payload: %w", err)
 	}
 	record := OTelLogRecord{Time: now, Severity: OTelSeverityInfo, Body: string(raw)}
+	// Not a JSON object (scalar or array): the body alone carries it.
+	record.Attributes, _ = OTelAttributesFromJSON(raw)
+	return record, nil
+}
+
+// OTelAttributesFromJSON maps a JSON object's top-level fields to typed
+// attributes in key order; nested values are carried as JSON strings and
+// nulls as empty strings (dropped on encode). ok is false when raw is not
+// an object.
+func OTelAttributesFromJSON(raw []byte) ([]OTelAttribute, bool) {
 	var fields map[string]json.RawMessage
-	if unmarshalErr := json.Unmarshal(raw, &fields); unmarshalErr != nil {
-		// Not a JSON object (scalar or array): the body alone carries it.
-		return record, nil //nolint:nilerr // intentional: non-object payloads are still valid records
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return nil, false
 	}
 	keys := make([]string, 0, len(fields))
 	for k := range fields {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+	attrs := make([]OTelAttribute, 0, len(keys))
 	for _, k := range keys {
-		record.Attributes = append(record.Attributes, otelAttributeFromJSON(k, fields[k]))
+		attrs = append(attrs, otelAttributeFromJSON(k, fields[k]))
 	}
-	return record, nil
+	return attrs, true
 }
 
 func otelAttributeFromJSON(key string, raw json.RawMessage) OTelAttribute {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
 	var v any
-	if err := json.Unmarshal(raw, &v); err != nil {
+	if err := dec.Decode(&v); err != nil {
 		return OTelString(key, string(raw))
 	}
 	switch t := v.(type) {
@@ -248,11 +261,18 @@ func otelAttributeFromJSON(key string, raw json.RawMessage) OTelAttribute {
 		return OTelString(key, t)
 	case bool:
 		return OTelBool(key, t)
-	case float64:
-		if t == float64(int64(t)) {
-			return OTelInt(key, int64(t))
+	case json.Number:
+		if i, intErr := t.Int64(); intErr == nil {
+			return OTelInt(key, i)
 		}
-		return OTelDouble(key, t)
+		f, floatErr := t.Float64()
+		if floatErr != nil {
+			return OTelString(key, t.String())
+		}
+		if f == float64(int64(f)) {
+			return OTelInt(key, int64(f))
+		}
+		return OTelDouble(key, f)
 	case nil:
 		return OTelString(key, "")
 	default:
