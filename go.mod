@@ -9,7 +9,7 @@ require (
 	github.com/google/go-jsonnet v0.17.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgtype v1.10.0
-	github.com/jackc/pgx/v5 v5.0.4
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/lib/pq v1.10.4
 	github.com/magiconair/properties v1.8.6
 	github.com/modelcontextprotocol/go-sdk v1.7.0
@@ -100,7 +100,8 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jhump/protoreflect v1.18.0 // indirect
 	github.com/jhump/protoreflect/v2 v2.0.0-beta.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
