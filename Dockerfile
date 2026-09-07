@@ -62,7 +62,10 @@ RUN   cd ${SRC_DIR} \
       && go build \
         -o ${BUILD_DIR}/stackql_mcp_client ./mcp_client/cmd
 
-FROM python:3.11-bullseye AS utility
+# bookworm, not bullseye: bullseye LTS ended 2026-08-31 and its security suite
+# is being withdrawn from the mirrors (expired Release file, packages vanishing
+# from the pool), which broke apt-get in this stage on arm64 first.
+FROM python:3.11-bookworm AS utility
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
@@ -92,7 +95,7 @@ RUN openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_s
     && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_client_key.pem -out  ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_client_cert.pem  -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \
     && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_rubbish_key.pem -out ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_rubbish_cert.pem -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365
 
-FROM python:3.11-bullseye AS registrymock
+FROM python:3.11-bookworm AS registrymock
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
