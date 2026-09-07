@@ -10881,6 +10881,36 @@ Preview Rows Are Emitted Throughout The Run
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Rows-Are-Emitted-Throughout-The-Run.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Rows-Are-Emitted-Throughout-The-Run-stderr.tmp
 
+Preview Rows Are Emitted Throughout The Run As OTel Records
+    [Documentation]    Issue #738: the otel writer streams like jsonl, one
+    ...                LogsData per row as the upstream produces it, then the
+    ...                completion record; 79 rows plus completion is 80 lines.
+    [Setup]    Write Gcp Service Account    ${OMNISDK_MOCK_GCP_SA_HOST}
+    [Teardown]    Remove Preview Mock Environment
+    ${mock} =    Set Variable    {"scheme":"http","host":"${LOCAL_HOST_ALIAS}","port":"${MOCKSERVER_PORT_OMNISDK}"}
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"batchSize":10,"flushInterval":"50ms","endpoint":{"aws.s3":${mock}}}
+    Set Environment Variable    AWS_ACCESS_KEY_ID    AK
+    Set Environment Variable    AWS_SECRET_ACCESS_KEY    SK
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select * from stackql_preview.audit.aws_s3_buckets
+    ...    where region = 'us-east-1' and method = 'list';
+    Should StackQL Exec Stream Incrementally
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    80
+    ...    0.2
+    ...    \-o\=otel
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Rows-Are-Emitted-Throughout-The-Run-As-OTel-Records.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Rows-Are-Emitted-Throughout-The-Run-As-OTel-Records-stderr.tmp
+
 Preview Order By Is Refused Rather Than Ignored
     [Documentation]    A streamed relation never reaches the SQL backend, so
     ...                ORDER BY cannot be applied. It is refused outright rather
@@ -11020,12 +11050,26 @@ Unstable Google Kms Key Rings Jsonl Row Set Matches Expectation
 
 OTel Output Emits One Record Per Row Plus Completion
     [Documentation]    Issue #738: --output otel writes one OTLP/JSON LogsData per
-    ...                row and a completion record. Every record of the statement
-    ...                shares the snapshot instant, snapshot id and span, and an
-    ...                identical re-run yields identical row fingerprints.
+    ...                row and a completion record with the row values as typed
+    ...                attributes. Every record of the statement shares the
+    ...                snapshot instant, snapshot id and span, and an identical
+    ...                re-run yields identical row fingerprints.
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select login, contributions from github.repos.contributors
     ...    where owner = 'dummyorg' and repo = 'dummyapp.io';
+    ${expected} =    Catenate    SEPARATOR=
+    ...    {"context":{"stackql.provider":"github","stackql.service":"repos","stackql.resource":"contributors",
+    ...    "stackql.query":"${query}"},
+    ...    "rows":[
+    ...    {"stackql.row.index":0,"login":"octo-lead","contributions":"500"},
+    ...    {"stackql.row.index":1,"login":"octo-dev-one","contributions":"120"},
+    ...    {"stackql.row.index":2,"login":"octo-dev-two","contributions":"120"},
+    ...    {"stackql.row.index":3,"login":"octo-maintainer","contributions":"80"},
+    ...    {"stackql.row.index":4,"login":"octo-helper-one","contributions":"45"},
+    ...    {"stackql.row.index":5,"login":"octo-helper-two","contributions":"45"},
+    ...    {"stackql.row.index":6,"login":"octo-casual","contributions":"12"},
+    ...    {"stackql.row.index":7,"login":"octo-drive-by","contributions":"3"}],
+    ...    "completion":{"stackql.snapshot.complete":true,"stackql.rows_returned":8}}
     ${first} =    Should StackQL Exec OTel Snapshot
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -11035,7 +11079,7 @@ OTel Output Emits One Record Per Row Plus Completion
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
-    ...    8
+    ...    ${expected}
     ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Rows-First.tmp
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Rows-First-stderr.tmp
     ${second} =    Should StackQL Exec OTel Snapshot
@@ -11047,7 +11091,7 @@ OTel Output Emits One Record Per Row Plus Completion
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
-    ...    8
+    ...    ${expected}
     ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Rows-Second.tmp
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Rows-Second-stderr.tmp
     Should Be Equal    ${first}    ${second}
@@ -11059,6 +11103,11 @@ OTel Output Zero Row Statement Emits Only Completion
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select login from github.repos.contributors
     ...    where owner = 'dummyorg' and repo = 'dummyapp.io' and login = 'nobody';
+    ${expected} =    Catenate    SEPARATOR=
+    ...    {"context":{"stackql.provider":"github","stackql.service":"repos","stackql.resource":"contributors",
+    ...    "stackql.query":"${query}"},
+    ...    "rows":[],
+    ...    "completion":{"stackql.snapshot.complete":true,"stackql.rows_returned":0}}
     Should StackQL Exec OTel Snapshot
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -11068,6 +11117,6 @@ OTel Output Zero Row Statement Emits Only Completion
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
-    ...    0
+    ...    ${expected}
     ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows.tmp
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows-stderr.tmp
