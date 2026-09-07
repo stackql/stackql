@@ -37,6 +37,8 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 			internaldto.OutputContext{
 				RuntimeContext: handlerCtx.GetRuntimeContext(),
 				Result:         sqlResult,
+				Query:          handlerCtx.GetRawQuery(),
+				StartTime:      handlerCtx.GetQueryStartTime(),
 			},
 		)
 		if outputWriter == nil || err != nil {
@@ -51,6 +53,8 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 			internaldto.OutputContext{
 				RuntimeContext: handlerCtx.GetRuntimeContext(),
 				Result:         sqlResult,
+				Query:          handlerCtx.GetRawQuery(),
+				StartTime:      handlerCtx.GetQueryStartTime(),
 			},
 		)
 		if outputWriter == nil || err != nil {

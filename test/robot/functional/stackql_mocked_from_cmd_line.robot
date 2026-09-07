@@ -11017,3 +11017,57 @@ Unstable Google Kms Key Rings Jsonl Row Set Matches Expectation
     ...    --preview\=${preview}
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings-stderr.tmp
+
+OTel Output Emits One Record Per Row Plus Completion
+    [Documentation]    Issue #738: --output otel writes one OTLP/JSON LogsData per
+    ...                row and a completion record. Every record of the statement
+    ...                shares the snapshot instant, snapshot id and span, and an
+    ...                identical re-run yields identical row fingerprints.
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, contributions from github.repos.contributors
+    ...    where owner = 'dummyorg' and repo = 'dummyapp.io';
+    ${first} =    Should StackQL Exec OTel Snapshot
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    8
+    ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Rows-First.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Rows-First-stderr.tmp
+    ${second} =    Should StackQL Exec OTel Snapshot
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    8
+    ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Rows-Second.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Rows-Second-stderr.tmp
+    Should Be Equal    ${first}    ${second}
+
+OTel Output Zero Row Statement Emits Only Completion
+    [Documentation]    Issue #738: a statement returning no rows still emits its
+    ...                completion record, so an absent resource is visible as
+    ...                drift rather than as silence.
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login from github.repos.contributors
+    ...    where owner = 'dummyorg' and repo = 'dummyapp.io' and login = 'nobody';
+    Should StackQL Exec OTel Snapshot
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    0
+    ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows-stderr.tmp

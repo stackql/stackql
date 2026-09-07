@@ -11,6 +11,7 @@ import (
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
+	"github.com/stackql/stackql/internal/stackql/contributors"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
@@ -251,6 +252,8 @@ func NewShowInstructionExecutor(
 		keys = convertProviderServicesToMap(services, extended)
 	case "VERSION":
 		columnOrder, keys = buildVersionShowOutput(extended)
+	case "CONTRIBUTORS":
+		columnOrder, keys = buildContributorsShowOutput(extended)
 	}
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
 		handlerCtx.GetTypingConfig()))
@@ -338,6 +341,23 @@ func buildVersionShowOutput(extended bool) ([]string, map[string]map[string]inte
 		map[string]map[string]interface{}{
 			"1": {"version": bi.GetSemVersion()},
 		}
+}
+
+// buildContributorsShowOutput renders SHOW [EXTENDED] CONTRIBUTORS; keys are
+// zero-padded so the sorted result set keeps leaderboard order.
+func buildContributorsShowOutput(extended bool) ([]string, map[string]map[string]interface{}) {
+	keys := make(map[string]map[string]interface{})
+	for i, c := range contributors.List() {
+		row := map[string]interface{}{"contributor": c.GetLogin()}
+		if extended {
+			row["contributions"] = c.GetContributions()
+		}
+		keys[fmt.Sprintf("%06d", i)] = row
+	}
+	if extended {
+		return []string{"contributor", "contributions"}, keys
+	}
+	return []string{"contributor"}, keys
 }
 
 //nolint:errcheck // future proofing

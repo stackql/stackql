@@ -26,6 +26,7 @@ on:
       - 'packaging/**'
       - '.github/workflows/mcp-packaging.yml'
       - '.github/workflows/mcp-registry-publish.yml'
+      - '.github/workflows/contributors.yml'
   pull_request:
     branches:
       - main
@@ -49,6 +50,7 @@ on:
       - 'packaging/**'
       - '.github/workflows/mcp-packaging.yml'
       - '.github/workflows/mcp-registry-publish.yml'
+      - '.github/workflows/contributors.yml'
 env:
   GOTESTCMD: "go test -timeout 1200s --tags \"sqlite_stackql\" -v ./..."
   TESTSCRIPT: "test/deprecated/python/main.py"

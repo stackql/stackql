@@ -63,6 +63,8 @@ func GetOutputWriter(
 	case "jsonl", "ndjson":
 		jsonlWriter := NewJSONLWriter(writer, errWriter)
 		return jsonlWriter, nil
+	case otelFormatStr:
+		return NewOTelWriter(writer, errWriter, outputCtx.Query, outputCtx.StartTime), nil
 	case constants.TableStr:
 		tablewriter := TableWriter{
 			AbstractTabularWriter{

@@ -7,6 +7,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/getkin/kin-openapi v0.88.0
 	github.com/google/go-jsonnet v0.17.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgtype v1.10.0
 	github.com/jackc/pgx/v5 v5.0.4
 	github.com/lib/pq v1.10.4
@@ -93,7 +94,6 @@ require (
 	github.com/google/flatbuffers v24.12.23+incompatible // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/jsonschema-go v0.4.3 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

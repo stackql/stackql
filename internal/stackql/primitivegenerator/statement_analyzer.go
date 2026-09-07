@@ -1668,7 +1668,7 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 		return nil
 	case "PROVIDERS":
 		// TODO
-	case "VERSION":
+	case "VERSION", "CONTRIBUTORS":
 		// no further analysis required
 	case "RESOURCES":
 		prov, err := handlerCtx.GetProvider(node.OnTable.Qualifier.GetRawVal())

@@ -810,6 +810,26 @@ Show Version Extended
     ${captured}=    Get File    ${CURDIR}/tmp/Show-Version-Extended.tmp
     Should Match Regexp    ${captured}    \\d+\\.\\d+\\.\\d+
 
+Show Contributors
+    [Documentation]    Issue #320: SHOW CONTRIBUTORS renders the embedded
+    ...                leaderboard, contributions descending, founder on top.
+    Should StackQL Exec Contain
+    ...    SHOW CONTRIBUTORS;
+    ...    contributor
+    ...    stdout=${CURDIR}/tmp/Show-Contributors.tmp
+    ${captured}=    Get File    ${CURDIR}/tmp/Show-Contributors.tmp
+    Should Match Regexp    ${captured}    (?s)general-kroll-4-life.*jeffreyaven
+    Should Not Contain    ${captured}    contributions
+
+Show Contributors Extended
+    [Documentation]    SHOW EXTENDED CONTRIBUTORS adds the contributions count.
+    Should StackQL Exec Contain
+    ...    SHOW EXTENDED CONTRIBUTORS;
+    ...    contributions
+    ...    stdout=${CURDIR}/tmp/Show-Contributors-Extended.tmp
+    ${captured}=    Get File    ${CURDIR}/tmp/Show-Contributors-Extended.tmp
+    Should Match Regexp    ${captured}    (?s)general-kroll-4-life.*jeffreyaven
+
 *** Keywords ***
 Should StackQL Exec Equal
     [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}    &{kwargs}

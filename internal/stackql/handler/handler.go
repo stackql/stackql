@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
@@ -57,6 +58,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	//
 	GetRawQuery() string
 	GetQuery() string
+	GetQueryStartTime() time.Time
 	GetRuntimeContext() dto.RuntimeCtx
 	GetProviders() map[string]provider.IProvider
 	GetControlAttributes() sqlcontrol.ControlAttributes
@@ -83,6 +85,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	SetCurrentProvider(string)
 	SetQuery(string)
 	SetRawQuery(string)
+	SetQueryStartTime(time.Time)
 	//
 	SetOutErrFile(io.Writer)
 	//
@@ -126,6 +129,7 @@ type standardHandlerContext struct {
 	providersMapMutex   *sync.Mutex
 	rawQuery            string
 	query               string
+	queryStartTime      time.Time
 	runtimeContext      dto.RuntimeCtx
 	providers           map[string]provider.IProvider
 	controlAttributes   sqlcontrol.ControlAttributes
@@ -214,6 +218,10 @@ func (hc *standardHandlerContext) SetRawQuery(rq string) {
 	hc.rawQuery = rq
 }
 
+func (hc *standardHandlerContext) SetQueryStartTime(t time.Time) {
+	hc.queryStartTime = t
+}
+
 func (hc *standardHandlerContext) SetQuery(q string) {
 	hc.query = q
 }
@@ -223,6 +231,7 @@ func (hc *standardHandlerContext) SetTxnCounterMgr(mgr txncounter.Manager) {
 }
 
 func (hc *standardHandlerContext) GetRawQuery() string                         { return hc.rawQuery }
+func (hc *standardHandlerContext) GetQueryStartTime() time.Time                { return hc.queryStartTime }
 func (hc *standardHandlerContext) GetQuery() string                            { return hc.query }
 func (hc *standardHandlerContext) GetRuntimeContext() dto.RuntimeCtx           { return hc.runtimeContext }
 func (hc *standardHandlerContext) GetProviders() map[string]provider.IProvider { return hc.providers }
@@ -568,6 +577,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		providersMapMutex:    hc.providersMapMutex,
 		drmConfig:            hc.drmConfig,
 		rawQuery:             hc.rawQuery,
+		queryStartTime:       hc.queryStartTime,
 		runtimeContext:       hc.runtimeContext,
 		currentProvider:      hc.currentProvider,
 		providers:            hc.providers,

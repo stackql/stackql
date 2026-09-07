@@ -328,6 +328,27 @@ PG Server Show Version Extended
     Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+
     Should Be Equal As Integers    ${psql_client_result.rc}    0
 
+PG Server Show Contributors
+    [Documentation]    Issue #320: the embedded leaderboard is served over the
+    ...                wire protocol from the same implementation.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${posixInput} =     Catenate
+    ...    "${PSQL_EXE}"    -d     postgres://stackql:stackql@127.0.0.1:5665   -c
+    ...    "SHOW EXTENDED CONTRIBUTORS;"
+    ${windowsInput} =     Catenate
+    ...    &    ${posixInput}
+    ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+    ${psql_client_result}=    Run Process
+    ...                  ${shellExe}     \-c    ${input}
+    ...                  stdout=${CURDIR}${/}tmp${/}PG-Server-Show-Contributors-psql.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}PG-Server-Show-Contributors-psql-stderr.txt
+    Should Contain       ${psql_client_result.stdout}       contributor
+    Should Contain       ${psql_client_result.stdout}       contributions
+    Should Match Regexp    ${psql_client_result.stdout}       (?s)general-kroll-4-life.*jeffreyaven
+    Should Be Equal As Integers    ${psql_client_result.rc}    0
+
 MCP HTTP Server Query Tool
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s

@@ -1081,6 +1081,63 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     return sorted(rows)
 
   @keyword
+  def should_stackql_exec_otel_snapshot(
+    self,
+    stackql_exe :str,
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg,
+    auth_cfg_str :str,
+    sql_backend_cfg_str :str,
+    query :str,
+    expected_row_count :int,
+    *args,
+    **cfg
+  ) -> typing.List[str]:
+    """
+    Run with `--output otel` and check the snapshot invariants (issue #738):
+    one LogsData per row plus one completion record, every record sharing the
+    snapshot instant, snapshot id and span. Returns the row fingerprints so a
+    repeat run can be compared.
+    """
+    result = self._run_stackql_exec_command(
+      stackql_exe, okta_secret_str, github_secret_str, k8s_secret_str,
+      registry_cfg, auth_cfg_str, sql_backend_cfg_str, query, '-o=otel', *args, **cfg
+    )
+    records = []
+    for line in result.stdout.splitlines():
+      if not line.strip():
+        continue
+      scope_logs = json.loads(line)['resourceLogs'][0]['scopeLogs'][0]
+      if scope_logs['scope']['name'] != 'github.com/stackql/stackql/internal/stackql/output':
+        raise Exception(f'unexpected scope: {scope_logs["scope"]}')
+      for rec in scope_logs['logRecords']:
+        rec['attrs'] = {a['key']: next(iter(a['value'].values())) for a in rec['attributes']}
+        records.append(rec)
+    rows = [r for r in records if 'stackql.row.index' in r['attrs']]
+    completions = [r for r in records if r['attrs'].get('stackql.snapshot.complete') is True]
+    if len(rows) != int(expected_row_count) or len(completions) != 1 or len(records) != len(rows) + 1:
+      raise Exception(
+        f'expected {expected_row_count} row records and one completion record, '
+        f'got {len(rows)} rows and {len(completions)} completions in {len(records)} records; '
+        f'stderr: {(result.stderr or "").strip()[-2000:]}'
+      )
+    for key in ('timeUnixNano', 'spanId', 'traceId'):
+      if len({r[key] for r in records}) != 1:
+        raise Exception(f'{key} differs across the records of one statement')
+    if len({r['attrs']['stackql.snapshot.id'] for r in records}) != 1:
+      raise Exception('stackql.snapshot.id differs across the records of one statement')
+    if [r['attrs']['stackql.row.index'] for r in rows] != [str(i) for i in range(len(rows))]:
+      raise Exception(f'row indices are not sequential: {[r["attrs"]["stackql.row.index"] for r in rows]}')
+    if completions[0]['attrs']['stackql.rows_returned'] != str(len(rows)):
+      raise Exception(f'completion rows_returned {completions[0]["attrs"]["stackql.rows_returned"]} != {len(rows)}')
+    fingerprints = [r['attrs']['stackql.row.fingerprint'] for r in rows]
+    if any(not fp.startswith('sha256:') or len(fp) != 71 for fp in fingerprints):
+      raise Exception(f'malformed fingerprints: {fingerprints}')
+    return fingerprints
+
+  @keyword
   def should_stackql_exec_inline_equal_both_streams(
     self, 
     stackql_exe :str, 
