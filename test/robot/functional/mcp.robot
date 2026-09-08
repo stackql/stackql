@@ -1419,7 +1419,9 @@ MCP Stdio Reload Credentials Sources Env File Mid Session
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${env_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-reload-credentials.env
     ${select_sql}=    Set Variable    select name, status from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;
-    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_credential_reload_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $env_file, 'OKTA_SECRET_KEY', $OKTA_SECRET_STR, $select_sql)    modules=stackql_test_tooling.mcp_stdio_client
+    ${child_env}=    Evaluate    {"OKTA_SECRET_KEY": None}
+    ${steps}=    Evaluate    [{"call": "run_select_query", "args": {"sql": $select_sql}, "as": "select_before"}, {"write_env": {"OKTA_SECRET_KEY": $OKTA_SECRET_STR}}, {"call": "reload_credentials", "args": {}, "as": "reload"}, {"call": "run_select_query", "args": {"sql": $select_sql}, "as": "select_after"}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_credential_script($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $env_file, $child_env, $steps)    modules=stackql_test_tooling.mcp_stdio_client
     Log    ${result['stderr']}
     # Before the env file exists, credential resolution fails with the
     # agent-actionable hint pointing at the reload_credentials tool.
