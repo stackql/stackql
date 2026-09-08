@@ -468,6 +468,11 @@ make pypi-build VERSION=X.Y.Z   build sdist+wheel (publish is manual:
 make publish VERSION=X.Y.Z      upload dist/* to the stackql/stackql release
 make server-json VERSION=X.Y.Z  render registry/server.json (pins 4 SHAs)
 make registry-publish VERSION=X.Y.Z   render + publish to the Official MCP Registry
+make check-published [VERSION=X.Y.Z]  read-only: PASS/FAIL every distribution target
+                                (release assets, releases.stackql.io, Docker Hub,
+                                npm, PyPI, crates.io, Go, NuGet, Official MCP
+                                Registry, GitHub MCP Registry) for VERSION
+                                (default: latest release); publishes nothing
 make list                       show artefacts present in bin/
 make clean                      wipe dist/
 make clean-bin                  wipe downloaded artefacts from bin/

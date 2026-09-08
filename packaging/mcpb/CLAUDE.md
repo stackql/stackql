@@ -53,6 +53,8 @@ Cache layout note: the npm/PyPI wrappers and the Go SDK extract only the entry p
 
 SDK vector targets (all take `VERSION=X.Y.Z`; see "The six wrapper vectors" above): `make manifests`, `make <vector>-manifest`, `make <vector>-build` (lint + unit tests + package), `make <vector>-smoke` (`smoke-test.py --cmd` against the launcher; `PYTHON=python` on Windows), `make <vector>-publish` (credentials from the environment, listed in the Makefile header). Toolchains: Rust stable (MSRV 1.88), Go 1.25, .NET 8+9 SDKs.
 
+Post-release assurance: `make check-published [VERSION=X.Y.Z]` (`scripts/check-published.py`, stdlib only, read-only) probes every distribution target for the version (default: the latest GitHub release) and prints PASS/FAIL per venue - release assets, releases.stackql.io, Docker Hub (incl. `:latest`), npm, PyPI, crates.io, Go mirror + proxy, NuGet, the Official MCP Registry (incl. sha256 pins vs the release `.sha256` files and the package set vs `server.template.json`) and the GitHub MCP Registry. It never publishes; a non-zero exit means at least one venue is behind. The GitHub MCP Registry row trails `mcp-registry-publish` by up to 2 hours: GitHub syncs from the Official MCP Registry on an hourly sweep (runs can abort and retry) and its read API caches the listing for about 20 minutes (measured 2026-09-08: registry publish 02:54Z, GitHub entry updated 03:47Z, visible via the API between 04:00Z and 04:09Z). A FAIL there inside that window is expected; a FAIL after it means the sync is broken on GitHub's side.
+
 
 A [Makefile](Makefile) wraps `scripts/package.sh` for the common flows. The script is still the source of truth; `make` is convenience.
 

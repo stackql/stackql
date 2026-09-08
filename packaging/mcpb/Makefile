@@ -26,6 +26,13 @@
 #                                   MCP Registry using mcp-publisher. Requires
 #                                   mcp-publisher installed and 'mcp-publisher
 #                                   login github'.
+#   make check-published [VERSION=X.Y.Z]
+#                                   read-only assurance: probe every distribution
+#                                   target (release assets, releases.stackql.io,
+#                                   Docker Hub, npm, PyPI, crates.io, Go, NuGet,
+#                                   Official MCP Registry, GitHub MCP Registry)
+#                                   and PASS/FAIL each for VERSION (default: the
+#                                   latest stackql release). Publishes nothing.
 #   make list                       show artefacts present in bin/
 #   make clean                      wipe dist/
 #   make clean-bin                  wipe downloaded artefacts from bin/
@@ -52,7 +59,7 @@ OCI_IMAGE ?= stackql/stackql-mcp
 OCI_STAGE := .oci-stage
 
 .PHONY: all check-version check-target download package combined one signed sign publish \
-        server-json registry-publish clean clean-bin \
+        server-json registry-publish check-published clean clean-bin \
         linux-x64 linux-arm64 windows-x64 darwin-universal \
         oci-stage oci oci-push npm-manifest npm-pack pypi-manifest pypi-build \
         list help
@@ -80,6 +87,9 @@ help:
 	@echo "  make registry-publish VERSION=X.Y.Z"
 	@echo "                                  publish to the Official MCP Registry"
 	@echo "                                  via mcp-publisher (renders first)"
+	@echo "  make check-published [VERSION=X.Y.Z]"
+	@echo "                                  read-only: PASS/FAIL every distribution"
+	@echo "                                  target for VERSION (default: latest release)"
 	@echo "  make list                       show artefacts present in $(BIN_DIR)/"
 	@echo "  make clean                      wipe $(DIST_DIR)/"
 	@echo "  make clean-bin                  wipe downloaded artefacts from $(BIN_DIR)/"
@@ -178,6 +188,15 @@ registry-publish: check-version server-json
 	  exit 2; \
 	}
 	cd registry && mcp-publisher publish
+
+# Read-only assurance that a release's MCP server is live on every target:
+# GitHub release assets, releases.stackql.io, Docker Hub, npm, PyPI, crates.io,
+# Go mirror + proxy, NuGet, the Official MCP Registry (incl. sha256 pins vs the
+# release) and the GitHub MCP Registry. VERSION defaults to the latest stackql
+# release. Publishes nothing, mutates nothing; exits non-zero on any FAIL.
+# GH_TOKEN (if set) authenticates the api.github.com calls. --json via ARGS.
+check-published:
+	$(PYTHON) scripts/check-published.py $(if $(VERSION),--version $(VERSION)) $(ARGS)
 
 # --- OCI image ---------------------------------------------------------------
 # Extract the linux binaries from the release zips into the docker build
