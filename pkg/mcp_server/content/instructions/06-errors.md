@@ -14,7 +14,7 @@ Automatic retry, owned by the engine (per-operation overrides live in the provid
 Recovery by class:
 
 - 400 or a provider validation error -> the request shape is wrong. Re-check `describe_method` for required params and exact field names; never resubmit unmodified.
-- 401 -> credentials invalid or expired. Call `reload_credentials` and retry once; if it persists, report the named env vars to the operator.
+- 401 -> credentials resolved but rejected: invalid, expired or rotated. Ask the operator to update the configured env file, call `reload_credentials` scoped to the provider, and retry once only if the report shows `changed: true` for it; otherwise report the named env vars to the operator instead of retrying.
 - 403 -> authenticated but not permitted. Retry cannot fix this; record the check as "could not assess" or ask the operator for the missing permission.
 - 429 surviving auto-retry -> reduce fan-out breadth and query frequency before trying again.
 - 5xx -> provider-side trouble. 502/503/504 arrive only after auto-retry is exhausted; 500 is never auto-retried. Either way back off and report, do not hammer.
