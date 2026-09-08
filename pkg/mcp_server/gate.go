@@ -122,18 +122,25 @@ func deriveToolAnnotations(gate toolGate) *mcp.ToolAnnotations {
 
 // addToolWithGate wraps mcp.AddTool with the policy gate + audit middleware.
 // It is the single chokepoint at which mode enforcement and audit recording
-// are applied.  The tool handler itself stays oblivious to both concerns.
+// are applied, and where the tool description mastered under content/tools
+// is attached.  The tool handler itself stays oblivious to these concerns.
 func addToolWithGate[In, Out any](
 	s *mcp.Server,
 	cfg *Config,
 	auditSink sink.Sink,
+	descriptions toolDescriptions,
 	gate toolGate,
 	t *mcp.Tool,
 	h mcp.ToolHandlerFor[In, Out],
-) {
+) error {
 	if !cfg.IsToolEnabled(t.Name) {
-		return
+		return nil
 	}
+	description, hasDescription := descriptions.describe(t.Name)
+	if !hasDescription {
+		return fmt.Errorf("tool %q has no description under %s", t.Name, embeddedToolsDir)
+	}
+	t.Description = description
 	if t.Annotations == nil {
 		t.Annotations = deriveToolAnnotations(gate)
 	}
@@ -191,6 +198,7 @@ func addToolWithGate[In, Out any](
 		return result, out, nil
 	}
 	mcp.AddTool(s, t, wrapped)
+	return nil
 }
 
 // approvalInputKey is the input request id the client echoes back with the

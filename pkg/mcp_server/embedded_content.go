@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"regexp"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -14,9 +15,10 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// Embedded content framework (issue #696).  MCP server instructions, prompts
-// and resources are authored as markdown under content/ and compiled into the
-// binary; adding or changing published content is a markdown-only edit.
+// Embedded content framework (issue #696).  MCP server instructions, prompts,
+// resources and tool descriptions are authored as markdown under content/ and
+// compiled into the binary; adding or changing published content is a
+// markdown-only edit.
 //
 //go:embed content
 var embeddedContentFS embed.FS
@@ -25,6 +27,7 @@ const (
 	embeddedInstructionsDir = "content/instructions"
 	embeddedPromptsDir      = "content/prompts"
 	embeddedResourcesDir    = "content/resources"
+	embeddedToolsDir        = "content/tools"
 
 	defaultResourceMIMEType = "text/markdown"
 	defaultResourceURIStem  = "stackql://docs/"
@@ -203,6 +206,52 @@ type resourceFrontmatter struct {
 	MIMEType    string `yaml:"mime_type"`
 }
 
+// toolFrontmatter is the YAML wire form of a tool description file header;
+// the body is the description prose.
+type toolFrontmatter struct {
+	Name string `yaml:"name"`
+}
+
+// toolDescriptions carries the tool descriptions mastered under
+// content/tools, one file per tool, keyed by tool name.
+type toolDescriptions interface {
+	describe(name string) (string, bool)
+	names() []string
+}
+
+type standardToolDescriptions struct {
+	byName map[string]string
+}
+
+func newToolDescriptions(byName map[string]string) toolDescriptions {
+	return &standardToolDescriptions{byName: byName}
+}
+
+func (d *standardToolDescriptions) describe(name string) (string, bool) {
+	rv, ok := d.byName[name]
+	return rv, ok
+}
+
+func (d *standardToolDescriptions) names() []string {
+	rv := make([]string, 0, len(d.byName))
+	for name := range d.byName {
+		rv = append(rv, name)
+	}
+	sort.Strings(rv)
+	return rv
+}
+
+// collapseProse joins the lines of each paragraph with single spaces and
+// keeps blank-line paragraph breaks, so wrapped markdown source publishes as
+// the prose a client renders.
+func collapseProse(body string) string {
+	paragraphs := strings.Split(strings.TrimSpace(body), "\n\n")
+	for i, paragraph := range paragraphs {
+		paragraphs[i] = strings.Join(strings.Fields(paragraph), " ")
+	}
+	return strings.Join(paragraphs, "\n\n")
+}
+
 // loadInstructionsFrom concatenates instruction files (no frontmatter) in
 // lexical order, separated by blank lines.
 func loadInstructionsFrom(fsys fs.FS, dir string) (string, error) {
@@ -306,8 +355,45 @@ func loadResourcesFrom(fsys fs.FS, dir string) ([]embeddedResource, error) {
 	return resources, nil
 }
 
+// loadToolDescriptionsFrom parses every tool description file; the
+// frontmatter name must match the file stem and the body must be non-empty.
+func loadToolDescriptionsFrom(fsys fs.FS, dir string) (toolDescriptions, error) {
+	names, err := listMarkdownFiles(fsys, dir)
+	if err != nil {
+		return nil, err
+	}
+	byName := make(map[string]string, len(names))
+	for _, name := range names {
+		raw, readErr := fs.ReadFile(fsys, dir+"/"+name)
+		if readErr != nil {
+			return nil, readErr
+		}
+		meta, body, splitErr := splitFrontmatter(raw)
+		if splitErr != nil {
+			return nil, fmt.Errorf("tool file %s: %w", name, splitErr)
+		}
+		var fm toolFrontmatter
+		if yamlErr := yaml.UnmarshalStrict([]byte(meta), &fm); yamlErr != nil {
+			return nil, fmt.Errorf("tool file %s: %w", name, yamlErr)
+		}
+		if fm.Name != strings.TrimSuffix(name, ".md") {
+			return nil, fmt.Errorf("tool file %s: name %q must match the file stem", name, fm.Name)
+		}
+		description := collapseProse(body)
+		if description == "" {
+			return nil, fmt.Errorf("tool file %s: description body is empty", name)
+		}
+		byName[fm.Name] = description
+	}
+	return newToolDescriptions(byName), nil
+}
+
 func loadEmbeddedInstructions() (string, error) {
 	return loadInstructionsFrom(embeddedContentFS, embeddedInstructionsDir)
+}
+
+func loadEmbeddedToolDescriptions() (toolDescriptions, error) {
+	return loadToolDescriptionsFrom(embeddedContentFS, embeddedToolsDir)
 }
 
 func loadEmbeddedPrompts() ([]embeddedPrompt, error) {

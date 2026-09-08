@@ -253,15 +253,16 @@ A mock server implementing the URL contract for testing lives at
 (see its docstring for standalone usage); the Go unit tests exercise the same contract via
 `httptest`, and the robot scenarios in `mcp.robot` cover the offline snapshot path end to end.
 
-### Embedded Content: Instructions, Prompts and Resources
+### Embedded Content: Instructions, Prompts, Resources and Tool Descriptions
 
-Server instructions, prompts and resources are authored as markdown files under `pkg/mcp_server/content/` and compiled into the binary with `go:embed` (issue #696). Adding or changing published content is a markdown-only edit; no Go changes are required.
+Server instructions, prompts, resources and tool descriptions are authored as markdown files under `pkg/mcp_server/content/` and compiled into the binary with `go:embed` (issue #696). Adding or changing published content is a markdown-only edit; no Go changes are required.
 
 - `content/instructions/*.md` - concatenated in lexical filename order (blank line separated) into the `instructions` string of the `initialize` result. No frontmatter. Suppress with the top-level `disable_instructions: true` config flag.
 - `content/prompts/*.md` - one prompt per file. YAML frontmatter carries `name`, `description` and optional `arguments` (each with `name`, `description`, `required`); the body is the prompt text. `{{argument}}` placeholders in the body are substituted with caller-supplied argument values on `prompts/get`; a placeholder that is not a declared argument fails validation.
 - `content/resources/*.md` - one resource per file. Frontmatter carries `name`, `description`, optional `uri` (default `stackql://docs/<filename-sans-extension>`) and optional `mime_type` (default `text/markdown`); the body is served by `resources/read`. The resources capability is declared only when at least one resource is published.
+- `content/tools/<tool_name>.md` - one file per tool, the single source of the `description` published by `tools/list` (the tool tables in this README and in `docs/mcp.md` paraphrase them). Frontmatter carries `name`, which must match the file stem; the body is the description prose. Single line breaks inside a paragraph collapse to spaces and blank lines separate paragraphs, so the source can be wrapped freely. A tool registered in Go without a description file fails server construction.
 
-Malformed frontmatter, duplicate names and unresolved placeholders are caught at build time by the unit tests in `embedded_content_test.go`.
+Malformed frontmatter, duplicate names, unresolved placeholders and tool description coverage (every published tool has a file, every file names a published tool) are caught at build time by the unit tests in `embedded_content_test.go`.
 
 Currently published prompts:
 

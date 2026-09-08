@@ -168,7 +168,7 @@ Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`,
 
 ## Canonical agent prompts, resources and instructions
 
-Instructions, prompts and resources are authored as markdown under `pkg/mcp_server/content/` and embedded into the binary at build time; adding or changing published content is a markdown-only edit.
+Instructions, prompts, resources and tool descriptions are authored as markdown under `pkg/mcp_server/content/` and embedded into the binary at build time; adding or changing published content is a markdown-only edit.  Tool descriptions live one file per tool under `content/tools/`; the tool table above paraphrases them.
 
 - **Instructions**: dialect and session guidance surfaced in the `initialize` result.  Suppress with `disable_instructions: true` in the config.
 - **Prompts**: seven prompts are published - `getting_started` (interactive guided tour for new users; optional `provider` argument, falls back to credential-free `github`), `cloud_audit` (agent-driven read-only cross-cloud security and FinOps audit; the agent-driven counterpart of the dockerised audit in [docs/audit.md](/docs/audit.md)), `drift_report`, `iam_access_review`, `public_exposure_scan`, `cost_cleanup` and `create_deploy_stack` (guided generation of a [stackql-deploy](https://github.com/stackql/stackql-deploy) stack with live-tested queries).  Per-prompt detail lives in [the `pkg/mcp_server` README](/pkg/mcp_server/README.md).
