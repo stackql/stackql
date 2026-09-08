@@ -63,11 +63,55 @@ func TestProviderCredentialStatus(t *testing.T) {
 
 func TestClassifyBackendError_CredentialResolutionHint(t *testing.T) {
 	err := fmt.Errorf("credentials error: credentialsenvvar references empty string")
-	got := classifyBackendError(err)
-	if !strings.Contains(got.Error(), "reload_credentials") {
-		t.Errorf("expected reload_credentials hint, got %q", got.Error())
+	got := classifyBackendError(err, "aws")
+	for _, fragment := range []string{"provider 'aws'", "fix the configured env file", "reload_credentials", "then retry", "references empty string"} {
+		if !strings.Contains(got.Error(), fragment) {
+			t.Errorf("expected %q in error, got %q", fragment, got.Error())
+		}
 	}
-	if !strings.Contains(got.Error(), "references empty string") {
-		t.Errorf("expected underlying detail preserved, got %q", got.Error())
+}
+
+func TestQueryProviderName(t *testing.T) {
+	cases := []struct {
+		sql  string
+		want string
+	}{
+		{"select name from aws.s3.buckets where region = 'us-east-1';", "aws"},
+		{"exec aws.ec2.instances.instances_Start @region = 'ap-southeast-2', @InstanceId = 'id-001';", "aws"},
+		{"delete from google.compute.firewalls where project = 'p' and firewall = 'f';", "google"},
+		{"select 1;", ""},
+		{"not sql at all", ""},
+	}
+	for _, tc := range cases {
+		if got := queryProviderName(tc.sql); got != tc.want {
+			t.Errorf("queryProviderName(%q): expected %q, got %q", tc.sql, tc.want, got)
+		}
+	}
+}
+
+func TestCredentialFingerprint(t *testing.T) {
+	const varName = "STACKQL_TEST_FINGERPRINT_VAR"
+	ac := &dto.AuthCtx{Type: dto.AuthAPIKeyStr, KeyEnvVar: varName}
+	t.Setenv(varName, "key-a")
+	before := credentialFingerprint(ac)
+	if before != credentialFingerprint(ac) {
+		t.Errorf("fingerprint must be stable for an unchanged value")
+	}
+	t.Setenv(varName, "key-b")
+	after := credentialFingerprint(ac)
+	if before == after {
+		t.Errorf("fingerprint must change with the resolved value")
+	}
+	for _, fp := range []string{before, after} {
+		if strings.Contains(fp, "key-a") || strings.Contains(fp, "key-b") {
+			t.Errorf("fingerprint must not embed the value: %q", fp)
+		}
+	}
+	successor := &dto.AuthCtx{Type: dto.AuthCustomStr, KeyEnvVar: varName, Successor: &dto.AuthCtx{KeyEnvVar: varName + "_2"}}
+	t.Setenv(varName+"_2", "s-a")
+	chained := credentialFingerprint(successor)
+	t.Setenv(varName+"_2", "s-b")
+	if chained == credentialFingerprint(successor) {
+		t.Errorf("fingerprint must cover the successor chain")
 	}
 }

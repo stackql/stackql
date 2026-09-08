@@ -17,6 +17,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/pkg/mcp_server"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
+
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 var (
@@ -340,17 +342,46 @@ func isCredentialResolutionError(err error) bool {
 		strings.Contains(msg, "references empty string")
 }
 
+// queryProviderName extracts the provider of the first provider-qualified
+// table or method in the statement; error decoration only, "" when unknown.
+func queryProviderName(query string) string {
+	stmt, err := sqlparser.Parse(query)
+	if err != nil {
+		return ""
+	}
+	rv := ""
+	//nolint:errcheck // the visitor never errors
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		if rv != "" {
+			return false, nil
+		}
+		switch n := node.(type) {
+		case *sqlparser.Exec:
+			rv = internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.MethodName).GetProviderStr()
+		case sqlparser.TableName:
+			rv = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n).GetProviderStr()
+		}
+		return true, nil
+	}, stmt)
+	return rv
+}
+
 // classifyBackendError decorates a statement error for the MCP surface:
 // upstream HTTP statuses get a {"http_status", "retryable"} prefix (issue
-// #670), credential resolution failures get a reload_credentials hint
-// (issue #688), anything else keeps the historical prefix.
-func classifyBackendError(err error) error {
+// #670), credential resolution failures name the recovery sequence (issue
+// #688), anything else keeps the historical prefix.
+func classifyBackendError(err error, providerName string) error {
 	match := upstreamStatusCodeRegex.FindStringSubmatch(err.Error())
 	if match == nil {
 		if isCredentialResolutionError(err) {
+			scope := ""
+			if providerName != "" {
+				scope = fmt.Sprintf(" for provider '%s'", providerName)
+			}
 			return fmt.Errorf(
-				"credential resolution failed (hint: update credentials at their source, "+
-					"then call the reload_credentials tool and retry): %w",
+				"credential resolution failed%s (%w) - fix the configured env file, "+
+					"call reload_credentials, then retry",
+				scope,
 				err,
 			)
 		}
@@ -391,6 +422,9 @@ func (b *stackqlMCPService) execQuery(query string) (map[string]any, error) {
 	}
 	messages := []string{}
 	for _, resp := range r {
+		if respErr := resp.GetError(); respErr != nil {
+			return rv, classifyBackendError(respErr, queryProviderName(query))
+		}
 		messages = append(messages, resp.GetMessages()...)
 	}
 	rv["messages"] = messages
@@ -429,7 +463,7 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 			// Propagate the statement error (with upstream HTTP status
 			// classification where available) rather than collapsing it
 			// into an indistinct empty result (issue #670).
-			return nil, classifyBackendError(respErr)
+			return nil, classifyBackendError(respErr, queryProviderName(query))
 		}
 		// PrepareResultSet emits a nil SQLResult when RowMap is empty (eg
 		// REGISTRY LIST against an empty registry).  That's a zero-row

@@ -186,6 +186,22 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Stateless.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Stateless-stderr.txt
+    # Mocked HTTP registry with a throwaway approot so pull_provider performs
+    # a real install; REGISTRY PULL is an error against the file registry.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9927", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_MOCKED_CFG_STR.get_config_str('native')}
+    ...                                   \-\-approot
+    ...                                   ${TEST_TMP_EXEC_APP_ROOT_NATIVE}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Registry-Pull.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Registry-Pull-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -1056,20 +1072,23 @@ MCP HTTP Pull Provider Installs Known Provider
     [Documentation]    Issue #661 feature: pull_provider installs a single
     ...                provider into the approot cache.  Allowed under every
     ...                mode (writes only local cache state per the issue's "not
-    ...                a cloud mutation" rationale).  The full_access 9922 server
-    ...                is used so the call goes through the gate cleanly.
+    ...                a cloud mutation" rationale).  The full_access 9927 server
+    ...                on the mocked HTTP registry is used so the pull is real;
+    ...                statement errors now propagate through run_mutation_query,
+    ...                run_lifecycle_operation and pull_provider alike.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
     ...                  \-\-client\-type\=http
-    ...                  \-\-url\=http://127.0.0.1:9922
+    ...                  \-\-url\=http://127.0.0.1:9927
     ...                  \-\-exec.action      pull_provider
     ...                  \-\-exec.args        {"provider":"google"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Pull-Provider.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Pull-Provider-stderr.txt
     Should Be Equal As Integers    ${result.rc}    0
     Should Contain                 ${result.stdout}    timestamp
+    Should Contain                 ${result.stdout}    successfully installed
 
 # ===========================================================================
 # Issue #668 scenarios.  The stdio transport must tolerate CRLF-terminated
@@ -1301,16 +1320,97 @@ MCP HTTP Upstream 404 Returns Empty Result Set
 # --env.file dotenv file via the reload_credentials tool.
 # ===========================================================================
 
-MCP Stdio Reload Credentials Without Auth Contexts
-    [Documentation]    Unscoped credential reload returns an empty provider list
-    ...                when no explicit auth contexts are configured.
+MCP Stdio Reload Credentials Reports Installed Providers On Fresh Session
+    [Documentation]    Unscoped and scoped reload_credentials before any query
+    ...                report every installed provider from the registry, not the
+    ...                lazily populated auth context cache; unknown provider is
+    ...                the only scoped error.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    ${env_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-reload-empty.env
-    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_empty_credential_reload_roundtrip($STACKQL_EXE, $env_file)    modules=stackql_test_tooling.mcp_stdio_client
+    ${env_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-reload-fresh.env
+    ${child_env}=    Evaluate    {"DD_API_KEY": "myusername", "DD_APPLICATION_KEY": "mypassword"}
+    ${steps}=    Evaluate    [{"call": "reload_credentials", "args": {}, "as": "unscoped"}, {"call": "reload_credentials", "args": {"provider": "stackql_auth_testing"}, "as": "scoped"}, {"call": "reload_credentials", "args": {"provider": "nonexistent_provider"}, "as": "unknown"}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_credential_script($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $env_file, $child_env, $steps)    modules=stackql_test_tooling.mcp_stdio_client
     Log    ${result['stderr']}
-    Should Contain        ${result['reload']}    "env_file_sourced": true
-    Should Contain        ${result['reload']}    "providers": []
-    Should Not Contain    ${result['reload']}    isError=true
+    Should Contain        ${result['unscoped']}    "env_file_sourced": true
+    Should Not Contain    ${result['unscoped']}    "providers": []
+    Should Not Contain    ${result['unscoped']}    isError=true
+    Should Contain        ${result['unscoped']}    | custom | false |  | stackql_auth_testing | env:DD_API_KEY | ok |
+    Should Contain        ${result['unscoped']}    | okta | env:OKTA_SECRET_KEY |
+    Should Contain        ${result['unscoped']}    | aws_signing_v4 |
+    Should Not Contain    ${result['unscoped']}    myusername
+    Should Not Contain    ${result['scoped']}      isError=true
+    Should Contain        ${result['scoped']}      | custom | false |  | stackql_auth_testing | env:DD_API_KEY | ok |
+    Should Not Contain    ${result['scoped']}      | okta |
+    Should Contain        ${result['unknown']}     provider 'nonexistent_provider' is not installed
+    Should Contain        ${result['unknown']}     isError=true
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Reload Credentials Rotates Key After Auth Context Registered
+    [Documentation]    A query registers the provider's auth context under a
+    ...                stale key (rejected by the mock), the env file is rotated,
+    ...                one reload reports changed: true and the next query
+    ...                authenticates with the new key; a second reload against the
+    ...                unchanged file is a no-op; a deleted file is an explicit error.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${env_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-reload-rotate-after.env
+    ${select_sql}=    Set Variable    select id from stackql_auth_testing.collectors.collectors order by id desc;
+    ${child_env}=    Evaluate    {"DD_API_KEY": "stale-key", "DD_APPLICATION_KEY": "mypassword"}
+    ${steps}=    Evaluate    [{"call": "run_select_query", "args": {"sql": $select_sql}, "as": "select_stale"}, {"write_env": {"DD_API_KEY": "myusername"}}, {"call": "reload_credentials", "args": {"provider": "stackql_auth_testing"}, "as": "reload"}, {"call": "run_select_query", "args": {"sql": $select_sql}, "as": "select_rotated"}, {"call": "reload_credentials", "args": {"provider": "stackql_auth_testing"}, "as": "reload_noop"}, {"remove_env": True}, {"call": "reload_credentials", "args": {}, "as": "reload_missing"}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_credential_script($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $env_file, $child_env, $steps)    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    Should Contain        ${result['select_stale']}      isError=true
+    Should Not Contain    ${result['select_stale']}      100000001
+    Should Contain        ${result['reload']}            | custom | true |  | stackql_auth_testing | env:DD_API_KEY | ok |
+    Should Not Contain    ${result['reload']}            myusername
+    Should Contain        ${result['select_rotated']}    100000001
+    Should Not Contain    ${result['select_rotated']}    isError=true
+    Should Contain        ${result['reload_noop']}       | custom | false |  | stackql_auth_testing | env:DD_API_KEY | ok |
+    Should Contain        ${result['reload_missing']}    isError=true
+    Should Contain        ${result['reload_missing']}    mcp-reload-rotate-after.env' not found
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Reload Credentials Rotates Key Before First Query
+    [Documentation]    The env file is rotated before the provider has ever been
+    ...                queried; the unscoped reload is a full report (no error) and
+    ...                the first query uses the new key.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${env_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-reload-rotate-before.env
+    ${select_sql}=    Set Variable    select id from stackql_auth_testing.collectors.collectors order by id desc;
+    ${child_env}=    Evaluate    {"DD_API_KEY": "stale-key", "DD_APPLICATION_KEY": "mypassword"}
+    ${steps}=    Evaluate    [{"write_env": {"DD_API_KEY": "myusername"}}, {"call": "reload_credentials", "args": {}, "as": "reload"}, {"call": "run_select_query", "args": {"sql": $select_sql}, "as": "select_first"}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_credential_script($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $env_file, $child_env, $steps)    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    Should Not Contain    ${result['reload']}          isError=true
+    Should Contain        ${result['reload']}          DD_API_KEY
+    Should Contain        ${result['reload']}          | custom | true |  | stackql_auth_testing | env:DD_API_KEY | ok |
+    Should Contain        ${result['reload']}          | okta | env:OKTA_SECRET_KEY |
+    Should Contain        ${result['select_first']}    100000001
+    Should Not Contain    ${result['select_first']}    isError=true
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Reload Credentials Recovers From Failed Resolution
+    [Documentation]    Select and mutation failures name the provider and the
+    ...                fix-file / reload / retry recovery; a reload against an
+    ...                unchanged file reports changed: false (the stop signal);
+    ...                after the fix one reload reports changed: true and the retry
+    ...                succeeds.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${env_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-reload-recover.env
+    ${select_sql}=    Set Variable    select id from stackql_auth_testing.collectors.collectors order by id desc;
+    ${delete_sql}=    Set Variable    delete from stackql_auth_testing.collectors.collectors where id = '100000001';
+    ${child_env}=    Evaluate    {"DD_API_KEY": None, "DD_APPLICATION_KEY": "mypassword"}
+    ${steps}=    Evaluate    [{"call": "run_select_query", "args": {"sql": $select_sql}, "as": "select_before"}, {"call": "run_mutation_query", "args": {"sql": $delete_sql}, "as": "delete_before"}, {"call": "reload_credentials", "args": {"provider": "stackql_auth_testing"}, "as": "reload_unchanged"}, {"write_env": {"DD_API_KEY": "myusername"}}, {"call": "reload_credentials", "args": {"provider": "stackql_auth_testing"}, "as": "reload"}, {"call": "run_select_query", "args": {"sql": $select_sql}, "as": "select_after"}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_credential_script($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $env_file, $child_env, $steps)    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    Should Contain        ${result['select_before']}       credential resolution failed for provider 'stackql_auth_testing'
+    Should Contain        ${result['select_before']}       fix the configured env file, call reload_credentials, then retry
+    Should Contain        ${result['delete_before']}       credential resolution failed for provider 'stackql_auth_testing'
+    Should Contain        ${result['delete_before']}       fix the configured env file, call reload_credentials, then retry
+    Should Contain        ${result['reload_unchanged']}    | custom | false | credentialsenvvar references empty string | stackql_auth_testing | env:DD_API_KEY | unresolved |
+    Should Not Contain    ${result['reload_unchanged']}    isError=true
+    Should Contain        ${result['reload']}              | custom | true |  | stackql_auth_testing | env:DD_API_KEY | ok |
+    Should Contain        ${result['select_after']}        100000001
+    Should Not Contain    ${result['select_after']}        isError=true
     Should Be Equal As Integers    ${result['returncode']}    0
 
 MCP Stdio Reload Credentials Sources Env File Mid Session
@@ -1324,12 +1424,13 @@ MCP Stdio Reload Credentials Sources Env File Mid Session
     # Before the env file exists, credential resolution fails with the
     # agent-actionable hint pointing at the reload_credentials tool.
     Should Contain        ${result['select_before']}    references empty string
-    Should Contain        ${result['select_before']}    reload_credentials
+    Should Contain        ${result['select_before']}    credential resolution failed for provider 'okta'
+    Should Contain        ${result['select_before']}    fix the configured env file, call reload_credentials, then retry
     Should Not Contain    ${result['select_before']}    okta_browser_plugin
     # The reload sources the var (names only, never values) and reports the
     # okta provider as resolvable.
     Should Contain        ${result['reload']}    OKTA_SECRET_KEY
-    Should Contain        ${result['reload']}    "ok"
+    Should Contain        ${result['reload']}    | api_key | true |  | okta | env:OKTA_SECRET_KEY | ok |
     Should Not Contain    ${result['reload']}    ${OKTA_SECRET_STR}
     # The same query now succeeds against the mocked okta provider.
     Should Contain        ${result['select_after']}    okta_browser_plugin

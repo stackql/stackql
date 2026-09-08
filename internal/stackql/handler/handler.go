@@ -50,6 +50,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetStacqklSemver() string
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetAuthContext(providerName string) (*dto.AuthCtx, error)
+	InvalidateAuthContexts(providerName string)
 	GetDBMSInternalRouter() dbmsinternal.Router
 	GetProvider(providerName string) (provider.IProvider, error)
 	DeleteProvider(providerName string) error
@@ -135,6 +136,7 @@ type standardHandlerContext struct {
 	controlAttributes   sqlcontrol.ControlAttributes
 	currentProvider     string
 	authContexts        dto.AuthContexts
+	docAuthProviders    map[string]struct{}
 	sqlDataSources      map[string]sql_datasource.SQLDataSource
 	registry            formulation.RegistryAPI
 	errorPresentation   string
@@ -502,6 +504,26 @@ func (hc *standardHandlerContext) updateAuthContextIfNotExists(providerName stri
 		return
 	}
 	hc.authContexts[providerName] = authCtx
+	hc.docAuthProviders[providerName] = struct{}{}
+}
+
+// InvalidateAuthContexts drops auth contexts registered lazily from provider
+// documents (all of them when providerName is empty), together with the
+// cached provider objects that registered them, so the next GetProvider call
+// rebuilds both; contexts supplied at startup via --auth are retained.
+func (hc *standardHandlerContext) InvalidateAuthContexts(providerName string) {
+	hc.providersMapMutex.Lock()
+	defer hc.providersMapMutex.Unlock()
+	hc.authMapMutex.Lock()
+	defer hc.authMapMutex.Unlock()
+	for name := range hc.docAuthProviders {
+		if providerName != "" && name != providerName {
+			continue
+		}
+		delete(hc.providers, name)
+		delete(hc.authContexts, name)
+		delete(hc.docAuthProviders, name)
+	}
 }
 
 func (hc *standardHandlerContext) SetConfigAtPath(path string, rhs interface{}, scope string) error {
@@ -582,6 +604,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		currentProvider:      hc.currentProvider,
 		providers:            hc.providers,
 		authContexts:         hc.authContexts,
+		docAuthProviders:     hc.docAuthProviders,
 		registry:             hc.registry,
 		controlAttributes:    hc.controlAttributes,
 		errorPresentation:    hc.errorPresentation,
@@ -662,6 +685,7 @@ func NewHandlerCtx(
 		runtimeContext:      runtimeCtx.Copy(),
 		providers:           providers,
 		authContexts:        inputBundle.GetAuthContexts(),
+		docAuthProviders:    map[string]struct{}{},
 		registry:            reg,
 		controlAttributes:   controlAttributes,
 		errorPresentation:   runtimeCtx.ErrorPresentation,

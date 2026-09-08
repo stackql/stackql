@@ -589,10 +589,14 @@ func registerReloadCredentialsTool(server *mcp.Server, cfg *Config, backend Back
 		},
 		&mcp.Tool{
 			Name: "reload_credentials",
-			Description: "Re-source provider credentials from the server's configured env file into the process " +
-				"environment, then report per-provider credential resolution status. Call after fixing or rotating " +
-				"credentials (eg a query failed with a credential resolution error), then retry the query. " +
-				"Never returns secret values. Optional provider arg scopes the report.",
+			Description: "Live-reload provider credentials: re-sources the server's configured env file into the " +
+				"process environment, invalidates cached auth contexts, and reports resolution status for every " +
+				"installed provider (optional provider arg filters the report; changed field flags values that " +
+				"differ from before). Never returns secret values. Credentials resolve automatically at query " +
+				"time - never call this at session start or before queries. Call only after a query fails with a " +
+				"credential resolution error (fix the env file first, then reload, then retry) or when the user " +
+				"says credentials have been rotated or changed. If the report shows changed: false after a " +
+				"failure, the file was not updated - ask the user rather than retrying.",
 			// Mutates process env, so not read-only despite the select-class gate.
 			Annotations: &mcp.ToolAnnotations{IdempotentHint: true, DestructiveHint: boolPtr(false)},
 		},
@@ -612,6 +616,7 @@ func registerReloadCredentialsTool(server *mcp.Server, cfg *Config, backend Back
 					"auth_type":    p.AuthType,
 					"sourced_from": p.SourcedFrom,
 					"status":       p.Status,
+					"changed":      p.Changed,
 					"detail":       p.Detail,
 				})
 			}

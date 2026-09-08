@@ -73,8 +73,10 @@ Semantics:
 - Sourced at startup (if the file exists) and again on every `reload_credentials` call; only keys with non-empty values are set, nothing is ever unset.
 - An absent file is created at startup as an empty commented dotenv file (`0600` on unix, parent directories included), so packaged installs (eg MCPB bundles in Claude Desktop) can pass the flag unconditionally; an existing file is never touched, so bundle updates cannot wipe populated credentials.
 - The file may be created, updated or rotated at any time while the server runs.
-- `reload_credentials` reports variable names and per-provider status (`ok`, `unresolved`, `not_checked`) only; secret values are never returned, logged or audited.  Without `--env.file` it degrades to a pure status probe.
-- Credential resolution failures carry a hint directing the agent to call `reload_credentials` and retry.
+- `reload_credentials` runs three ordered phases: re-source the file, invalidate auth contexts registered lazily from provider documents (contexts supplied via `--auth` are retained), then report every installed provider against the now-current environment.  The report is identical before and after a provider's first query; the optional `provider` argument filters it, and an unknown provider name is the only scoped error.
+- Each report row carries variable names, per-provider status (`ok`, `unresolved`, `not_checked`) and `changed` (whether the resolved credential material differs from before the reload); secret values are never returned, logged or audited.  A second reload against an unchanged file is idempotent (`changed: false` throughout).  Without `--env.file` it degrades to a pure status probe; a configured file that has gone missing is an explicit error naming the path.
+- Credentials resolve automatically at query time, so no reload is ever required before querying.  Credential resolution failures on the query tools name the provider and the recovery sequence (fix the env file, call `reload_credentials`, retry); `changed: false` after a failure means the file was not updated.
+- Reload semantics are per process.  In a replicated stateless HTTP deployment an in-band reload mutates one replica only; rotation there belongs at the deployment layer (redeploy, shared secret store, file watcher).
 
 File format: one `KEY=VALUE` per line; `#` comments, blank lines, `export ` prefixes, surrounding quotes and CRLF are tolerated.
 
@@ -162,7 +164,7 @@ Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`,
 | `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation.  Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
 | `list_registry` | Table | Providers (and their versions) available in the configured registry.  Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache.  Requires `provider`; `version` optional.  Local cache write only. |
-| `reload_credentials` | Table | Re-source credentials from the [`--env.file`](#credential-resourcing---envfile--reload_credentials) dotenv file into the process environment and report per-provider resolution status.  Never returns secret values.  Optional `provider` scopes the report.  Allowed in every mode. |
+| `reload_credentials` | Table | Live-reload credentials: re-source the [`--env.file`](#credential-resourcing---envfile--reload_credentials) dotenv file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider.  Never returns secret values.  Optional `provider` filters the report.  Recovery and rotation only, never a pre-query step.  Allowed in every mode. |
 
 ## Canonical agent prompts, resources and instructions
 

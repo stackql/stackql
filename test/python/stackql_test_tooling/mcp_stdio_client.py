@@ -264,76 +264,6 @@ def _tool_result_text(response):
     return "\n".join(parts)
 
 
-def run_stdio_empty_credential_reload_roundtrip(
-    stackql_exe,
-    env_file_path,
-    timeout_seconds=90,
-):
-    """Calls reload_credentials with no explicit auth contexts."""
-    if os.path.exists(env_file_path):
-        os.remove(env_file_path)
-    argv = [
-        stackql_exe,
-        "mcp",
-        "--mcp.server.type=stdio",
-        "--mcp.config",
-        '{"server": {"audit": {"disabled": true}} }',
-        f"--env.file={env_file_path}",
-    ]
-    proc = subprocess.Popen(
-        argv,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    watchdog = threading.Timer(timeout_seconds, proc.kill)
-    watchdog.start()
-    stdout_lines = []
-    stderr = b""
-    reload_response = None
-    try:
-        def send(message):
-            proc.stdin.write(_frame_messages([message], b"\n"))
-            proc.stdin.flush()
-
-        send({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2025-06-18",
-                "capabilities": {},
-                "clientInfo": {"name": "robot-stdio-harness", "version": "0.1.0"},
-            },
-        })
-        _await_response(proc, 1, stdout_lines)
-        send({"jsonrpc": "2.0", "method": "notifications/initialized"})
-        send({
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "tools/call",
-            "params": {"name": "reload_credentials", "arguments": {}},
-        })
-        reload_response = _await_response(proc, 2, stdout_lines)
-        try:
-            proc.stdin.close()
-        except OSError:
-            pass
-        stdout_lines.append(proc.stdout.read())
-        stderr = proc.stderr.read()
-        proc.wait(timeout=timeout_seconds)
-    finally:
-        watchdog.cancel()
-        if proc.poll() is None:
-            proc.kill()
-    return {
-        "reload": _tool_result_text(reload_response),
-        "stdout": b"".join(stdout_lines).decode("utf-8", errors="replace"),
-        "stderr": stderr.decode("utf-8", errors="replace"),
-        "returncode": proc.returncode,
-    }
-
-
 def run_stdio_credential_reload_roundtrip(
     stackql_exe,
     registry_cfg,
@@ -448,6 +378,110 @@ def run_stdio_credential_reload_roundtrip(
         "stderr": stderr.decode("utf-8", errors="replace"),
         "returncode": proc.returncode,
     }
+
+
+def run_stdio_credential_script(
+    stackql_exe,
+    registry_cfg,
+    auth_cfg,
+    env_file_path,
+    child_env_overrides,
+    steps,
+    timeout_seconds=120,
+):
+    """Drives a scripted reload_credentials scenario over one stdio session.
+
+    `child_env_overrides` maps var names to values for the child env (None
+    removes the var).  `steps` is an ordered list of dicts, one of:
+      {"call": <tool>, "args": {...}, "as": <label>}  tool call, flattened
+                                                        text stored under label
+      {"write_env": {"VAR": "value", ...}}             (re)write the env file
+      {"remove_env": true}                             delete the env file
+    Returns {label: text, ..., stderr, returncode}.
+    """
+    if os.path.exists(env_file_path):
+        os.remove(env_file_path)
+    child_env = {
+        k: v for k, v in os.environ.items()
+        if k.upper() not in {o.upper() for o in child_env_overrides}
+    }
+    for k, v in child_env_overrides.items():
+        if v is not None:
+            child_env[k] = v
+    argv = [
+        stackql_exe,
+        "mcp",
+        "--mcp.server.type=stdio",
+        "--mcp.config",
+        '{"server": {"mode": "full_access", "audit": {"disabled": true}} }',
+        f"--env.file={env_file_path}",
+        "--registry",
+        registry_cfg,
+        "--auth",
+        auth_cfg,
+        "--tls.allowInsecure",
+    ]
+    proc = subprocess.Popen(
+        argv,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=child_env,
+    )
+    watchdog = threading.Timer(timeout_seconds, proc.kill)
+    watchdog.start()
+    stdout_lines = []
+    stderr = b""
+    results = {}
+    try:
+        def send(message):
+            proc.stdin.write(_frame_messages([message], b"\n"))
+            proc.stdin.flush()
+
+        send({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "robot-stdio-harness", "version": "0.1.0"},
+            },
+        })
+        _await_response(proc, 1, stdout_lines)
+        send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+        next_id = 2
+        for step in steps:
+            if "write_env" in step:
+                with open(env_file_path, "w") as f:
+                    for k, v in step["write_env"].items():
+                        f.write(f"{k}={v}\n")
+                continue
+            if step.get("remove_env"):
+                os.remove(env_file_path)
+                continue
+            send({
+                "jsonrpc": "2.0",
+                "id": next_id,
+                "method": "tools/call",
+                "params": {"name": step["call"], "arguments": step.get("args", {})},
+            })
+            results[step["as"]] = _tool_result_text(_await_response(proc, next_id, stdout_lines))
+            next_id += 1
+        try:
+            proc.stdin.close()
+        except OSError:
+            pass
+        stdout_lines.append(proc.stdout.read())
+        stderr = proc.stderr.read()
+        proc.wait(timeout=timeout_seconds)
+    finally:
+        watchdog.cancel()
+        if proc.poll() is None:
+            proc.kill()
+    results["stderr"] = stderr.decode("utf-8", errors="replace")
+    results["returncode"] = proc.returncode
+    return results
 
 
 # ---- protocol revision 2026-07-28 conformance (issue #729) ----------------
