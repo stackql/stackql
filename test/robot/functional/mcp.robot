@@ -1488,10 +1488,14 @@ MCP HTTP Legacy Revision Client Initialize Handshake Still Served
 
 MCP HTTP Current Revision Client Runs Without Handshake Or Session
     [Documentation]    On the sessionless 9926 server a 2026-07-28 client sends no
-    ...                initialize and no session header; the revision and capabilities
-    ...                ride in _meta and tools/list is connection-invariant.
+    ...                initialize and no session header; server/discover serves the
+    ...                supported revisions and the embedded instructions once, then the
+    ...                revision and capabilities ride in _meta and tools/list is
+    ...                connection-invariant.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_roundtrip('http://127.0.0.1:9926')    modules=stackql_test_tooling.mcp_stdio_client
+    List Should Contain Value    ${result['discover_versions']}    2026-07-28
+    Should Contain    ${result['discover_instructions']}    Drill down in order - provider -> service -> resource -> methods
     Should Not Be True    ${result['session_issued']}
     List Should Contain Value    ${result['tools']}    server_info
     List Should Contain Value    ${result['tools']}    run_select_query

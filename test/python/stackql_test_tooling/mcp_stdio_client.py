@@ -776,8 +776,13 @@ def _http_post_stateless(url, payload):
 
 def run_http_stateless_roundtrip(url):
     """2026-07-28 client over Streamable HTTP: no handshake, no session
-    header; the revision travels in the Mcp-Protocol-Version header and in
-    _meta on tools/list and a server_info call."""
+    header; server/discover (SEP-2575) replaces initialize as the one-shot
+    carrier of versions, capabilities and instructions, then the revision
+    travels in the Mcp-Protocol-Version header and in _meta on tools/list and
+    a server_info call."""
+    _, _, discovered = _http_post_stateless(url, {
+        "jsonrpc": "2.0", "id": 0, "method": "server/discover", "params": {"_meta": _STATELESS_META},
+    })
     _, headers, listed = _http_post_stateless(url, {
         "jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {"_meta": _STATELESS_META},
     })
@@ -785,7 +790,10 @@ def run_http_stateless_roundtrip(url):
         "jsonrpc": "2.0", "id": 2, "method": "tools/call",
         "params": {"_meta": _STATELESS_META, "name": "server_info", "arguments": {}},
     })
+    discover_result = discovered.get("result") or {}
     return {
+        "discover_versions": discover_result.get("supportedVersions") or [],
+        "discover_instructions": discover_result.get("instructions") or "",
         "session_issued": bool(headers.get("mcp-session-id", "")),
         "tools": [t.get("name") for t in (listed.get("result") or {}).get("tools") or []],
         "server_info": _tool_result_text(info),
