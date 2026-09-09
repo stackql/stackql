@@ -220,7 +220,7 @@ Tools carry MCP behavioural annotations derived from the policy-gate classificat
 | `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation. Returns `{messages, timestamp}`. Gated by the server [mode](#server-modes). |
 | `list_registry` | Table | Providers (and their versions) available in the configured registry. Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache. Requires `provider`; `version` optional. Local cache write only. |
-| `reload_credentials` | Table | Re-source credentials from the backend's configured dotenv file into the process environment and report per-provider resolution status (issue #688). Never returns secret values. Optional `provider` scopes the report. Allowed in every mode. |
+| `reload_credentials` | Table | Live-reload credentials: re-source the backend's configured dotenv file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider (issue #688). Never returns secret values. Optional `provider` filters the report. Recovery and rotation only, never a pre-query step. Allowed in every mode. |
 | `query_library_search` | Table | Search the curated query library by natural-language `intent` (optional `provider`/`service`/`tags` filters, `include_mutations`, `limit`). Lexical ranking over the cached catalogue; no network call in steady state. On a miss (no hit clears the relevance threshold) the result carries a one-line pointer directing the model to author via the server instructions (discovery workflow + dialect rules) instead of guessing. Mutation entries are excluded in `read_only` mode regardless of `include_mutations`. Read-only, no credentials. |
 | `query_library_get` | KV | Retrieve one library entry by `id`. Without `params`: the teaching surface - raw template with `{{placeholder}}`s intact, param declarations, notes, doc URL. With `params`: server-side validation (unknown params rejected, missing required params reported structurally with type/description/example, `identifier` params strictly validated, `string` values escaped for their literal position) and rendered SQL plus which execution tool to call (`run_select_query` or `run_mutation_query`). Rendering happens in the server; the model never performs substitution. |
 
@@ -253,15 +253,16 @@ A mock server implementing the URL contract for testing lives at
 (see its docstring for standalone usage); the Go unit tests exercise the same contract via
 `httptest`, and the robot scenarios in `mcp.robot` cover the offline snapshot path end to end.
 
-### Embedded Content: Instructions, Prompts and Resources
+### Embedded Content: Instructions, Prompts, Resources and Tool Descriptions
 
-Server instructions, prompts and resources are authored as markdown files under `pkg/mcp_server/content/` and compiled into the binary with `go:embed` (issue #696). Adding or changing published content is a markdown-only edit; no Go changes are required.
+Server instructions, prompts, resources and tool descriptions are authored as markdown files under `pkg/mcp_server/content/` and compiled into the binary with `go:embed` (issue #696). Adding or changing published content is a markdown-only edit; no Go changes are required.
 
 - `content/instructions/*.md` - concatenated in lexical filename order (blank line separated) into the `instructions` string of the `initialize` result. No frontmatter. Suppress with the top-level `disable_instructions: true` config flag.
 - `content/prompts/*.md` - one prompt per file. YAML frontmatter carries `name`, `description` and optional `arguments` (each with `name`, `description`, `required`); the body is the prompt text. `{{argument}}` placeholders in the body are substituted with caller-supplied argument values on `prompts/get`; a placeholder that is not a declared argument fails validation.
 - `content/resources/*.md` - one resource per file. Frontmatter carries `name`, `description`, optional `uri` (default `stackql://docs/<filename-sans-extension>`) and optional `mime_type` (default `text/markdown`); the body is served by `resources/read`. The resources capability is declared only when at least one resource is published.
+- `content/tools/<tool_name>.md` - one file per tool, the single source of the `description` published by `tools/list` (the tool tables in this README and in `docs/mcp.md` paraphrase them). Frontmatter carries `name`, which must match the file stem; the body is the description prose. Single line breaks inside a paragraph collapse to spaces and blank lines separate paragraphs, so the source can be wrapped freely. A tool registered in Go without a description file fails server construction.
 
-Malformed frontmatter, duplicate names and unresolved placeholders are caught at build time by the unit tests in `embedded_content_test.go`.
+Malformed frontmatter, duplicate names, unresolved placeholders and tool description coverage (every published tool has a file, every file names a published tool) are caught at build time by the unit tests in `embedded_content_test.go`.
 
 Currently published prompts:
 

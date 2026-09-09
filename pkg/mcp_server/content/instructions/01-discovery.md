@@ -1,6 +1,6 @@
 # Discovery workflow
 
-Drill down in order - provider -> service -> resource -> methods - then describe before querying. The following discovery tools are available:
+Before composing SQL from scratch, check `query_library_search` for a vetted template: `query_library_get` validates the params and renders the SQL, and a rendered template needs no further discovery. For everything else, drill down in order - provider -> service -> resource -> methods - then describe before querying. The following discovery tools are available:
 
 - `list_providers` - providers installed on the server
 - `list_services` - available services within the provider

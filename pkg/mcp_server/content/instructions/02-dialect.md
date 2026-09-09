@@ -1,6 +1,6 @@
 # Dialect rules
 
-The working SQL dialect is reported in the `sql_backend` field of `server_info`: `sqlite3` (the default) or `postgres`. Statement-level discovery commands (`SHOW`, `DESCRIBE`, `REGISTRY LIST`, `REGISTRY PULL`) exist in the dialect, but prefer the dedicated discovery tools in this context. Validate non-trivial queries with `validate_select_query` before executing, particularly wide fan-out queries.
+The working SQL dialect is reported in the `sql_backend` field of `server_info`: `sqlite3` (the default) or `postgres`. Statement-level discovery commands (`SHOW`, `DESCRIBE`, `REGISTRY LIST`, `REGISTRY PULL`) exist in the dialect, but prefer the dedicated discovery tools in this context. `validate_select_query` parses and plans a SELECT without executing it; use it when iterating on a syntax or plan error, or to pre-flight a wide fan-out or otherwise expensive query. Do not validate routinely: `run_select_query` surfaces the same errors, and validation resolves the provider's credentials just as execution does.
 
 ## Request inputs in the WHERE clause
 
@@ -39,6 +39,7 @@ Always run `describe_method` before a mutation or lifecycle op. It returns the f
 - `UPDATE <provider>.<service>.<resource> SET Field = 'v', param = 'p' WHERE <required params>` - `SET` carries body fields and routing params; `WHERE` carries the identifying params.
 - `REPLACE` (maps to HTTP PUT) has the same statement shape as `UPDATE` (which typically maps to PATCH).
 - `DELETE FROM <provider>.<service>.<resource> WHERE <required params>`.
+- `EXEC <provider>.<service>.<resource>.<method> @param = 'v', @param2 = 'v'` - lifecycle operations that are not CRUD (start, stop, reboot and the like), run through `run_lifecycle_operation`. `list_methods` reports them with the `EXEC` verb and their required params; `describe_method` gives the full contract.
 - JSON-valued inputs are passed as single-quoted JSON strings: `Protocols = '[ "SFTP" ]'`.
 - The `Field` names in the examples above are placeholders; substitute the names `describe_method` reports.
 - `RETURNING` projects fields of the method's response: exactly the rows `describe_method` reports with `param_type` = `output`. A method with an empty response (eg HTTP 204) has no output rows and nothing to return.

@@ -2,6 +2,8 @@ package mcpbackend
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
@@ -9,6 +11,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/dto"
 
 	"github.com/stackql/stackql/internal/stackql/envfile"
+	"github.com/stackql/stackql/internal/stackql/intrinsic"
 	mcp_dto "github.com/stackql/stackql/pkg/mcp_server/dto"
 )
 
@@ -61,6 +64,23 @@ func isCredentialCheckSupported(authType string) bool {
 	}
 }
 
+// credentialFingerprint digests the credential material an auth context
+// (successor chain included) resolves to right now; the digest is compared,
+// never emitted, so a reload can report whether rotation took effect.
+func credentialFingerprint(ac *dto.AuthCtx) string {
+	h := sha256.New()
+	for cur := ac; cur != nil; cur = cur.Successor {
+		if b, err := cur.GetCredentialsBytes(); err == nil {
+			h.Write(b)
+		}
+		if keyID, err := cur.GetKeyIDString(); err == nil {
+			h.Write([]byte(keyID))
+		}
+		h.Write([]byte{0})
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 // providerCredentialStatus dry-runs credential resolution for one provider;
 // resolved bytes are discarded, only the outcome is reported.
 func providerCredentialStatus(providerName string, ac *dto.AuthCtx) mcp_dto.ProviderCredentialStatusDTO {
@@ -82,9 +102,58 @@ func providerCredentialStatus(providerName string, ac *dto.AuthCtx) mcp_dto.Prov
 	return rv
 }
 
-// ReloadCredentials implements the reload_credentials MCP tool: (re)source
-// the env file, then report per-provider credential resolution status.  With
-// no env file configured it degrades to a pure status probe.
+// installedProviderNames enumerates registry-installed providers (the
+// list_providers set less the intrinsic provider, document-first aliases and
+// SQL data sources), sorted.
+func (b *stackqlMCPService) installedProviderNames() ([]string, error) {
+	supported, err := b.handlerCtx.GetSupportedProviders(false)
+	if err != nil {
+		return nil, err
+	}
+	rv := make([]string, 0, len(supported))
+	for name := range supported {
+		if name == intrinsic.ProviderName || strings.HasPrefix(name, intrinsic.UnstablePrefix) {
+			continue
+		}
+		if _, isSQLDataSource := b.handlerCtx.GetSQLDataSource(name); isSQLDataSource {
+			continue
+		}
+		rv = append(rv, name)
+	}
+	sort.Strings(rv)
+	return rv, nil
+}
+
+// resolveAuthContext registers the provider (lazily, exactly as a query
+// would) and returns its effective auth context: the --auth override when
+// present, else the provider document default.
+func (b *stackqlMCPService) resolveAuthContext(providerName string) (*dto.AuthCtx, error) {
+	if _, err := b.handlerCtx.GetProvider(providerName); err != nil {
+		return nil, err
+	}
+	return b.handlerCtx.GetAuthContext(providerName)
+}
+
+func (b *stackqlMCPService) providerCredentialRow(providerName, priorFingerprint string) mcp_dto.ProviderCredentialStatusDTO {
+	ac, err := b.resolveAuthContext(providerName)
+	if err != nil {
+		return mcp_dto.ProviderCredentialStatusDTO{
+			Provider:    providerName,
+			SourcedFrom: credentialSourceNone,
+			Status:      credentialStatusNotChecked,
+			Detail:      err.Error(),
+		}
+	}
+	rv := providerCredentialStatus(providerName, ac)
+	rv.Changed = credentialFingerprint(ac) != priorFingerprint
+	return rv
+}
+
+// ReloadCredentials implements the reload_credentials MCP tool as three
+// ordered phases: re-source the env file, invalidate lazily registered auth
+// contexts, then report resolution status for every installed provider
+// against the now-current environment.  With no env file configured it
+// degrades to a pure status probe.
 func (b *stackqlMCPService) ReloadCredentials(
 	_ context.Context,
 	input mcp_dto.CredentialsReloadInput,
@@ -93,28 +162,35 @@ func (b *stackqlMCPService) ReloadCredentials(
 		EnvFile:   b.envFile,
 		Providers: []mcp_dto.ProviderCredentialStatusDTO{},
 	}
+	providerNames, namesErr := b.installedProviderNames()
+	if namesErr != nil {
+		return rv, fmt.Errorf("failed to enumerate installed providers: %w", namesErr)
+	}
+	if input.Provider != "" {
+		idx := sort.SearchStrings(providerNames, input.Provider)
+		if idx == len(providerNames) || providerNames[idx] != input.Provider {
+			return rv, fmt.Errorf("provider '%s' is not installed", input.Provider)
+		}
+		providerNames = providerNames[idx : idx+1]
+	}
+	priorFingerprints := make(map[string]string, len(providerNames))
+	for _, name := range providerNames {
+		if ac, err := b.resolveAuthContext(name); err == nil {
+			priorFingerprints[name] = credentialFingerprint(ac)
+		}
+	}
 	sourcedVars, sourced, err := envfile.Source(b.envFile)
 	if err != nil {
 		return rv, fmt.Errorf("failed to source env file '%s': %w", b.envFile, err)
 	}
+	if b.envFile != "" && !sourced {
+		return rv, fmt.Errorf("env file '%s' not found", b.envFile)
+	}
 	rv.EnvFileSourced = sourced
 	rv.SourcedVars = sourcedVars
-	authContexts := b.handlerCtx.GetAuthContexts()
-	if input.Provider != "" {
-		ac, ok := authContexts[input.Provider]
-		if !ok {
-			return rv, fmt.Errorf("cannot find AUTH context for provider = '%s'", input.Provider)
-		}
-		rv.Providers = append(rv.Providers, providerCredentialStatus(input.Provider, ac))
-		return rv, nil
-	}
-	providerNames := make([]string, 0, len(authContexts))
-	for name := range authContexts {
-		providerNames = append(providerNames, name)
-	}
-	sort.Strings(providerNames)
+	b.handlerCtx.InvalidateAuthContexts(input.Provider)
 	for _, name := range providerNames {
-		rv.Providers = append(rv.Providers, providerCredentialStatus(name, authContexts[name]))
+		rv.Providers = append(rv.Providers, b.providerCredentialRow(name, priorFingerprints[name]))
 	}
 	return rv, nil
 }

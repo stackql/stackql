@@ -41,7 +41,7 @@ func TestClassifyBackendError_UpstreamStatusVariants(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := classifyBackendError(tc.err)
+			got := classifyBackendError(tc.err, "")
 			wantFragment := fmt.Sprintf(`{"http_status": %d, "retryable": %t}`, tc.status, tc.retryable)
 			if !strings.Contains(got.Error(), wantFragment) {
 				t.Errorf("expected %q in classified error, got %q", wantFragment, got.Error())
@@ -55,7 +55,7 @@ func TestClassifyBackendError_UpstreamStatusVariants(t *testing.T) {
 
 func TestClassifyBackendError_NonHTTPKeepsLegacyPrefix(t *testing.T) {
 	err := fmt.Errorf("'registry list' is meaningless in local mode")
-	got := classifyBackendError(err)
+	got := classifyBackendError(err, "")
 	if !strings.Contains(got.Error(), "failed to extract query results") {
 		t.Errorf("expected legacy prefix, got %q", got.Error())
 	}

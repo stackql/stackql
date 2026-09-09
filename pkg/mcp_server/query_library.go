@@ -3,6 +3,7 @@ package mcp_server //nolint:revive // fine for now
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -810,23 +811,22 @@ func searchHitsToRows(hits []dto.QueryLibraryHitDTO) []map[string]any {
 }
 
 // registerQueryLibraryTools publishes the two read-only library tools.
-func registerQueryLibraryTools(server *mcp.Server, cfg *Config, auditSink sink.Sink) {
+func registerQueryLibraryTools(
+	server *mcp.Server, cfg *Config, auditSink sink.Sink, descriptions toolDescriptions,
+) error {
 	client := newQueryLibraryClient(cfg.QueryLibrary)
-	registerQueryLibrarySearchTool(server, cfg, auditSink, client)
-	registerQueryLibraryGetTool(server, cfg, auditSink, client)
+	return errors.Join(
+		registerQueryLibrarySearchTool(server, cfg, auditSink, descriptions, client),
+		registerQueryLibraryGetTool(server, cfg, auditSink, descriptions, client),
+	)
 }
 
 func registerQueryLibrarySearchTool(
-	server *mcp.Server, cfg *Config, auditSink sink.Sink, client *queryLibraryClient,
-) {
-	addToolWithGate(
-		server, cfg, auditSink, queryLibrarySearchGate(),
-		&mcp.Tool{
-			Name: "query_library_search",
-			Description: "Search the curated StackQL query library by natural-language intent. Returns ranked " +
-				"template ids with required param names. Consult this before composing SQL from scratch; " +
-				"follow up with query_library_get. Read-only, no credentials.",
-		},
+	server *mcp.Server, cfg *Config, auditSink sink.Sink, descriptions toolDescriptions, client *queryLibraryClient,
+) error {
+	return addToolWithGate(
+		server, cfg, auditSink, descriptions, queryLibrarySearchGate(),
+		&mcp.Tool{Name: "query_library_search"},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryLibrarySearchInput,
 		) (*mcp.CallToolResult, dto.QueryLibrarySearchDTO, error) {
 			format, formatErr := resolveRenderFormat(cfg, args.Format)
@@ -852,17 +852,11 @@ func registerQueryLibrarySearchTool(
 }
 
 func registerQueryLibraryGetTool(
-	server *mcp.Server, cfg *Config, auditSink sink.Sink, client *queryLibraryClient,
-) {
-	addToolWithGate(
-		server, cfg, auditSink, queryLibraryGetGate(),
-		&mcp.Tool{
-			Name: "query_library_get",
-			Description: "Retrieve a query library entry by id. Without params: returns the raw template, " +
-				"param declarations and notes (adapt from it when no exact match exists). With params: the " +
-				"server validates values and returns rendered SQL plus which tool to execute it with " +
-				"(run_select_query or run_mutation_query). Read-only, no credentials.",
-		},
+	server *mcp.Server, cfg *Config, auditSink sink.Sink, descriptions toolDescriptions, client *queryLibraryClient,
+) error {
+	return addToolWithGate(
+		server, cfg, auditSink, descriptions, queryLibraryGetGate(),
+		&mcp.Tool{Name: "query_library_get"},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryLibraryGetInput,
 		) (*mcp.CallToolResult, dto.QueryLibraryGetDTO, error) {
 			format, formatErr := resolveRenderFormat(cfg, args.Format)

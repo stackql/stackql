@@ -2,6 +2,8 @@ package mcp_server //nolint:testpackage,revive // exercise internal wiring
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -34,6 +36,106 @@ func TestEmbeddedContent_LoadsAndValidates(t *testing.T) {
 	}
 	if len(resources) == 0 {
 		t.Errorf("expected at least one embedded resource")
+	}
+	descriptions, err := loadEmbeddedToolDescriptions()
+	if err != nil {
+		t.Fatalf("tool descriptions: %v", err)
+	}
+	if len(descriptions.names()) == 0 {
+		t.Errorf("expected at least one embedded tool description")
+	}
+}
+
+// TestToolDescriptions_CoverPublishedTools pins the two directions of the
+// content/tools contract: every published tool carries its mastered
+// description, and every description file names a published tool.
+func TestToolDescriptions_CoverPublishedTools(t *testing.T) {
+	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	list, err := cs.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools: %v", err)
+	}
+	descriptions, err := loadEmbeddedToolDescriptions()
+	if err != nil {
+		t.Fatalf("tool descriptions: %v", err)
+	}
+	published := map[string]bool{}
+	for _, tool := range list.Tools {
+		published[tool.Name] = true
+		want, ok := descriptions.describe(tool.Name)
+		if !ok || tool.Description != want {
+			t.Errorf("tool %q: published description %q does not match content/tools", tool.Name, tool.Description)
+		}
+	}
+	for _, name := range descriptions.names() {
+		if !published[name] {
+			t.Errorf("content/tools/%s.md describes a tool that is not published", name)
+		}
+	}
+}
+
+// TestToolDescriptions_MarkdownProseIsPublished reads one description file
+// from disk, independently of the loader, and checks that tools/list exposes
+// its prose: frontmatter stripped, wrapped lines joined by single spaces.
+func TestToolDescriptions_MarkdownProseIsPublished(t *testing.T) {
+	const toolName = "run_select_query"
+	raw, err := os.ReadFile(filepath.Join("content", "tools", toolName+".md"))
+	if err != nil {
+		t.Fatalf("read markdown: %v", err)
+	}
+	parts := strings.SplitN(string(raw), "---", 3)
+	if len(parts) != 3 || !strings.Contains(parts[1], "name: "+toolName) {
+		t.Fatalf("unexpected file shape: %q", raw)
+	}
+	if !strings.Contains(strings.TrimSpace(parts[2]), "\n") {
+		t.Fatalf("fixture must be wrapped over several lines to exercise prose collapsing")
+	}
+	want := strings.Join(strings.Fields(parts[2]), " ")
+
+	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	list, err := cs.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools: %v", err)
+	}
+	for _, tool := range list.Tools {
+		if tool.Name != toolName {
+			continue
+		}
+		if tool.Description != want {
+			t.Errorf("published description mismatch.\nwant: %q\ngot:  %q", want, tool.Description)
+		}
+		return
+	}
+	t.Fatalf("%s not published", toolName)
+}
+
+func TestLoadToolDescriptionsFrom_ValidatesAndCollapsesProse(t *testing.T) {
+	fsys := fstest.MapFS{
+		"tools/alpha.md": {Data: []byte("---\nname: alpha\n---\nFirst line\nsecond line.\n\nSecond paragraph.\n")},
+	}
+	descriptions, err := loadToolDescriptionsFrom(fsys, "tools")
+	if err != nil {
+		t.Fatalf("loadToolDescriptionsFrom: %v", err)
+	}
+	got, ok := descriptions.describe("alpha")
+	if !ok || got != "First line second line.\n\nSecond paragraph." {
+		t.Errorf("unexpected description %q (ok=%v)", got, ok)
+	}
+	mismatch := fstest.MapFS{
+		"tools/alpha.md": {Data: []byte("---\nname: beta\n---\nbody\n")},
+	}
+	if _, err := loadToolDescriptionsFrom(mismatch, "tools"); err == nil || !strings.Contains(err.Error(), "file stem") {
+		t.Errorf("expected file stem mismatch error, got %v", err)
+	}
+	empty := fstest.MapFS{
+		"tools/alpha.md": {Data: []byte("---\nname: alpha\n---\n   \n")},
+	}
+	if _, err := loadToolDescriptionsFrom(empty, "tools"); err == nil || !strings.Contains(err.Error(), "empty") {
+		t.Errorf("expected empty body error, got %v", err)
 	}
 }
 

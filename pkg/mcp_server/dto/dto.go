@@ -168,6 +168,7 @@ type ProviderCredentialStatusDTO struct {
 	AuthType    string `json:"auth_type,omitempty"`
 	SourcedFrom string `json:"sourced_from,omitempty" jsonschema:"where credentials are read from, eg env:VAR_NAME or file:/path"`
 	Status      string `json:"status" jsonschema:"ok, unresolved or not_checked"`
+	Changed     bool   `json:"changed" jsonschema:"true when the resolved credential material differs from before this reload"`
 	Detail      string `json:"detail,omitempty" jsonschema:"resolution error detail when status is unresolved"`
 }
 

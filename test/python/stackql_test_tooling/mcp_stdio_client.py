@@ -2,7 +2,7 @@
 
 Drives a `stackql mcp --mcp.server.type=stdio` child over raw byte pipes in
 binary mode with a configurable line terminator (issue #668 CRLF framing).
-Also hosts the issue #688 credential reload roundtrip against the
+Also hosts the issue #688 scripted credential reload scenarios against the
 `--env.file` dotenv file, the issue #701 malformed-frame resilience
 roundtrip, and the issue #729 protocol revision conformance roundtrips
 (2025-06-18 handshake client and 2026-07-28 stateless client, stdio and
@@ -264,105 +264,40 @@ def _tool_result_text(response):
     return "\n".join(parts)
 
 
-def run_stdio_empty_credential_reload_roundtrip(
-    stackql_exe,
-    env_file_path,
-    timeout_seconds=90,
-):
-    """Calls reload_credentials with no explicit auth contexts."""
-    if os.path.exists(env_file_path):
-        os.remove(env_file_path)
-    argv = [
-        stackql_exe,
-        "mcp",
-        "--mcp.server.type=stdio",
-        "--mcp.config",
-        '{"server": {"audit": {"disabled": true}} }',
-        f"--env.file={env_file_path}",
-    ]
-    proc = subprocess.Popen(
-        argv,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    watchdog = threading.Timer(timeout_seconds, proc.kill)
-    watchdog.start()
-    stdout_lines = []
-    stderr = b""
-    reload_response = None
-    try:
-        def send(message):
-            proc.stdin.write(_frame_messages([message], b"\n"))
-            proc.stdin.flush()
-
-        send({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2025-06-18",
-                "capabilities": {},
-                "clientInfo": {"name": "robot-stdio-harness", "version": "0.1.0"},
-            },
-        })
-        _await_response(proc, 1, stdout_lines)
-        send({"jsonrpc": "2.0", "method": "notifications/initialized"})
-        send({
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "tools/call",
-            "params": {"name": "reload_credentials", "arguments": {}},
-        })
-        reload_response = _await_response(proc, 2, stdout_lines)
-        try:
-            proc.stdin.close()
-        except OSError:
-            pass
-        stdout_lines.append(proc.stdout.read())
-        stderr = proc.stderr.read()
-        proc.wait(timeout=timeout_seconds)
-    finally:
-        watchdog.cancel()
-        if proc.poll() is None:
-            proc.kill()
-    return {
-        "reload": _tool_result_text(reload_response),
-        "stdout": b"".join(stdout_lines).decode("utf-8", errors="replace"),
-        "stderr": stderr.decode("utf-8", errors="replace"),
-        "returncode": proc.returncode,
-    }
-
-
-def run_stdio_credential_reload_roundtrip(
+def run_stdio_credential_script(
     stackql_exe,
     registry_cfg,
     auth_cfg,
     env_file_path,
-    secret_env_var,
-    secret_value,
-    select_sql,
+    child_env_overrides,
+    steps,
     timeout_seconds=120,
 ):
-    """Issue #688 end-to-end: credential (re)sourcing over a stdio session.
+    """Drives a scripted reload_credentials scenario over one stdio session.
 
-    Spawns the server WITHOUT `secret_env_var`, `--env.file` pointing at a
-    not-yet-existing file; runs `select_sql` (expects a credential error),
-    writes the env file, calls `reload_credentials`, re-runs the query
-    (expects rows).  Returns the three flattened tool results plus streams.
+    `child_env_overrides` maps var names to values for the child env (None
+    removes the var).  `steps` is an ordered list of dicts, one of:
+      {"call": <tool>, "args": {...}, "as": <label>}  tool call, flattened
+                                                        text stored under label
+      {"write_env": {"VAR": "value", ...}}             (re)write the env file
+      {"remove_env": true}                             delete the env file
+    Returns {label: text, ..., stderr, returncode}.
     """
     if os.path.exists(env_file_path):
         os.remove(env_file_path)
     child_env = {
         k: v for k, v in os.environ.items()
-        if k.upper() != secret_env_var.upper()
+        if k.upper() not in {o.upper() for o in child_env_overrides}
     }
+    for k, v in child_env_overrides.items():
+        if v is not None:
+            child_env[k] = v
     argv = [
         stackql_exe,
         "mcp",
         "--mcp.server.type=stdio",
         "--mcp.config",
-        '{"server": {"audit": {"disabled": true}} }',
+        '{"server": {"mode": "full_access", "audit": {"disabled": true}} }',
         f"--env.file={env_file_path}",
         "--registry",
         registry_cfg,
@@ -381,7 +316,7 @@ def run_stdio_credential_reload_roundtrip(
     watchdog.start()
     stdout_lines = []
     stderr = b""
-    select_before = reload_response = select_after = None
+    results = {}
     try:
         def send(message):
             proc.stdin.write(_frame_messages([message], b"\n"))
@@ -399,36 +334,24 @@ def run_stdio_credential_reload_roundtrip(
         })
         _await_response(proc, 1, stdout_lines)
         send({"jsonrpc": "2.0", "method": "notifications/initialized"})
-        send({
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "tools/call",
-            "params": {
-                "name": "run_select_query",
-                "arguments": {"sql": select_sql},
-            },
-        })
-        select_before = _await_response(proc, 2, stdout_lines)
-        with open(env_file_path, "w") as f:
-            f.write("# written mid-session by the robot harness\n")
-            f.write(f"{secret_env_var}={secret_value}\n")
-        send({
-            "jsonrpc": "2.0",
-            "id": 3,
-            "method": "tools/call",
-            "params": {"name": "reload_credentials", "arguments": {}},
-        })
-        reload_response = _await_response(proc, 3, stdout_lines)
-        send({
-            "jsonrpc": "2.0",
-            "id": 4,
-            "method": "tools/call",
-            "params": {
-                "name": "run_select_query",
-                "arguments": {"sql": select_sql},
-            },
-        })
-        select_after = _await_response(proc, 4, stdout_lines)
+        next_id = 2
+        for step in steps:
+            if "write_env" in step:
+                with open(env_file_path, "w") as f:
+                    for k, v in step["write_env"].items():
+                        f.write(f"{k}={v}\n")
+                continue
+            if step.get("remove_env"):
+                os.remove(env_file_path)
+                continue
+            send({
+                "jsonrpc": "2.0",
+                "id": next_id,
+                "method": "tools/call",
+                "params": {"name": step["call"], "arguments": step.get("args", {})},
+            })
+            results[step["as"]] = _tool_result_text(_await_response(proc, next_id, stdout_lines))
+            next_id += 1
         try:
             proc.stdin.close()
         except OSError:
@@ -440,14 +363,9 @@ def run_stdio_credential_reload_roundtrip(
         watchdog.cancel()
         if proc.poll() is None:
             proc.kill()
-    return {
-        "select_before": _tool_result_text(select_before),
-        "reload": _tool_result_text(reload_response),
-        "select_after": _tool_result_text(select_after),
-        "stdout": b"".join(stdout_lines).decode("utf-8", errors="replace"),
-        "stderr": stderr.decode("utf-8", errors="replace"),
-        "returncode": proc.returncode,
-    }
+    results["stderr"] = stderr.decode("utf-8", errors="replace")
+    results["returncode"] = proc.returncode
+    return results
 
 
 # ---- protocol revision 2026-07-28 conformance (issue #729) ----------------
@@ -742,8 +660,13 @@ def _http_post_stateless(url, payload):
 
 def run_http_stateless_roundtrip(url):
     """2026-07-28 client over Streamable HTTP: no handshake, no session
-    header; the revision travels in the Mcp-Protocol-Version header and in
-    _meta on tools/list and a server_info call."""
+    header; server/discover (SEP-2575) replaces initialize as the one-shot
+    carrier of versions, capabilities and instructions, then the revision
+    travels in the Mcp-Protocol-Version header and in _meta on tools/list and
+    a server_info call."""
+    _, _, discovered = _http_post_stateless(url, {
+        "jsonrpc": "2.0", "id": 0, "method": "server/discover", "params": {"_meta": _STATELESS_META},
+    })
     _, headers, listed = _http_post_stateless(url, {
         "jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {"_meta": _STATELESS_META},
     })
@@ -751,7 +674,10 @@ def run_http_stateless_roundtrip(url):
         "jsonrpc": "2.0", "id": 2, "method": "tools/call",
         "params": {"_meta": _STATELESS_META, "name": "server_info", "arguments": {}},
     })
+    discover_result = discovered.get("result") or {}
     return {
+        "discover_versions": discover_result.get("supportedVersions") or [],
+        "discover_instructions": discover_result.get("instructions") or "",
         "session_issued": bool(headers.get("mcp-session-id", "")),
         "tools": [t.get("name") for t in (listed.get("result") or {}).get("tools") or []],
         "server_info": _tool_result_text(info),
