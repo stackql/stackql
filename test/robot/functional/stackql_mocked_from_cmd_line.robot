@@ -11120,3 +11120,255 @@ OTel Output Zero Row Statement Emits Only Completion
     ...    ${expected}
     ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows.tmp
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows-stderr.tmp
+
+# ===========================================================================
+# Two further services sit under "stackql_preview": "dynamic_graph" for a query
+# wired across several exchanges, and "iac" for an idempotent converge run.
+# Discovery is answered in process, and a run is specified by predicate rather
+# than by column, so these assert the catalogue and the refusals; the runs
+# themselves reach live clouds and are covered by omnisdk's own suite.
+# ===========================================================================
+
+Preview Show Services Includes Dynamic Graph And Iac
+    ${preview} =    Set Variable    {"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    id,name,title
+    ...    audit:internal,audit,omnisdk audited resources
+    ...    dynamic_graph:internal,dynamic_graph,queries wired across several document-declared exchanges
+    ...    iac:internal,iac,"idempotent converge runs, and the blueprints that render one"
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show services in stackql_preview;
+    ...    ${expected}
+    ...    \-o\=csv
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Extended-Services.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Extended-Services-stderr.tmp
+
+Preview Dynamic Graph Show Resources Lists The Query Relation
+    ${preview} =    Set Variable    {"unstable":true}
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show resources in stackql_preview.dynamic_graph;
+    ...    name,id\nquery,stackql_preview.dynamic_graph.query
+    ...    \-o\=csv
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Dynamic-Graph-Resources.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Dynamic-Graph-Resources-stderr.tmp
+
+Preview Iac Show Resources Lists Run And Blueprint Handles
+    [Documentation]    A blueprint handle is written with hyphens, which no
+    ...                unquoted SQL identifier can carry, so it is presented
+    ...                under the relation name it takes.
+    ${preview} =    Set Variable    {"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    name,id
+    ...    run,stackql_preview.iac.run
+    ...    aws_vpc_subnet,stackql_preview.iac.aws_vpc_subnet
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show resources in stackql_preview.iac;
+    ...    ${expected}
+    ...    \-o\=csv
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Resources.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Resources-stderr.tmp
+
+Preview Iac Describe Blueprint Reports Declared Inputs
+    ${preview} =    Set Variable    {"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    name,type
+    ...    region,string
+    ...    vpc_cidr,string
+    ...    subnet_cidr,string
+    ...    vpc_tags,object
+    ...    subnet_tags,object
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    describe stackql_preview.iac.aws_vpc_subnet;
+    ...    ${expected}
+    ...    \-o\=csv
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Describe-Blueprint.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Describe-Blueprint-stderr.tmp
+
+Preview Dynamic Graph Select Without Spec Is Refused
+    ${preview} =    Set Variable    {"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=${SPACE}
+    ...    relation 'stackql_preview.dynamic_graph.query' needs a 'spec'
+    ...    predicate naming the exchanges and their wiring
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from stackql_preview.dynamic_graph.query;
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Dynamic-Graph-No-Spec.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Dynamic-Graph-No-Spec-stderr.tmp
+
+Preview Iac Converge Without Collection Is Refused
+    ${preview} =    Set Variable    {"unstable":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select * from stackql_preview.iac.run
+    ...    where blueprint = 'aws-vpc-subnet';
+    ${expected} =    Catenate    SEPARATOR=${SPACE}
+    ...    relation 'stackql_preview.iac.run' needs a 'collection' predicate;
+    ...    it is the ledger key prefix, the lease scope and the correlation
+    ...    stamp, and it is how a later run addresses the same resources
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-No-Collection.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-No-Collection-stderr.tmp
+
+Preview Iac Converge Needs Exactly One Of Blueprint Or Resources
+    ${preview} =    Set Variable    {"unstable":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select * from stackql_preview.iac.run where collection = 'scratch';
+    ${expected} =    Catenate    SEPARATOR=${SPACE}
+    ...    relation 'stackql_preview.iac.run' needs exactly one of 'blueprint'
+    ...    or 'resources'; a blueprint renders the resources, a specification
+    ...    states them
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Ambiguous-Source.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Ambiguous-Source-stderr.tmp
+
+Preview Iac Unknown Blueprint Names The Catalogue
+    ${preview} =    Set Variable    {"unstable":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select * from stackql_preview.iac.run
+    ...    where collection = 'scratch' and blueprint = 'no-such-thing';
+    ${expected} =    Catenate    SEPARATOR=${SPACE}
+    ...    intrinsic: no blueprint 'no-such-thing'; run SHOW RESOURCES IN
+    ...    stackql_preview.iac to list them
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Unknown-Blueprint.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Unknown-Blueprint-stderr.tmp
+
+Preview Iac Select Over A Blueprint Points At The Run Relation
+    ${preview} =    Set Variable    {"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=${SPACE}
+    ...    'stackql_preview.iac.aws_vpc_subnet' renders a deployment rather
+    ...    than rows; apply it with SELECT ... FROM stackql_preview.iac.run
+    ...    WHERE blueprint = 'aws_vpc_subnet' AND collection = '<name>'
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from stackql_preview.iac.aws_vpc_subnet;
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Blueprint-Select.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Blueprint-Select-stderr.tmp
+
+Preview Dynamic Graph Wiring Outside Graph Is Refused By Omnisdk
+    [Documentation]    The 'spec' predicate maps onto omnisdk's own constructors
+    ...                one field at a time, so its validation is what a caller
+    ...                sees: an edge naming an exchange the query does not run is
+    ...                caught where it can name the address.
+    ${preview} =    Set Variable    {"unstable":true}
+    ${spec} =    Catenate    SEPARATOR=
+    ...    {"addresses":["stackql_unstable_aws.ec2.vpcs"],"wirings":
+    ...    [{"to":"stackql_unstable_aws.ec2.subnets","inbound":
+    ...    [{"from":"stackql_unstable_aws.ec2.vpcs","src":"VpcId","as":"vpc_id"}]}]}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select * from stackql_preview.dynamic_graph.query where spec = '${spec}';
+    ${expected} =    Catenate    SEPARATOR=${SPACE}
+    ...    omnisdk: wiring targets "stackql_unstable_aws.ec2.subnets",
+    ...    which the graph does not include
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Dynamic-Graph-Wiring-Outside.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Dynamic-Graph-Wiring-Outside-stderr.tmp
+
+Preview Iac Resource Without Provider Is Refused By Omnisdk
+    [Documentation]    The 'resources' predicate maps onto omnisdk's NewResource
+    ...                one field at a time; this asserts a malformed entry is
+    ...                caught by the SDK before any effect is attempted.
+    ${preview} =    Set Variable    {"unstable":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select * from stackql_preview.iac.run where collection = 'scratch'
+    ...    and resources = '[{"key":"a/b/c"}]';
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    omnisdk: resource "a/b/c" names no provider or address
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Resource-No-Provider.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Resource-No-Provider-stderr.tmp

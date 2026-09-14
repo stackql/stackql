@@ -136,6 +136,9 @@ func showFunc(
 	currentProvider string,
 ) (func() internaldto.ExecutorOutput, bool) {
 	extended := isExtended(node.Extended)
+	if fn, isPreview := showPreviewFunc(ctx, node, currentProvider, extended); isPreview {
+		return fn, true
+	}
 	switch strings.ToUpper(strings.TrimSpace(node.Type)) {
 	case "SERVICES":
 		provider := resolveProvider(node.OnTable.Name.GetRawVal(), currentProvider)
@@ -185,6 +188,9 @@ func describeTableFunc(
 	node *sqlparser.DescribeTable,
 	currentProvider string,
 ) (func() internaldto.ExecutorOutput, bool) {
+	if fn, isPreview := describePreviewTableFunc(ctx, node, currentProvider); isPreview {
+		return fn, true
+	}
 	tbl, ok := lookupTable(
 		node.Table.QualifierSecond.GetRawVal(),
 		node.Table.Qualifier.GetRawVal(),
@@ -252,8 +258,9 @@ func showServices(ctx queryContext, extended bool) internaldto.ExecutorOutput {
 		row["version"] = ProviderVersion
 		row["preferred"] = nil
 	}
-	return prepare(ctx, formulation.GetServicesHeader(extended),
-		map[string]map[string]interface{}{"000001": row}, util.DefaultRowSort)
+	rows := map[string]map[string]interface{}{"000001": row}
+	appendPreviewServices(rows, extended)
+	return prepare(ctx, formulation.GetServicesHeader(extended), rows, util.DefaultRowSort)
 }
 
 func showResources(ctx queryContext, serviceStr string, extended bool) internaldto.ExecutorOutput {
