@@ -319,6 +319,10 @@ func selectFunc(
 	if !ok {
 		return nil, false
 	}
+	if service, isPreview := previewService(tableName.QualifierSecond.GetRawVal(),
+		tableName.Qualifier.GetRawVal(), currentProvider); isPreview {
+		return previewSelectFunc(ctx, node, service, tableName.Name.GetRawVal())
+	}
 	if bundle, isDoc := docProvider(
 		resolveProvider(tableName.QualifierSecond.GetRawVal(), currentProvider)); isDoc {
 		return docSelectFunc(ctx, node, bundle,
