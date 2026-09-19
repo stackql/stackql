@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/stackql/any-sdk/pkg/logging"
@@ -170,6 +171,12 @@ func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {
 //nolint:revive // TODO: review
 func (dr *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
 	dr.handlerCtx.SetRawQuery(query)
+	if isEmptyStatement(query) {
+		// Mirrors PostgreSQL's EmptyQueryResponse: a statement containing only
+		// whitespace and/or comments is a no-op, not a parse error. This keeps
+		// liveness probes such as pgx's Conn.Ping (which sends "-- ping") working.
+		return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(nil, 0, 0, nil)), nil
+	}
 	res, ok := dr.processQueryOrQueries(dr.handlerCtx)
 	if !ok {
 		return nil, fmt.Errorf("no SQLresults available")
@@ -179,6 +186,41 @@ func (dr *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query strin
 		return nil, fmt.Errorf("query returns error: %w", r.GetError())
 	}
 	return r.GetSQLResult(), nil
+}
+
+// isEmptyStatement reports whether query consists of nothing but whitespace
+// and/or SQL comments ("-- ..." or "/* ... */"), per the same rule Postgres
+// uses to decide whether to reply with an EmptyQueryResponse instead of
+// executing anything.
+func isEmptyStatement(query string) bool {
+	const (
+		blockCommentOpen  = "/*"
+		blockCommentClose = "*/"
+	)
+
+	i := 0
+	n := len(query)
+	for i < n {
+		switch {
+		case query[i] == ' ' || query[i] == '\t' || query[i] == '\n' || query[i] == '\r':
+			i++
+		case strings.HasPrefix(query[i:], "--"):
+			if idx := strings.IndexByte(query[i:], '\n'); idx >= 0 {
+				i += idx + 1
+			} else {
+				i = n
+			}
+		case strings.HasPrefix(query[i:], blockCommentOpen):
+			idx := strings.Index(query[i+len(blockCommentOpen):], blockCommentClose)
+			if idx < 0 {
+				return false // unterminated comment; let the parser report it
+			}
+			i += len(blockCommentOpen) + idx + len(blockCommentClose)
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func (dr *basicStackQLDriver) SplitCompoundQuery(s string) ([]string, error) {
