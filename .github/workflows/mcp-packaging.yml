@@ -37,7 +37,7 @@ defaults:
 jobs:
   version:
     name: resolve version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.resolve.outputs.version }}
       is_publish: ${{ steps.resolve.outputs.is_publish }}
@@ -65,7 +65,7 @@ jobs:
       matrix:
         include:
           - target: linux-x64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
           - target: linux-arm64
             runner: ubuntu-24.04-arm
           - target: darwin-universal
@@ -90,7 +90,7 @@ jobs:
   bundle-windows:
     name: windows-x64 (build)
     needs: version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - name: Build bundle
@@ -121,7 +121,7 @@ jobs:
   oci:
     name: oci (build + smoke)
     needs: version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - name: Build image
@@ -135,7 +135,7 @@ jobs:
   combined:
     name: multiplatform (combined build + byte verification)
     needs: [version, bundle, bundle-windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - name: Gather per-platform bundle artifacts
@@ -165,7 +165,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-latest
+          - runner: ubuntu-24.04
             py: python3
           - runner: ubuntu-24.04-arm
             py: python3
@@ -188,7 +188,7 @@ jobs:
     name: upload bundles to release
     if: needs.version.outputs.is_publish == 'true'
     needs: [version, bundle, bundle-windows, smoke-windows, oci, combined, combined-smoke]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -219,7 +219,7 @@ jobs:
     name: push OCI image
     if: needs.version.outputs.is_publish == 'true'
     needs: [version, oci]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - name: Push multi-arch image
@@ -252,12 +252,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { vector: cargo,  runner: ubuntu-latest,  target: linux-x64,        py: python3 }
+          - { vector: cargo,  runner: ubuntu-24.04,  target: linux-x64,        py: python3 }
           - { vector: cargo,  runner: windows-latest, target: windows-x64,      py: python }
           - { vector: cargo,  runner: macos-latest,   target: darwin-universal, py: python3 }
-          - { vector: go,     runner: ubuntu-latest,  target: linux-x64,        py: python3 }
+          - { vector: go,     runner: ubuntu-24.04,  target: linux-x64,        py: python3 }
           - { vector: go,     runner: windows-latest, target: windows-x64,      py: python }
-          - { vector: dotnet, runner: ubuntu-latest,  target: linux-x64,        py: python3 }
+          - { vector: dotnet, runner: ubuntu-24.04,  target: linux-x64,        py: python3 }
           - { vector: dotnet, runner: windows-latest, target: windows-x64,      py: python }
     runs-on: ${{ matrix.runner }}
     env:
@@ -317,7 +317,7 @@ jobs:
     name: publish cargo (crates.io)
     if: needs.version.outputs.is_publish == 'true'
     needs: [version, sdk]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -332,7 +332,7 @@ jobs:
     name: publish dotnet (NuGet)
     if: needs.version.outputs.is_publish == 'true'
     needs: [version, sdk]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
@@ -356,7 +356,7 @@ jobs:
     name: publish go (mirror stackql-mcp-go, tag)
     if: needs.version.outputs.is_publish == 'true'
     needs: [version, sdk]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - env:

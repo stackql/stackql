@@ -29,7 +29,7 @@ defaults:
 jobs:
   registry-publish:
     name: publish to MCP registry
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       id-token: write
       contents: read
