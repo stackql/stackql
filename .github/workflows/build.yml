@@ -147,8 +147,30 @@ jobs:
            dir "C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\"
 
     - name: Set up mingw
-      uses: egor-tensin/setup-mingw@v2.2.0
+      # This action installs mingw via Chocolatey's public feed, which occasionally returns
+      # transient errors (e.g. 406 Not Acceptable) unrelated to this repo. It is a composite
+      # action, so it can't be wrapped by generic JS-action retry actions - fall back to a
+      # native retry step below instead.
       id: gccsetup
+      continue-on-error: true
+      uses: egor-tensin/setup-mingw@v2.2.0
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
+      with:
+        version: '8.1.0'
+
+    - name: Set up mingw (retry 1)
+      if: steps.gccsetup.outcome == 'failure'
+      id: gccsetup_retry1
+      continue-on-error: true
+      uses: egor-tensin/setup-mingw@v2.2.0
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
+      with:
+        version: '8.1.0'
+
+    - name: Set up mingw (retry 2)
+      if: steps.gccsetup.outcome == 'failure' && steps.gccsetup_retry1.outcome == 'failure'
+      id: gccsetup_retry2
+      uses: egor-tensin/setup-mingw@v2.2.0
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       with:
         version: '8.1.0'
@@ -1746,7 +1768,13 @@ jobs:
       uses: docker/setup-qemu-action@v3
       
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      # Wrapped in a retry: BuildKit occasionally fails to become ready in time
+      # ("waiting for BuildKit: DeadlineExceeded"), a transient infra flake.
+      uses: Wandalen/wretry.action@v3.8.0
+      with:
+        action: docker/setup-buildx-action@v3
+        attempt_limit: 3
+        attempt_delay: 15000
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -2177,9 +2205,15 @@ jobs:
 
       - name: Set up Docker Buildx
         if: env.PUSH_IMAGE_REQUIRED == 'true'
-        uses: docker/setup-buildx-action@v3
+        # Wrapped in a retry: BuildKit occasionally fails to become ready in time
+        # ("waiting for BuildKit: DeadlineExceeded"), a transient infra flake.
+        uses: Wandalen/wretry.action@v3.8.0
         with:
-          version: v0.30.1 # guard agasinst defective v0.30.0
+          action: docker/setup-buildx-action@v3
+          with: |
+            version: v0.30.1
+          attempt_limit: 3
+          attempt_delay: 15000
 
       - name: Extract Build Info and Persist
         if: env.PUSH_IMAGE_REQUIRED == 'true'
