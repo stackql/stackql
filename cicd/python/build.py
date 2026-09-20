@@ -54,9 +54,16 @@ def sanitise_val(val) -> str:
 
 def run_robot_mocked_functional_tests_stackql(*args, **kwargs) -> int:
     variables = ' '.join([f'--variable {key}:{sanitise_val(value)} ' for key, value in kwargs.get("variables", {}).items() ])
+    # Optional semantic shard: a list of Robot suite names (derived from file names, e.g.
+    # "stackql_sessions.robot" -> "Stackql Sessions") to restrict this run to. Suite Setup/
+    # Teardown in test/robot/functional/__init__.robot still applies exactly once, since the
+    # invocation target remains the whole directory - only the --suite filter narrows which
+    # test cases actually execute.
+    suites = ' '.join([f'--suite "{name}" ' for name in kwargs.get("suites", [])])
     return subprocess.call(
         'robot '
-        f'{variables} ' 
+        f'{variables} '
+        f'{suites} '
         '-d test/robot/reports '
         'test/robot/functional',
         shell=True
