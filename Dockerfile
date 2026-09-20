@@ -46,8 +46,8 @@ ENV SRC_DIR=/work/stackql/src
 ENV BUILD_DIR=/work/stackql/build
 
 RUN   cd ${SRC_DIR} \
-      && go test --tags "sqlite_stackql" ./... \
-      && go build -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
+      && CGO_ENABLED=0 go test ./... \
+      && CGO_ENABLED=0 go build -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
@@ -55,11 +55,10 @@ RUN   cd ${SRC_DIR} \
           -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
           -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
-        --tags "sqlite_stackql" \
         -o ${BUILD_DIR}/stackql ./stackql
 
 RUN   cd ${SRC_DIR} \
-      && go build \
+      && CGO_ENABLED=0 go build \
         -o ${BUILD_DIR}/stackql_mcp_client ./mcp_client/cmd
 
 # bookworm, not bullseye: bullseye LTS ended 2026-08-31 and its security suite

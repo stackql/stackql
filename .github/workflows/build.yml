@@ -52,7 +52,7 @@ on:
       - '.github/workflows/mcp-registry-publish.yml'
       - '.github/workflows/contributors.yml'
 env:
-  GOTESTCMD: "go test -timeout 1200s --tags \"sqlite_stackql\" -v ./..."
+  GOTESTCMD: "go test -timeout 1200s -v ./..."
   TESTSCRIPT: "test/deprecated/python/main.py"
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
@@ -146,35 +146,6 @@ jobs:
       run:  |
            dir "C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\"
 
-    - name: Set up mingw
-      # This action installs mingw via Chocolatey's public feed, which occasionally returns
-      # transient errors (e.g. 406 Not Acceptable) unrelated to this repo. It is a composite
-      # action, so it can't be wrapped by generic JS-action retry actions - fall back to a
-      # native retry step below instead.
-      id: gccsetup
-      continue-on-error: true
-      uses: egor-tensin/setup-mingw@v2.2.0
-      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
-      with:
-        version: '8.1.0'
-
-    - name: Set up mingw (retry 1)
-      if: steps.gccsetup.outcome == 'failure'
-      id: gccsetup_retry1
-      continue-on-error: true
-      uses: egor-tensin/setup-mingw@v2.2.0
-      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
-      with:
-        version: '8.1.0'
-
-    - name: Set up mingw (retry 2)
-      if: steps.gccsetup.outcome == 'failure' && steps.gccsetup_retry1.outcome == 'failure'
-      id: gccsetup_retry2
-      uses: egor-tensin/setup-mingw@v2.2.0
-      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
-      with:
-        version: '8.1.0'
-    
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
@@ -212,7 +183,7 @@ jobs:
         git --no-pager config --list
         go get -v -t -d ./...
       env:
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
         GHACCESSTOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
 
@@ -222,32 +193,12 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: '1'
+        CGO_ENABLED: '0'
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
         GOOS: windows
         GOARCH: amd64
-        GOMINGWID: 'x86_64-w64-mingw32'
       run: |
-        # Explicitly prioritize the correct MinGW in the PATH
-        $mingwPath = "C:\mingw64"
-        if (-not (Test-Path -Path $mingwPath)) {
-            # Fallback to the chocolatey path, which we know exists
-            $mingwPath = "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64"
-        }
-
-        # Use Resolve-Path to get the guaranteed absolute path
-        # Now that we've ensured $mingwPath isn't empty, Resolve-Path will succeed.
-        $mingwPath = Resolve-Path $mingwPath
-        $env:Path = "$mingwPath\bin;" + $env:Path
-
-        # Set CC and CXX with the fully resolved absolute path
-        $env:CC = "$mingwPath\bin\x86_64-w64-mingw32-gcc"
-        $env:CXX = "$mingwPath\bin\x86_64-w64-mingw32-g++"
-        echo "Current PATH:"
-        echo $env:PATH
-
-
         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
         $Version = convertfrom-stringdata (get-content ./cicd/version.txt -raw)
         $BuildMajorVersion = $Version.'MajorVersion'
@@ -261,14 +212,6 @@ jobs:
         echo "BUILDMAJORVERSION=$env:BUILDMAJORVERSION" >> $GITHUB_ENV
         echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
-
-        # This creates a PowerShell function to intercept the 'go build' command
-        # and inject the static linker flags.
-        # The function calls the actual go.exe with the added arguments.
-        $originalGoPath = (Get-Command go.exe).Path
-        function go {
-            & $originalGoPath @args -ldflags "-linkmode external -extldflags '-static -s -w'"
-        }
 
         python cicd/python/build.py --verbose --build
         python cicd/python/build.py --verbose --build-mcp-client
@@ -316,6 +259,22 @@ jobs:
         ls ".\build"
 
         build\stackql.exe --help
+
+    - name: Extension function smoke test
+      if: success()
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $query = @'
+        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
+        '@
+        $out = (& .\build\stackql.exe exec $query -o json | Out-String)
+        if ($LASTEXITCODE -ne 0) { throw "stackql exec failed (exit $LASTEXITCODE)" }
+        Write-Host $out
+        foreach ($frag in @('"sp":{"String":"b"', '"rl":{"String":"1"', '"rs":{"String":"123"', '"rr":{"String":"abcXXX"', '"je":{"String":"1"', '"ape":{"String":"1"')) {
+          if (-not $out.Contains($frag)) { throw "extension function smoke FAILED: missing $frag" }
+        }
+        Write-Host "extension function smoke PASSED"
 
     - name: Test
       if: success()
@@ -418,6 +377,19 @@ jobs:
         Write-Host $execOut
         if ($execOut -notmatch 'StackQL') { throw "exec did not return 'StackQL'" }
 
+        # Extension function smoke: proves the pure Go sqlite function registration
+        # works in the emulated binary, one invocation per extension function.
+        $query = @'
+        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
+        '@
+        $funcOut = (& $bin exec $query -o json | Out-String)
+        if ($LASTEXITCODE -ne 0) { throw "extension function smoke exec failed (exit $LASTEXITCODE)" }
+        Write-Host $funcOut
+        foreach ($frag in @('"sp":{"String":"b"', '"rl":{"String":"1"', '"rs":{"String":"123"', '"rr":{"String":"abcXXX"', '"je":{"String":"1"', '"ape":{"String":"1"')) {
+          if (-not $funcOut.Contains($frag)) { throw "extension function smoke FAILED: missing $frag" }
+        }
+        Write-Host "extension function smoke PASSED"
+
         Write-Host "Windows arm64 (x64 emulation) smoke PASSED"
 
   linuxbuild:
@@ -464,13 +436,6 @@ jobs:
             echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
           } >> "${GITHUB_STATE}"
 
-    - name: Set up GCC
-      uses: egor-tensin/setup-gcc@v1
-      id: gccsetup
-      with:
-        platform: x64
-        cygwin: 0
-    
     - name: Install psql
       run: |
           sudo apt-get update
@@ -499,8 +464,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
-        CGO_LDFLAGS: '-static'
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -536,10 +500,27 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
       run: |
         python cicd/python/build.py --verbose --build-mcp-client
       
+    - name: Extension function smoke test
+      if: success()
+      run: |
+        query=$(cat <<'SQLEOF'
+        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
+        SQLEOF
+        )
+        out="$(./build/stackql exec "${query}" -o json)"
+        echo "${out}"
+        for frag in '"sp":{"String":"b"' '"rl":{"String":"1"' '"rs":{"String":"123"' '"rr":{"String":"abcXXX"' '"je":{"String":"1"' '"ape":{"String":"1"'; do
+          if ! printf '%s' "${out}" | grep -F "${frag}" >/dev/null; then
+            echo "extension function smoke FAILED: missing ${frag}"
+            exit 1
+          fi
+        done
+        echo "extension function smoke PASSED"
+
     - name: Test
       if: success()
       run: python cicd/python/build.py --verbose --test
@@ -551,7 +532,7 @@ jobs:
         baselineRefFile="cicd/ref/bench/baseline-go-bench.log"
         thresholdRefFile="cicd/ref/bench/max-threshold-go-bench.log"
         go test -run='^$' -bench . -benchtime=100x -count=6 \
-          --tags "sqlite_stackql" --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
+          --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
           ./... | tee ${outFile}
         # shellcheck disable=SC2181
         if [ "$?" = "0" ]; then
@@ -736,8 +717,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
-        CGO_LDFLAGS: '-static'
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -934,8 +914,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
-        CGO_LDFLAGS: '-static'
+        CGO_ENABLED: 0
       run: |
         if [ "${{ matrix.registry }}" = "test/registry" ]; then
           python3 test/python/stackql_test_tooling/tcp_lb.py --generate-hosts-entries | sudo tee -a /etc/hosts
@@ -1088,10 +1067,7 @@ jobs:
     - name: Install psql
       run: |
           sudo apt-get update
-          sudo apt-get install --yes build-essential
           sudo apt-get install --yes --no-install-recommends postgresql-client
-          gccVersion="$(gcc --version 2>&1 | head -n 1)"
-          echo "gcc version: ${gccVersion}"
 
     - name: Install Python dependencies
       run: |
@@ -1116,8 +1092,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
-        CGO_LDFLAGS: '-static'
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -1153,10 +1128,27 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
       run: |
         python cicd/python/build.py --verbose --build-mcp-client
       
+    - name: Extension function smoke test
+      if: success()
+      run: |
+        query=$(cat <<'SQLEOF'
+        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
+        SQLEOF
+        )
+        out="$(./build/stackql exec "${query}" -o json)"
+        echo "${out}"
+        for frag in '"sp":{"String":"b"' '"rl":{"String":"1"' '"rs":{"String":"123"' '"rr":{"String":"abcXXX"' '"je":{"String":"1"' '"ape":{"String":"1"'; do
+          if ! printf '%s' "${out}" | grep -F "${frag}" >/dev/null; then
+            echo "extension function smoke FAILED: missing ${frag}"
+            exit 1
+          fi
+        done
+        echo "extension function smoke PASSED"
+
     - name: Test
       if: success()
       run: python cicd/python/build.py --verbose --test
@@ -1168,7 +1160,7 @@ jobs:
         baselineRefFile="cicd/ref/bench/baseline-go-bench.log"
         thresholdRefFile="cicd/ref/bench/max-threshold-go-bench.log"
         go test -run='^$' -bench . -benchtime=100x -count=6 \
-          --tags "sqlite_stackql" --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
+          --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
           ./... | tee ${outFile}
         # shellcheck disable=SC2181
         if [ "$?" = "0" ]; then
@@ -1539,7 +1531,7 @@ jobs:
         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
         go get -v -t -d ./...
       env:
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
 
@@ -1549,7 +1541,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -1580,6 +1572,23 @@ jobs:
 
         python cicd/python/build.py --verbose --build 
         python cicd/python/build.py --verbose --build-mcp-client
+
+    - name: Extension function smoke test
+      if: success()
+      run: |
+        query=$(cat <<'SQLEOF'
+        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
+        SQLEOF
+        )
+        out="$(./build/stackql exec "${query}" -o json)"
+        echo "${out}"
+        for frag in '"sp":{"String":"b"' '"rl":{"String":"1"' '"rs":{"String":"123"' '"rr":{"String":"abcXXX"' '"je":{"String":"1"' '"ape":{"String":"1"'; do
+          if ! printf '%s' "${out}" | grep -F "${frag}" >/dev/null; then
+            echo "extension function smoke FAILED: missing ${frag}"
+            exit 1
+          fi
+        done
+        echo "extension function smoke PASSED"
 
     - name: Test
       if: success()
@@ -1677,7 +1686,7 @@ jobs:
         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
         go get -v -t -d ./...
       env:
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
 
@@ -1687,7 +1696,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: "darwin_arm64"
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -1720,6 +1729,23 @@ jobs:
         export GOARCH="arm64"
         python cicd/python/build.py --verbose --build 
         python cicd/python/build.py --verbose --build-mcp-client
+
+    - name: Extension function smoke test
+      if: success()
+      run: |
+        query=$(cat <<'SQLEOF'
+        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
+        SQLEOF
+        )
+        out="$(./build/stackql exec "${query}" -o json)"
+        echo "${out}"
+        for frag in '"sp":{"String":"b"' '"rl":{"String":"1"' '"rs":{"String":"123"' '"rr":{"String":"abcXXX"' '"je":{"String":"1"' '"ape":{"String":"1"'; do
+          if ! printf '%s' "${out}" | grep -F "${frag}" >/dev/null; then
+            echo "extension function smoke FAILED: missing ${frag}"
+            exit 1
+          fi
+        done
+        echo "extension function smoke PASSED"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7.0.1
