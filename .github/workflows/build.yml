@@ -1928,32 +1928,6 @@ jobs:
         db_backend:
           - sqlite
           - postgres_tcp
-        # "full" runs the entire test/robot/functional suite unmodified (unchanged behaviour).
-        # The postgres_tcp/linux amd64 cell is the only one long/flaky enough (~45min, single
-        # process) to warrant splitting; it is fanned out below into semantic family shards so a
-        # slow/stuck family can no longer blow the whole job's timeout, and shards run in parallel.
-        family:
-          - full
-        exclude:
-          - platform: linux/amd64
-            db_backend: postgres_tcp
-            family: full
-        include:
-          - platform: linux/amd64
-            db_backend: postgres_tcp
-            family: core-cli
-          - platform: linux/amd64
-            db_backend: postgres_tcp
-            family: sessions-runtime
-          - platform: linux/amd64
-            db_backend: postgres_tcp
-            family: output-shaping
-          - platform: linux/amd64
-            db_backend: postgres_tcp
-            family: remote-api
-          - platform: linux/amd64
-            db_backend: postgres_tcp
-            family: mcp
     steps:
     - name: Prepare
       run: |
@@ -2136,11 +2110,7 @@ jobs:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'postgres_tcp'
-      # core-cli is the heaviest family (contains the bulk of the suite, including the large
-      # mocked-from-cmd-line tests) so it keeps the full long-step budget; the other, much
-      # smaller families get a tighter timeout since they no longer have to share a single
-      # 45min budget with everything else.
-      timeout-minutes: ${{ matrix.family == 'core-cli' && (vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 45 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN) || 20 }}
+      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 45 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
       run: |
         sudo rm -rf test/tmp || true
         mkdir -p test/tmp
@@ -2156,30 +2126,7 @@ jobs:
         echo "## Stray docker containers after clean up commands ##"
         docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}" -a
         echo "## End ##"
-        # Semantic family -> Robot suite name(s) (suite names are auto-derived from file names,
-        # e.g. stackql_sessions.robot -> "Stackql Sessions"). "full" (or an unrecognised value)
-        # falls back to running everything, matching the previous un-sharded behaviour.
-        case "${{ matrix.family }}" in
-          core-cli)
-            SUITES='["Stackql From Cmd Line", "Stackql Mocked From Cmd Line", "Stackql Exec"]'
-            ;;
-          sessions-runtime)
-            SUITES='["Stackql Sessions", "Stackql Sessions Postgres", "Stackql Postgres Housekeeping", "Stackql Server Variables"]'
-            ;;
-          output-shaping)
-            SUITES='["Stackql Casing", "Stackql Body Coercion", "Stackql Function Projection", "Stackql Xml Walker", "Stackql Export"]'
-            ;;
-          remote-api)
-            SUITES='["Stackql Rest Pagination", "Stackql Graphql Pagination", "Stackql Odata Pushdown", "Stackql Oci Auth"]'
-            ;;
-          mcp)
-            SUITES='["Mcp"]'
-            ;;
-          *)
-            SUITES='[]'
-            ;;
-        esac
-        python cicd/python/build.py --robot-test --config="{ \"variables\": { \"EXECUTION_PLATFORM\": \"docker\", \"SHOULD_RUN_DOCKER_EXTERNAL_TESTS\": true, \"SQL_BACKEND\": \"postgres_tcp\" }, \"suites\": ${SUITES} }"
+        python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
       if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' 
