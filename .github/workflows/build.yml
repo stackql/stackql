@@ -147,17 +147,33 @@ jobs:
            dir "C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\"
 
     - name: Set up mingw
-      # Wrapped in a retry: this action installs mingw via Chocolatey's public feed, which
-      # occasionally returns transient errors (e.g. 406 Not Acceptable) unrelated to this repo.
-      uses: Wandalen/wretry.action@v3.8.0
+      # This action installs mingw via Chocolatey's public feed, which occasionally returns
+      # transient errors (e.g. 406 Not Acceptable) unrelated to this repo. It is a composite
+      # action, so it can't be wrapped by generic JS-action retry actions - fall back to a
+      # native retry step below instead.
       id: gccsetup
+      continue-on-error: true
+      uses: egor-tensin/setup-mingw@v2.2.0
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       with:
-        action: egor-tensin/setup-mingw@v2.2.0
-        with: |
-          version: 8.1.0
-        attempt_limit: 3
-        attempt_delay: 15000
+        version: '8.1.0'
+
+    - name: Set up mingw (retry 1)
+      if: steps.gccsetup.outcome == 'failure'
+      id: gccsetup_retry1
+      continue-on-error: true
+      uses: egor-tensin/setup-mingw@v2.2.0
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
+      with:
+        version: '8.1.0'
+
+    - name: Set up mingw (retry 2)
+      if: steps.gccsetup.outcome == 'failure' && steps.gccsetup_retry1.outcome == 'failure'
+      id: gccsetup_retry2
+      uses: egor-tensin/setup-mingw@v2.2.0
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
+      with:
+        version: '8.1.0'
     
     - name: Git Ref Parse
       id: git_ref_parse
