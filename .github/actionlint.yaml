@@ -1,11 +1,9 @@
 self-hosted-runner:
   # Labels of self-hosted runner in array of string
+  # Note: all labels below are actually standard GitHub-hosted runners (free/unlimited
+  # for this public repo). They are listed here only because actionlint's built-in
+  # label list has not caught up with them yet.
   labels:
-    - ubuntu-latest-m
-    - ubuntu-22-04-m
-    - ubuntu-22-04-arm64-m
-    - arm-ubuntu-22-04-runner-one
-    - macos-14 # should not be necessary
     - macos-15 # should not be necessary
     - macos-15-intel # should not be necessary
     - windows-11-arm # GitHub-hosted arm64 Windows runner, newer than actionlint's built-in label list
