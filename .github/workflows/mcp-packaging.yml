@@ -111,7 +111,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download bundle artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           name: stackql-mcp-windows-x64
           path: packaging/mcpb/dist
@@ -139,7 +139,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Gather per-platform bundle artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           pattern: stackql-mcp-*
           path: packaging/mcpb/dist
@@ -177,7 +177,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download combined bundle
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           name: stackql-mcp-multiplatform
           path: packaging/mcpb/dist
@@ -194,7 +194,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Gather bundle artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           pattern: stackql-mcp-*
           path: packaging/mcpb/dist
@@ -265,7 +265,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download this run's bundle (PR smoke input)
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           name: stackql-mcp-${{ matrix.target }}
           path: packaging/mcpb/dist
