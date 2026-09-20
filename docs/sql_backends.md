@@ -53,5 +53,5 @@ List of drivers:
 
 ### Data Source Name (DSN) strings
 
-- [SQLite as per golang](https://github.com/mattn/go-sqlite3#dsn-examples).
+- [SQLite as per golang (modernc.org/sqlite)](https://pkg.go.dev/modernc.org/sqlite#Driver.Open).
 - [Postgres URI](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
