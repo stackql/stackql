@@ -2951,6 +2951,7 @@ Page Limited Select Github
     ...    stdout=${CURDIR}/tmp/Page-Limited-Select-Github.tmp
 
 Basic Query mTLS Returns OK
+    [Tags]    shard-group:pg-server-generation
     Should PG Client Inline Contain
     ...    ${CURDIR}
     ...    ${PSQL_EXE}
@@ -2959,6 +2960,7 @@ Basic Query mTLS Returns OK
     ...    ipCidrRange
 
 Basic Error Query mTLS Returns Error Message
+    [Tags]    shard-group:pg-server-generation
     Should PG Client StdErr Inline Contain
     ...    ${CURDIR}
     ...    ${PSQL_EXE}
