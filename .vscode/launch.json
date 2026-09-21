@@ -247,15 +247,6 @@
     },
     {
       "type": "pickString",
-      "id": "buildFlags",
-      "description": "Extra Build Flags for debug; cannot place elsewhere",
-      "default": "-tags=sqlite_stackql",
-      "options": [
-        "-tags=sqlite_stackql"
-      ]
-    },
-    {
-      "type": "pickString",
       "id": "appRoot",
       "description": "Extra Build Flags for debug; cannot place elsewhere",
       "default": "${workspaceFolder}",
@@ -460,7 +451,6 @@
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
-      "buildFlags": "${input:buildFlags}",
       "args": [
         "exec",
         "--registry=${input:registryString}",

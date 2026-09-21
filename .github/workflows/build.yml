@@ -377,8 +377,6 @@ jobs:
         Write-Host $execOut
         if ($execOut -notmatch 'StackQL') { throw "exec did not return 'StackQL'" }
 
-        # Extension function smoke: proves the pure Go sqlite function registration
-        # works in the emulated binary, one invocation per extension function.
         $query = @'
         select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
         '@
@@ -2311,4 +2309,3 @@ jobs:
         if: env.PUSH_IMAGE_REQUIRED == 'true'
         run: |
           docker buildx imagetools inspect ${{ env.STACKQL_IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-
