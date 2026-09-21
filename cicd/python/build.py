@@ -13,9 +13,9 @@ def build_stackql(verbose :bool) -> int:
     os.environ['BUILDMAJORVERSION'] = os.environ.get('BUILDMAJORVERSION', '1')
     os.environ['BUILDMINORVERSION'] = os.environ.get('BUILDMINORVERSION', '1')
     os.environ['BUILDPATCHVERSION'] = os.environ.get('BUILDPATCHVERSION', '1')
-    os.environ['CGO_ENABLED'] = os.environ.get('CGO_ENABLED', '1')
+    os.environ['CGO_ENABLED'] = os.environ.get('CGO_ENABLED', '0')
     return subprocess.call(
-        f'go build {"-x -v" if verbose else ""} --tags "sqlite_stackql" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={os.environ.get("BUILDMAJORVERSION")} '
+        f'go build {"-x -v" if verbose else ""} -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={os.environ.get("BUILDMAJORVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={os.environ.get("BUILDMINORVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={os.environ.get("BUILDPATCHVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={os.environ.get("BUILDCOMMITSHA", "")} '
@@ -31,7 +31,7 @@ def build_stackql_mcp_client(verbose :bool) -> int:
     os.environ['BUILDMAJORVERSION'] = os.environ.get('BUILDMAJORVERSION', '1')
     os.environ['BUILDMINORVERSION'] = os.environ.get('BUILDMINORVERSION', '1')
     os.environ['BUILDPATCHVERSION'] = os.environ.get('BUILDPATCHVERSION', '1')
-    os.environ['CGO_ENABLED'] = os.environ.get('CGO_ENABLED', '1')
+    os.environ['CGO_ENABLED'] = os.environ.get('CGO_ENABLED', '0')
     return subprocess.call(
         'go build '
         f'{"-x -v" if verbose else ""} '
@@ -42,7 +42,7 @@ def build_stackql_mcp_client(verbose :bool) -> int:
 
 def unit_test_stackql(verbose :bool) -> int:
     return subprocess.call(
-        f'go test -timeout 1200s {"-v" if verbose else ""} --tags "sqlite_stackql"  ./...',
+        f'go test -timeout 1200s {"-v" if verbose else ""} ./...',
         shell=True
     )
 

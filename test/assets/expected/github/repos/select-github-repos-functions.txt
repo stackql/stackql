@@ -1,9 +1,9 @@
 |---------------------------|----------------|---------------------|---------------|--------------------|
 |           name            | extracted_team |     user_suffix     | is_docusaurus | sqlite_lib_version |
 |---------------------------|----------------|---------------------|---------------|--------------------|
-| docusaurus-plugin-hubspot | dummyorg       | username = dummyorg |             1 | 3.45.1             |
+| docusaurus-plugin-hubspot | dummyorg       | username = dummyorg |             1 | 3.53.4             |
 |---------------------------|----------------|---------------------|---------------|--------------------|
-| dummyapp.io               | dummyorg       | username = dummyorg |             0 | 3.45.1             |
+| dummyapp.io               | dummyorg       | username = dummyorg |             0 | 3.53.4             |
 |---------------------------|----------------|---------------------|---------------|--------------------|
-| gatsby-plugin-smartlook   | dummyorg       | username = dummyorg |             0 | 3.45.1             |
+| gatsby-plugin-smartlook   | dummyorg       | username = dummyorg |             0 | 3.53.4             |
 |---------------------------|----------------|---------------------|---------------|--------------------|
