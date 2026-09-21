@@ -1940,7 +1940,7 @@ jobs:
   dockertest:
     env:
       IS_DOCKER: 'true'
-    name: Docker Test
+    name: ${{ matrix.job_name }}
     needs:
       - dockerbuild
     runs-on: ${{  matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
@@ -1948,12 +1948,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-        db_backend:
-          - sqlite
-          - postgres_tcp
+        include:
+          - job_name: Docker Test (linux/amd64, sqlite)
+            platform: linux/amd64
+            db_backend: sqlite
+            run_integration: true
+          - job_name: Docker Test (linux/amd64, postgres_tcp, shard 1 of 4)
+            platform: linux/amd64
+            db_backend: postgres_tcp
+            robot_shard_index: 1
+            robot_shard_count: 4
+            run_integration: false
+          - job_name: Docker Test (linux/amd64, postgres_tcp, shard 2 of 4)
+            platform: linux/amd64
+            db_backend: postgres_tcp
+            robot_shard_index: 2
+            robot_shard_count: 4
+            run_integration: false
+          - job_name: Docker Test (linux/amd64, postgres_tcp, shard 3 of 4)
+            platform: linux/amd64
+            db_backend: postgres_tcp
+            robot_shard_index: 3
+            robot_shard_count: 4
+            run_integration: false
+          - job_name: Docker Test (linux/amd64, postgres_tcp, shard 4 of 4)
+            platform: linux/amd64
+            db_backend: postgres_tcp
+            robot_shard_index: 4
+            robot_shard_count: 4
+            run_integration: false
+          - job_name: Docker Test (linux/arm64, sqlite)
+            platform: linux/arm64
+            db_backend: sqlite
+            run_integration: false
     steps:
     - name: Prepare
       run: |
@@ -2136,7 +2163,7 @@ jobs:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'postgres_tcp'
-      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 45 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
         sudo rm -rf test/tmp || true
         mkdir -p test/tmp
@@ -2152,7 +2179,11 @@ jobs:
         echo "## Stray docker containers after clean up commands ##"
         docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}" -a
         echo "## End ##"
-        python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
+        python cicd/python/build.py \
+          --robot-test \
+          --robot-shard-index "${{ matrix.robot_shard_index }}" \
+          --robot-shard-count "${{ matrix.robot_shard_count }}" \
+          --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
       if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' 
@@ -2160,7 +2191,7 @@ jobs:
         cat ./test/robot/reports/output.xml
 
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.run_integration && env.BUILD_IMAGE_REQUIRED == 'true'
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}

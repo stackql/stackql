@@ -187,12 +187,8 @@ Start Postgres External Source If Viable
 
 Stackql Per Test Teardown
     IF    "${EXECUTION_PLATFORM}" == "docker" and "${SQL_BACKEND}" == "postgres_tcp"
-        ${res} =         Run Process    bash    \-c    docker kill $(docker ps \-\-filter name\=execrun \-q)
-        Log     Container killed
-        # Should Be Equal As Integers    ${res.rc}    0
-        ${restwo} =         Run Process    bash    \-c    docker rm $(docker ps \-\-filter status\=exited \-q)
-        Log     Container removed
-        # Should Be Equal As Integers    ${restwo.rc}    0
+        ${result} =    Run Process    docker    compose    \-p    execrun    down    \-\-remove\-orphans
+        Log    Execution containers cleaned up
     END
 
 Remove Preview Mock Environment
@@ -204,4 +200,3 @@ Remove Preview Mock Environment
     ...    GOOGLE_APPLICATION_CREDENTIALS
         Remove Environment Variable    ${name}
     END
-
