@@ -52,7 +52,7 @@ on:
       - '.github/workflows/mcp-registry-publish.yml'
       - '.github/workflows/contributors.yml'
 env:
-  GOTESTCMD: "go test -timeout 1200s --tags \"sqlite_stackql\" -v ./..."
+  GOTESTCMD: "go test -timeout 1200s -v ./..."
   TESTSCRIPT: "test/deprecated/python/main.py"
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
@@ -146,35 +146,6 @@ jobs:
       run:  |
            dir "C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\"
 
-    - name: Set up mingw
-      # This action installs mingw via Chocolatey's public feed, which occasionally returns
-      # transient errors (e.g. 406 Not Acceptable) unrelated to this repo. It is a composite
-      # action, so it can't be wrapped by generic JS-action retry actions - fall back to a
-      # native retry step below instead.
-      id: gccsetup
-      continue-on-error: true
-      uses: egor-tensin/setup-mingw@v2.2.0
-      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
-      with:
-        version: '8.1.0'
-
-    - name: Set up mingw (retry 1)
-      if: steps.gccsetup.outcome == 'failure'
-      id: gccsetup_retry1
-      continue-on-error: true
-      uses: egor-tensin/setup-mingw@v2.2.0
-      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
-      with:
-        version: '8.1.0'
-
-    - name: Set up mingw (retry 2)
-      if: steps.gccsetup.outcome == 'failure' && steps.gccsetup_retry1.outcome == 'failure'
-      id: gccsetup_retry2
-      uses: egor-tensin/setup-mingw@v2.2.0
-      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
-      with:
-        version: '8.1.0'
-    
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
@@ -212,7 +183,7 @@ jobs:
         git --no-pager config --list
         go get -v -t -d ./...
       env:
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
         GHACCESSTOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
 
@@ -222,32 +193,12 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: '1'
+        CGO_ENABLED: '0'
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
         GOOS: windows
         GOARCH: amd64
-        GOMINGWID: 'x86_64-w64-mingw32'
       run: |
-        # Explicitly prioritize the correct MinGW in the PATH
-        $mingwPath = "C:\mingw64"
-        if (-not (Test-Path -Path $mingwPath)) {
-            # Fallback to the chocolatey path, which we know exists
-            $mingwPath = "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64"
-        }
-
-        # Use Resolve-Path to get the guaranteed absolute path
-        # Now that we've ensured $mingwPath isn't empty, Resolve-Path will succeed.
-        $mingwPath = Resolve-Path $mingwPath
-        $env:Path = "$mingwPath\bin;" + $env:Path
-
-        # Set CC and CXX with the fully resolved absolute path
-        $env:CC = "$mingwPath\bin\x86_64-w64-mingw32-gcc"
-        $env:CXX = "$mingwPath\bin\x86_64-w64-mingw32-g++"
-        echo "Current PATH:"
-        echo $env:PATH
-
-
         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
         $Version = convertfrom-stringdata (get-content ./cicd/version.txt -raw)
         $BuildMajorVersion = $Version.'MajorVersion'
@@ -261,14 +212,6 @@ jobs:
         echo "BUILDMAJORVERSION=$env:BUILDMAJORVERSION" >> $GITHUB_ENV
         echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
-
-        # This creates a PowerShell function to intercept the 'go build' command
-        # and inject the static linker flags.
-        # The function calls the actual go.exe with the added arguments.
-        $originalGoPath = (Get-Command go.exe).Path
-        function go {
-            & $originalGoPath @args -ldflags "-linkmode external -extldflags '-static -s -w'"
-        }
 
         python cicd/python/build.py --verbose --build
         python cicd/python/build.py --verbose --build-mcp-client
@@ -369,12 +312,29 @@ jobs:
         name: stackql_windows_amd64
         path: build/stackql.exe
 
+    # Consumed by winarmsmoke, so that the MCP robot scenarios run there too.
+    - name: Upload MCP client artifact
+      uses: actions/upload-artifact@v7.0.1
+      if: success()
+      with:
+        name: stackql_mcp_client_windows_amd64
+        path: build/stackql_mcp_client.exe
+
   winarmsmoke:
     name: Windows arm64 Smoke (x64 emulation)
     needs: winbuild
     runs-on: windows-11-arm
-    timeout-minutes: ${{ vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN == '' && 15 || vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN }}
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
+
+    - name: Get rid of disruptive line endings before checkout
+      run: |
+        git config --global core.autocrlf false
+
+    # The checkout supplies the robot suite and must precede the artifact
+    # downloads, because it cleans the workspace.
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v7.0.1
 
     # We deliberately do NOT build here: there is no native windows/arm64 build
     # (goreleaser only targets windows/amd64). This job downloads the amd64 .exe
@@ -385,6 +345,12 @@ jobs:
       uses: actions/download-artifact@v8.0.1
       with:
         name: stackql_windows_amd64
+        path: build
+
+    - name: Download Windows amd64 MCP client artifact
+      uses: actions/download-artifact@v8.0.1
+      with:
+        name: stackql_mcp_client_windows_amd64
         path: build
 
     - name: Confirm host is arm64 (binary under test is x64)
@@ -406,7 +372,7 @@ jobs:
         if ($LASTEXITCODE -ne 0) { throw "stackql --version failed (exit $LASTEXITCODE)" }
 
         # 'exec' runs a query in batch mode (no TTY needed) and exercises the same
-        # cgo/sqlite engine the interactive shell uses, so it fully covers the
+        # embedded sqlite engine the interactive shell uses, so it fully covers the
         # "x64 binary runs under emulation" claim. The interactive shell is not
         # smoke-tested here: it's a REPL that requires a TTY, so piping a query to
         # it yields EOF + "goodbye" without ever executing the query.
@@ -419,6 +385,63 @@ jobs:
         if ($execOut -notmatch 'StackQL') { throw "exec did not return 'StackQL'" }
 
         Write-Host "Windows arm64 (x64 emulation) smoke PASSED"
+
+    # The robot harness below mirrors winbuild, run against the emulated binary.
+    # Python is x64 (so itself emulated) because the pinned test dependencies
+    # psycopg2-binary, psycopg-binary and cryptography publish no win_arm64 wheels.
+    - name: Setup Python
+      uses: actions/setup-python@v7.0.0
+      with:
+        cache: pip
+        python-version: '3.12'
+        architecture: x64
+
+    - name: Choco install openssl
+      uses: crazy-max/ghaction-chocolatey@v4.1.0
+      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
+      with:
+        args: "install --force openssl --version 3.1.1"
+
+    - name: Choco install packages
+      uses: crazy-max/ghaction-chocolatey@v4.1.0
+      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
+      with:
+        args: "install --force postgresql13 sqlite"
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r cicd/requirements.txt
+
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test\python\stackql_test_tooling\registry_rewrite.py --srcdir "$pwd\test\registry\src" --destdir "$pwd\test\registry-mocked\src"
+
+    # winbuild leaves the MCP client under both names; the robot tooling
+    # addresses it without the extension.
+    - name: Mirror winbuild binary layout
+      shell: pwsh
+      run: |
+        Copy-Item -Path ".\build\stackql_mcp_client.exe" -Destination ".\build\stackql_mcp_client" -Force
+        ls ".\build"
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Run robot mocked functional tests
+      env:
+        PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
+        SQLITE_EXE: C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.exe
+        PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
+      run: |
+        python cicd/python/build.py --robot-test
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/reports/output.xml || echo "no functional test output present"
 
   linuxbuild:
     name: Linux Build
@@ -464,13 +487,6 @@ jobs:
             echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
           } >> "${GITHUB_STATE}"
 
-    - name: Set up GCC
-      uses: egor-tensin/setup-gcc@v1
-      id: gccsetup
-      with:
-        platform: x64
-        cygwin: 0
-    
     - name: Install psql
       run: |
           sudo apt-get update
@@ -499,8 +515,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
-        CGO_LDFLAGS: '-static'
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -536,7 +551,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
       run: |
         python cicd/python/build.py --verbose --build-mcp-client
       
@@ -551,7 +566,7 @@ jobs:
         baselineRefFile="cicd/ref/bench/baseline-go-bench.log"
         thresholdRefFile="cicd/ref/bench/max-threshold-go-bench.log"
         go test -run='^$' -bench . -benchtime=100x -count=6 \
-          --tags "sqlite_stackql" --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
+          --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
           ./... | tee ${outFile}
         # shellcheck disable=SC2181
         if [ "$?" = "0" ]; then
@@ -736,8 +751,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
-        CGO_LDFLAGS: '-static'
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -934,8 +948,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
-        CGO_LDFLAGS: '-static'
+        CGO_ENABLED: 0
       run: |
         if [ "${{ matrix.registry }}" = "test/registry" ]; then
           python3 test/python/stackql_test_tooling/tcp_lb.py --generate-hosts-entries | sudo tee -a /etc/hosts
@@ -1088,10 +1101,7 @@ jobs:
     - name: Install psql
       run: |
           sudo apt-get update
-          sudo apt-get install --yes build-essential
           sudo apt-get install --yes --no-install-recommends postgresql-client
-          gccVersion="$(gcc --version 2>&1 | head -n 1)"
-          echo "gcc version: ${gccVersion}"
 
     - name: Install Python dependencies
       run: |
@@ -1116,8 +1126,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
-        CGO_LDFLAGS: '-static'
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -1153,7 +1162,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
       run: |
         python cicd/python/build.py --verbose --build-mcp-client
       
@@ -1168,7 +1177,7 @@ jobs:
         baselineRefFile="cicd/ref/bench/baseline-go-bench.log"
         thresholdRefFile="cicd/ref/bench/max-threshold-go-bench.log"
         go test -run='^$' -bench . -benchtime=100x -count=6 \
-          --tags "sqlite_stackql" --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
+          --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
           ./... | tee ${outFile}
         # shellcheck disable=SC2181
         if [ "$?" = "0" ]; then
@@ -1539,7 +1548,7 @@ jobs:
         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
         go get -v -t -d ./...
       env:
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
 
@@ -1549,7 +1558,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -1672,12 +1681,32 @@ jobs:
         cache: true
       id: go
 
+    # Mirrors macosbuild, except that the libpq location is resolved rather
+    # than hardcoded: homebrew's prefix differs on Apple Silicon.
+    - name: Install Various dependencies
+      run: |
+        brew install libpq@16
+
+        # Use overwrite to force the links for version 16
+        brew link --force --overwrite libpq@16
+
+        # Update PATH so the CI finds the brew version of psql
+        echo "$(brew --prefix libpq@16)/bin" >> "$GITHUB_PATH"
+
+        pip3 install -r cicd/requirements.txt
+
+        "$(brew --prefix libpq@16)/bin/psql" --version
+
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
+
     - name: Get dependencies
       run: |
         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
         go get -v -t -d ./...
       env:
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
 
@@ -1687,7 +1716,7 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: "darwin_arm64"
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -1720,6 +1749,38 @@ jobs:
         export GOARCH="arm64"
         python cicd/python/build.py --verbose --build 
         python cicd/python/build.py --verbose --build-mcp-client
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Run robot mocked functional tests
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+      if: success()
+      run: |
+        python cicd/python/build.py --robot-test
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/reports/output.xml
+
+    - name: Upload Robot Reports Artifact
+      uses: actions/upload-artifact@v7.0.1
+      if: always() && github.repository == 'stackql/stackql-devel'
+      with:
+        name: stackql_darwin_arm64_robot_reports
+        path: test/robot/reports
+
+    - name: Upload Robot Tmp Artifact
+      uses: actions/upload-artifact@v7.0.1
+      if: always() && github.repository == 'stackql/stackql-devel'
+      with:
+        name: stackql_darwin_arm64_robot_tmp
+        path: test/robot/functional/tmp
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7.0.1
@@ -1914,7 +1975,7 @@ jobs:
   dockertest:
     env:
       IS_DOCKER: 'true'
-    name: Docker Test
+    name: ${{ matrix.job_name }}
     needs:
       - dockerbuild
     runs-on: ${{  matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
@@ -1922,12 +1983,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-        db_backend:
-          - sqlite
-          - postgres_tcp
+        include:
+          - job_name: Docker Test (linux/amd64, sqlite)
+            platform: linux/amd64
+            db_backend: sqlite
+            run_integration: true
+          - job_name: Docker Test (linux/amd64, postgres_tcp, shard 1 of 4)
+            platform: linux/amd64
+            db_backend: postgres_tcp
+            robot_shard_index: 1
+            robot_shard_count: 4
+            run_integration: false
+          - job_name: Docker Test (linux/amd64, postgres_tcp, shard 2 of 4)
+            platform: linux/amd64
+            db_backend: postgres_tcp
+            robot_shard_index: 2
+            robot_shard_count: 4
+            run_integration: false
+          - job_name: Docker Test (linux/amd64, postgres_tcp, shard 3 of 4)
+            platform: linux/amd64
+            db_backend: postgres_tcp
+            robot_shard_index: 3
+            robot_shard_count: 4
+            run_integration: false
+          - job_name: Docker Test (linux/amd64, postgres_tcp, shard 4 of 4)
+            platform: linux/amd64
+            db_backend: postgres_tcp
+            robot_shard_index: 4
+            robot_shard_count: 4
+            run_integration: false
+          - job_name: Docker Test (linux/arm64, sqlite)
+            platform: linux/arm64
+            db_backend: sqlite
+            run_integration: false
     steps:
     - name: Prepare
       run: |
@@ -2110,7 +2198,7 @@ jobs:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'postgres_tcp'
-      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 45 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
         sudo rm -rf test/tmp || true
         mkdir -p test/tmp
@@ -2126,15 +2214,30 @@ jobs:
         echo "## Stray docker containers after clean up commands ##"
         docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}" -a
         echo "## End ##"
-        python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
+        python cicd/python/build.py \
+          --robot-test \
+          --robot-shard-index "${{ matrix.robot_shard_index }}" \
+          --robot-shard-count "${{ matrix.robot_shard_count }}" \
+          --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
       if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' 
       run: |
         cat ./test/robot/reports/output.xml
 
+    # Consumed by dockertestverify, which asserts that the shards of each
+    # (platform, db backend) group together ran every functional test.
+    # Unsharded legs upload as shard 1 of 1.
+    - name: Upload robot output for shard verification
+      if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
+      uses: actions/upload-artifact@v7.0.1
+      with:
+        name: robot-output-${{ env.PLATFORM_PAIR }}-${{ matrix.db_backend }}-shard-${{ matrix.robot_shard_index || 1 }}-of-${{ matrix.robot_shard_count || 1 }}
+        path: test/robot/reports/output.xml
+        if-no-files-found: error
+
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.run_integration && env.BUILD_IMAGE_REQUIRED == 'true'
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -2149,11 +2252,73 @@ jobs:
         echo "## End ##"
         python cicd/python/build.py --robot-test-integration --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
+  ## Sharding splits one robot run across several dockertest legs, so no single
+  ## leg can attest that the whole suite ran.  This job runs once all legs have
+  ## concluded and fails unless, for each (platform, db backend) group, the
+  ## shards together account for every functional test exactly once: both the
+  ## total count and each individual test are checked against the test source,
+  ## parsed independently of the shard modifier.  Anything that prevents the
+  ## check (absent shard, absent output, unlisted group) is itself a failure.
+  dockertestverify:
+    name: Docker Test Shard Verification
+    needs:
+      - dockertest
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN == '' && 15 || vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN }}
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v7.0.1
+
+    # Must mirror the conditions under which dockertest runs the robot
+    # functional tests (BUILD_IMAGE_REQUIRED and CI_IS_EXPRESS there).  If the
+    # two drift, the safe outcome is the one that happens: this job expects
+    # reports that were never produced, and fails.
+    - name: Robot run env sanitize
+      run: |
+        ROBOT_RUN_REQUIRED="true"
+        if [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" !=  "" ] || [ "${{ env.IS_FORK_PR }}" = "true" ] || [ "${{ env.CI_IS_EXPRESS }}" = "true" ]; then
+          ROBOT_RUN_REQUIRED="false"
+        fi
+        {
+          echo "ROBOT_RUN_REQUIRED=${ROBOT_RUN_REQUIRED}";
+        } | tee -a "${GITHUB_ENV}"
+
+    - name: Setup Python
+      uses: actions/setup-python@v7.0.0
+      with:
+        cache: pip
+        python-version: '3.12'
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r cicd/requirements.txt
+
+    - name: Download robot outputs
+      if: env.ROBOT_RUN_REQUIRED == 'true'
+      uses: actions/download-artifact@v8.0.1
+      with:
+        path: ${{ runner.temp }}/robot-outputs
+        pattern: robot-output-*
+
+    # The expected groups are listed explicitly: a group that uploads reports
+    # without being listed here fails verification, so a new robot-running
+    # dockertest leg cannot go unverified.
+    - name: Verify every functional test ran in each group
+      if: env.ROBOT_RUN_REQUIRED == 'true'
+      run: |
+        python test/python/stackql_test_tooling/robot_shard.py \
+          --source test/robot/functional \
+          --reports-dir "${{ runner.temp }}/robot-outputs" \
+          --expected-group linux-amd64-sqlite \
+          --expected-group linux-amd64-postgres_tcp
+
   dockermerge:
     runs-on: ubuntu-latest
     needs:
       - dockerbuild
       - dockertest
+      - dockertestverify
     steps:
 
       - name: Check out code into the Go module directory
@@ -2285,4 +2450,3 @@ jobs:
         if: env.PUSH_IMAGE_REQUIRED == 'true'
         run: |
           docker buildx imagetools inspect ${{ env.STACKQL_IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-

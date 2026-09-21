@@ -37,7 +37,7 @@ The contract every wrapper follows:
 - Canonical launch argv `mcp --mcp.server.type=stdio --approot <home>/.stackql --mcp.config {"server":{"mode":"<mode>","audit":{"disabled":true}}} [--auth=<json>]`; SDKs default to `read_only`.
 - Every SDK ships a launcher `scripts/smoke-test.py --cmd` can drive with no code (`make <vector>-smoke`): cargo `cargo run --example launcher --`, go `go run ./cmd/stackql-mcp-launch`, dotnet `dotnet run --project samples/Launcher --`. Extra argv passes through to the server.
 
-Ordering rules (one-way, see `docs/stackql release process.md` step 7):
+Ordering rules (one-way, see `docs/stackql_release_process.md` step 7):
 
 1. Bundles first: `.mcpb` + `.sha256` on the GitHub release (`mcp-packaging` dispatch, or `make publish`).
 2. Only then render (`make manifests VERSION=`) - the renderer fetches the canonical `.sha256` from the release; never pin locally built bundle hashes.

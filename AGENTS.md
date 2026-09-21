@@ -25,7 +25,7 @@ Authoritative references: [developer guide](/docs/developer_guide.md), [test sum
 Common commands (run from repo root):
 
 - Build: `python cicd/python/build.py --build` (output at `./build/stackql`).
-- Unit tests: `python cicd/python/build.py --test` (CI uses `go test -timeout 1200s --tags "sqlite_stackql" -v ./...`).
+- Unit tests: `python cicd/python/build.py --test` (CI uses `go test -timeout 1200s -v ./...`).
 - Robot tests: `python cicd/python/build.py --robot-test` (requires the binary from the build step).
 - Lint: `golangci-lint run` (CI pins the version in [`.github/workflows/lint.yml`](/.github/workflows/lint.yml); config in [`.golangci.yml`](/.golangci.yml)).
 
@@ -55,6 +55,30 @@ Common commands (run from repo root):
 ## Security & Configuration Tips
 
 StackQL supports flexible configuration management, including authentication secrets and connection parameters, through environment variables and command-line arguments. This design enables seamless integration with standard deployment mechanisms such as container orchestration platforms, CI/CD pipelines, and configuration management tools, allowing sensitive credentials to be managed securely through established DevOps practices rather than hard-coded in scripts or configuration files.
+
+---
+
+## SQLite backend
+
+- The embedded backend is `modernc.org/sqlite` (pure Go, no cgo), pinned >= v1.57.0
+  (caller-constructed `Driver` function registration). It is consumed via
+  [`any-sdk`](https://github.com/stackql/any-sdk) `public/sqlengine`, which registers
+  the driver under the name `stackql-sqlite`.
+- DSN construction happens only via the central `BuildDSN` in any-sdk `public/sqlengine`
+  (legacy mattn-style params such as `_busy_timeout=5000` are translated to modernc
+  `_pragma=busy_timeout(5000)` syntax there); driver errors are inspected only via the
+  error predicates in that package (`isBusy`, `isConstraintViolation`); the custom
+  extension functions (`split_part`, `regexp_like`, `regexp_substr`, `regexp_replace`,
+  `json_equal`, `aws_policy_equal`) live only in any-sdk `public/sqlfuncs` and are
+  registered on the constructed driver, never globally.
+- Never reintroduce `mattn/go-sqlite3`, cgo, the `sqlite_stackql` build tag, or
+  package-global function registration. All builds and release artifacts are
+  `CGO_ENABLED=0`.
+- Bumps of `modernc.org/sqlite` merge only after the full robot suite passes
+  (transpile regenerations occasionally regress).
+- Rollback anchor: the tag `v0.11.707-final-cgo` marks the last cgo commit on `main`
+  (the `stackql-go-sqlite3` fork plus the `sqlite_stackql` build tag). To roll back
+  the pure Go migration, branch from that tag.
 
 ---
 

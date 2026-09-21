@@ -11,6 +11,10 @@ Before beginning implementation work, please raise an issue and receive a consen
 
 Please raise pull requests (PRs) from a fork of this repository, using the provided PR template.  The richer the detail / evidence supplied, the easier the review process.  A usefully named feature branch for the PR source is appreciated.
 
+## Dependency notes
+
+- Bumps of `modernc.org/sqlite` (the pure Go embedded SQLite backend, consumed via `any-sdk`) merge only after the full robot test suite passes; its transpile regenerations occasionally regress.
+
 Finally, in respect of all your efforts; we thank you and ask that you please give us a star while you are at it.
 
 Many Thanks,

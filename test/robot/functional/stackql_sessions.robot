@@ -97,6 +97,7 @@ Shell Session Invalid Registry Config Exits Cleanly
     [Teardown]    NONE
 
 PG Session GC Manual Behaviour Canonical
+    [Tags]    shard-group:pg-server-generation
     Should PG Client Session Inline Equal Strict
     ...    ${PSQL_MTLS_CONN_STR_UNIX}
     ...    ${SHELL_COMMANDS_GC_SEQUENCE_CANONICAL}

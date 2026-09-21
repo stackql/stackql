@@ -4,7 +4,7 @@
 # registry at the exact version, so the .mcpb release assets, the OCI image
 # (mcp-packaging), and the npm + PyPI wrappers (manual, 2FA) must ALL be live
 # before this runs.  Dispatch it after steps 7a/7b of
-# docs/stackql release process.md.
+# docs/stackql_release_process.md.
 #
 # Auth is GitHub Actions OIDC: the registry grants io.github.<owner>/* to
 # OIDC tokens from this repo's workflows, so no secret is required.

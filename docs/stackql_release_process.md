@@ -1,5 +1,15 @@
 ## StackQL release process
 
+### Release notes: pure Go SQLite backend (first release after the modernc migration)
+
+Include the following in the notes of the first release cut after the modernc.org/sqlite migration:
+
+> The embedded SQLite backend is now [`modernc.org/sqlite`](https://gitlab.com/cznic/sqlite) (pure Go). All binaries are built with `CGO_ENABLED=0` and are statically linked; no C toolchain is involved anywhere in the build.
+> The custom extension functions (`split_part`, `regexp_like`, `regexp_substr`, `regexp_replace`, `json_equal`, `aws_policy_equal`) are ported to pure Go in [`any-sdk`](https://github.com/stackql/any-sdk); documented behaviour divergences (RE2 regexp limits) are listed in any-sdk `public/sqlfuncs/DIVERGENCES.md`.
+> Library embedders now inherit the `modernc.org/sqlite` dependency tree instead of `mattn/go-sqlite3`/cgo.
+> External loadable SQLite extensions (`.load`) are no longer supported.
+> Rollback anchor: the tag `v0.11.707-final-cgo` marks the last cgo commit on `main`.
+
 1. Download Artifacts from Latest Build
 
 Download the following artifacts from the latest build on the `main` branch including:

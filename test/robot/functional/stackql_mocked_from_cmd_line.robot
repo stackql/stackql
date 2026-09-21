@@ -1207,6 +1207,32 @@ Split Part Negative Index Invocation Working
     ...    ${outputStr}
     ...    ${CURDIR}/tmp/Split-Part-Negative-Index-Invocation-Working.tmp
 
+Sqlite Extension Functions Smoke Working
+    [Documentation]    Exercises every custom sqlite extension function (split_part,
+    ...    regexp_like, regexp_substr, regexp_replace, json_equal, aws_policy_equal)
+    ...    in a single scalar select, guarding the pure Go (modernc.org/sqlite) port
+    ...    of the former cgo extension functions. This is the per-platform check:
+    ...    it runs wherever the functional suite runs, in place of workflow-level
+    ...    smoke steps.
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    Skipping postgres backend test due to unsupported sqlite extension functions
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----|----|-----|--------|----|-----|
+    ...    |${SPACE}sp${SPACE}|${SPACE}rl${SPACE}|${SPACE}rs${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}rr${SPACE}${SPACE}${SPACE}|${SPACE}je${SPACE}|${SPACE}ape${SPACE}|
+    ...    |----|----|-----|--------|----|-----|
+    ...    |${SPACE}b${SPACE}${SPACE}|${SPACE}${SPACE}1${SPACE}|${SPACE}123${SPACE}|${SPACE}abcXXX${SPACE}|${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |----|----|-----|--------|----|-----|
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select split_part('a,b,c', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape;
+    ...    ${outputStr}
+    ...    ${CURDIR}/tmp/Sqlite-Extension-Functions-Smoke-Working.tmp
+
 Create Table Scenario Working
     ${inputStr} =    Catenate
     ...    create table phystab_one(t_id int, z text);
@@ -2927,6 +2953,7 @@ Page Limited Select Github
     ...    stdout=${CURDIR}/tmp/Page-Limited-Select-Github.tmp
 
 Basic Query mTLS Returns OK
+    [Tags]    shard-group:pg-server-generation
     Should PG Client Inline Contain
     ...    ${CURDIR}
     ...    ${PSQL_EXE}
@@ -2935,6 +2962,7 @@ Basic Query mTLS Returns OK
     ...    ipCidrRange
 
 Basic Error Query mTLS Returns Error Message
+    [Tags]    shard-group:pg-server-generation
     Should PG Client StdErr Inline Contain
     ...    ${CURDIR}
     ...    ${PSQL_EXE}
