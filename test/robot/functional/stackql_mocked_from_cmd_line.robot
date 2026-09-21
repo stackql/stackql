@@ -1208,7 +1208,10 @@ Split Part Negative Index Invocation Working
     ...    ${CURDIR}/tmp/Split-Part-Negative-Index-Invocation-Working.tmp
 
 Sqlite Extension Functions Smoke Working
-    [Documentation]    Exercises every custom sqlite extension function.
+    [Documentation]    Exercises every custom sqlite extension function (split_part,
+    ...    regexp_like, regexp_substr, regexp_replace, json_equal, aws_policy_equal)
+    ...    in a single scalar select, guarding the pure Go (modernc.org/sqlite) port
+    ...    of the former cgo extension functions.
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    Skipping postgres backend test due to unsupported sqlite extension functions
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |----|----|-----|--------|----|-----|
