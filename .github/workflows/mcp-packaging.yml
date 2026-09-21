@@ -5,7 +5,7 @@
 # release event fires before they exist.  Flow:
 # push tag -> create release -> attach signed assets -> dispatch.
 # The npm / PyPI wrappers need interactive (2FA) credentials and are
-# published from a local clone - see step 7 of docs/stackql release process.md.
+# published from a local clone - see step 7 of docs/stackql_release_process.md.
 # The three embedded SDK wrappers (cargo, go, dotnet) are validated here on
 # every packaging PR (against the latest release, smoke tests fed the freshly
 # built bundle via STACKQL_MCP_BUNDLE) and, on dispatch, validated with real
