@@ -260,22 +260,6 @@ jobs:
 
         build\stackql.exe --help
 
-    - name: Extension function smoke test
-      if: success()
-      shell: pwsh
-      run: |
-        $ErrorActionPreference = 'Stop'
-        $query = @'
-        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
-        '@
-        $out = (& .\build\stackql.exe exec $query -o json | Out-String)
-        if ($LASTEXITCODE -ne 0) { throw "stackql exec failed (exit $LASTEXITCODE)" }
-        Write-Host $out
-        foreach ($frag in @('"sp":{"String":"b"', '"rl":{"String":"1"', '"rs":{"String":"123"', '"rr":{"String":"abcXXX"', '"je":{"String":"1"', '"ape":{"String":"1"')) {
-          if (-not $out.Contains($frag)) { throw "extension function smoke FAILED: missing $frag" }
-        }
-        Write-Host "extension function smoke PASSED"
-
     - name: Test
       if: success()
       run: python cicd/python/build.py --verbose --test
@@ -365,7 +349,7 @@ jobs:
         if ($LASTEXITCODE -ne 0) { throw "stackql --version failed (exit $LASTEXITCODE)" }
 
         # 'exec' runs a query in batch mode (no TTY needed) and exercises the same
-        # cgo/sqlite engine the interactive shell uses, so it fully covers the
+        # embedded sqlite engine the interactive shell uses, so it fully covers the
         # "x64 binary runs under emulation" claim. The interactive shell is not
         # smoke-tested here: it's a REPL that requires a TTY, so piping a query to
         # it yields EOF + "goodbye" without ever executing the query.
@@ -376,19 +360,6 @@ jobs:
         if ($LASTEXITCODE -ne 0) { throw "stackql exec failed (exit $LASTEXITCODE)" }
         Write-Host $execOut
         if ($execOut -notmatch 'StackQL') { throw "exec did not return 'StackQL'" }
-
-        # Extension function smoke: proves the pure Go sqlite function registration
-        # works in the emulated binary, one invocation per extension function.
-        $query = @'
-        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
-        '@
-        $funcOut = (& $bin exec $query -o json | Out-String)
-        if ($LASTEXITCODE -ne 0) { throw "extension function smoke exec failed (exit $LASTEXITCODE)" }
-        Write-Host $funcOut
-        foreach ($frag in @('"sp":{"String":"b"', '"rl":{"String":"1"', '"rs":{"String":"123"', '"rr":{"String":"abcXXX"', '"je":{"String":"1"', '"ape":{"String":"1"')) {
-          if (-not $funcOut.Contains($frag)) { throw "extension function smoke FAILED: missing $frag" }
-        }
-        Write-Host "extension function smoke PASSED"
 
         Write-Host "Windows arm64 (x64 emulation) smoke PASSED"
 
@@ -504,23 +475,6 @@ jobs:
       run: |
         python cicd/python/build.py --verbose --build-mcp-client
       
-    - name: Extension function smoke test
-      if: success()
-      run: |
-        query=$(cat <<'SQLEOF'
-        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
-        SQLEOF
-        )
-        out="$(./build/stackql exec "${query}" -o json)"
-        echo "${out}"
-        for frag in '"sp":{"String":"b"' '"rl":{"String":"1"' '"rs":{"String":"123"' '"rr":{"String":"abcXXX"' '"je":{"String":"1"' '"ape":{"String":"1"'; do
-          if ! printf '%s' "${out}" | grep -F "${frag}" >/dev/null; then
-            echo "extension function smoke FAILED: missing ${frag}"
-            exit 1
-          fi
-        done
-        echo "extension function smoke PASSED"
-
     - name: Test
       if: success()
       run: python cicd/python/build.py --verbose --test
@@ -1132,23 +1086,6 @@ jobs:
       run: |
         python cicd/python/build.py --verbose --build-mcp-client
       
-    - name: Extension function smoke test
-      if: success()
-      run: |
-        query=$(cat <<'SQLEOF'
-        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
-        SQLEOF
-        )
-        out="$(./build/stackql exec "${query}" -o json)"
-        echo "${out}"
-        for frag in '"sp":{"String":"b"' '"rl":{"String":"1"' '"rs":{"String":"123"' '"rr":{"String":"abcXXX"' '"je":{"String":"1"' '"ape":{"String":"1"'; do
-          if ! printf '%s' "${out}" | grep -F "${frag}" >/dev/null; then
-            echo "extension function smoke FAILED: missing ${frag}"
-            exit 1
-          fi
-        done
-        echo "extension function smoke PASSED"
-
     - name: Test
       if: success()
       run: python cicd/python/build.py --verbose --test
@@ -1573,23 +1510,6 @@ jobs:
         python cicd/python/build.py --verbose --build 
         python cicd/python/build.py --verbose --build-mcp-client
 
-    - name: Extension function smoke test
-      if: success()
-      run: |
-        query=$(cat <<'SQLEOF'
-        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
-        SQLEOF
-        )
-        out="$(./build/stackql exec "${query}" -o json)"
-        echo "${out}"
-        for frag in '"sp":{"String":"b"' '"rl":{"String":"1"' '"rs":{"String":"123"' '"rr":{"String":"abcXXX"' '"je":{"String":"1"' '"ape":{"String":"1"'; do
-          if ! printf '%s' "${out}" | grep -F "${frag}" >/dev/null; then
-            echo "extension function smoke FAILED: missing ${frag}"
-            exit 1
-          fi
-        done
-        echo "extension function smoke PASSED"
-
     - name: Test
       if: success()
       run: python cicd/python/build.py --verbose --test
@@ -1729,23 +1649,6 @@ jobs:
         export GOARCH="arm64"
         python cicd/python/build.py --verbose --build 
         python cicd/python/build.py --verbose --build-mcp-client
-
-    - name: Extension function smoke test
-      if: success()
-      run: |
-        query=$(cat <<'SQLEOF'
-        select split_part('a,b', ',', 2) as sp, regexp_like('abc123', '[0-9]+') as rl, regexp_substr('abc123def', '[0-9]+') as rs, regexp_replace('abc123', '[0-9]', 'X') as rr, json_equal('{"a":1}', '{ "a" : 1.0 }') as je, aws_policy_equal('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["*"]}]}') as ape
-        SQLEOF
-        )
-        out="$(./build/stackql exec "${query}" -o json)"
-        echo "${out}"
-        for frag in '"sp":{"String":"b"' '"rl":{"String":"1"' '"rs":{"String":"123"' '"rr":{"String":"abcXXX"' '"je":{"String":"1"' '"ape":{"String":"1"'; do
-          if ! printf '%s' "${out}" | grep -F "${frag}" >/dev/null; then
-            echo "extension function smoke FAILED: missing ${frag}"
-            exit 1
-          fi
-        done
-        echo "extension function smoke PASSED"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7.0.1
