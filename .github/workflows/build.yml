@@ -2093,6 +2093,17 @@ jobs:
       run: |
         cat ./test/robot/reports/output.xml
 
+    # Consumed by dockertestverify, which asserts that the shards of each
+    # (platform, db backend) group together ran every functional test.
+    # Unsharded legs upload as shard 1 of 1.
+    - name: Upload robot output for shard verification
+      if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
+      uses: actions/upload-artifact@v7.0.1
+      with:
+        name: robot-output-${{ env.PLATFORM_PAIR }}-${{ matrix.db_backend }}-shard-${{ matrix.robot_shard_index || 1 }}-of-${{ matrix.robot_shard_count || 1 }}
+        path: test/robot/reports/output.xml
+        if-no-files-found: error
+
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.run_integration && env.BUILD_IMAGE_REQUIRED == 'true'
       env:
@@ -2109,11 +2120,73 @@ jobs:
         echo "## End ##"
         python cicd/python/build.py --robot-test-integration --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
+  ## Sharding splits one robot run across several dockertest legs, so no single
+  ## leg can attest that the whole suite ran.  This job runs once all legs have
+  ## concluded and fails unless, for each (platform, db backend) group, the
+  ## shards together account for every functional test exactly once: both the
+  ## total count and each individual test are checked against the test source,
+  ## parsed independently of the shard modifier.  Anything that prevents the
+  ## check (absent shard, absent output, unlisted group) is itself a failure.
+  dockertestverify:
+    name: Docker Test Shard Verification
+    needs:
+      - dockertest
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN == '' && 15 || vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN }}
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v7.0.1
+
+    # Must mirror the conditions under which dockertest runs the robot
+    # functional tests (BUILD_IMAGE_REQUIRED and CI_IS_EXPRESS there).  If the
+    # two drift, the safe outcome is the one that happens: this job expects
+    # reports that were never produced, and fails.
+    - name: Robot run env sanitize
+      run: |
+        ROBOT_RUN_REQUIRED="true"
+        if [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" !=  "" ] || [ "${{ env.IS_FORK_PR }}" = "true" ] || [ "${{ env.CI_IS_EXPRESS }}" = "true" ]; then
+          ROBOT_RUN_REQUIRED="false"
+        fi
+        {
+          echo "ROBOT_RUN_REQUIRED=${ROBOT_RUN_REQUIRED}";
+        } | tee -a "${GITHUB_ENV}"
+
+    - name: Setup Python
+      uses: actions/setup-python@v7.0.0
+      with:
+        cache: pip
+        python-version: '3.12'
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r cicd/requirements.txt
+
+    - name: Download robot outputs
+      if: env.ROBOT_RUN_REQUIRED == 'true'
+      uses: actions/download-artifact@v8.0.1
+      with:
+        path: ${{ runner.temp }}/robot-outputs
+        pattern: robot-output-*
+
+    # The expected groups are listed explicitly: a group that uploads reports
+    # without being listed here fails verification, so a new robot-running
+    # dockertest leg cannot go unverified.
+    - name: Verify every functional test ran in each group
+      if: env.ROBOT_RUN_REQUIRED == 'true'
+      run: |
+        python test/python/stackql_test_tooling/robot_shard.py \
+          --source test/robot/functional \
+          --reports-dir "${{ runner.temp }}/robot-outputs" \
+          --expected-group linux-amd64-sqlite \
+          --expected-group linux-amd64-postgres_tcp
+
   dockermerge:
     runs-on: ubuntu-latest
     needs:
       - dockerbuild
       - dockertest
+      - dockertestverify
     steps:
 
       - name: Check out code into the Go module directory
