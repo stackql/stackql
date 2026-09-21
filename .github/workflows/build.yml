@@ -2311,4 +2311,3 @@ jobs:
         if: env.PUSH_IMAGE_REQUIRED == 'true'
         run: |
           docker buildx imagetools inspect ${{ env.STACKQL_IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-
