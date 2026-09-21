@@ -312,12 +312,29 @@ jobs:
         name: stackql_windows_amd64
         path: build/stackql.exe
 
+    # Consumed by winarmsmoke, so that the MCP robot scenarios run there too.
+    - name: Upload MCP client artifact
+      uses: actions/upload-artifact@v7.0.1
+      if: success()
+      with:
+        name: stackql_mcp_client_windows_amd64
+        path: build/stackql_mcp_client.exe
+
   winarmsmoke:
     name: Windows arm64 Smoke (x64 emulation)
     needs: winbuild
     runs-on: windows-11-arm
-    timeout-minutes: ${{ vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN == '' && 15 || vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN }}
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
+
+    - name: Get rid of disruptive line endings before checkout
+      run: |
+        git config --global core.autocrlf false
+
+    # The checkout supplies the robot suite and must precede the artifact
+    # downloads, because it cleans the workspace.
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v7.0.1
 
     # We deliberately do NOT build here: there is no native windows/arm64 build
     # (goreleaser only targets windows/amd64). This job downloads the amd64 .exe
@@ -328,6 +345,12 @@ jobs:
       uses: actions/download-artifact@v8.0.1
       with:
         name: stackql_windows_amd64
+        path: build
+
+    - name: Download Windows amd64 MCP client artifact
+      uses: actions/download-artifact@v8.0.1
+      with:
+        name: stackql_mcp_client_windows_amd64
         path: build
 
     - name: Confirm host is arm64 (binary under test is x64)
@@ -362,6 +385,63 @@ jobs:
         if ($execOut -notmatch 'StackQL') { throw "exec did not return 'StackQL'" }
 
         Write-Host "Windows arm64 (x64 emulation) smoke PASSED"
+
+    # The robot harness below mirrors winbuild, run against the emulated binary.
+    # Python is x64 (so itself emulated) because the pinned test dependencies
+    # psycopg2-binary, psycopg-binary and cryptography publish no win_arm64 wheels.
+    - name: Setup Python
+      uses: actions/setup-python@v7.0.0
+      with:
+        cache: pip
+        python-version: '3.12'
+        architecture: x64
+
+    - name: Choco install openssl
+      uses: crazy-max/ghaction-chocolatey@v4.1.0
+      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
+      with:
+        args: "install --force openssl --version 3.1.1"
+
+    - name: Choco install packages
+      uses: crazy-max/ghaction-chocolatey@v4.1.0
+      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
+      with:
+        args: "install --force postgresql13 sqlite"
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r cicd/requirements.txt
+
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test\python\stackql_test_tooling\registry_rewrite.py --srcdir "$pwd\test\registry\src" --destdir "$pwd\test\registry-mocked\src"
+
+    # winbuild leaves the MCP client under both names; the robot tooling
+    # addresses it without the extension.
+    - name: Mirror winbuild binary layout
+      shell: pwsh
+      run: |
+        Copy-Item -Path ".\build\stackql_mcp_client.exe" -Destination ".\build\stackql_mcp_client" -Force
+        ls ".\build"
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Run robot mocked functional tests
+      env:
+        PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
+        SQLITE_EXE: C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.exe
+        PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
+      run: |
+        python cicd/python/build.py --robot-test
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/reports/output.xml || echo "no functional test output present"
 
   linuxbuild:
     name: Linux Build
@@ -1601,6 +1681,26 @@ jobs:
         cache: true
       id: go
 
+    # Mirrors macosbuild, except that the libpq location is resolved rather
+    # than hardcoded: homebrew's prefix differs on Apple Silicon.
+    - name: Install Various dependencies
+      run: |
+        brew install libpq@16
+
+        # Use overwrite to force the links for version 16
+        brew link --force --overwrite libpq@16
+
+        # Update PATH so the CI finds the brew version of psql
+        echo "$(brew --prefix libpq@16)/bin" >> "$GITHUB_PATH"
+
+        pip3 install -r cicd/requirements.txt
+
+        "$(brew --prefix libpq@16)/bin/psql" --version
+
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
+
     - name: Get dependencies
       run: |
         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
@@ -1649,6 +1749,38 @@ jobs:
         export GOARCH="arm64"
         python cicd/python/build.py --verbose --build 
         python cicd/python/build.py --verbose --build-mcp-client
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Run robot mocked functional tests
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+      if: success()
+      run: |
+        python cicd/python/build.py --robot-test
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/reports/output.xml
+
+    - name: Upload Robot Reports Artifact
+      uses: actions/upload-artifact@v7.0.1
+      if: always() && github.repository == 'stackql/stackql-devel'
+      with:
+        name: stackql_darwin_arm64_robot_reports
+        path: test/robot/reports
+
+    - name: Upload Robot Tmp Artifact
+      uses: actions/upload-artifact@v7.0.1
+      if: always() && github.repository == 'stackql/stackql-devel'
+      with:
+        name: stackql_darwin_arm64_robot_tmp
+        path: test/robot/functional/tmp
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7.0.1
