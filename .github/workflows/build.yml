@@ -1527,13 +1527,14 @@ jobs:
 
     - name: Install Various dependencies
       run: |
+        brew unlink libpq || true
         brew install libpq@16
         
         # Use overwrite to force the links for version 16
         brew link --force --overwrite libpq@16
         
         # Update PATH so the CI finds the brew version of psql
-        echo "/usr/local/opt/libpq@16/bin" >> "$GITHUB_PATH"
+        echo "$(brew --prefix libpq@16)/bin" >> "$GITHUB_PATH"
         
         pip3 install -r cicd/requirements.txt
         
@@ -1685,6 +1686,7 @@ jobs:
     # than hardcoded: homebrew's prefix differs on Apple Silicon.
     - name: Install Various dependencies
       run: |
+        brew unlink libpq || true
         brew install libpq@16
 
         # Use overwrite to force the links for version 16
@@ -1829,13 +1831,7 @@ jobs:
       uses: docker/setup-qemu-action@v4.4.0
       
     - name: Set up Docker Buildx
-      # Wrapped in a retry: BuildKit occasionally fails to become ready in time
-      # ("waiting for BuildKit: DeadlineExceeded"), a transient infra flake.
-      uses: Wandalen/wretry.action@v3.8.0
-      with:
-        action: docker/setup-buildx-action@v4.4.1
-        attempt_limit: 3
-        attempt_delay: 15000
+      uses: docker/setup-buildx-action@v4.4.1
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -2370,15 +2366,9 @@ jobs:
 
       - name: Set up Docker Buildx
         if: env.PUSH_IMAGE_REQUIRED == 'true'
-        # Wrapped in a retry: BuildKit occasionally fails to become ready in time
-        # ("waiting for BuildKit: DeadlineExceeded"), a transient infra flake.
-        uses: Wandalen/wretry.action@v3.8.0
+        uses: docker/setup-buildx-action@v4.4.1
         with:
-          action: docker/setup-buildx-action@v4.4.1
-          with: |
-            version: v0.30.1
-          attempt_limit: 3
-          attempt_delay: 15000
+          version: v0.30.1
 
       - name: Extract Build Info and Persist
         if: env.PUSH_IMAGE_REQUIRED == 'true'
