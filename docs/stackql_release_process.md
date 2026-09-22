@@ -1,16 +1,21 @@
 ## StackQL release process
 
-### Release notes: pure Go SQLite backend (first release after the modernc migration)
+Follow these steps to release a new version of `stackql`, as hardware tokens and 2FA is involved in several steps, end to end automation is not possible.  
 
-Include the following in the notes of the first release cut after the modernc.org/sqlite migration:
+### 1. Push a tag and create a release
 
-> The embedded SQLite backend is now [`modernc.org/sqlite`](https://gitlab.com/cznic/sqlite) (pure Go). All binaries are built with `CGO_ENABLED=0` and are statically linked; no C toolchain is involved anywhere in the build.
-> The custom extension functions (`split_part`, `regexp_like`, `regexp_substr`, `regexp_replace`, `json_equal`, `aws_policy_equal`) are ported to pure Go in [`any-sdk`](https://github.com/stackql/any-sdk); documented behaviour divergences (RE2 regexp limits) are listed in any-sdk `public/sqlfuncs/DIVERGENCES.md`.
-> Library embedders now inherit the `modernc.org/sqlite` dependency tree instead of `mattn/go-sqlite3`/cgo.
-> External loadable SQLite extensions (`.load`) are no longer supported.
-> Rollback anchor: the tag `v0.11.707-final-cgo` marks the last cgo commit on `main`.
+Push a tag using the semver, `v{major}.{minor}.{build_number}`, for example `v0.12.718`  
 
-1. Download Artifacts from Latest Build
+The `build_number` is the latest successful GitHub Actions build number for the `build` job on a merge to `main`  
+
+```bash
+git tag v0.12.718
+git push origin v0.12.718
+```
+
+Create a release from the tag (set to latest)
+
+### 2. Download Artifacts from Latest Build
 
 Download the following artifacts from the latest build on the `main` branch including:
 
@@ -18,47 +23,47 @@ Download the following artifacts from the latest build on the `main` branch incl
 - `arm64-artifact-deb`
 - `stackql_linux_amd64`
 - `stackql_linux_arm64`
-- `stackql_windows_amd64` (used in step 2)
+- `stackql_windows_amd64` (used in step 4)
 
-2. Package and Sign Windows Version
+### 3. Add the following assets to the release:
 
-Using the  [stackql/stackql-msi](https://github.com/stackql/stackql-msi) project along with a Microsoft Authenticode CodeSigning hardware token, create the windows packages:
+- `amd64-artifact-deb` (downloaded in step 2)
+- `arm64-artifact-deb` (downloaded in step 2)
+- `stackql_linux_amd64.zip` (downloaded in step 2)
+- `stackql_linux_arm64.zip` (downloaded in step 2)
+
+### 4. Package, Sign and Upload Windows Version
+
+Using the  [stackql/stackql-windows-installer](https://github.com/stackql/stackql-windows-installer) project along with a Microsoft Authenticode CodeSigning hardware token, create the windows packages:
 
 - `stackql_windows_amd64.msi`
 - `stackql_windows_amd64.zip`
 
-3. Package, Sign and Notarize the Multi Arch Darwin Version
+place the from the `stackql_windows_amd64.zip` file from step 2 in the `downloaded` directory of the `stackql-windows-installer` project, then run the following via PowerShell:
 
-Using a Mac with the correct certificate chain configured (MacInCloud), run the [stackql/stackql-mac-installer](https://github.com/stackql/stackql-mac-installer), upload the package binary `stackql_darwin_multiarch.pkg` to Google Drive.  
-
-Download the signed, notarized package file:
-
-- `stackql_darwin_multiarch.pkg`
-
-4. Push a tag and create a release
-
-Push a tag using the semver, `{major}.{minor}.{build_number}`, for example `0.10.591`  
-
-The `build_number` is the latest successful GitHub Actions build number for the `build` job on a merge to `main`  
-
-```
-git tag v0.11.669
-git push origin v0.11.669
+```powershell
+.\build.ps1 true
 ```
 
-Create a release from the tag (set to latest)
+then run the following to publish the `MSI` and `ZIP` assets to the corresponding release:  
 
-5. Add the following assets to the release:
+```powershell
+.\release.ps1
+```
 
-- `amd64-artifact-deb` (downloaded in step 1)
-- `arm64-artifact-deb` (downloaded in step 1)
-- `stackql_linux_amd64.zip` (downloaded in step 1)
-- `stackql_linux_arm64.zip` (downloaded in step 1)
-- `stackql_windows_amd64.msi` (built in step 2)
-- `stackql_windows_amd64.zip` (built in step 2)
-- `stackql_darwin_multiarch.pkg` (built in step 3)
+### 5. Package, Sign, Notarize and Upload the Multi Arch Darwin Version
 
-6. Build and push MCPB assets to the release
+Using a Mac with the correct certificate chain configured (MacInCloud), from the [stackql/stackql-mac-installer](https://github.com/stackql/stackql-mac-installer) repo, run the following:
+
+```bash
+sh create-installer.sh {build_number}
+# for instance
+sh create-installer.sh 718
+```
+
+this will create a signed, notarized package file `stackql_darwin_multiarch.pkg` and add it to the relase assets.
+
+### 6. Build and push MCPB assets to the release
 
 Invoke the `mcp-packaging` workflow in [stackql/stackql](https://github.com/stackql/stackql)
 
@@ -79,19 +84,21 @@ make go-publish     VERSION=X.Y.Z   # SDK_MIRROR_TOKEN, or an already-authorised
 make dotnet-publish VERSION=X.Y.Z   # NUGET_API_KEY
 ```
 
-7. Make the release available via **releases.stackql.io**
+### 7.  Make the release available via **releases.stackql.io**
 
 Push a tag to [releases.stackql.io](https://github.com/stackql/releases.stackql.io), eg:
 
 > note: the tag needs to match the tag for the release
 
 ```
-git tag v0.11.669 && git push origin v0.11.669
+git tag v0.12.718 && git push origin v0.12.718
 ```
 
-8. Publish the MCP wrapper packages (manual last mile)
+### 8. Publish the MCP wrapper packages (manual last mile)
 
-8a. npm (`@stackql/mcp-server`)
+Export the end vars `packaging/mcpb/.env` first
+
+#### 8a. npm (`@stackql/mcp-server`)
 
 Requires an `npm login` session as a user with publish rights on the `@stackql` scope; the publish prompts for an OTP.
 
@@ -102,7 +109,7 @@ cd npm
 npm publish stackql-mcp-server-X.Y.Z.tgz --access public
 ```
 
-8b. PyPI (`stackql-mcp-server`)
+#### 8b. PyPI (`stackql-mcp-server`)
 
 Requires a PyPI API token with upload rights on the project; twine username is `__token__`, password is the token. On Debian/Ubuntu (including WSL) `pip install` outside a venv is blocked by PEP 668, hence the venv.
 
@@ -115,7 +122,7 @@ python -m twine check pypi/dist/*
 python -m twine upload pypi/dist/*
 ```
 
-9. Official MCP Registry (`io.github.stackql/stackql-mcp`) - dispatch last
+### 9. Official MCP Registry (`io.github.stackql/stackql-mcp`) - dispatch last
 
 Manual fallback (if the workflow fails or an out-of-band publish is needed):
 
@@ -141,7 +148,7 @@ mcp-publisher login github
 make registry-publish VERSION=X.Y.Z
 ```
 
-10. Update the ChatGPT/Codex stdio plugin
+### 10. Update the ChatGPT/Codex stdio plugin
 
 After 7a confirms `@stackql/mcp-server@X.Y.Z` is live, update the local plugin in a follow-up PR:
 
