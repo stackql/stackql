@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -233,6 +236,77 @@ func TestOTelWriter_WriteError(t *testing.T) {
 	}
 	if err := w.WriteError(errors.New("boom"), stderrPressentationStr); err != nil || strings.TrimSpace(errOut.String()) != "boom" {
 		t.Fatalf("stderr presentation: err=%v out=%q", err, errOut.String())
+	}
+}
+
+// TestOTelWriter_PushesStatementBatchToOTLPEndpoint covers issue #755: with
+// the standard exporter variables set, the records streamed to stdout are
+// also POSTed to the endpoint, chunked by OTEL_BLRP_MAX_EXPORT_BATCH_SIZE.
+func TestOTelWriter_PushesStatementBatchToOTLPEndpoint(t *testing.T) {
+	var (
+		mu       sync.Mutex
+		requests []*http.Request
+		bodies   []sink.OTelLogsData
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		var data sink.OTelLogsData
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			t.Errorf("body is not LogsData: %v", err)
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		requests = append(requests, r)
+		bodies = append(bodies, data)
+	}))
+	defer srv.Close()
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", srv.URL+"/")
+	t.Setenv("OTEL_EXPORTER_OTLP_HEADERS", "api-key=secret%20one,x-tenant=acme")
+	t.Setenv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "2")
+	lines := otelSchemaFixture(t)
+	if len(requests) != 2 {
+		t.Fatalf("expected 2 export requests (2 rows + completion at batch size 2), got %d", len(requests))
+	}
+	first := requests[0]
+	if first.URL.Path != "/v1/logs" || first.Header.Get("Content-Type") != "application/json" ||
+		first.Header.Get("api-key") != "secret one" || first.Header.Get("x-tenant") != "acme" {
+		t.Fatalf("request: path %q headers %v", first.URL.Path, first.Header)
+	}
+	var pushed []sink.OTelWireLogRecord
+	for i, body := range bodies {
+		if len(body.ResourceLogs) != 1 || len(body.ResourceLogs[0].ScopeLogs) != 1 {
+			t.Fatalf("batch %d: expected one shared resource and scope envelope, got %+v", i, body)
+		}
+		pushed = append(pushed, body.ResourceLogs[0].ScopeLogs[0].LogRecords...)
+	}
+	if len(bodies[0].ResourceLogs[0].ScopeLogs[0].LogRecords) != 2 || len(pushed) != len(lines) {
+		t.Fatalf("expected batches of 2 + 1 records, got %d pushed", len(pushed))
+	}
+	for i, rl := range lines {
+		if !reflect.DeepEqual(otelRecord(rl), pushed[i]) {
+			t.Fatalf("pushed record %d differs from the streamed one:\n got %+v\nwant %+v", i, pushed[i], otelRecord(rl))
+		}
+	}
+	if !reflect.DeepEqual(bodies[0].ResourceLogs[0].Resource, lines[0].Resource) {
+		t.Fatalf("pushed resource differs from the streamed one: %+v", bodies[0].ResourceLogs[0].Resource)
+	}
+}
+
+// TestOTelWriter_ReportsExportFailureOnStderr: a push that keeps failing is
+// surfaced on the error stream after the rows were streamed.
+func TestOTelWriter_ReportsExportFailureOnStderr(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer srv.Close()
+	t.Setenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", srv.URL+"/v1/logs")
+	var out, errOut bytes.Buffer
+	w := NewOTelWriter(&out, &errOut, otelTestQuery, time.Time{})
+	err := w.Write(otelTestStream([]interface{}{"fw-a", "us-east1", false, nil}))
+	if err == nil || !strings.Contains(errOut.String(), "otlp http sink") {
+		t.Fatalf("expected the export failure on stderr, err=%v stderr=%q", err, errOut.String())
+	}
+	if len(otelLines(t, out.String())) != 2 {
+		t.Fatalf("rows must still stream to stdout: %q", out.String())
 	}
 }
 

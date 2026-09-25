@@ -73,7 +73,7 @@ func ClassifyQuery(sql string) QueryClass {
 		verb = trimmed
 	}
 	switch strings.ToUpper(verb) {
-	case "SELECT", "SHOW", "DESCRIBE", "EXPLAIN":
+	case "SELECT", "SHOW", "DESCRIBE", "DESC", "EXPLAIN":
 		return QueryClassSelect
 	case "WITH":
 		return classifyWith(trimmed)

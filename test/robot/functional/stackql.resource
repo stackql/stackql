@@ -43,6 +43,7 @@ Start All Mock Servers
     ...    sumologic=${MOCKSERVER_PORT_SUMOLOGIC}
     ...    digitalocean=${MOCKSERVER_PORT_DIGITALOCEAN}
     ...    retry=${MOCKSERVER_PORT_RETRY}
+    ...    otlp=${MOCKSERVER_PORT_OTLP}
     ...    native_test=${MOCKSERVER_PORT_NATIVE_TEST}
     ...    omnisdk=${MOCKSERVER_PORT_OMNISDK}
     Start All Webservers    port_dict=${port_dict}
@@ -55,6 +56,24 @@ Reset Retry Mock Counters
 Assert Retry Mock Attempts
     [Arguments]    ${key}    ${expected}
     ${count} =    Run Process    curl    -sf    ${RETRY_MOCK_BASE_URL}/count/${key}
+    Should Be Equal As Strings    ${count.rc}    0
+    Should Contain    ${count.stdout}    "attempts":${expected}
+
+Reset OTLP Mock
+    ${reset} =    Run Process    curl    -sf    -X    POST    ${OTLP_MOCK_BASE_URL}/reset
+    Should Be Equal As Strings    ${reset.rc}    0
+    ...    Reset call to ${OTLP_MOCK_BASE_URL}/reset returned rc=${reset.rc} stdout='${reset.stdout}' stderr='${reset.stderr}'
+
+Get OTLP Mock Requests
+    [Documentation]    The export requests the OTLP mock has received since the last reset, oldest first.
+    ${resp} =    Run Process    curl    -sf    ${OTLP_MOCK_BASE_URL}/requests
+    Should Be Equal As Strings    ${resp.rc}    0
+    ${requests} =    Evaluate    json.loads($resp.stdout)    json
+    RETURN    ${requests}
+
+Assert OTLP Mock Attempts
+    [Arguments]    ${key}    ${expected}
+    ${count} =    Run Process    curl    -sf    ${OTLP_MOCK_BASE_URL}/count/${key}
     Should Be Equal As Strings    ${count.rc}    0
     Should Contain    ${count.stdout}    "attempts":${expected}
 

@@ -5000,6 +5000,54 @@ Describe Extended Works For Single Exclusive View Through Naive Approach
     ...    stdout=${CURDIR}/tmp/Describe-Extended-Works-For-Single-Exclusive-View-Through-Naive-Approach.tmp
     ...    stderr=${CURDIR}/tmp/Describe-Extended-Works-For-Single-Exclusive-View-Through-Naive-Approach-stderr.tmp
 
+Desc Extended Is Accepted As An Alias For Describe Extended
+    [Documentation]    Issue #773: DESC is an alias for DESCRIBE, so DESC EXTENDED yields the
+    ...                DESCRIBE EXTENDED output verbatim and plain DESC describes the table.
+    ${inputStr} =    Catenate
+    ...    DESC EXTENDED aws.acmpca.certificate_authority_activations;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}type${SPACE}|${SPACE}description${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}certificate${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}certificate_authority_arn${SPACE}${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}certificate_chain${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}complete_certificate_chain${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}data__Identifier${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}status${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Desc-Extended-Is-Accepted-As-An-Alias-For-Describe-Extended.tmp
+    ...    stderr=${CURDIR}/tmp/Desc-Extended-Is-Accepted-As-An-Alias-For-Describe-Extended-stderr.tmp
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    desc aws.pseudo_s3.s3_bucket_listing;
+    ...    RestrictPublicBuckets
+    ...    stdout=${CURDIR}/tmp/Desc-Is-Accepted-As-An-Alias-For-Describe.tmp
+
 List And Details Dataflow View Works As Exemplified By AWS EC2 VPC Cloud Control
     ${sqliteInputStr} =    Catenate
     ...    select 
@@ -11204,6 +11252,122 @@ OTel Output Zero Row Statement Emits Only Completion
     ...    ${expected}
     ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows.tmp
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows-stderr.tmp
+
+OTel Output Pushes Statement Batch To OTLP Endpoint
+    [Documentation]    Issue #755: with OTEL_EXPORTER_OTLP_LOGS_ENDPOINT set the
+    ...                statement's records are also POSTed to the endpoint as one
+    ...                OTLP/JSON batch carrying the OTEL_EXPORTER_OTLP_HEADERS pairs,
+    ...                while stdout still streams the same records.
+    [Teardown]    Run Keywords    Remove Environment Variable    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT    OTEL_EXPORTER_OTLP_HEADERS
+    ...    AND    Stackql Per Test Teardown
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    exporter environment is not forwarded into the container
+    Set Environment Variable    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT    ${OTLP_MOCK_BASE_URL}/v1/logs
+    Set Environment Variable    OTEL_EXPORTER_OTLP_HEADERS    api-key=secret-123,x-stackql-tenant=acme
+    Reset OTLP Mock
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, contributions from github.repos.contributors
+    ...    where owner = 'dummyorg' and repo = 'dummyapp.io';
+    ${expected} =    Catenate    SEPARATOR=
+    ...    {"context":{"stackql.provider":"github","stackql.service":"repos","stackql.resource":"contributors"},
+    ...    "rows":[{"login":"octo-lead"},{"login":"octo-dev-one"},{"login":"octo-dev-two"},{"login":"octo-maintainer"},
+    ...    {"login":"octo-helper-one"},{"login":"octo-helper-two"},{"login":"octo-casual"},{"login":"octo-drive-by"}],
+    ...    "completion":{"stackql.snapshot.complete":true,"stackql.rows_returned":8}}
+    Should StackQL Exec OTel Snapshot
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Push-Batch.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Push-Batch-stderr.tmp
+    ${requests} =    Get OTLP Mock Requests
+    Length Should Be    ${requests}    1
+    Should Be Equal As Strings    ${requests[0]['path']}    /v1/logs
+    Should Be Equal As Strings    ${requests[0]['headers']['content-type']}    application/json
+    Should Be Equal As Strings    ${requests[0]['headers']['api-key']}    secret-123
+    Should Be Equal As Strings    ${requests[0]['headers']['x-stackql-tenant']}    acme
+    Should Be Equal As Integers    ${requests[0]['records']}    9
+    Length Should Be    ${requests[0]['body']['resourceLogs']}    1
+    Length Should Be    ${requests[0]['body']['resourceLogs'][0]['scopeLogs']}    1
+    ${records} =    Set Variable    ${requests[0]['body']['resourceLogs'][0]['scopeLogs'][0]['logRecords']}
+    ${logins} =    Evaluate    [a['value']['stringValue'] for r in $records[:8] for a in r['attributes'] if a['key'] == 'login']
+    Should Be Equal    ${logins}    ${{ ['octo-lead', 'octo-dev-one', 'octo-dev-two', 'octo-maintainer', 'octo-helper-one', 'octo-helper-two', 'octo-casual', 'octo-drive-by'] }}
+    ${completion_keys} =    Evaluate    [a['key'] for a in $records[8]['attributes']]
+    Should Contain    ${completion_keys}    stackql.snapshot.complete
+
+OTel Output Chunks Pushed Batches And Derives The Logs Path
+    [Documentation]    Issue #755: the generic OTEL_EXPORTER_OTLP_ENDPOINT gets /v1/logs
+    ...                appended and OTEL_BLRP_MAX_EXPORT_BATCH_SIZE chunks a large
+    ...                result set into several requests.
+    [Teardown]    Run Keywords    Remove Environment Variable    OTEL_EXPORTER_OTLP_ENDPOINT    OTEL_BLRP_MAX_EXPORT_BATCH_SIZE
+    ...    AND    Stackql Per Test Teardown
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    exporter environment is not forwarded into the container
+    Set Environment Variable    OTEL_EXPORTER_OTLP_ENDPOINT    ${OTLP_MOCK_BASE_URL}
+    Set Environment Variable    OTEL_BLRP_MAX_EXPORT_BATCH_SIZE    4
+    Reset OTLP Mock
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, contributions from github.repos.contributors
+    ...    where owner = 'dummyorg' and repo = 'dummyapp.io';
+    ${expected} =    Catenate    SEPARATOR=
+    ...    {"context":{"stackql.provider":"github","stackql.service":"repos","stackql.resource":"contributors"},
+    ...    "rows":[{"login":"octo-lead"},{"login":"octo-dev-one"},{"login":"octo-dev-two"},{"login":"octo-maintainer"},
+    ...    {"login":"octo-helper-one"},{"login":"octo-helper-two"},{"login":"octo-casual"},{"login":"octo-drive-by"}],
+    ...    "completion":{"stackql.snapshot.complete":true,"stackql.rows_returned":8}}
+    Should StackQL Exec OTel Snapshot
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Push-Chunked.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Push-Chunked-stderr.tmp
+    ${requests} =    Get OTLP Mock Requests
+    Length Should Be    ${requests}    3
+    ${sizes} =    Evaluate    [r['records'] for r in $requests]
+    Should Be Equal    ${sizes}    ${{ [4, 4, 1] }}
+    ${paths} =    Evaluate    sorted({r['path'] for r in $requests})
+    Should Be Equal    ${paths}    ${{ ['/v1/logs'] }}
+
+OTel Output Retries OTLP Push On Server Error
+    [Documentation]    Issue #755: a 503 from the endpoint is retried after a backoff
+    ...                and the batch lands on the next attempt.
+    [Teardown]    Run Keywords    Remove Environment Variable    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+    ...    AND    Stackql Per Test Teardown
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    exporter environment is not forwarded into the container
+    Set Environment Variable    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT    ${OTLP_MOCK_BASE_URL}/flaky/otel-retry/v1/logs?fail_until=1
+    Reset OTLP Mock
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login from github.repos.contributors
+    ...    where owner = 'dummyorg' and repo = 'dummyapp.io' and login = 'nobody';
+    ${expected} =    Catenate    SEPARATOR=
+    ...    {"context":{"stackql.provider":"github","stackql.service":"repos","stackql.resource":"contributors"},
+    ...    "rows":[],
+    ...    "completion":{"stackql.snapshot.complete":true,"stackql.rows_returned":0}}
+    Should StackQL Exec OTel Snapshot
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Push-Retry.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Push-Retry-stderr.tmp
+    Assert OTLP Mock Attempts    otel-retry    2
+    ${requests} =    Get OTLP Mock Requests
+    Length Should Be    ${requests}    1
+    Should Be Equal As Strings    ${requests[0]['key']}    otel-retry
+    Should Be Equal As Integers    ${requests[0]['records']}    1
 
 # ===========================================================================
 # Two further services sit under "stackql_preview": "dynamic_graph" for a query
