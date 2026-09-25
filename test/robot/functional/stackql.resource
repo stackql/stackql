@@ -60,20 +60,22 @@ Assert Retry Mock Attempts
     Should Contain    ${count.stdout}    "attempts":${expected}
 
 Reset OTLP Mock
-    ${reset} =    Run Process    curl    -sf    -X    POST    ${OTLP_MOCK_BASE_URL}/reset
+    ${reset} =    Run Process    curl    -sf    --max-time    30    -X    POST    ${OTLP_MOCK_BASE_URL}/reset
     Should Be Equal As Strings    ${reset.rc}    0
     ...    Reset call to ${OTLP_MOCK_BASE_URL}/reset returned rc=${reset.rc} stdout='${reset.stdout}' stderr='${reset.stderr}'
 
 Get OTLP Mock Requests
     [Documentation]    The export requests the OTLP mock has received since the last reset, oldest first.
-    ${resp} =    Run Process    curl    -sf    ${OTLP_MOCK_BASE_URL}/requests
+    ...                stdout goes to a file: the response exceeds the 4 KB pipe buffer on Windows.
+    ${resp} =    Run Process    curl    -sf    --max-time    30    ${OTLP_MOCK_BASE_URL}/requests
+    ...    stdout=${CURDIR}${/}tmp${/}otlp-mock-requests.json
     Should Be Equal As Strings    ${resp.rc}    0
     ${requests} =    Evaluate    json.loads($resp.stdout)    json
     RETURN    ${requests}
 
 Assert OTLP Mock Attempts
     [Arguments]    ${key}    ${expected}
-    ${count} =    Run Process    curl    -sf    ${OTLP_MOCK_BASE_URL}/count/${key}
+    ${count} =    Run Process    curl    -sf    --max-time    30    ${OTLP_MOCK_BASE_URL}/count/${key}
     Should Be Equal As Strings    ${count.rc}    0
     Should Contain    ${count.stdout}    "attempts":${expected}
 
