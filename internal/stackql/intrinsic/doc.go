@@ -132,68 +132,137 @@ func docMethods(ctx queryContext, bundle, service, resource string) ([]relationM
 	}
 	out := make([]relationMethod, 0, len(methods))
 	for _, method := range methods {
-		out = append(out, relationMethod{name: method.Name, description: method.OperationID})
+		out = append(out, relationMethod{
+			name:        method.Name,
+			description: method.OperationID,
+			sqlVerb:     docSQLVerb(method.SQLVerb),
+		})
 	}
 	return out, nil
 }
 
-// docSelectFunc routes a SELECT over a document-driven relation. The address is
-// the bundle's own "<provider>.<service>.<resource>", and the plan it yields
-// streams exactly as a hand-authored one does.
+// docSQLVerb is the verb a document maps a method to, upper-cased as SHOW
+// METHODS reports it. A method no verb maps is reachable only through EXEC.
+func docSQLVerb(verb string) string {
+	if verb == "" {
+		return "EXEC"
+	}
+	return strings.ToUpper(verb)
+}
+
+// docSelectFunc routes a SELECT over document-driven relations. omnisdk
+// resolves the whole query against the provider documents - which method each
+// relation runs, and whether a condition is a request parameter, an edge
+// between relations or a row filter - and streams the rows back.
 func docSelectFunc(
 	ctx queryContext,
 	node *sqlparser.Select,
-	bundle, service, resource string,
+	currentProvider string,
 ) (func() internaldto.ExecutorOutput, bool) {
-	if unsupported := unsupportedClauses(node); len(unsupported) > 0 {
-		return refuse(fmt.Errorf(
-			"relation '%s%s.%s.%s' streams its rows, so %s cannot be applied; remove %s from the query",
-			UnstablePrefix, bundle, service, resource,
-			strings.Join(unsupported, ", "), pluralClause(len(unsupported)))), true
+	translated, err := translateSelect(node, currentProvider)
+	if err != nil {
+		return refuse(err), true
 	}
-	params, badPredicates := equalityPredicates(node.Where)
-	if len(badPredicates) > 0 {
-		return refuse(fmt.Errorf(
-			"relation '%s%s.%s.%s' streams its rows, so only equality predicates are applied; "+
-				"%s cannot be honoured",
-			UnstablePrefix, bundle, service, resource, strings.Join(badPredicates, ", "))), true
+	return func() internaldto.ExecutorOutput { return runDocQuery(ctx, translated) }, true
+}
+
+// docMutationFunc routes an INSERT, UPDATE or DELETE whose target is a
+// document-driven relation. Without RETURNING the effects are driven to
+// completion and reported as a message; with it, the returned rows stream back.
+func docMutationFunc(
+	ctx queryContext,
+	stmt sqlparser.Statement,
+	currentProvider string,
+) (func() internaldto.ExecutorOutput, bool) {
+	tables, isMutation := mutationTables(stmt)
+	if !isMutation {
+		return nil, false
 	}
-	address := fmt.Sprintf("%s%s.%s.%s", UnstablePrefix, bundle, service, resource)
-	return func() internaldto.ExecutorOutput {
-		input := previewCfg
-		dir, dirErr := docRoot(ctx, bundle)
-		if dirErr != nil {
-			return internaldto.NewErroneousExecutorOutput(dirErr)
+	if isDoc, err := fromDocProviders(tables, currentProvider); !isDoc {
+		return nil, false
+	} else if err != nil {
+		return refuse(err), true
+	}
+	translated, err := translateMutation(stmt, currentProvider)
+	if err != nil {
+		return refuse(err), true
+	}
+	return func() internaldto.ExecutorOutput { return runDocQuery(ctx, translated) }, true
+}
+
+const mutationSuccessMessage = "The operation was despatched successfully"
+
+// runDocQuery describes each relation, resolves the query and runs it.
+func runDocQuery(ctx queryContext, translated docQuery) internaldto.ExecutorOutput {
+	registry := registryRoot(ctx)
+	q := translated.getQuery()
+	tables := make(map[string]omnisdk.Table, len(q.From())+1)
+	for _, join := range q.From() {
+		tbl, describeErr := omnisdk.DescribeTable(registry, join.Resource().Handle())
+		if describeErr != nil {
+			return internaldto.NewErroneousExecutorOutput(describeErr)
 		}
-		plan, err := omnisdk.NewFromCatalog(dir, address, omnisdk.Args{
-			Params:                params,
-			Auth:                  omnisdkAuth(providerAuthContext(ctx, bundle)),
-			Endpoint:              input.getEndpoint(),
-			InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify(),
-		})
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
+		tables[join.Resource().Alias()] = tbl
+	}
+	var relation string
+	if target := q.Target(); target != nil {
+		tbl, describeErr := omnisdk.DescribeMutation(
+			registry, target.Resource().Handle(), target.Verb().String())
+		if describeErr != nil {
+			return internaldto.NewErroneousExecutorOutput(describeErr)
 		}
-		rows, openErr := plan.Open(context.Background())
-		if openErr != nil {
-			return internaldto.NewErroneousExecutorOutput(openErr)
-		}
-		// A document declares no egress schema, so the columns are those the
-		// first row carries; projection is applied over them.
-		stream := &rowStream{
-			rows:          rows,
-			batchSize:     input.getBatchSize(),
-			flushInterval: input.getFlushInterval(),
-			table:         sqldata.NewSQLTable(0, resource),
-			typCfg:        ctx.GetTypingConfig(),
-			projection:    node.SelectExprs,
-		}
-		primed, readErr := newPrimedStream(stream)
-		if readErr != nil {
-			return internaldto.NewErroneousExecutorOutput(readErr)
-		}
-		return internaldto.NewExecutorOutput(primed, nil, nil, nil, nil)
-	}, true
+		tables[target.Resource().Alias()] = tbl
+		relation = target.Resource().Alias()
+	} else {
+		relation = q.From()[0].Resource().Alias()
+	}
+	res, resolveErr := omnisdk.Resolve(q, tables)
+	if resolveErr != nil {
+		return internaldto.NewErroneousExecutorOutput(resolveErr)
+	}
+	// omnisdk takes one credential per run: the first relation's cloud - a
+	// mutation's target - leaving the rest to the canonical environment
+	// variables.
+	args := previewArgs(ctx, translated.getBundles()[0], res.Params())
+	args.Tuning.Limit = translated.getLimit()
+	plan, planErr := omnisdk.NewGraphSelectQuery(registry, res.Graph(), args)
+	if planErr != nil {
+		return internaldto.NewErroneousExecutorOutput(planErr)
+	}
+	rows, openErr := plan.Open(context.Background())
+	if openErr != nil {
+		return internaldto.NewErroneousExecutorOutput(openErr)
+	}
+	if q.Target() != nil && len(translated.getOutputs()) == 0 {
+		return drainMutation(rows)
+	}
+	input := previewCfg
+	stream := &rowStream{
+		rows:          rows,
+		batchSize:     input.getBatchSize(),
+		flushInterval: input.getFlushInterval(),
+		table:         sqldata.NewSQLTable(0, relation),
+		typCfg:        ctx.GetTypingConfig(),
+		outputs:       translated.getOutputs(),
+	}
+	primed, readErr := newPrimedStream(stream)
+	if readErr != nil {
+		return internaldto.NewErroneousExecutorOutput(readErr)
+	}
+	return internaldto.NewExecutorOutput(primed, nil, nil, nil, nil)
+}
+
+// drainMutation pulls a mutation's cursor to the end, which is what sends its
+// effects, and reports the outcome.
+func drainMutation(rows omnisdk.Rows) internaldto.ExecutorOutput {
+	defer rows.Close()
+	for rows.Next() { //nolint:revive // draining sends the effects
+	}
+	if err := rows.Err(); err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	return internaldto.NewExecutorOutput(nil, nil, nil,
+		internaldto.NewBackendMessages([]string{mutationSuccessMessage}), nil)
 }
 
 func refuse(err error) func() internaldto.ExecutorOutput {
@@ -255,7 +324,7 @@ func showDocMethods(
 		row := map[string]interface{}{
 			"MethodName":     method.name,
 			"RequiredParams": strings.Join(method.requiredParams, ", "),
-			"SQLVerb":        strings.ToUpper(selectMethodName),
+			"SQLVerb":        method.sqlVerb,
 		}
 		if extended {
 			row["description"] = method.description

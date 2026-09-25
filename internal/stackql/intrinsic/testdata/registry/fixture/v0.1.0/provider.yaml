@@ -1,0 +1,17 @@
+id: fixture
+name: fixture
+version: v0.1.0
+providerServices:
+  orgs:
+    id: orgs:v0.1.0
+    name: orgs
+    preferred: true
+    service:
+      $ref: fixture/v0.1.0/services/orgs.yaml
+    title: orgs API
+    version: v0.1.0
+    description: organisation membership
+config:
+  auth:
+    type: bearer
+    credentialsenvvar: FIXTURE_TOKEN
