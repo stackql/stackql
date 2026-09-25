@@ -654,7 +654,9 @@ func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.JoinTableExpr:
 		node.LeftExpr.Accept(v)
 		node.RightExpr.Accept(v)
-		node.Condition.On.Accept(v)
+		if node.Condition.On != nil {
+			node.Condition.On.Accept(v)
+		}
 		buf.AstPrintf(node, "%v %s %v%v", node.LeftExpr, node.Join, node.RightExpr, node.Condition)
 
 	case *sqlparser.IndexHints:

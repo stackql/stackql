@@ -993,11 +993,11 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.containsNativeBackendMaterial = true
 
 	case sqlparser.JoinCondition:
-		err := node.On.Accept(v)
-		if err != nil {
-			return err
-		}
 		if node.On != nil {
+			err := node.On.Accept(v)
+			if err != nil {
+				return err
+			}
 			buf.AstPrintf(node, " on %v", node.On)
 		}
 		if node.Using != nil {
