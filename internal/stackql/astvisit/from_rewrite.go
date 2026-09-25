@@ -23,6 +23,9 @@ var (
 	_ FromRewriteAstVisitor = &standardFromRewriteAstVisitor{}
 )
 
+// The parser folds CROSS JOIN into sqlparser.JoinStr, so it is re-emitted here.
+const crossJoinStr = "cross join"
+
 type FromRewriteAstVisitor interface {
 	sqlparser.SQLAstVisitor
 	GetIndirectContexts() []drm.PreparedStatementCtx
@@ -801,11 +804,21 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		// accumulate hoisted tables
 		v.hoistedOnClauseTables = append(v.hoistedOnClauseTables, lhsHoistedIntoOn...)
 		v.hoistedOnClauseTables = append(v.hoistedOnClauseTables, rhsHoistedIntoOn...)
-		if len(v.hoistedOnClauseTables) > 0 {
-			v.rewrittenQuery = fmt.Sprintf("%s %s %s ON ( %s ) AND %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), textutil.ControlOnClausePlaceholder, conditionVis.GetRewrittenQuery())
-		} else {
-			v.rewrittenQuery = fmt.Sprintf("%s %s %s ON %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
+		joinStr := node.Join
+		hasCondition := node.Condition.On != nil || node.Condition.Using != nil
+		var onClause string
+		switch {
+		case len(v.hoistedOnClauseTables) > 0 && hasCondition:
+			onClause = fmt.Sprintf(" ON ( %s ) AND %s", textutil.ControlOnClausePlaceholder, conditionVis.GetRewrittenQuery())
+		case len(v.hoistedOnClauseTables) > 0:
+			onClause = fmt.Sprintf(" ON ( %s )", textutil.ControlOnClausePlaceholder)
+		case hasCondition:
+			onClause = fmt.Sprintf(" ON %s", conditionVis.GetRewrittenQuery())
+		case joinStr == sqlparser.JoinStr:
+			// JOIN without ON is a cross join; postgres requires it spelled out
+			joinStr = crossJoinStr
 		}
+		v.rewrittenQuery = fmt.Sprintf("%s %s %s%s", lVis.GetRewrittenQuery(), joinStr, rVis.GetRewrittenQuery(), onClause)
 
 	case *sqlparser.IndexHints:
 		buf.AstPrintf(node, " %sindex ", node.Type)
