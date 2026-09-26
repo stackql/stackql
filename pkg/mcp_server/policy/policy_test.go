@@ -17,6 +17,8 @@ func TestClassifyQuery(t *testing.T) {
 		{"  SELECT 1", policy.QueryClassSelect},
 		{"Show methods in x.y.z;", policy.QueryClassSelect},
 		{"describe x.y", policy.QueryClassSelect},
+		{"desc x.y", policy.QueryClassSelect}, // issue #773: DESC aliases DESCRIBE
+		{"DESC EXTENDED x.y.z", policy.QueryClassSelect},
 		{"EXPLAIN select 1", policy.QueryClassSelect},
 		{"insert into t values (1)", policy.QueryClassMutationCreate},
 		{"UPDATE t SET a=1", policy.QueryClassMutationCreate},

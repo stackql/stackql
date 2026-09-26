@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -233,6 +236,101 @@ func TestOTelWriter_WriteError(t *testing.T) {
 	}
 	if err := w.WriteError(errors.New("boom"), stderrPressentationStr); err != nil || strings.TrimSpace(errOut.String()) != "boom" {
 		t.Fatalf("stderr presentation: err=%v out=%q", err, errOut.String())
+	}
+}
+
+func TestInitOTelConfig(t *testing.T) {
+	t.Cleanup(func() { otelConfig = OTelConfig{} })
+	for _, raw := range []string{"", "  ", "{}"} {
+		if err := InitOTelConfig(raw); err != nil || otelConfig.Exporter != nil {
+			t.Fatalf("InitOTelConfig(%q): err=%v exporter=%+v", raw, err, otelConfig.Exporter)
+		}
+	}
+	yamlForm := "exporter:\n  endpoint: http://c:4318/v1/logs\n  headers:\n    api-key: secret\n  batch_size: 3\n"
+	if err := InitOTelConfig(yamlForm); err != nil || otelConfig.Exporter == nil ||
+		otelConfig.Exporter.Endpoint != "http://c:4318/v1/logs" || otelConfig.Exporter.BatchSize != 3 ||
+		otelConfig.Exporter.Headers["api-key"] != "secret" {
+		t.Fatalf("yaml form: err=%v exporter=%+v", err, otelConfig.Exporter)
+	}
+	// A rejected value leaves the previous configuration in place.
+	for _, raw := range []string{`{"exporter": {"headers": {"a": "b"}}}`, `{"exporter": [1]}`, `not: [valid`} {
+		if err := InitOTelConfig(raw); err == nil || otelConfig.Exporter == nil || otelConfig.Exporter.BatchSize != 3 {
+			t.Fatalf("InitOTelConfig(%q): err=%v exporter=%+v", raw, err, otelConfig.Exporter)
+		}
+	}
+}
+
+// TestOTelWriter_PushesStatementBatchToOTLPEndpoint covers issue #755: with
+// an exporter in --otel.config, the records streamed to stdout are also
+// POSTed to the endpoint, chunked by batch_size.
+func TestOTelWriter_PushesStatementBatchToOTLPEndpoint(t *testing.T) {
+	var (
+		mu       sync.Mutex
+		requests []*http.Request
+		bodies   []sink.OTelLogsData
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		var data sink.OTelLogsData
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			t.Errorf("body is not LogsData: %v", err)
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		requests = append(requests, r)
+		bodies = append(bodies, data)
+	}))
+	defer srv.Close()
+	t.Cleanup(func() { otelConfig = OTelConfig{} })
+	if err := InitOTelConfig(`{"exporter": {"endpoint": "` + srv.URL + `/v1/logs", ` +
+		`"headers": {"api-key": "secret one", "x-tenant": "acme"}, "batch_size": 2}}`); err != nil {
+		t.Fatalf("InitOTelConfig() error = %v", err)
+	}
+	lines := otelSchemaFixture(t)
+	if len(requests) != 2 {
+		t.Fatalf("expected 2 export requests (2 rows + completion at batch size 2), got %d", len(requests))
+	}
+	first := requests[0]
+	if first.URL.Path != "/v1/logs" || first.Header.Get("Content-Type") != "application/json" ||
+		first.Header.Get("api-key") != "secret one" || first.Header.Get("x-tenant") != "acme" {
+		t.Fatalf("request: path %q headers %v", first.URL.Path, first.Header)
+	}
+	var pushed []sink.OTelWireLogRecord
+	for i, body := range bodies {
+		if len(body.ResourceLogs) != 1 || len(body.ResourceLogs[0].ScopeLogs) != 1 {
+			t.Fatalf("batch %d: expected one shared resource and scope envelope, got %+v", i, body)
+		}
+		pushed = append(pushed, body.ResourceLogs[0].ScopeLogs[0].LogRecords...)
+	}
+	if len(bodies[0].ResourceLogs[0].ScopeLogs[0].LogRecords) != 2 || len(pushed) != len(lines) {
+		t.Fatalf("expected batches of 2 + 1 records, got %d pushed", len(pushed))
+	}
+	for i, rl := range lines {
+		if !reflect.DeepEqual(otelRecord(rl), pushed[i]) {
+			t.Fatalf("pushed record %d differs from the streamed one:\n got %+v\nwant %+v", i, pushed[i], otelRecord(rl))
+		}
+	}
+	if !reflect.DeepEqual(bodies[0].ResourceLogs[0].Resource, lines[0].Resource) {
+		t.Fatalf("pushed resource differs from the streamed one: %+v", bodies[0].ResourceLogs[0].Resource)
+	}
+}
+
+// TestOTelWriter_ReportsExportFailureOnStderr: a push that keeps failing is
+// surfaced on the error stream after the rows were streamed.
+func TestOTelWriter_ReportsExportFailureOnStderr(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer srv.Close()
+	t.Cleanup(func() { otelConfig = OTelConfig{} })
+	otelConfig = OTelConfig{Exporter: &sink.OTLPHTTPConfig{Endpoint: srv.URL + "/v1/logs"}}
+	var out, errOut bytes.Buffer
+	w := NewOTelWriter(&out, &errOut, otelTestQuery, time.Time{})
+	err := w.Write(otelTestStream([]interface{}{"fw-a", "us-east1", false, nil}))
+	if err == nil || !strings.Contains(errOut.String(), "otlp http sink") {
+		t.Fatalf("expected the export failure on stderr, err=%v stderr=%q", err, errOut.String())
+	}
+	if len(otelLines(t, out.String())) != 2 {
+		t.Fatalf("rows must still stream to stdout: %q", out.String())
 	}
 }
 

@@ -10,7 +10,10 @@
 // rotation, GC, alternate transports plug in once and benefit everyone.
 package sink
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 // Sink is the generic destination contract.  Implementations must be safe for
 // concurrent calls from multiple goroutines.
@@ -31,3 +34,26 @@ func NewNopSink() Sink { return &nopSink{} }
 
 func (*nopSink) Record(_ context.Context, _ any) error { return nil }
 func (*nopSink) Close() error                          { return nil }
+
+// NewMultiSink fans every payload out to each sink in order; Close closes
+// them all and joins any errors.
+func NewMultiSink(sinks ...Sink) Sink { return multiSink(sinks) }
+
+type multiSink []Sink
+
+func (m multiSink) Record(ctx context.Context, payload any) error {
+	for _, s := range m {
+		if err := s.Record(ctx, payload); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m multiSink) Close() error {
+	errs := make([]error, 0, len(m))
+	for _, s := range m {
+		errs = append(errs, s.Close())
+	}
+	return errors.Join(errs...)
+}

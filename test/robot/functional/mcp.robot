@@ -839,6 +839,23 @@ MCP HTTP Mode Read Only Refuses Mutations And Lifecycle
     Should Not Be Equal As Integers    ${cte_mut.rc}    0
     Should Contain    ${cte_mut.stderr}    read_only
 
+MCP HTTP Mode Read Only Allows Desc Alias
+    [Documentation]    Issue #773: DESC is classed read-only like DESCRIBE, so the read_only server at 9920 answers it.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${desc_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"DESC EXTENDED google.storage.buckets;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-desc.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-desc-stderr.txt
+    Should Be Equal As Integers    ${desc_result.rc}    0
+    Should Not Contain    ${desc_result.stderr}    read_only
+    ${desc_obj}=    Parse MCP JSON Output    ${desc_result.stdout}
+    Dictionary Should Contain Key    ${desc_obj}    rows
+    Should Not Be Empty        ${desc_obj['rows']}
+
 MCP HTTP Mode Safe Refuses Mutations Without Elicitation
     [Documentation]    Server at 9912 starts with mode=full_access (existing scenarios assume that).
     ...                We verify the safe-mode no-elicitation path via the *default* mode on a

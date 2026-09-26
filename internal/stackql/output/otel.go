@@ -19,7 +19,41 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/pkg/sink"
+	"gopkg.in/yaml.v2"
 )
+
+// OTelConfigKey is the flag carrying the OTelConfig JSON / YAML.
+const OTelConfigKey = "otel.config"
+
+// OTelConfig is the --otel.config DTO: settings for the otel output format.
+type OTelConfig struct {
+	// Exporter, when set, also pushes every statement's records to the
+	// OTLP/HTTP logs endpoint it names.
+	Exporter *sink.OTLPHTTPConfig `json:"exporter,omitempty" yaml:"exporter,omitempty"`
+}
+
+// otelConfig is the parsed --otel.config, set once at startup.
+//
+//nolint:gochecknoglobals // process-wide configuration
+var otelConfig OTelConfig
+
+// InitOTelConfig parses the --otel.config argument; an empty value keeps the
+// defaults and an exporter without an endpoint is rejected.
+func InitOTelConfig(raw string) error {
+	var cfg OTelConfig
+	if strings.TrimSpace(raw) != "" {
+		if err := yaml.Unmarshal([]byte(raw), &cfg); err != nil {
+			return err
+		}
+	}
+	if cfg.Exporter != nil {
+		if _, err := sink.NewOTLPHTTPSink(*cfg.Exporter); err != nil {
+			return err
+		}
+	}
+	otelConfig = cfg
+	return nil
+}
 
 // The emitted attribute set is a versioned interface (issue #738): bump
 // otelAttributeSchemaVersion when it changes and update the schema test.
@@ -51,7 +85,8 @@ var otelInvocationTraceID = sync.OnceValue(func() string {
 // OTelWriter emits one OTLP/JSON LogsData per result row plus a completion
 // record per statement, so a result set can be shipped as a timestamped
 // inventory snapshot. Every record of a statement shares the snapshot
-// instant, snapshot id and span id.
+// instant, snapshot id and span id. When --otel.config names an exporter
+// the statement is also pushed there as a batch.
 type OTelWriter struct {
 	errWriter  io.Writer
 	encoder    sink.Sink
@@ -103,6 +138,20 @@ func (s writerSink) Record(_ context.Context, payload any) error {
 
 func (writerSink) Close() error { return nil }
 
+// newOTelOutputSink streams to the output writer and, when --otel.config
+// names an exporter, also pushes to it.
+func newOTelOutputSink(writer io.Writer) sink.Sink {
+	out := writerSink{writer: writer}
+	if otelConfig.Exporter == nil {
+		return out
+	}
+	exporter, err := sink.NewOTLPHTTPSink(*otelConfig.Exporter)
+	if err != nil {
+		return out
+	}
+	return sink.NewMultiSink(out, exporter)
+}
+
 // NewOTelWriter returns the writer for one statement: query is the submitted
 // text and startTime the snapshot instant stamped on every record.
 func NewOTelWriter(writer io.Writer, errWriter io.Writer, query string, startTime time.Time) IOutputWriter {
@@ -113,7 +162,7 @@ func NewOTelWriter(writer io.Writer, errWriter io.Writer, query string, startTim
 	queryHash := sha256.Sum256([]byte(strings.TrimSpace(query)))
 	return &OTelWriter{
 		errWriter:  errWriter,
-		encoder:    sink.NewOTelSink(writerSink{writer: writer}, otelResource(statement), otelScope()),
+		encoder:    sink.NewOTelSink(newOTelOutputSink(writer), otelResource(statement), otelScope()),
 		startTime:  startTime,
 		snapshotID: uuid.NewString(),
 		spanID:     sink.OTelRandomID(otelSpanIDBytes),
@@ -280,6 +329,17 @@ func (ow *OTelWriter) writeCompletion(rows int) error {
 	return ow.record(sink.OTelSeverityInfo, body, attrs)
 }
 
+// close flushes the sinks so a configured exporter ships the statement's
+// batch; the failure is echoed to the error stream because the response
+// handler discards writer errors.
+func (ow *OTelWriter) close() error {
+	if err := ow.encoder.Close(); err != nil {
+		_ = writeStderrError(ow.errWriter, err)
+		return err
+	}
+	return nil
+}
+
 func (ow *OTelWriter) Write(res sqldata.ISQLResultStream) error {
 	rows := 0
 	for {
@@ -296,7 +356,10 @@ func (ow *OTelWriter) Write(res sqldata.ISQLResultStream) error {
 			}
 		}
 		if err != nil {
-			return ow.writeCompletion(rows)
+			if completionErr := ow.writeCompletion(rows); completionErr != nil {
+				return completionErr
+			}
+			return ow.close()
 		}
 	}
 }
@@ -309,5 +372,8 @@ func (ow *OTelWriter) WriteError(err error, errorPresentation string) error {
 		sink.OTelString("error.type", fmt.Sprintf("%T", err)),
 		sink.OTelString("error.message", err.Error()),
 	)
-	return ow.record(sink.OTelSeverityError, err.Error(), attrs)
+	if recordErr := ow.record(sink.OTelSeverityError, err.Error(), attrs); recordErr != nil {
+		return recordErr
+	}
+	return ow.close()
 }
