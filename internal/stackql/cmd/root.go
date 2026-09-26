@@ -29,6 +29,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/envfile"
 	"github.com/stackql/stackql/internal/stackql/intrinsic"
+	"github.com/stackql/stackql/internal/stackql/output"
 
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
@@ -76,6 +77,12 @@ var (
 //
 //nolint:gochecknoglobals // cobra binds flags to package scope
 var previewCfgRaw string
+
+// otelConfigRaw is the raw --otel.config argument; initConfig hands it to
+// the output package once.
+//
+//nolint:gochecknoglobals // cobra binds flags to package scope
+var otelConfigRaw string
 
 // rootCmd represents the base command when called without any subcommands.
 //
@@ -177,6 +184,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ACIDCfgRaw, dto.ACIDCfgRawKey, "{}", "JSON / YAML string representing ACID config")
 	rootCmd.PersistentFlags().StringVar(&previewCfgRaw, intrinsic.CfgRawKey, "{}", "JSON string configuring the "+intrinsic.ProviderName+
 		" provider backend; keys: batchSize, flushInterval, endpoint, unstable")
+	rootCmd.PersistentFlags().StringVar(&otelConfigRaw, output.OTelConfigKey, "{}", "JSON / YAML string configuring the otel output format, "+
+		`eg: '{ "exporter": { "endpoint": "http://localhost:4318/v1/logs", "headers": { "authorization": "<token>" } } }'`)
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.SessionCtxRaw, dto.SessionCtxKey, "{}", "JSON / YAML string representing session config")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.APIRequestTimeout, dto.APIRequestTimeoutKey, 45, "API request timeout in seconds, 0 for no timeout.") //nolint:mnd // TODO: investigate
 	rootCmd.PersistentFlags().StringVar(&dummyString, dto.ColorSchemeKey, "", "DEPRECATED: color schems no longer active")
@@ -273,6 +282,10 @@ func initConfig() {
 	mergeConfigFromFile(&runtimeCtx, *rootCmd.PersistentFlags())
 
 	intrinsic.Init(previewCfgRaw)
+	if err := output.InitOTelConfig(otelConfigRaw); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid --%s: %v\n", output.OTelConfigKey, err)
+		os.Exit(1)
+	}
 
 	// An absent --env.file is created empty (issue #691) so packaged installs
 	// have a credential store to populate; creation failure is non-fatal

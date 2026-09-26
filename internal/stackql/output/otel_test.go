@@ -239,9 +239,30 @@ func TestOTelWriter_WriteError(t *testing.T) {
 	}
 }
 
+func TestInitOTelConfig(t *testing.T) {
+	t.Cleanup(func() { otelConfig = OTelConfig{} })
+	for _, raw := range []string{"", "  ", "{}"} {
+		if err := InitOTelConfig(raw); err != nil || otelConfig.Exporter != nil {
+			t.Fatalf("InitOTelConfig(%q): err=%v exporter=%+v", raw, err, otelConfig.Exporter)
+		}
+	}
+	yamlForm := "exporter:\n  endpoint: http://c:4318/v1/logs\n  headers:\n    api-key: secret\n  batch_size: 3\n"
+	if err := InitOTelConfig(yamlForm); err != nil || otelConfig.Exporter == nil ||
+		otelConfig.Exporter.Endpoint != "http://c:4318/v1/logs" || otelConfig.Exporter.BatchSize != 3 ||
+		otelConfig.Exporter.Headers["api-key"] != "secret" {
+		t.Fatalf("yaml form: err=%v exporter=%+v", err, otelConfig.Exporter)
+	}
+	// A rejected value leaves the previous configuration in place.
+	for _, raw := range []string{`{"exporter": {"headers": {"a": "b"}}}`, `{"exporter": [1]}`, `not: [valid`} {
+		if err := InitOTelConfig(raw); err == nil || otelConfig.Exporter == nil || otelConfig.Exporter.BatchSize != 3 {
+			t.Fatalf("InitOTelConfig(%q): err=%v exporter=%+v", raw, err, otelConfig.Exporter)
+		}
+	}
+}
+
 // TestOTelWriter_PushesStatementBatchToOTLPEndpoint covers issue #755: with
-// the standard exporter variables set, the records streamed to stdout are
-// also POSTed to the endpoint, chunked by OTEL_BLRP_MAX_EXPORT_BATCH_SIZE.
+// an exporter in --otel.config, the records streamed to stdout are also
+// POSTed to the endpoint, chunked by batch_size.
 func TestOTelWriter_PushesStatementBatchToOTLPEndpoint(t *testing.T) {
 	var (
 		mu       sync.Mutex
@@ -259,9 +280,11 @@ func TestOTelWriter_PushesStatementBatchToOTLPEndpoint(t *testing.T) {
 		bodies = append(bodies, data)
 	}))
 	defer srv.Close()
-	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", srv.URL+"/")
-	t.Setenv("OTEL_EXPORTER_OTLP_HEADERS", "api-key=secret%20one,x-tenant=acme")
-	t.Setenv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "2")
+	t.Cleanup(func() { otelConfig = OTelConfig{} })
+	if err := InitOTelConfig(`{"exporter": {"endpoint": "` + srv.URL + `/v1/logs", ` +
+		`"headers": {"api-key": "secret one", "x-tenant": "acme"}, "batch_size": 2}}`); err != nil {
+		t.Fatalf("InitOTelConfig() error = %v", err)
+	}
 	lines := otelSchemaFixture(t)
 	if len(requests) != 2 {
 		t.Fatalf("expected 2 export requests (2 rows + completion at batch size 2), got %d", len(requests))
@@ -298,7 +321,8 @@ func TestOTelWriter_ReportsExportFailureOnStderr(t *testing.T) {
 		w.WriteHeader(http.StatusBadRequest)
 	}))
 	defer srv.Close()
-	t.Setenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", srv.URL+"/v1/logs")
+	t.Cleanup(func() { otelConfig = OTelConfig{} })
+	otelConfig = OTelConfig{Exporter: &sink.OTLPHTTPConfig{Endpoint: srv.URL + "/v1/logs"}}
 	var out, errOut bytes.Buffer
 	w := NewOTelWriter(&out, &errOut, otelTestQuery, time.Time{})
 	err := w.Write(otelTestStream([]interface{}{"fw-a", "us-east1", false, nil}))

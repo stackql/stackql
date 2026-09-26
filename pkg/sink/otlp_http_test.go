@@ -59,11 +59,11 @@ func otlpTestSink(t *testing.T, capture *otlpCapture, batchSize int, n int) (*ot
 	t.Helper()
 	srv := httptest.NewServer(capture)
 	t.Cleanup(srv.Close)
-	s := newOTLPHTTPSink(otlpHTTPConfig{
-		endpoint:  srv.URL + "/v1/logs",
-		headers:   map[string]string{"api-key": "secret"},
-		timeout:   time.Second,
-		batchSize: batchSize,
+	s := newOTLPHTTPSink(OTLPHTTPConfig{
+		Endpoint:  srv.URL + "/v1/logs",
+		Headers:   map[string]string{"api-key": "secret"},
+		TimeoutMS: 1000,
+		BatchSize: batchSize,
 	})
 	waits := &[]time.Duration{}
 	s.sleep = func(d time.Duration) { *waits = append(*waits, d) }
@@ -170,46 +170,23 @@ func TestOTLPHTTPSink_RejectsForeignPayloads(t *testing.T) {
 	}
 }
 
-func TestOTLPHTTPConfigFromEnv(t *testing.T) {
-	for _, v := range []string{
-		otlpLogsEndpointEnv, otlpEndpointEnv, otlpLogsHeadersEnv, otlpHeadersEnv,
-		otlpLogsTimeoutEnv, otlpTimeoutEnv, otlpBatchSizeEnv,
-	} {
-		t.Setenv(v, "")
+func TestNewOTLPHTTPSink_ConfigDefaults(t *testing.T) {
+	if _, err := NewOTLPHTTPSink(OTLPHTTPConfig{Endpoint: "  "}); err == nil {
+		t.Fatal("an empty endpoint must be rejected")
 	}
-	if _, ok := otlpHTTPConfigFromEnv(); ok {
-		t.Fatal("no endpoint set must disable the exporter")
+	s := newOTLPHTTPSink(OTLPHTTPConfig{Endpoint: " http://collector:4318/v1/logs "})
+	if s.endpoint != "http://collector:4318/v1/logs" || s.client.Timeout != otlpDefaultTimeout ||
+		s.batchSize != otlpDefaultBatchSize {
+		t.Fatalf("defaults not applied: endpoint=%q timeout=%v batch=%d", s.endpoint, s.client.Timeout, s.batchSize)
 	}
-	if _, ok := NewOTLPHTTPSinkFromEnv(); ok {
-		t.Fatal("no endpoint set must yield no sink")
+	s = newOTLPHTTPSink(OTLPHTTPConfig{Endpoint: "http://c/v1/logs", TimeoutMS: 2500, BatchSize: 7,
+		Headers: map[string]string{"api-key": "a b"}})
+	if s.client.Timeout != 2500*time.Millisecond || s.batchSize != 7 ||
+		!reflect.DeepEqual(s.headers, map[string]string{"api-key": "a b"}) {
+		t.Fatalf("explicit config not honoured: timeout=%v batch=%d headers=%v", s.client.Timeout, s.batchSize, s.headers)
 	}
-	t.Setenv(otlpEndpointEnv, "http://collector:4318/")
-	t.Setenv(otlpHeadersEnv, "api-key=a%20b, x-tenant=acme,malformed")
-	t.Setenv(otlpTimeoutEnv, "2500")
-	t.Setenv(otlpBatchSizeEnv, "7")
-	cfg, ok := otlpHTTPConfigFromEnv()
-	if !ok || cfg.endpoint != "http://collector:4318/v1/logs" {
-		t.Fatalf("generic endpoint: ok=%v endpoint=%q", ok, cfg.endpoint)
-	}
-	if want := map[string]string{"api-key": "a b", "x-tenant": "acme"}; !reflect.DeepEqual(cfg.headers, want) {
-		t.Fatalf("headers %v, want %v", cfg.headers, want)
-	}
-	if cfg.timeout != 2500*time.Millisecond || cfg.batchSize != 7 {
-		t.Fatalf("timeout %v batch %d", cfg.timeout, cfg.batchSize)
-	}
-	// The logs-specific variables win and the logs endpoint is used verbatim.
-	t.Setenv(otlpLogsEndpointEnv, "http://logs.example/custom/path?x=1")
-	t.Setenv(otlpLogsHeadersEnv, "authorization=Bearer%20t")
-	t.Setenv(otlpLogsTimeoutEnv, "100")
-	cfg, ok = otlpHTTPConfigFromEnv()
-	if !ok || cfg.endpoint != "http://logs.example/custom/path?x=1" || cfg.timeout != 100*time.Millisecond {
-		t.Fatalf("logs endpoint precedence: %+v", cfg)
-	}
-	if want := map[string]string{"authorization": "Bearer t"}; !reflect.DeepEqual(cfg.headers, want) {
-		t.Fatalf("logs headers %v, want %v", cfg.headers, want)
-	}
-	if _, ok = NewOTLPHTTPSinkFromEnv(); !ok {
-		t.Fatal("endpoint set must yield a sink")
+	if _, err := NewOTLPHTTPSink(OTLPHTTPConfig{Endpoint: "http://c/v1/logs"}); err != nil {
+		t.Fatalf("valid config rejected: %v", err)
 	}
 }
 

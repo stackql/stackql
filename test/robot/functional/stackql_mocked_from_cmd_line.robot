@@ -11254,15 +11254,12 @@ OTel Output Zero Row Statement Emits Only Completion
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Zero-Rows-stderr.tmp
 
 OTel Output Pushes Statement Batch To OTLP Endpoint
-    [Documentation]    Issue #755: with OTEL_EXPORTER_OTLP_LOGS_ENDPOINT set the
+    [Documentation]    Issue #755: with an exporter in --otel.config the
     ...                statement's records are also POSTed to the endpoint as one
-    ...                OTLP/JSON batch carrying the OTEL_EXPORTER_OTLP_HEADERS pairs,
-    ...                while stdout still streams the same records.
-    [Teardown]    Run Keywords    Remove Environment Variable    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT    OTEL_EXPORTER_OTLP_HEADERS
-    ...    AND    Stackql Per Test Teardown
-    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    exporter environment is not forwarded into the container
-    Set Environment Variable    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT    ${OTLP_MOCK_BASE_URL}/v1/logs
-    Set Environment Variable    OTEL_EXPORTER_OTLP_HEADERS    api-key=secret-123,x-stackql-tenant=acme
+    ...                OTLP/JSON batch carrying the configured headers, while
+    ...                stdout still streams the same records.
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    the exec container cannot reach the host mock
+    ${otelCfg} =    Set Variable    {"exporter": {"endpoint": "${OTLP_MOCK_BASE_URL}/v1/logs", "headers": {"api-key": "secret-123", "x-stackql-tenant": "acme"}}}
     Reset OTLP Mock
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select login, contributions from github.repos.contributors
@@ -11282,6 +11279,7 @@ OTel Output Pushes Statement Batch To OTLP Endpoint
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
     ...    ${expected}
+    ...    \-\-otel.config\=${otelCfg}
     ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Push-Batch.tmp
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Push-Batch-stderr.tmp
     ${requests} =    Get OTLP Mock Requests
@@ -11299,15 +11297,11 @@ OTel Output Pushes Statement Batch To OTLP Endpoint
     ${completion_keys} =    Evaluate    [a['key'] for a in $records[8]['attributes']]
     Should Contain    ${completion_keys}    stackql.snapshot.complete
 
-OTel Output Chunks Pushed Batches And Derives The Logs Path
-    [Documentation]    Issue #755: the generic OTEL_EXPORTER_OTLP_ENDPOINT gets /v1/logs
-    ...                appended and OTEL_BLRP_MAX_EXPORT_BATCH_SIZE chunks a large
-    ...                result set into several requests.
-    [Teardown]    Run Keywords    Remove Environment Variable    OTEL_EXPORTER_OTLP_ENDPOINT    OTEL_BLRP_MAX_EXPORT_BATCH_SIZE
-    ...    AND    Stackql Per Test Teardown
-    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    exporter environment is not forwarded into the container
-    Set Environment Variable    OTEL_EXPORTER_OTLP_ENDPOINT    ${OTLP_MOCK_BASE_URL}
-    Set Environment Variable    OTEL_BLRP_MAX_EXPORT_BATCH_SIZE    4
+OTel Output Chunks Pushed Batches By Configured Batch Size
+    [Documentation]    Issue #755: the exporter's batch_size chunks a large result
+    ...                set into several requests to the configured endpoint.
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    the exec container cannot reach the host mock
+    ${otelCfg} =    Set Variable    {"exporter": {"endpoint": "${OTLP_MOCK_BASE_URL}/v1/logs", "batch_size": 4}}
     Reset OTLP Mock
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select login, contributions from github.repos.contributors
@@ -11327,6 +11321,7 @@ OTel Output Chunks Pushed Batches And Derives The Logs Path
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
     ...    ${expected}
+    ...    \-\-otel.config\=${otelCfg}
     ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Push-Chunked.tmp
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Push-Chunked-stderr.tmp
     ${requests} =    Get OTLP Mock Requests
@@ -11339,10 +11334,8 @@ OTel Output Chunks Pushed Batches And Derives The Logs Path
 OTel Output Retries OTLP Push On Server Error
     [Documentation]    Issue #755: a 503 from the endpoint is retried after a backoff
     ...                and the batch lands on the next attempt.
-    [Teardown]    Run Keywords    Remove Environment Variable    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
-    ...    AND    Stackql Per Test Teardown
-    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    exporter environment is not forwarded into the container
-    Set Environment Variable    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT    ${OTLP_MOCK_BASE_URL}/flaky/otel-retry/v1/logs?fail_until=1
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    the exec container cannot reach the host mock
+    ${otelCfg} =    Set Variable    {"exporter": {"endpoint": "${OTLP_MOCK_BASE_URL}/flaky/otel-retry/v1/logs?fail_until\=1"}}
     Reset OTLP Mock
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select login from github.repos.contributors
@@ -11361,6 +11354,7 @@ OTel Output Retries OTLP Push On Server Error
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
     ...    ${expected}
+    ...    \-\-otel.config\=${otelCfg}
     ...    stdout=${CURDIR}${/}tmp${/}OTel-Output-Push-Retry.tmp
     ...    stderr=${CURDIR}${/}tmp${/}OTel-Output-Push-Retry-stderr.tmp
     Assert OTLP Mock Attempts    otel-retry    2

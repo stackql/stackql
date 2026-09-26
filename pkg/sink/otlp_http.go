@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,18 +15,7 @@ import (
 	"time"
 )
 
-// The OTLP/HTTP exporter is configured only through the standard
-// OTEL_EXPORTER_OTLP_* environment variables; a logs-specific variable
-// takes precedence over its generic counterpart.
 const (
-	otlpLogsEndpointEnv  = "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"
-	otlpEndpointEnv      = "OTEL_EXPORTER_OTLP_ENDPOINT"
-	otlpLogsHeadersEnv   = "OTEL_EXPORTER_OTLP_LOGS_HEADERS"
-	otlpHeadersEnv       = "OTEL_EXPORTER_OTLP_HEADERS"
-	otlpLogsTimeoutEnv   = "OTEL_EXPORTER_OTLP_LOGS_TIMEOUT"
-	otlpTimeoutEnv       = "OTEL_EXPORTER_OTLP_TIMEOUT"
-	otlpBatchSizeEnv     = "OTEL_BLRP_MAX_EXPORT_BATCH_SIZE"
-	otlpLogsPath         = "/v1/logs"
 	otlpDefaultTimeout   = 10 * time.Second
 	otlpDefaultBatchSize = 512
 	otlpMaxAttempts      = 4
@@ -37,12 +25,21 @@ const (
 	otlpErrorBodyLimit   = 1024
 )
 
-// otlpHTTPConfig is the resolved exporter configuration.
-type otlpHTTPConfig struct {
-	endpoint  string
-	headers   map[string]string
-	timeout   time.Duration
-	batchSize int
+// OTLPHTTPConfig configures the OTLP/HTTP logs exporter. Endpoint is the
+// full logs URL (for example http://collector:4318/v1/logs) and is required;
+// the rest are optional.
+type OTLPHTTPConfig struct {
+	Endpoint string `json:"endpoint" yaml:"endpoint"`
+
+	// Headers are sent on every export request, for example an ingestion
+	// token or API key.
+	Headers map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
+
+	// TimeoutMS bounds each request; zero means 10000.
+	TimeoutMS int `json:"timeout_ms,omitempty" yaml:"timeout_ms,omitempty"`
+
+	// BatchSize is the number of records per request; zero means 512.
+	BatchSize int `json:"batch_size,omitempty" yaml:"batch_size,omitempty"`
 }
 
 // otlpHTTPSink batches OTelLogsData payloads and POSTs them as OTLP/JSON to
@@ -50,87 +47,43 @@ type otlpHTTPConfig struct {
 // and 5xx responses retried after a backoff. Close ships the remainder, so
 // the batch spans the sink's lifetime (one statement for the CLI writer).
 type otlpHTTPSink struct {
-	cfg     otlpHTTPConfig
-	client  *http.Client
-	backoff time.Duration
-	sleep   func(time.Duration)
+	endpoint  string
+	headers   map[string]string
+	batchSize int
+	client    *http.Client
+	backoff   time.Duration
+	sleep     func(time.Duration)
 
 	mu      sync.Mutex
 	pending OTelLogsData
 	count   int
 }
 
-// NewOTLPHTTPSinkFromEnv returns the exporter configured from the
-// environment, or false when neither OTEL_EXPORTER_OTLP_LOGS_ENDPOINT nor
-// OTEL_EXPORTER_OTLP_ENDPOINT is set.
-func NewOTLPHTTPSinkFromEnv() (Sink, bool) {
-	cfg, ok := otlpHTTPConfigFromEnv()
-	if !ok {
-		return nil, false
+// NewOTLPHTTPSink returns the exporter for cfg; the endpoint is required.
+func NewOTLPHTTPSink(cfg OTLPHTTPConfig) (Sink, error) {
+	if strings.TrimSpace(cfg.Endpoint) == "" {
+		return nil, errors.New("otlp http sink: endpoint is required")
 	}
-	return newOTLPHTTPSink(cfg), true
+	return newOTLPHTTPSink(cfg), nil
 }
 
-func newOTLPHTTPSink(cfg otlpHTTPConfig) *otlpHTTPSink {
+func newOTLPHTTPSink(cfg OTLPHTTPConfig) *otlpHTTPSink {
+	timeout := otlpDefaultTimeout
+	if cfg.TimeoutMS > 0 {
+		timeout = time.Duration(cfg.TimeoutMS) * time.Millisecond
+	}
+	batchSize := otlpDefaultBatchSize
+	if cfg.BatchSize > 0 {
+		batchSize = cfg.BatchSize
+	}
 	return &otlpHTTPSink{
-		cfg:     cfg,
-		client:  &http.Client{Timeout: cfg.timeout},
-		backoff: otlpInitialBackoff,
-		sleep:   time.Sleep,
+		endpoint:  strings.TrimSpace(cfg.Endpoint),
+		headers:   cfg.Headers,
+		batchSize: batchSize,
+		client:    &http.Client{Timeout: timeout},
+		backoff:   otlpInitialBackoff,
+		sleep:     time.Sleep,
 	}
-}
-
-// otlpHTTPConfigFromEnv resolves the endpoint (the logs endpoint verbatim,
-// else the generic endpoint with the logs path appended), headers, timeout
-// and batch size.
-func otlpHTTPConfigFromEnv() (otlpHTTPConfig, bool) {
-	cfg := otlpHTTPConfig{
-		endpoint:  os.Getenv(otlpLogsEndpointEnv),
-		headers:   otlpParseHeaders(otlpEnv(otlpLogsHeadersEnv, otlpHeadersEnv)),
-		timeout:   otlpDefaultTimeout,
-		batchSize: otlpDefaultBatchSize,
-	}
-	if cfg.endpoint == "" {
-		base := strings.TrimRight(os.Getenv(otlpEndpointEnv), "/")
-		if base == "" {
-			return cfg, false
-		}
-		cfg.endpoint = base + otlpLogsPath
-	}
-	if ms, err := strconv.Atoi(otlpEnv(otlpLogsTimeoutEnv, otlpTimeoutEnv)); err == nil && ms > 0 {
-		cfg.timeout = time.Duration(ms) * time.Millisecond
-	}
-	if n, err := strconv.Atoi(os.Getenv(otlpBatchSizeEnv)); err == nil && n > 0 {
-		cfg.batchSize = n
-	}
-	return cfg, true
-}
-
-// otlpEnv returns the logs-specific variable when set, else the generic one.
-func otlpEnv(specific, generic string) string {
-	if v := os.Getenv(specific); v != "" {
-		return v
-	}
-	return os.Getenv(generic)
-}
-
-// otlpParseHeaders parses the key=value,key=value list; values may be
-// percent-encoded as the specification allows.
-func otlpParseHeaders(raw string) map[string]string {
-	headers := map[string]string{}
-	for _, pair := range strings.Split(raw, ",") {
-		key, value, found := strings.Cut(pair, "=")
-		key = strings.TrimSpace(key)
-		if !found || key == "" {
-			continue
-		}
-		value = strings.TrimSpace(value)
-		if unescaped, err := url.PathUnescape(value); err == nil {
-			value = unescaped
-		}
-		headers[key] = value
-	}
-	return headers
 }
 
 // Record adds the payload's records to the pending batch and ships the
@@ -145,7 +98,7 @@ func (s *otlpHTTPSink) Record(ctx context.Context, payload any) error {
 	for _, rl := range data.ResourceLogs {
 		s.add(rl)
 	}
-	if s.count >= s.cfg.batchSize {
+	if s.count >= s.batchSize {
 		return s.flush(ctx)
 	}
 	return nil
@@ -219,18 +172,18 @@ func (s *otlpHTTPSink) post(ctx context.Context, body []byte) error {
 		s.sleep(wait)
 		delay *= otlpBackoffFactor
 	}
-	return fmt.Errorf("otlp http sink: export to %s failed: %w", s.cfg.endpoint, err)
+	return fmt.Errorf("otlp http sink: export to %s failed: %w", s.endpoint, err)
 }
 
 // send performs one export attempt, reporting whether a failure is
 // retryable and any Retry-After hint.
 func (s *otlpHTTPSink) send(ctx context.Context, body []byte) (bool, time.Duration, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.cfg.endpoint, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.endpoint, bytes.NewReader(body))
 	if err != nil {
 		return false, 0, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	for k, v := range s.cfg.headers {
+	for k, v := range s.headers {
 		req.Header.Set(k, v)
 	}
 	resp, err := s.client.Do(req)
