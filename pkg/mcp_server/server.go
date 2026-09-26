@@ -54,9 +54,13 @@ type simpleMCPServer struct {
 
 func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) error {
 	address := config.GetServerAddress()
+	if config.IsStateless() && !config.Server.Stateless {
+		s.logger.Infof("server.protocol_version %s implies stateless Streamable HTTP", config.GetProtocolVersion())
+	}
+	// Request bodies keep the SDK's 4 MiB default cap (413 beyond it).
 	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 		return server
-	}, &mcp.StreamableHTTPOptions{Stateless: config.Server.Stateless})
+	}, &mcp.StreamableHTTPOptions{Stateless: config.IsStateless()})
 
 	handlerWithLogging := loggingHandler(handler, s.logger)
 
@@ -198,7 +202,11 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		return nil, err
 	}
 
-	serverOpts := &mcp.ServerOptions{}
+	serverOpts := &mcp.ServerOptions{
+		// nil keeps every SDK revision; a pinned server.protocol_version
+		// narrows what is advertised and negotiated (issue #784).
+		SupportedProtocolVersions: config.AdvertisedProtocolVersions(),
+	}
 	if !config.DisableInstructions {
 		instructions, instrErr := loadEmbeddedInstructions()
 		if instrErr != nil {

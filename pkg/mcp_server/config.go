@@ -3,14 +3,26 @@ package mcp_server //nolint:revive,stylecheck,mnd // fine for now
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/stackql/stackql/pkg/mcp_server/audit"
 	"github.com/stackql/stackql/pkg/mcp_server/policy"
 	"github.com/stackql/stackql/pkg/mcp_server/render"
 	"github.com/stackql/stackql/pkg/sink"
+)
+
+const (
+	// protocolVersionAuto leaves every SDK-supported revision advertised.
+	protocolVersionAuto = "auto"
+	// protocolVersionSessionless is the first revision without the initialize
+	// handshake; the SDK serves it over HTTP only from a stateless handler.
+	protocolVersionSessionless = "2026-07-28"
 )
 
 // Config represents the complete configuration for the MCP server.
@@ -138,6 +150,42 @@ func (c *Config) IsAuditEnabled() bool {
 	return true
 }
 
+// GetProtocolVersion returns the configured revision ceiling, with "auto"
+// substituted for empty input.
+func (c *Config) GetProtocolVersion() string {
+	if c == nil || c.Server.ProtocolVersion == "" {
+		return protocolVersionAuto
+	}
+	return c.Server.ProtocolVersion
+}
+
+// AdvertisedProtocolVersions maps the ceiling onto
+// mcp.ServerOptions.SupportedProtocolVersions; nil keeps the SDK default.
+// The sessionless revision stands alone because its lifecycle differs;
+// any older ceiling keeps that revision and everything before it.
+func (c *Config) AdvertisedProtocolVersions() []string {
+	pinned := c.GetProtocolVersion()
+	if pinned == protocolVersionAuto {
+		return nil
+	}
+	if pinned == protocolVersionSessionless {
+		return []string{pinned}
+	}
+	var out []string
+	for _, v := range mcp.SupportedProtocolVersions() { // newest first
+		if v <= pinned {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+// IsStateless reports whether Streamable HTTP runs without sessions: set
+// explicitly, or implied by pinning the sessionless revision.
+func (c *Config) IsStateless() bool {
+	return c != nil && (c.Server.Stateless || c.GetProtocolVersion() == protocolVersionSessionless)
+}
+
 // ServerConfig contains configuration for the MCP server itself.
 type ServerConfig struct {
 	// Name is the server name advertised to clients.
@@ -166,6 +214,14 @@ type ServerConfig struct {
 	// their elicitation capability) and negotiates 2026-07-28 clients down
 	// via server/discover. Ignored for stdio, which serves every revision.
 	Stateless bool `json:"stateless,omitempty" yaml:"stateless,omitempty"`
+
+	// ProtocolVersion pins the newest revision advertised (issue #784).
+	// "auto" or empty keeps the SDK default; "2026-07-28" serves only the
+	// sessionless revision and implies Stateless for HTTP; an older revision
+	// keeps it and everything before it, so a 2026-07-28 request is answered
+	// with the SDK's -32022 downgrade error.  Legal values: "auto" plus
+	// mcp.SupportedProtocolVersions().
+	ProtocolVersion string `json:"protocol_version,omitempty" yaml:"protocol_version,omitempty"`
 
 	// Description is a human-readable description of the server.
 	Description string `json:"description" yaml:"description"`
@@ -207,6 +263,7 @@ type serverConfigWire struct {
 	TLSKeyFile            string         `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
 	TransportCfg          map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 	Stateless             bool           `json:"stateless,omitempty" yaml:"stateless,omitempty"`
+	ProtocolVersion       string         `json:"protocol_version,omitempty" yaml:"protocol_version,omitempty"`
 	Description           string         `json:"description" yaml:"description"`
 	MaxConcurrentRequests int            `json:"max_concurrent_requests" yaml:"max_concurrent_requests"`
 	RequestTimeout        Duration       `json:"request_timeout" yaml:"request_timeout"`
@@ -227,6 +284,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.TLSKeyFile = w.TLSKeyFile
 	s.TransportCfg = w.TransportCfg
 	s.Stateless = w.Stateless
+	s.ProtocolVersion = w.ProtocolVersion
 	s.Description = w.Description
 	s.MaxConcurrentRequests = w.MaxConcurrentRequests
 	s.RequestTimeout = w.RequestTimeout
@@ -414,6 +472,10 @@ func (c *Config) Validate() error {
 	}
 	if !render.IsLegalFormat(c.Server.Render) {
 		return fmt.Errorf("invalid server.render %q (legal: markdown, json)", c.Server.Render)
+	}
+	if v := c.GetProtocolVersion(); v != protocolVersionAuto && !slices.Contains(mcp.SupportedProtocolVersions(), v) {
+		return fmt.Errorf("invalid server.protocol_version %q (legal: auto, %s)",
+			c.Server.ProtocolVersion, strings.Join(mcp.SupportedProtocolVersions(), ", "))
 	}
 	switch c.Server.Audit.GetFormat() {
 	case audit.FormatJSONL, audit.FormatOTel:

@@ -82,10 +82,11 @@ func providerRegistryIdentifier(runtimeCtx dto.RuntimeCtx) string {
 
 //nolint:gochecknoglobals // cobra pattern
 var (
-	mcpServerType string // overwritten by flag
-	mcpConfig     string // overwritten by flag
-	mcpLogFormat  string // overwritten by flag; audit log encoding (issue #729)
-	envFilePath   string // overwritten by flag; sourced for every entrypoint in initConfig
+	mcpServerType      string // overwritten by flag
+	mcpConfig          string // overwritten by flag
+	mcpLogFormat       string // overwritten by flag; audit log encoding (issue #729)
+	mcpProtocolVersion string // overwritten by flag; revision ceiling (issue #784)
+	envFilePath        string // overwritten by flag; sourced for every entrypoint in initConfig
 )
 
 //nolint:gochecknoglobals // cobra pattern
@@ -151,6 +152,9 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	}
 	if mcpLogFormat != "" {
 		config.Server.Audit.Format = mcpLogFormat
+	}
+	if mcpProtocolVersion != "" {
+		config.Server.ProtocolVersion = mcpProtocolVersion
 	}
 	// MCP clients must be able to distinguish "query ran, zero rows" from
 	// "query failed upstream" (issue #670), so data acquisition failures

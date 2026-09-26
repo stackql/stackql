@@ -210,13 +210,37 @@ The server speaks every revision the [Go MCP SDK](https://github.com/modelcontex
 Transport behaviour:
 
 - **stdio** serves every revision on one process; a new-revision client's first request is served without a handshake and a legacy client's `initialize` still works.
-- **Streamable HTTP** defaults to the stateful, session-per-client model (`Mcp-Session-Id`), which the SDK serves for revisions up to `2025-11-25`; a `2026-07-28` client learns that from `server/discover` and negotiates down, so existing HTTP hosts keep their sessions and elicitation unchanged.  Set `"stateless": true` in `server` to serve `2026-07-28` natively: no `Mcp-Session-Id` is issued or read, `tools/list` / `prompts/list` / `resources/list` are connection-invariant, and gated writes use the input-required round trip.  A sessionless server still accepts a legacy `initialize` and serves reads to that client, but cannot retain the elicitation capability a legacy client declared at initialise (the SDK gives each request an ephemeral session), so legacy HTTP clients cannot approve gated writes on it.  Pick stateless for current-revision hosts, stateful for a mixed legacy fleet.
+- **Streamable HTTP** defaults to the stateful, session-per-client model (`Mcp-Session-Id`), which the SDK serves for revisions up to `2025-11-25`; a `2026-07-28` request is answered with JSON-RPC error `-32022` (`UnsupportedProtocolVersion`, SDK v1.8.0; a plain HTTP 400 before) whose `data.supported` lists the handshake revisions, and `server/discover` advertises the same, so the client negotiates down and existing HTTP hosts keep their sessions and elicitation unchanged.  Set `"stateless": true` in `server` (or pin `protocol_version` to `2026-07-28`, below) to serve `2026-07-28` natively: no `Mcp-Session-Id` is issued or read, `GET` and `DELETE` answer 405 (there is no session to tear down), `tools/list` / `prompts/list` / `resources/list` are connection-invariant, and gated writes use the input-required round trip.  A sessionless server still accepts a legacy `initialize` and serves reads to that client, but cannot retain the elicitation capability a legacy client declared at initialise (the SDK gives each request an ephemeral session), so legacy HTTP clients cannot approve gated writes on it.  Pick stateless for current-revision hosts, stateful for a mixed legacy fleet.
 
 ```bash
 ./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "stateless": true} }'
 ```
 
 The server holds no cross-call state: mode, audit and provider auth are process-level configuration, so nothing needed to move behind explicit handles (SEP-2567).  The robot suite drives stdio and both HTTP models with a 2025-06-18 handshake client and a 2026-07-28 stateless client, including the gated write on each revision.
+
+### Pinning the revision (`--mcp.protocol.version`)
+
+By default the server advertises every revision the SDK supports and negotiates per client.  To narrow that:
+
+```bash
+./build/stackql mcp --mcp.server.type=http --mcp.protocol.version=2026-07-28 --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992"} }'
+./build/stackql mcp --mcp.server.type=stdio --mcp.protocol.version=2025-11-25
+```
+
+The flag overrides `server.protocol_version` in `mcp.config` (`"server": {"protocol_version": "2025-11-25"}`) and sets the newest revision the server advertises (the SDK's `ServerOptions.SupportedProtocolVersions`):
+
+| Value | Advertised | Effect |
+|---|---|---|
+| `auto` (default) or absent | every SDK revision | negotiation as above: the highest revision both sides speak |
+| `2026-07-28` | `2026-07-28` only | sessionless only; implies `stateless` for Streamable HTTP.  A legacy `initialize` is answered with `2025-11-25`, the SDK's cue that the client should disconnect rather than read the answer as the new lifecycle |
+| `2025-11-25` (or any older revision) | that revision and everything before it | handshake lifecycle only: a `2026-07-28` request gets `-32022` with `data.supported` listing the advertised revisions so the client can renegotiate; older handshake clients keep their own revision |
+
+Any other value fails config validation at startup (`invalid server.protocol_version`, naming the legal values).  The robot suite covers each row on stdio and Streamable HTTP, the automatic negotiation, and the stateful downgrade error.
+
+### Transport limits and deprecated features (SDK v1.8.0)
+
+- Streamable HTTP request bodies are capped at the SDK default of 4 MiB (`413` beyond it) and JSON nested deeper than 1000 levels is rejected before parsing; stackql's own stdio transport bounds a frame at 8 MiB (issue #701).  None of these are configurable in `mcp.config`: they sit far above any SQL statement stackql accepts.
+- Roots, sampling and server-side logging are deprecated by `2026-07-28` (SEP-2577).  stackql uses none of them: it issues no roots or sampling requests and emits no `notifications/message`; the SDK's default `logging` capability stays advertised for the deprecation window.
 
 ### Breaking change vs PR1
 

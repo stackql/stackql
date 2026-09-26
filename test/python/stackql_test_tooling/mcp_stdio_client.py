@@ -6,7 +6,8 @@ Also hosts the issue #688 scripted credential reload scenarios against the
 `--env.file` dotenv file, the issue #701 malformed-frame resilience
 roundtrip, and the issue #729 protocol revision conformance roundtrips
 (2025-06-18 handshake client and 2026-07-28 stateless client, stdio and
-Streamable HTTP).
+Streamable HTTP).  The issue #784 scenarios reuse those clients against
+servers pinned via server.protocol_version / --mcp.protocol.version.
 """
 
 import json
@@ -400,6 +401,7 @@ def run_stdio_stateless_roundtrip(
     mutation_sql,
     approval_action="accept",
     mode="safe",
+    protocol_version=None,
     timeout_seconds=90,
 ):
     """Drives a 2026-07-28 client over stdio: no initialize handshake, the
@@ -407,14 +409,19 @@ def run_stdio_stateless_roundtrip(
     request. Runs tools/list, then a gated mutation whose approval comes back
     as an input_required result and is answered on the retry via
     inputResponses. Returns the tool names, the first mutation result shape,
-    the retried mutation text and the raw streams.
+    the retried mutation text and the raw streams.  `protocol_version` pins
+    the server (issue #784); a pin below 2026-07-28 answers tools/list with
+    the -32022 downgrade error surfaced as list_error_code / _supported.
     """
+    server_cfg = {"mode": mode, "audit": {"disabled": True}}
+    if protocol_version:
+        server_cfg["protocol_version"] = protocol_version
     argv = [
         stackql_exe,
         "mcp",
         "--mcp.server.type=stdio",
         "--mcp.config",
-        json.dumps({"server": {"mode": mode, "audit": {"disabled": True}}}),
+        json.dumps({"server": server_cfg}),
         "--registry",
         registry_cfg,
         "--auth",
@@ -469,8 +476,11 @@ def run_stdio_stateless_roundtrip(
         watchdog.cancel()
         if proc.poll() is None:
             proc.kill()
+    list_error = listed.get("error") or {}
     return {
         "tools": tools,
+        "list_error_code": list_error.get("code"),
+        "list_error_supported": (list_error.get("data") or {}).get("supported") or [],
         "first_result_type": first.get("resultType", ""),
         "input_request_methods": sorted(
             (v or {}).get("method", "") for v in (first.get("inputRequests") or {}).values()
@@ -598,7 +608,17 @@ def _http_post(url, payload, headers=None):
             response_headers = {k.lower(): v for k, v in response.headers.items()}
             raw = response.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as err:
-        return err.code, {k.lower(): v for k, v in err.headers.items()}, {"http_error": err.read().decode("utf-8", errors="replace")}
+        # SDK v1.8.0 answers a rejected revision with a JSON-RPC error body
+        # on a 400 status; keep it decodable for the downgrade assertions.
+        error_headers = {k.lower(): v for k, v in err.headers.items()}
+        raw = err.read().decode("utf-8", errors="replace")
+        decoded = {"http_error": raw}
+        if error_headers.get("content-type", "").startswith("application/json"):
+            try:
+                decoded = json.loads(raw)
+            except ValueError:
+                pass
+        return err.code, error_headers, decoded
     decoded = {}
     if raw.strip():
         if response_headers.get("content-type", "").startswith("text/event-stream"):
@@ -613,6 +633,21 @@ def _http_post(url, payload, headers=None):
         else:
             decoded = json.loads(raw)
     return status, response_headers, decoded
+
+
+def _http_delete(url, headers=None):
+    """Sends a DELETE with no session header and returns the HTTP status."""
+    import urllib.request
+    import urllib.error
+
+    request = urllib.request.Request(url, method="DELETE")
+    for key, value in (headers or {}).items():
+        request.add_header(key, value)
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            return response.status
+    except urllib.error.HTTPError as err:
+        return err.code
 
 
 def run_http_legacy_roundtrip(url):
@@ -675,11 +710,16 @@ def run_http_stateless_roundtrip(url):
         "params": {"_meta": _STATELESS_META, "name": "server_info", "arguments": {}},
     })
     discover_result = discovered.get("result") or {}
+    list_error = listed.get("error") or {}
     return {
         "discover_versions": discover_result.get("supportedVersions") or [],
         "discover_instructions": discover_result.get("instructions") or "",
         "session_issued": bool(headers.get("mcp-session-id", "")),
         "tools": [t.get("name") for t in (listed.get("result") or {}).get("tools") or []],
+        "list_error_code": list_error.get("code"),
+        "list_error_supported": (list_error.get("data") or {}).get("supported") or [],
+        # Sessionless servers have nothing to tear down: DELETE is 405.
+        "delete_status": _http_delete(url, {"Mcp-Protocol-Version": "2026-07-28"}),
         "server_info": _tool_result_text(info),
     }
 

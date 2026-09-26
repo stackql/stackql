@@ -3,6 +3,8 @@ package mcp_server //nolint:testpackage,revive // fine for now
 import (
 	"context"
 	"encoding/json"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -125,6 +127,50 @@ func TestIsPromptEnabled(t *testing.T) {
 	}
 	if cfg.IsPromptEnabled("other") {
 		t.Errorf("other should be denied")
+	}
+}
+
+// Issue #784: server.protocol_version pins the newest advertised revision.
+func TestProtocolVersionConfig(t *testing.T) {
+	legacy := []string{"2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"}
+	cases := []struct {
+		name       string
+		pinned     string
+		stateless  bool
+		advertised []string
+		wantStless bool
+	}{
+		{name: "empty is auto", pinned: "", advertised: nil},
+		{name: "auto", pinned: "auto", advertised: nil},
+		{name: "auto keeps explicit stateless", pinned: "auto", stateless: true, wantStless: true},
+		{name: "sessionless stands alone and implies stateless", pinned: "2026-07-28",
+			advertised: []string{"2026-07-28"}, wantStless: true},
+		{name: "legacy ceiling keeps older revisions", pinned: "2025-11-25", advertised: legacy},
+		{name: "older ceiling", pinned: "2025-06-18", advertised: legacy[1:]},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := DefaultConfig()
+			cfg.Server.ProtocolVersion = tc.pinned
+			cfg.Server.Stateless = tc.stateless
+			if err := cfg.Validate(); err != nil {
+				t.Fatalf("Validate: %v", err)
+			}
+			if got := cfg.AdvertisedProtocolVersions(); !reflect.DeepEqual(got, tc.advertised) {
+				t.Fatalf("advertised = %v, want %v", got, tc.advertised)
+			}
+			if got := cfg.IsStateless(); got != tc.wantStless {
+				t.Fatalf("IsStateless = %v, want %v", got, tc.wantStless)
+			}
+		})
+	}
+	cfg, err := LoadFromJSON([]byte(`{"server": {"protocol_version": "2020-01-01"}}`))
+	if err == nil || !strings.Contains(err.Error(), "invalid server.protocol_version") {
+		t.Fatalf("unsupported revision must fail validation, got cfg=%v err=%v", cfg, err)
+	}
+	cfg, err = LoadFromJSON([]byte(`{"server": {"protocol_version": "2025-11-25", "read_only": true}}`))
+	if err != nil || cfg.GetProtocolVersion() != "2025-11-25" || cfg.GetMode() != "read_only" {
+		t.Fatalf("wire form should carry protocol_version beside the legacy shim: cfg=%+v err=%v", cfg, err)
 	}
 }
 

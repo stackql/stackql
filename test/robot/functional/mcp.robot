@@ -202,6 +202,35 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Registry-Pull.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Registry-Pull-stderr.txt
+    # Issue #784: revision pins.  9928 is pinned to 2026-07-28 through the
+    # --mcp.protocol.version flag with no "stateless" key (the pin implies
+    # sessionless HTTP); safe mode so the gated write is exercised.  9929 is
+    # pinned to 2025-11-25 through mcp.config and stays stateful.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.protocol.version\=2026-07-28
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9928", "mode": "safe", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Pinned-Current.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Pinned-Current-stderr.txt
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9929", "protocol_version": "2025-11-25", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Pinned-Legacy.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Pinned-Legacy-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -1531,12 +1560,16 @@ MCP HTTP Stateless Server Still Serves Legacy Handshake Client
 
 MCP HTTP Stateful Server Negotiates Current Client Down
     [Documentation]    The default (stateful) HTTP server does not serve 2026-07-28: a raw
-    ...                _meta-versioned request is rejected, and the bundled client
-    ...                discovers that and negotiates a prior revision, so existing HTTP
+    ...                _meta-versioned request is answered with JSON-RPC -32022 whose data
+    ...                lists the handshake revisions (SDK v1.8.0; a plain 400 before), and
+    ...                the bundled client negotiates a prior revision, so existing HTTP
     ...                hosts keep sessions and elicitation unchanged.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_roundtrip('http://127.0.0.1:9912')    modules=stackql_test_tooling.mcp_stdio_client
     Should Be Equal    ${result['tools']}    ${{[]}}
+    Should Be Equal As Integers    ${result['list_error_code']}    -32022
+    List Should Contain Value        ${result['list_error_supported']}    2025-11-25
+    List Should Not Contain Value    ${result['list_error_supported']}    2026-07-28
     ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
     ...                  \-\-client\-type\=http
@@ -1673,3 +1706,101 @@ MCP HTTP Audit OTel Format Emits OTLP JSON Log Records
     Should Not Contain    ${jsonl_log}    resourceLogs
     Should Not Contain    ${jsonl_log}    rows_returned
     Should Not Contain    ${jsonl_log}    2026-07-28
+
+# ===========================================================================
+# Issue #784 scenarios: go-sdk v1.8.0 and the revision pin
+# (server.protocol_version / --mcp.protocol.version).  9928 is pinned to
+# 2026-07-28 (flag, no "stateless" key), 9929 to 2025-11-25 (mcp.config,
+# stateful); stdio pins ride in the harness config.
+# ===========================================================================
+
+MCP HTTP Pinned Current Revision Serves Sessionless Client Without Stateless Config
+    [Documentation]    --mcp.protocol.version=2026-07-28 narrows server/discover to that
+    ...                revision and implies stateless HTTP: no session id is issued, DELETE
+    ...                is not session teardown (405), and the safe-mode gated write uses
+    ...                the input-required round trip.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_roundtrip('http://127.0.0.1:9928')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['discover_versions']}    ${{['2026-07-28']}}
+    Should Not Be True    ${result['session_issued']}
+    Should Be Equal As Integers    ${result['delete_status']}    405
+    List Should Contain Value    ${result['tools']}    run_mutation_query
+    Should Contain    ${result['server_info']}    "version"
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${gated}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_gated_write('http://127.0.0.1:9928', $sql, approval_action='accept')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${gated['first_result_type']}    input_required
+    Should Contain        ${gated['retry']}    timestamp
+    Should Not Contain    ${gated['retry']}    isError=true
+
+MCP HTTP Pinned Current Revision Answers Legacy Initialize With Newest Handshake Revision
+    [Documentation]    With only 2026-07-28 advertised, a 2025-06-18 initialize is answered
+    ...                with 2025-11-25 (the SDK's cue for the client to disconnect rather
+    ...                than read the answer as the new lifecycle) and no session is issued.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9928')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${result['negotiated']}    2025-11-25
+    Should Not Be True    ${result['session_issued']}
+
+MCP HTTP Pinned Legacy Revision Rejects Current Revision With Downgrade Error
+    [Documentation]    protocol_version 2025-11-25 in mcp.config keeps the handshake
+    ...                lifecycle: a 2026-07-28 request gets JSON-RPC -32022 listing the
+    ...                advertised revisions (so the client can renegotiate) while a
+    ...                2025-06-18 client keeps its own revision on a session.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${current}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_stateless_roundtrip('http://127.0.0.1:9929')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${current['list_error_code']}    -32022
+    List Should Contain Value        ${current['list_error_supported']}    2025-11-25
+    List Should Not Contain Value    ${current['list_error_supported']}    2026-07-28
+    Should Be Equal    ${current['tools']}    ${{[]}}
+    ${legacy}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9929')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal    ${legacy['negotiated']}    2025-06-18
+    Should Be True     ${legacy['session_issued']}
+    List Should Contain Value    ${legacy['tools']}    server_info
+
+MCP Stdio Pinned Legacy Revision Rejects Current Revision Request
+    [Documentation]    The same downgrade error over stdio: tools/list carrying the
+    ...                2026-07-28 _meta is refused with -32022 and the session survives.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_stateless_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $sql, protocol_version='2025-11-25')    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    Should Be Equal As Integers    ${result['list_error_code']}    -32022
+    List Should Contain Value        ${result['list_error_supported']}    2025-11-25
+    List Should Not Contain Value    ${result['list_error_supported']}    2026-07-28
+    Should Be Equal    ${result['tools']}    ${{[]}}
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Pinned Current Revision Serves Current Client Gated Write
+    [Documentation]    A stdio server pinned to 2026-07-28 serves the sessionless client
+    ...                unchanged, including the safe-mode input-required round trip.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${sql}=    Set Variable    delete from google.compute.firewalls where project = 'mutable-project' and firewall = 'deletable-firewall';
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_stateless_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $sql, approval_action='accept', protocol_version='2026-07-28')    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    List Should Contain Value    ${result['tools']}    run_mutation_query
+    Should Be Equal    ${result['first_result_type']}    input_required
+    Should Contain        ${result['retry']}    timestamp
+    Should Not Contain    ${result['retry']}    isError=true
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Server Refuses Unsupported Protocol Version
+    [Documentation]    A revision the SDK does not know fails config validation at startup
+    ...                and names the legal values.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Run Process    ${STACKQL_EXE}
+    ...                  mcp
+    ...                  \-\-mcp.server.type\=http
+    ...                  \-\-mcp.protocol.version\=2020-01-01
+    ...                  \-\-mcp.config
+    ...                  {"server": {"transport": "http", "address": "127.0.0.1:9930", "audit": {"disabled": true}} }
+    ...                  \-\-registry
+    ...                  ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                  \-\-auth
+    ...                  ${AUTH_CFG_STR}
+    ...                  \-\-tls.allowInsecure
+    ...                  timeout=90s
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Unsupported-Version.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Unsupported-Version-stderr.txt
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain    ${result.stderr}    invalid server.protocol_version "2020-01-01"
+    Should Contain    ${result.stderr}    legal: auto, 2026-07-28, 2025-11-25

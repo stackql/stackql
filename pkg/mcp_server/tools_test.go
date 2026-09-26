@@ -3,7 +3,9 @@ package mcp_server //nolint:testpackage,revive // exercise internal wiring
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -926,7 +928,102 @@ func (c *rawClientConn) expectResponse(id int64) json.RawMessage {
 	return resp.Result
 }
 
+// expectError reads the next message and asserts it is an error response to id.
+func (c *rawClientConn) expectError(id int64) *jsonrpc.Error {
+	c.t.Helper()
+	resp, ok := c.read().(*jsonrpc.Response)
+	if !ok {
+		c.t.Fatalf("expected a response to id %d", id)
+	}
+	if got, _ := resp.ID.Raw().(int64); got != id {
+		c.t.Fatalf("response id = %v, want %d", resp.ID.Raw(), id)
+	}
+	var rpcErr *jsonrpc.Error
+	if !errors.As(resp.Error, &rpcErr) {
+		c.t.Fatalf("response %d should carry a JSON-RPC error, got err=%v result=%s", id, resp.Error, resp.Result)
+	}
+	return rpcErr
+}
+
+// negotiate runs a 2025-06-18 initialize and returns the server's answer.
+func (c *rawClientConn) negotiate(id int64) string {
+	c.t.Helper()
+	c.send(id, "initialize",
+		`{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"legacy","version":"0"}}`)
+	var init struct {
+		ProtocolVersion string `json:"protocolVersion"`
+	}
+	if err := json.Unmarshal(c.expectResponse(id), &init); err != nil {
+		c.t.Fatalf("initialize result: %v", err)
+	}
+	return init.ProtocolVersion
+}
+
 const legacyMutationCall = `{"name":"run_mutation_query","arguments":{"sql":"delete from t"}}`
+
+const currentRevisionToolsList = `{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28",` +
+	`"io.modelcontextprotocol/clientCapabilities":{}}}`
+
+// pinnedConfig returns a default config with server.protocol_version set.
+func pinnedConfig(version string) *Config {
+	cfg := DefaultConfig()
+	cfg.Server.ProtocolVersion = version
+	return cfg
+}
+
+// Issue #784: a server pinned below 2026-07-28 answers a current-revision
+// request with the SEP-2575 downgrade error listing what it does speak, and
+// still negotiates older handshake revisions.  Each lifecycle gets its own
+// connection, as the SDK treats a session as initialised either way.
+func TestPinnedLegacyRevision_RejectsCurrentRevisionWithDowngradeError(t *testing.T) {
+	c := newRawClientConn(t, pinnedConfig("2025-11-25"), &testBackend{})
+	c.send(1, "tools/list", currentRevisionToolsList)
+	rpcErr := c.expectError(1)
+	if rpcErr.Code != mcp.CodeUnsupportedProtocolVersion {
+		t.Fatalf("code = %d, want %d", rpcErr.Code, mcp.CodeUnsupportedProtocolVersion)
+	}
+	var data mcp.UnsupportedProtocolVersionData
+	if err := json.Unmarshal(rpcErr.Data, &data); err != nil {
+		t.Fatalf("error data: %v", err)
+	}
+	if data.Requested != "2026-07-28" || slices.Contains(data.Supported, "2026-07-28") ||
+		!slices.Contains(data.Supported, "2025-11-25") {
+		t.Fatalf("downgrade data = %+v", data)
+	}
+	legacy := newRawClientConn(t, pinnedConfig("2025-11-25"), &testBackend{})
+	if got := legacy.negotiate(1); got != "2025-06-18" {
+		t.Fatalf("older handshake revision negotiated %q, want the client's 2025-06-18", got)
+	}
+}
+
+// Issue #784: a server pinned to 2026-07-28 serves current-revision requests
+// and answers a legacy initialize with 2025-11-25 (the SDK's signal that the
+// client should disconnect rather than read it as the new lifecycle).
+func TestPinnedCurrentRevision_ServesCurrentAndAnswersLegacyWithNewestHandshake(t *testing.T) {
+	c := newRawClientConn(t, pinnedConfig("2026-07-28"), &testBackend{})
+	c.send(1, "tools/list", currentRevisionToolsList)
+	if listed := c.expectResponse(1); !strings.Contains(string(listed), `"run_select_query"`) {
+		t.Fatalf("pinned current revision should list tools, got %s", listed)
+	}
+	legacy := newRawClientConn(t, pinnedConfig("2026-07-28"), &testBackend{})
+	if got := legacy.negotiate(1); got != "2025-11-25" {
+		t.Fatalf("legacy initialize answered %q, want 2025-11-25", got)
+	}
+}
+
+// Automatic negotiation keeps both lifecycles: the client's handshake
+// revision is honoured and current-revision requests are served.
+func TestAutoRevision_ServesBothLifecycles(t *testing.T) {
+	c := newRawClientConn(t, DefaultConfig(), &testBackend{})
+	c.send(1, "tools/list", currentRevisionToolsList)
+	if listed := c.expectResponse(1); !strings.Contains(string(listed), `"run_select_query"`) {
+		t.Fatalf("auto should serve the current revision, got %s", listed)
+	}
+	legacy := newRawClientConn(t, DefaultConfig(), &testBackend{})
+	if got := legacy.negotiate(1); got != "2025-06-18" {
+		t.Fatalf("auto negotiated %q, want the client's 2025-06-18", got)
+	}
+}
 
 // A 2025-06-18 client keeps the initialize handshake and receives the safe
 // mode approval as a server-initiated elicitation/create request; the SDK

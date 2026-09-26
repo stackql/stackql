@@ -32,7 +32,7 @@ const (
 
 // resilientStdioTransport replaces mcp.StdioTransport, whose read loop
 // treats any JSON decode failure on stdin as fatal to the session (issue
-// #701; unchanged as of SDK v1.7.0).  Frames are read here instead and
+// #701; unchanged as of SDK v1.8.0).  Frames are read here instead and
 // undecodable ones answered per JSON-RPC 2.0 (-32700 / -32600) without
 // terminating the session.  Inbound batch arrays get -32600 rather than
 // fan-out: batching was removed in MCP 2025-06-18 and the SDK kills
