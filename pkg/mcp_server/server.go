@@ -386,24 +386,6 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 	))
 
 	errs = append(errs, addToolWithGate(
-		server, cfg, auditSink, descriptions, selectGate("describe_resource"),
-		&mcp.Tool{Name: "describe_resource"},
-		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
-			format, formatErr := resolveRenderFormat(cfg, args.Format)
-			if formatErr != nil {
-				return nil, dto.QueryResultDTO{}, formatErr
-			}
-			rows, err := backend.DescribeResource(ctx, args)
-			if err != nil {
-				return nil, dto.QueryResultDTO{}, err
-			}
-			out := dto.QueryResultDTO{Rows: rows}
-			text := textForFormat(format, out, func() string { return render.RenderKV("Resource", rows) })
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
-		},
-	))
-
-	errs = append(errs, addToolWithGate(
 		server, cfg, auditSink, descriptions, selectGate("describe_method"),
 		&mcp.Tool{Name: "describe_method"},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {

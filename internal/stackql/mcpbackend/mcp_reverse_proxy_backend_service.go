@@ -184,14 +184,6 @@ func (b *stackqlMCPReverseProxyService) RunQueryJSON(ctx context.Context, input 
 	return b.query(ctx, input.SQL, input.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	q, qErr := b.interrogator.GetDescribeResource(hI)
-	if qErr != nil {
-		return nil, qErr
-	}
-	return b.query(ctx, q, hI.RowLimit)
-}
-
 func (b *stackqlMCPReverseProxyService) DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	q, qErr := b.interrogator.GetDescribeMethod(hI)
 	if qErr != nil {

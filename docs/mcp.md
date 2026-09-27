@@ -116,11 +116,7 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 ## **must** supply <provider>, <service>, <resource>
 ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action list_methods --exec.args '{"provider": "google", "service": "compute", "resource": "networks"}'
 
-## Describe a resource's output fields.
-## **must** supply <provider>, <service>, <resource>
-./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action describe_resource --exec.args '{"provider": "google", "service": "compute", "resource": "networks"}'
-
-## Describe a single method's I/O contract (always EXTENDED).
+## Describe a single method's I/O contract (always EXTENDED): inputs with param_type and the output fields.
 ## **must** supply <provider>, <service>, <resource>, <method>
 ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action describe_method --exec.args '{"provider": "google", "service": "compute", "resource": "networks", "method": "get"}'
 
@@ -145,7 +141,7 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 
 ## Canonical agent tools
 
-The server publishes 14 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
+The server publishes 15 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
 
 Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`), derived from the same policy-gate classification that enforces the server [mode](#server-modes): statically read-only tools claim `readOnlyHint`, mutation/lifecycle tools claim `destructiveHint`, and SQL-carrying tools make no read-only claim because their effect depends on the submitted statement.  Annotations are advisory hints for client UX; enforcement always remains with the policy gate.
 
@@ -155,9 +151,8 @@ Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`,
 | `list_providers` | Table | Available cloud/SaaS providers (top of the hierarchy).  No inputs. |
 | `list_services` | Table | Services under a provider.  Requires `provider`. |
 | `list_resources` | Table | Resources under a `provider`.`service`.  Requires `provider` and `service`. |
-| `list_methods` | Table | Access methods (HTTP operations) for a resource.  **Call before writing any query.** Requires `provider`, `service`, `resource`. |
-| `describe_resource` | KV | Output fields for a resource's primary read method.  Requires `provider`, `service`, `resource`. |
-| `describe_method` | KV | Full I/O contract for one method (always EXTENDED).  Requires `provider`, `service`, `resource`, `method`. |
+| `list_methods` | Table | Access methods (HTTP operations) for a resource with their SQL verb and required params.  **Call before writing any query.** Requires `provider`, `service`, `resource`. |
+| `describe_method` | KV | Full I/O contract for one method (always EXTENDED): inputs with `param_type` and the `output` fields a SELECT can reference.  Requires `provider`, `service`, `resource`, `method`. |
 | `validate_select_query` | KV | Parse and plan a SELECT without executing.  Returns `{valid, errors}`.  SELECT only. |
 | `run_select_query` | Table | Execute a SELECT.  Returns `{rows}`.  Reads only. |
 | `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE.  **Real side effects.** Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
@@ -165,6 +160,8 @@ Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`,
 | `list_registry` | Table | Providers (and their versions) available in the configured registry.  Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache.  Requires `provider`; `version` optional.  Local cache write only. |
 | `reload_credentials` | Table | Live-reload credentials: re-source the [`--env.file`](#credential-resourcing---envfile--reload_credentials) dotenv file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider.  Never returns secret values.  Optional `provider` filters the report.  Recovery and rotation only, never a pre-query step.  Allowed in every mode. |
+| `query_library_search` | Table | Search the curated query library by natural-language `intent` (optional `provider` / `service` / `tags` filters).  Consult before composing SQL from scratch.  Read-only, no credentials. |
+| `query_library_get` | KV | Retrieve one library entry by `id`; with `params` the server validates them and returns rendered SQL plus the tool to execute it with.  Read-only, no credentials. |
 
 ## Canonical agent prompts, resources and instructions
 
@@ -263,7 +260,7 @@ Recorded per event:
 | `decision` | `allow` / `refuse_immediate` / `needs_approval_accepted` / `needs_approval_declined` / `needs_approval_cancelled` / `needs_approval_unavailable` |
 | `query_class` | `select` / `mutation_create` / `mutation_delete` / `lifecycle` / `unknown` |
 | `sql` | For query tools (`run_select_query`, `run_mutation_query`, `run_lifecycle_operation`, `validate_select_query`) |
-| `args` | Hierarchy fields for metadata tools (`list_*`, `describe_*`); SQL + row_limit for query tools |
+| `args` | Hierarchy fields for metadata tools (`list_*`, `describe_method`); SQL + row_limit for query tools |
 | `duration_ms` | Wall-clock duration of the gate + handler |
 | `error` | Error message if the tool errored or was refused |
 
@@ -411,17 +408,6 @@ $ ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:999
     { "MethodName": "list",     "RequiredParams": "project",            "SQLVerb": "SELECT" },
     { "MethodName": "insert",   "RequiredParams": "project",            "SQLVerb": "INSERT" },
     { "MethodName": "delete",   "RequiredParams": "network, project",  "SQLVerb": "DELETE" }
-  ]
-}
-
-
-$ ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action describe_resource --exec.args '{"provider": "google", "service": "compute", "resource": "networks"}' 2>/dev/null | jq
-{
-  "rows": [
-    { "name": "id",          "type": "string" },
-    { "name": "name",        "type": "string" },
-    { "name": "description", "type": "string" },
-    { "name": "selfLink",    "type": "string" }
   ]
 }
 

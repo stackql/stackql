@@ -22,7 +22,6 @@ type testBackend struct {
 	listServicesOut  []map[string]any
 	listResourcesOut []map[string]any
 	listMethodsOut   []map[string]any
-	describeRsrcOut  []map[string]any
 	describeMethOut  []map[string]any
 	runJSONOut       []map[string]any
 	validateOut      []map[string]any
@@ -77,10 +76,6 @@ func (b *testBackend) ListResources(_ context.Context, h dto.HierarchyInput) ([]
 func (b *testBackend) ListMethods(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
 	return nilOrEmpty(b.listMethodsOut), nil
-}
-func (b *testBackend) DescribeResource(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
-	b.lastHierarchy = h
-	return nilOrEmpty(b.describeRsrcOut), nil
 }
 func (b *testBackend) DescribeMethod(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
@@ -281,22 +276,6 @@ func TestTool_ListServices_ForwardsHierarchy(t *testing.T) {
 	}
 }
 
-func TestTool_DescribeResource_UsesKVRenderer(t *testing.T) {
-	be := &testBackend{describeRsrcOut: []map[string]any{{"name": "id", "type": "string"}}}
-	cs := connectInProcess(t, DefaultConfig(), be)
-
-	res := callTool(t, cs, "describe_resource", map[string]any{
-		"provider": "google", "service": "compute", "resource": "networks",
-	})
-	text := firstText(t, res)
-	if !strings.Contains(text, "# Resource") {
-		t.Errorf("expected KV title, got %q", text)
-	}
-	if be.lastHierarchy.Resource != "networks" {
-		t.Errorf("hierarchy not forwarded: %+v", be.lastHierarchy)
-	}
-}
-
 func TestTool_DescribeMethod_RequiresFourSegments(t *testing.T) {
 	be := &testBackend{describeMethOut: []map[string]any{{"name": "project", "required": true}}}
 	cs := connectInProcess(t, DefaultConfig(), be)
@@ -421,6 +400,31 @@ func TestRegistration_EnabledToolsFilters(t *testing.T) {
 	}
 }
 
+// describe_resource is retired as an MCP tool: a resource has no single
+// field list, each method returns its own shape, so describe_method is the
+// column source. The SQL DESCRIBE statement is unaffected.
+func TestRegistration_DescribeResourceRetired(t *testing.T) {
+	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	tools, err := cs.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools: %v", err)
+	}
+	names := map[string]bool{}
+	for _, tool := range tools.Tools {
+		names[tool.Name] = true
+	}
+	if names["describe_resource"] {
+		t.Errorf("describe_resource must not be published, tools: %v", names)
+	}
+	for _, kept := range []string{"list_methods", "describe_method"} {
+		if !names[kept] {
+			t.Errorf("%s should be published, tools: %v", kept, names)
+		}
+	}
+}
+
 func TestTools_AnnotationsDerivedFromGate(t *testing.T) {
 	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
 
@@ -444,7 +448,7 @@ func TestTools_AnnotationsDerivedFromGate(t *testing.T) {
 	// Statically select-classified tools claim read-only.
 	for _, name := range []string{
 		"server_info", "list_providers", "list_services", "list_resources",
-		"list_methods", "describe_resource", "describe_method",
+		"list_methods", "describe_method",
 		"validate_select_query", "list_registry",
 	} {
 		if a := annotationsFor(name); a == nil || !a.ReadOnlyHint {

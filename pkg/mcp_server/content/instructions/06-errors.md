@@ -18,6 +18,6 @@ Recovery by class:
 - 403 -> authenticated but not permitted. Retry cannot fix this; record the check as "could not assess" or ask the operator for the missing permission.
 - 429 surviving auto-retry -> reduce fan-out breadth and query frequency before trying again.
 - 5xx -> provider-side trouble. 502/503/504 arrive only after auto-retry is exhausted; 500 is never auto-retried. Either way back off and report, do not hammer.
-- `no such column` -> call `describe_resource` and use the exact field names returned. Do not guess variants.
+- `no such column` -> call `describe_method` for the method the query routes to and use the exact `output` field names returned. Do not guess variants.
 - Empty result from a list operation that should plainly return rows -> suspect endpoint routing. Retry with the provider's default region or scope before concluding the result is genuinely empty.
 - Mutation rejected by policy -> server-mode enforcement, not a syntax error. Never rewrite the query to evade the gate; report the server mode to the user.

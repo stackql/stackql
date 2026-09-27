@@ -256,6 +256,9 @@ MCP HTTP Server Run List Tools
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Run-List-Tools.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Run-List-Tools-stderr.txt
     Should Contain       ${result.stdout}       Get server identity
+    # describe_resource is retired as an MCP tool; describe_method is the column source.
+    Should Contain       ${result.stdout}       describe_method
+    Should Not Contain   ${result.stdout}       describe_resource
     Should Be Equal As Integers    ${result.rc}    0
 
 
@@ -586,25 +589,6 @@ MCP HTTPS List Methods Canonical
     Dictionary Should Contain Key    ${meta_rels_obj}    rows
     Should Not Be Empty        ${meta_rels_obj['rows']}
 
-
-MCP HTTPS Describe Resource Canonical
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    ${meta_rels}=    Run Process
-    ...    ${STACKQL_MCP_CLIENT_EXE}
-    ...    exec
-    ...    \-\-client\-type\=http
-    ...    \-\-url\=https://127.0.0.1:9004
-    ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...    \-\-exec.action
-    ...    describe_resource
-    ...    \-\-exec.args
-    ...    {"provider": "google", "service": "compute", "resource": "networks"}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-resource-canonical.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-resource-canonical-stderr.txt
-    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
-    Dictionary Should Contain Key    ${meta_rels_obj}    rows
-    Should Not Be Empty        ${meta_rels_obj['rows']}
 
 MCP HTTPS Describe Method Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
