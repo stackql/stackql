@@ -7,7 +7,7 @@ The working SQL dialect is reported in the `sql_backend` field of `server_info`:
 - Required params (shown in `RequiredParams` from `list_methods`) must appear in the `WHERE` clause as equality predicates. They are request inputs, which are normally path parameters or server variables - but can include required query, header or body parameters - not post-filters. Omitting one fails the query; it does not widen the result.
 - Optional input params can also be supplied in the `WHERE` clause and are passed to the provider request.
 - Predicates that map to input params are exact-match equality only: no wildcards, `LIKE`, or inequalities. If a param value with an embedded slash fails, URL-encode the slash as `%2F` and retry.
-- Fields in the `describe_resource` response can be referenced in the column list or the `WHERE` clause; projection and filtering on these happen locally after the provider response, unlike params, which shape the request itself.
+- Fields reported with `param_type` = `output` by `describe_method` can be referenced in the column list or the `WHERE` clause; projection and filtering on these happen locally after the provider response, unlike params, which shape the request itself.
 - Input params containing hyphens must be double-quoted: `WHERE "max-buckets" = 1000`.
 
 ## Lexical rules

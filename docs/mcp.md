@@ -116,11 +116,7 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 ## **must** supply <provider>, <service>, <resource>
 ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action list_methods --exec.args '{"provider": "google", "service": "compute", "resource": "networks"}'
 
-## Describe a resource's output fields.
-## **must** supply <provider>, <service>, <resource>
-./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action describe_resource --exec.args '{"provider": "google", "service": "compute", "resource": "networks"}'
-
-## Describe a single method's I/O contract (always EXTENDED).
+## Describe a single method's I/O contract (always EXTENDED): inputs with param_type and the output fields.
 ## **must** supply <provider>, <service>, <resource>, <method>
 ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action describe_method --exec.args '{"provider": "google", "service": "compute", "resource": "networks", "method": "get"}'
 
@@ -145,7 +141,7 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 
 ## Canonical agent tools
 
-The server publishes 14 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
+The server publishes 15 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
 
 Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`), derived from the same policy-gate classification that enforces the server [mode](#server-modes): statically read-only tools claim `readOnlyHint`, mutation/lifecycle tools claim `destructiveHint`, and SQL-carrying tools make no read-only claim because their effect depends on the submitted statement.  Annotations are advisory hints for client UX; enforcement always remains with the policy gate.
 
@@ -155,9 +151,8 @@ Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`,
 | `list_providers` | Table | Available cloud/SaaS providers (top of the hierarchy).  No inputs. |
 | `list_services` | Table | Services under a provider.  Requires `provider`. |
 | `list_resources` | Table | Resources under a `provider`.`service`.  Requires `provider` and `service`. |
-| `list_methods` | Table | Access methods (HTTP operations) for a resource.  **Call before writing any query.** Requires `provider`, `service`, `resource`. |
-| `describe_resource` | KV | Output fields for a resource's primary read method.  Requires `provider`, `service`, `resource`. |
-| `describe_method` | KV | Full I/O contract for one method (always EXTENDED).  Requires `provider`, `service`, `resource`, `method`. |
+| `list_methods` | Table | Access methods (HTTP operations) for a resource with their SQL verb and required params.  **Call before writing any query.** Requires `provider`, `service`, `resource`. |
+| `describe_method` | KV | Full I/O contract for one method (always EXTENDED): inputs with `param_type` and the `output` fields a SELECT can reference.  Requires `provider`, `service`, `resource`, `method`. |
 | `validate_select_query` | KV | Parse and plan a SELECT without executing.  Returns `{valid, errors}`.  SELECT only. |
 | `run_select_query` | Table | Execute a SELECT.  Returns `{rows}`.  Reads only. |
 | `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE.  **Real side effects.** Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
@@ -165,6 +160,8 @@ Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`,
 | `list_registry` | Table | Providers (and their versions) available in the configured registry.  Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache.  Requires `provider`; `version` optional.  Local cache write only. |
 | `reload_credentials` | Table | Live-reload credentials: re-source the [`--env.file`](#credential-resourcing---envfile--reload_credentials) dotenv file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider.  Never returns secret values.  Optional `provider` filters the report.  Recovery and rotation only, never a pre-query step.  Allowed in every mode. |
+| `query_library_search` | Table | Search the curated query library by natural-language `intent` (optional `provider` / `service` / `tags` filters).  Consult before composing SQL from scratch.  Read-only, no credentials. |
+| `query_library_get` | KV | Retrieve one library entry by `id`; with `params` the server validates them and returns rendered SQL plus the tool to execute it with.  Read-only, no credentials. |
 
 ## Canonical agent prompts, resources and instructions
 
@@ -210,13 +207,37 @@ The server speaks every revision the [Go MCP SDK](https://github.com/modelcontex
 Transport behaviour:
 
 - **stdio** serves every revision on one process; a new-revision client's first request is served without a handshake and a legacy client's `initialize` still works.
-- **Streamable HTTP** defaults to the stateful, session-per-client model (`Mcp-Session-Id`), which the SDK serves for revisions up to `2025-11-25`; a `2026-07-28` client learns that from `server/discover` and negotiates down, so existing HTTP hosts keep their sessions and elicitation unchanged.  Set `"stateless": true` in `server` to serve `2026-07-28` natively: no `Mcp-Session-Id` is issued or read, `tools/list` / `prompts/list` / `resources/list` are connection-invariant, and gated writes use the input-required round trip.  A sessionless server still accepts a legacy `initialize` and serves reads to that client, but cannot retain the elicitation capability a legacy client declared at initialise (the SDK gives each request an ephemeral session), so legacy HTTP clients cannot approve gated writes on it.  Pick stateless for current-revision hosts, stateful for a mixed legacy fleet.
+- **Streamable HTTP** defaults to the stateful, session-per-client model (`Mcp-Session-Id`), which the SDK serves for revisions up to `2025-11-25`; a `2026-07-28` request is answered with JSON-RPC error `-32022` (`UnsupportedProtocolVersion`, SDK v1.8.0; a plain HTTP 400 before) whose `data.supported` lists the handshake revisions, and `server/discover` advertises the same, so the client negotiates down and existing HTTP hosts keep their sessions and elicitation unchanged.  Set `"stateless": true` in `server` (or pin `protocol_version` to `2026-07-28`, below) to serve `2026-07-28` natively: no `Mcp-Session-Id` is issued or read, `GET` and `DELETE` answer 405 (there is no session to tear down), `tools/list` / `prompts/list` / `resources/list` are connection-invariant, and gated writes use the input-required round trip.  A sessionless server still accepts a legacy `initialize` and serves reads to that client, but cannot retain the elicitation capability a legacy client declared at initialise (the SDK gives each request an ephemeral session), so legacy HTTP clients cannot approve gated writes on it.  Pick stateless for current-revision hosts, stateful for a mixed legacy fleet.
 
 ```bash
 ./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "stateless": true} }'
 ```
 
 The server holds no cross-call state: mode, audit and provider auth are process-level configuration, so nothing needed to move behind explicit handles (SEP-2567).  The robot suite drives stdio and both HTTP models with a 2025-06-18 handshake client and a 2026-07-28 stateless client, including the gated write on each revision.
+
+### Pinning the revision (`--mcp.protocol.version`)
+
+By default the server advertises every revision the SDK supports and negotiates per client.  To narrow that:
+
+```bash
+./build/stackql mcp --mcp.server.type=http --mcp.protocol.version=2026-07-28 --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992"} }'
+./build/stackql mcp --mcp.server.type=stdio --mcp.protocol.version=2025-11-25
+```
+
+The flag overrides `server.protocol_version` in `mcp.config` (`"server": {"protocol_version": "2025-11-25"}`) and sets the newest revision the server advertises (the SDK's `ServerOptions.SupportedProtocolVersions`):
+
+| Value | Advertised | Effect |
+|---|---|---|
+| `auto` (default) or absent | every SDK revision | negotiation as above: the highest revision both sides speak |
+| `2026-07-28` | `2026-07-28` only | sessionless only; implies `stateless` for Streamable HTTP.  A legacy `initialize` is answered with `2025-11-25`, the SDK's cue that the client should disconnect rather than read the answer as the new lifecycle |
+| `2025-11-25` (or any older revision) | that revision and everything before it | handshake lifecycle only: a `2026-07-28` request gets `-32022` with `data.supported` listing the advertised revisions so the client can renegotiate; older handshake clients keep their own revision |
+
+Any other value fails config validation at startup (`invalid server.protocol_version`, naming the legal values).  The robot suite covers each row on stdio and Streamable HTTP, the automatic negotiation, and the stateful downgrade error.
+
+### Transport limits and deprecated features (SDK v1.8.0)
+
+- Streamable HTTP request bodies are capped at the SDK default of 4 MiB (`413` beyond it) and JSON nested deeper than 1000 levels is rejected before parsing; stackql's own stdio transport bounds a frame at 8 MiB (issue #701).  None of these are configurable in `mcp.config`: they sit far above any SQL statement stackql accepts.
+- Roots, sampling and server-side logging are deprecated by `2026-07-28` (SEP-2577).  stackql uses none of them: it issues no roots or sampling requests and emits no `notifications/message`; the SDK's default `logging` capability stays advertised for the deprecation window.
 
 ### Breaking change vs PR1
 
@@ -239,7 +260,7 @@ Recorded per event:
 | `decision` | `allow` / `refuse_immediate` / `needs_approval_accepted` / `needs_approval_declined` / `needs_approval_cancelled` / `needs_approval_unavailable` |
 | `query_class` | `select` / `mutation_create` / `mutation_delete` / `lifecycle` / `unknown` |
 | `sql` | For query tools (`run_select_query`, `run_mutation_query`, `run_lifecycle_operation`, `validate_select_query`) |
-| `args` | Hierarchy fields for metadata tools (`list_*`, `describe_*`); SQL + row_limit for query tools |
+| `args` | Hierarchy fields for metadata tools (`list_*`, `describe_method`); SQL + row_limit for query tools |
 | `duration_ms` | Wall-clock duration of the gate + handler |
 | `error` | Error message if the tool errored or was refused |
 
@@ -387,17 +408,6 @@ $ ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:999
     { "MethodName": "list",     "RequiredParams": "project",            "SQLVerb": "SELECT" },
     { "MethodName": "insert",   "RequiredParams": "project",            "SQLVerb": "INSERT" },
     { "MethodName": "delete",   "RequiredParams": "network, project",  "SQLVerb": "DELETE" }
-  ]
-}
-
-
-$ ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action describe_resource --exec.args '{"provider": "google", "service": "compute", "resource": "networks"}' 2>/dev/null | jq
-{
-  "rows": [
-    { "name": "id",          "type": "string" },
-    { "name": "name",        "type": "string" },
-    { "name": "description", "type": "string" },
-    { "name": "selfLink",    "type": "string" }
   ]
 }
 

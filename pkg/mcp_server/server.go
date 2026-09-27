@@ -54,9 +54,13 @@ type simpleMCPServer struct {
 
 func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) error {
 	address := config.GetServerAddress()
+	if config.IsStateless() && !config.Server.Stateless {
+		s.logger.Infof("server.protocol_version %s implies stateless Streamable HTTP", config.GetProtocolVersion())
+	}
+	// Request bodies keep the SDK's 4 MiB default cap (413 beyond it).
 	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 		return server
-	}, &mcp.StreamableHTTPOptions{Stateless: config.Server.Stateless})
+	}, &mcp.StreamableHTTPOptions{Stateless: config.IsStateless()})
 
 	handlerWithLogging := loggingHandler(handler, s.logger)
 
@@ -198,7 +202,11 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		return nil, err
 	}
 
-	serverOpts := &mcp.ServerOptions{}
+	serverOpts := &mcp.ServerOptions{
+		// nil keeps every SDK revision; a pinned server.protocol_version
+		// narrows what is advertised and negotiated (issue #784).
+		SupportedProtocolVersions: config.AdvertisedProtocolVersions(),
+	}
 	if !config.DisableInstructions {
 		instructions, instrErr := loadEmbeddedInstructions()
 		if instrErr != nil {
@@ -373,24 +381,6 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			}
 			out := dto.QueryResultDTO{Rows: rows}
 			text := textForFormat(format, out, func() string { return render.RenderTable(rows) })
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
-		},
-	))
-
-	errs = append(errs, addToolWithGate(
-		server, cfg, auditSink, descriptions, selectGate("describe_resource"),
-		&mcp.Tool{Name: "describe_resource"},
-		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
-			format, formatErr := resolveRenderFormat(cfg, args.Format)
-			if formatErr != nil {
-				return nil, dto.QueryResultDTO{}, formatErr
-			}
-			rows, err := backend.DescribeResource(ctx, args)
-			if err != nil {
-				return nil, dto.QueryResultDTO{}, err
-			}
-			out := dto.QueryResultDTO{Rows: rows}
-			text := textForFormat(format, out, func() string { return render.RenderKV("Resource", rows) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	))

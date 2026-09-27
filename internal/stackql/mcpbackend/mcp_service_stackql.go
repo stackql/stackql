@@ -98,7 +98,6 @@ type StackqlInterrogator interface {
 	GetShowServices(dto.HierarchyInput, string) (string, error)
 	GetShowResources(dto.HierarchyInput, string) (string, error)
 	GetShowMethods(dto.HierarchyInput) (string, error)
-	GetDescribeResource(dto.HierarchyInput) (string, error)
 	GetDescribeMethod(dto.HierarchyInput) (string, error)
 	GetQueryJSON(dto.QueryJSONInput) (string, error)
 	GetRegistryList(provider string) (string, error)
@@ -160,20 +159,6 @@ func (s *simpleStackqlInterrogator) GetShowMethods(hI dto.HierarchyInput) (strin
 	}
 	sb := strings.Builder{}
 	sb.WriteString("SHOW METHODS IN ")
-	sb.WriteString(hI.Provider)
-	sb.WriteString(".")
-	sb.WriteString(hI.Service)
-	sb.WriteString(".")
-	sb.WriteString(hI.Resource)
-	return sb.String(), nil
-}
-
-func (s *simpleStackqlInterrogator) GetDescribeResource(hI dto.HierarchyInput) (string, error) {
-	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
-		return "", fmt.Errorf("provider, service and / or resource not specified")
-	}
-	sb := strings.Builder{}
-	sb.WriteString("DESCRIBE ")
 	sb.WriteString(hI.Provider)
 	sb.WriteString(".")
 	sb.WriteString(hI.Service)
@@ -508,14 +493,6 @@ func drainSQLRowStream(
 			return rv, rowCount, true
 		}
 	}
-}
-
-func (b *stackqlMCPService) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	q, qErr := b.interrogator.GetDescribeResource(hI)
-	if qErr != nil {
-		return nil, qErr
-	}
-	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
 }
 
 func (b *stackqlMCPService) DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {

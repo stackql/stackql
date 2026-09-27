@@ -52,8 +52,7 @@ enable it.
 - `list_services` - list services within a provider
 - `list_resources` - list resources within a service
 - `list_methods` - list methods for a resource
-- `describe_resource` - describe a resource's fields
-- `describe_method` - describe a method's parameters
+- `describe_method` - describe a method's parameters and output fields
 - `validate_select_query` - validate a SELECT query without running it
 - `run_select_query` - run a SELECT query against a provider
 - `run_mutation_query` - run an INSERT/UPDATE/DELETE (provisioning) query

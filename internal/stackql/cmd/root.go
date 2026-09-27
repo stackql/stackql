@@ -262,6 +262,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&mcpConfig, "mcp.config", "{}", "MCP server config file path (YAML or JSON)")
 	rootCmd.PersistentFlags().StringVar(&mcpServerType, "mcp.server.type", "", "MCP server type (http or stdio for now)")
 	rootCmd.PersistentFlags().StringVar(&mcpLogFormat, "mcp.log.format", "", "MCP audit log format: jsonl (default) or otel (OTLP/JSON log records); overrides server.audit.format in mcp.config")
+	rootCmd.PersistentFlags().StringVar(&mcpProtocolVersion, "mcp.protocol.version", "", "newest MCP protocol revision advertised: auto (default, every SDK revision), 2026-07-28 (sessionless only; implies stateless HTTP) or an older revision such as 2025-11-25 (that revision and earlier); overrides server.protocol_version in mcp.config")
 	rootCmd.PersistentFlags().StringVar(&envFilePath, "env.file", "", "optional dotenv-style file sourced into the process environment at startup, created empty if absent; the MCP reload_credentials tool re-sources it on demand")
 }
 

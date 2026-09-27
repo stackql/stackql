@@ -30,10 +30,6 @@ func (b *ExampleBackend) ListMethods(ctx context.Context, hI dto.HierarchyInput)
 	return []map[string]any{}, nil
 }
 
-func (b *ExampleBackend) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
-	return []map[string]any{}, nil
-}
-
 func (b *ExampleBackend) DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
 	return []map[string]any{}, nil
 }

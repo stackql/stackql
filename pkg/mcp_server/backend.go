@@ -39,9 +39,6 @@ type Backend interface {
 	// ListMethods lists access methods for a resource.
 	ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 
-	// DescribeResource returns the output fields for a resource's primary read method.
-	DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
-
 	// DescribeMethod returns the full I/O contract for one method.
 	DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 
