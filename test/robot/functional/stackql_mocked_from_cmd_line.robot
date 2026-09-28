@@ -11180,6 +11180,179 @@ Unstable Google Kms Key Rings Jsonl Row Set Matches Expectation
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings-stderr.tmp
 
+Unstable Google Kms Key Rings Joined To Crypto Keys Jsonl Row Set Matches Expectation
+    [Documentation]    A join over document-driven relations, resolved by
+    ...                omnisdk: the ON condition feeds each key ring's id into
+    ...                the crypto keys request, so the join runs as an edge
+    ...                between the two exchanges rather than a row filter.
+    [Setup]    Write Gcp Service Account    ${OMNISDK_MOCK_GCP_SA_HOST}
+    [Teardown]    Remove Preview Mock Environment
+    ${gcp_sa} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"
+    ...    /opt/test/tmp/omnisdk-gcp-sa.json    ${OMNISDK_MOCK_GCP_SA_HOST}
+    Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${gcp_sa}
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GOOGLE}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${auth} =    Set Variable    {"google":{"credentialsfilepath":"${gcp_sa}"}}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select k.name as key_ring, c.name as key_name
+    ...    from stackql_unstable_google.cloudkms.key_rings k
+    ...    inner join stackql_unstable_google.cloudkms.crypto_keys c
+    ...    on c.keyRingsId = split_part(k.name, '/', 6)
+    ...    where k.projectsId = 'testing-project' and k.locationsId = 'global'
+    ...    and c.projectsId = 'testing-project' and c.locationsId = 'global';
+    ${expected} =    Catenate    SEPARATOR=
+    ...    {"key_ring":"projects/testing-project/locations/global/keyRings/testing",
+    ...    "key_name":"projects/testing-project/locations/global/keyRings/testing/cryptoKeys/testing-demo-key"}
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${auth}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings-Joined-To-Crypto-Keys.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings-Joined-To-Crypto-Keys-stderr.tmp
+
+Unstable Github Org Members Filtered By In List Jsonl Row Set Matches Expectation
+    [Documentation]    A condition no request parameter can carry is applied by
+    ...                omnisdk as a filter on the streamed rows.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    {"login":"some-jimbo-7","type":"User"}
+    ...    {"login":"some-jimbo-3","type":"User"}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, type from stackql_unstable_github.orgs.members
+    ...    where org = 'dummyorg' and login in ('some-jimbo-3', 'some-jimbo-7');
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-In-List.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-In-List-stderr.tmp
+
+Unstable Github Org Update Reports Despatch
+    [Documentation]    A document-driven UPDATE without RETURNING: omnisdk sends
+    ...                the effect and stackql reports it. The mock refuses any
+    ...                other description, so success shows the SET value reached
+    ...                the request body.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    update stackql_unstable_github.orgs.orgs
+    ...    set description = 'Some silly description.'
+    ...    where org = 'dummyorg';
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    The operation was despatched successfully
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Update-Reports-Despatch.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Update-Reports-Despatch-stderr.tmp
+
+Unstable Github Org Update Returning Jsonl Row Set Matches Expectation
+    [Documentation]    A document-driven UPDATE with RETURNING streams back the
+    ...                updated resource.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    update stackql_unstable_github.orgs.orgs
+    ...    set description = 'Some silly description.'
+    ...    where org = 'dummyorg'
+    ...    returning login, email;
+    ${expected} =    Set Variable    {"login":"dummyorg","email":"info@dummyorg.io"}
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Update-Returning.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Update-Returning-stderr.tmp
+
+Unstable Google Kms Key Ring Insert Returning Jsonl Row Set Matches Expectation
+    [Documentation]    A document-driven INSERT ... VALUES with RETURNING: path
+    ...                and query parameters come from the column list, and the
+    ...                created key ring streams back.
+    [Setup]    Write Gcp Service Account    ${OMNISDK_MOCK_GCP_SA_HOST}
+    [Teardown]    Remove Preview Mock Environment
+    ${gcp_sa} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"
+    ...    /opt/test/tmp/omnisdk-gcp-sa.json    ${OMNISDK_MOCK_GCP_SA_HOST}
+    Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${gcp_sa}
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GOOGLE}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${auth} =    Set Variable    {"google":{"credentialsfilepath":"${gcp_sa}"}}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    insert into stackql_unstable_google.cloudkms.key_rings
+    ...    (projectsId, locationsId, keyRingId)
+    ...    values ('testing-project', 'us-central1', 'fresh-ring')
+    ...    returning name, createTime;
+    ${expected} =    Catenate    SEPARATOR=
+    ...    {"name":"projects/testing-project/locations/us-central1/keyRings/fresh-ring",
+    ...    "createTime":"2022-02-02T02:02:02.02000000Z"}
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${auth}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Ring-Insert-Returning.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Ring-Insert-Returning-stderr.tmp
+
+Unstable Show Methods Reports Each Method Sql Verb
+    [Documentation]    SHOW METHODS on a document-driven relation reports the
+    ...                verb the document maps each method to, and EXEC for a
+    ...                method no verb maps.
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show methods in stackql_unstable_github.orgs.orgs;
+    ...    MethodName,RequiredParams,SQLVerb\nget,,SELECT\nlist,,SELECT\nlist_for_authenticated_user,,EXEC\nlist_for_user,,SELECT\nupdate,,UPDATE
+    ...    \-o\=csv
+    ...    --preview\={"unstable":true}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Show-Methods-Reports-Each-Method-Sql-Verb.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Show-Methods-Reports-Each-Method-Sql-Verb-stderr.tmp
+
 OTel Output Emits One Record Per Row Plus Completion
     [Documentation]    Issue #738: --output otel writes one OTLP/JSON LogsData per
     ...                row and a completion record with the row values as typed

@@ -190,6 +190,7 @@ type rowStream struct {
 	columns       []column
 	table         sqldata.ISQLTable
 	projection    sqlparser.SelectExprs
+	outputs       []string
 	typCfg        columnFactory
 	done          bool
 }
@@ -261,7 +262,9 @@ func (rs *rowStream) startProducer() {
 }
 
 func (rs *rowStream) result(batch []omnisdk.Row) sqldata.ISQLResult {
-	if len(rs.columns) == 0 && len(batch) > 0 {
+	if len(rs.columns) == 0 && len(rs.outputs) > 0 {
+		rs.columns = outputColumns(rs.outputs, batch)
+	} else if len(rs.columns) == 0 && len(batch) > 0 {
 		for _, name := range sortedKeys(batch[0]) {
 			rs.columns = append(rs.columns, column{name: name})
 		}
@@ -286,6 +289,37 @@ func (rs *rowStream) result(batch []omnisdk.Row) sqldata.ISQLResult {
 	return sqldata.NewSQLResult(columns, uint64(len(rows)), 0, rows)
 }
 
+// outputColumns lays the columns out in select-list order. A star is filled
+// from the first row's keys that no named output claims, so it waits for a row;
+// a list without one is known before any arrives.
+func outputColumns(outputs []string, batch []omnisdk.Row) []column {
+	named := make(map[string]bool, len(outputs))
+	hasStar := false
+	for _, name := range outputs {
+		if name == starOutput {
+			hasStar = true
+			continue
+		}
+		named[name] = true
+	}
+	if hasStar && len(batch) == 0 {
+		return nil
+	}
+	out := make([]column, 0, len(outputs))
+	for _, name := range outputs {
+		if name != starOutput {
+			out = append(out, column{name: name})
+			continue
+		}
+		for _, key := range sortedKeys(batch[0]) {
+			if !named[key] {
+				out = append(out, column{name: key})
+			}
+		}
+	}
+	return out
+}
+
 func (rs *rowStream) Write(sqldata.ISQLResult) error {
 	return fmt.Errorf("intrinsic: omnisdk result stream is read-only")
 }
@@ -308,6 +342,12 @@ func selectFunc(
 	node *sqlparser.Select,
 	currentProvider string,
 ) (func() internaldto.ExecutorOutput, bool) {
+	if isDoc, err := fromDocProviders(node.From, currentProvider); isDoc {
+		if err != nil {
+			return refuse(err), true
+		}
+		return docSelectFunc(ctx, node, currentProvider)
+	}
 	if len(node.From) != 1 {
 		return nil, false
 	}
@@ -322,11 +362,6 @@ func selectFunc(
 	if service, isPreview := previewService(tableName.QualifierSecond.GetRawVal(),
 		tableName.Qualifier.GetRawVal(), currentProvider); isPreview {
 		return previewSelectFunc(ctx, node, service, tableName.Name.GetRawVal())
-	}
-	if bundle, isDoc := docProvider(
-		resolveProvider(tableName.QualifierSecond.GetRawVal(), currentProvider)); isDoc {
-		return docSelectFunc(ctx, node, bundle,
-			tableName.Qualifier.GetRawVal(), tableName.Name.GetRawVal())
 	}
 	if !strings.EqualFold(tableName.Qualifier.GetRawVal(), auditService) ||
 		!IsProvider(resolveProvider(tableName.QualifierSecond.GetRawVal(), currentProvider)) {
@@ -476,6 +511,7 @@ type relationMethod struct {
 	name           string
 	description    string
 	requiredParams []string
+	sqlVerb        string
 }
 
 func (t table) methods() []relationMethod {
@@ -533,7 +569,8 @@ func providerAuthContext(ctx queryContext, resourcePath string) *dto.AuthCtx {
 	cloud, _, _ := strings.Cut(resourcePath, ".")
 	providerName, ok := cloudProviders[cloud]
 	if !ok {
-		return nil
+		// A document-driven provider is addressed by its own stackql name.
+		providerName = cloud
 	}
 	authCtx, err := ctx.GetAuthContext(providerName)
 	if err != nil {
@@ -547,11 +584,15 @@ func omnisdkAuth(authCtx *dto.AuthCtx) *omnisdk.Auth {
 		return nil
 	}
 	auth := &omnisdk.Auth{
-		Type:        authCtx.Type,
-		ValuePrefix: authCtx.ValuePrefix,
-		Name:        authCtx.Name,
-		Scopes:      authCtx.Scopes,
-		TokenURL:    authCtx.GetTokenURL(),
+		Type:           authCtx.Type,
+		ValuePrefix:    authCtx.ValuePrefix,
+		Name:           authCtx.Name,
+		Scopes:         authCtx.Scopes,
+		TokenURL:       authCtx.GetTokenURL(),
+		Username:       authCtx.Username,
+		Password:       authCtx.Password,
+		UsernameEnvVar: authCtx.EnvVarUsername,
+		PasswordEnvVar: authCtx.EnvVarPassword,
 	}
 	if credentials, credErr := authCtx.GetCredentialsBytes(); credErr == nil {
 		auth.SecretAccessKey = string(credentials)

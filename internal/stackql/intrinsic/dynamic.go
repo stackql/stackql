@@ -115,7 +115,10 @@ func buildGraph(spec string) (omnisdk.Graph, error) {
 			override.Address, override.ObjectKey, override.MediaType,
 			override.ProgramType, override.ProgramBody))
 	}
-	return omnisdk.NewGraph(dtoSpec.Addresses, wirings, overrides...)
+	return omnisdk.NewGraph(
+		omnisdk.NodesOf(dtoSpec.Addresses...),
+		wirings,
+		overrides...)
 }
 
 // graphCloud is the cloud whose credential a graph runs under. omnisdk takes

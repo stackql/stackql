@@ -70,11 +70,16 @@ func GeneratePrimitiveFunc(
 	return nil, false
 }
 
+// GenerateStreamFunc plans a statement omnisdk runs end to end: a SELECT over
+// its relations, or a mutation whose target is a document-driven relation.
 func GenerateStreamFunc(
 	ctx queryContext,
-	node *sqlparser.Select,
+	stmt sqlparser.Statement,
 ) (func() internaldto.ExecutorOutput, bool) {
-	return selectFunc(ctx, node, ctx.GetCurrentProvider())
+	if node, isSelect := stmt.(*sqlparser.Select); isSelect {
+		return selectFunc(ctx, node, ctx.GetCurrentProvider())
+	}
+	return docMutationFunc(ctx, stmt, ctx.GetCurrentProvider())
 }
 
 func IsProvider(name string) bool {

@@ -107,25 +107,24 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	// An omnisdk data relation streams its rows straight to the output writer,
 	// so it is not backed by a view and analysis would try, and fail, to resolve
 	// it as a registry-backed relation. Plan it here, ahead of that analysis.
-	if sel, isSelect := statement.(*sqlparser.Select); isSelect {
-		if executor, isStream := intrinsic.GenerateStreamFunc(handlerCtx, sel); isStream {
-			qPlan.SetType(sqlparser.StmtSelect)
-			qPlan.SetReadOnly(true)
-			qPlan.SetCacheable(false)
-			qPlan.SetStatement(statement)
-			pGBuilder.getPlanGraphHolder().CreatePrimitiveNode(
-				primitive.NewLocalPrimitive(
-					func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-						return executor()
-					},
-				),
-			)
-			qPlan.SetInstructions(pGBuilder.getPlanGraphHolder())
-			if optimiseErr := qPlan.GetInstructions().GetPrimitiveGraph().Optimise(); optimiseErr != nil {
-				return createErroneousPlan(handlerCtx, qPlan, rowSort, optimiseErr)
-			}
-			return qPlan, nil
+	if executor, isStream := intrinsic.GenerateStreamFunc(handlerCtx, statement); isStream {
+		stmtType := sqlparser.ASTToStatementType(statement)
+		qPlan.SetType(stmtType)
+		qPlan.SetReadOnly(stmtType == sqlparser.StmtSelect)
+		qPlan.SetCacheable(false)
+		qPlan.SetStatement(statement)
+		pGBuilder.getPlanGraphHolder().CreatePrimitiveNode(
+			primitive.NewLocalPrimitive(
+				func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+					return executor()
+				},
+			),
+		)
+		qPlan.SetInstructions(pGBuilder.getPlanGraphHolder())
+		if optimiseErr := qPlan.GetInstructions().GetPrimitiveGraph().Optimise(); optimiseErr != nil {
+			return createErroneousPlan(handlerCtx, qPlan, rowSort, optimiseErr)
 		}
+		return qPlan, nil
 	}
 
 	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(

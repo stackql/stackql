@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: orgs API
+  version: v0.1.0
+servers:
+  - url: https://api.fixture.test
+paths:
+  /orgs/{org}/members:
+    get:
+      operationId: orgs/list-members
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/member'
+components:
+  schemas:
+    member:
+      type: object
+      properties:
+        login:
+          type: string
+        id:
+          type: integer
+        type:
+          type: string
+  x-stackQL-resources:
+    members:
+      id: fixture.orgs.members
+      name: members
+      title: Members
+      methods:
+        list_members:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1members/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/members/methods/list_members'
+        insert: []
+        update: []
+        delete: []

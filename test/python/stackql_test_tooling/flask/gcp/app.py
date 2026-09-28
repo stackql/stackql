@@ -121,6 +121,16 @@ def projects_testing_project_global_network_detail(project_name: str, network_na
         network_name=network_name
     ), 200, {'Content-Type': 'application/json'}
 
+@app.route('/v1/projects/<project_name>/locations/<location_name>/keyRings', methods=['POST'])
+def v1_projects_locations_keyRings_create(project_name: str, location_name: str):
+    key_ring_id = request.args.get('keyRingId')
+    if not key_ring_id:
+        return '{"msg": "Invalid request: keyRingId not supplied"}', 400, {'Content-Type': 'application/json'}
+    return jsonify({
+        'name': f'projects/{project_name}/locations/{location_name}/keyRings/{key_ring_id}',
+        'createTime': '2022-02-02T02:02:02.02000000Z',
+    }), 200
+
 @app.route('/v1/projects/testing-project-three/locations/global/keyRings/testing-three/cryptoKeys', methods=['GET'])
 def v1_projects_testing_project_three_locations_global_keyRings_testing_three_cryptoKeys():
     return render_template('route_1_template.json'), 200, {'Content-Type': 'application/json'}
