@@ -11800,6 +11800,6 @@ Rejected Auth Login Leaves Credential Source Unchanged
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    auth login google sa '/no/such/sa-key.json' ''; select name from google.storage.buckets where project \= 'stackql-demo' order by name desc;
     ...    stackql-demo-src-bucket
-    ...    no such file
+    ...    service account credentials error
     ...    stdout=${CURDIR}/tmp/Rejected-Auth-Login-Leaves-Credential-Source-Unchanged.tmp
     ...    stderr=${CURDIR}/tmp/Rejected-Auth-Login-Leaves-Credential-Source-Unchanged-stderr.tmp
