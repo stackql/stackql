@@ -12,11 +12,33 @@ import (
 	"github.com/lib/pq/oid"
 )
 
+// DecodedParam is one decoded parameter.  SQL NULL is flagged rather than
+// inferred from the value, so a client string "NULL" stays a string.
+type DecodedParam interface {
+	GetValue() string
+	IsNull() bool
+}
+
+type standardDecodedParam struct {
+	value  string
+	isNull bool
+}
+
+func newDecodedParam(value string) DecodedParam {
+	return &standardDecodedParam{value: value}
+}
+
+func newNullDecodedParam() DecodedParam {
+	return &standardDecodedParam{value: "NULL", isNull: true}
+}
+
+func (p *standardDecodedParam) GetValue() string { return p.value }
+func (p *standardDecodedParam) IsNull() bool     { return p.isNull }
+
 // Decoder decodes raw parameter bytes according to their format codes
-// and OIDs, returning string representations for each.  SQL NULL is a nil
-// entry, so it cannot collide with a client value.
+// and OIDs, returning one DecodedParam for each.
 type Decoder interface {
-	DecodeParams(paramOIDs []uint32, paramFormats []int16, paramValues [][]byte) ([]*string, error)
+	DecodeParams(paramOIDs []uint32, paramFormats []int16, paramValues [][]byte) ([]DecodedParam, error)
 }
 
 // NewDecoder creates a new parameter decoder.
@@ -28,10 +50,11 @@ type standardDecoder struct{}
 
 func (d *standardDecoder) DecodeParams(
 	paramOIDs []uint32, paramFormats []int16, paramValues [][]byte,
-) ([]*string, error) {
-	result := make([]*string, len(paramValues))
+) ([]DecodedParam, error) {
+	result := make([]DecodedParam, len(paramValues))
 	for i, val := range paramValues {
 		if val == nil {
+			result[i] = newNullDecodedParam()
 			continue
 		}
 		format := resolveFormat(paramFormats, i)
@@ -43,7 +66,7 @@ func (d *standardDecoder) DecodeParams(
 		if err != nil {
 			return nil, fmt.Errorf("parameter $%d: %w", i+1, err)
 		}
-		result[i] = &decoded
+		result[i] = newDecodedParam(decoded)
 	}
 	return result, nil
 }

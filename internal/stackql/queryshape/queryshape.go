@@ -25,6 +25,7 @@ import (
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/paramdecoder"
 	"github.com/stackql/stackql/internal/stackql/planbuilder"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/typing"
@@ -183,10 +184,10 @@ func columnMetadataToSQLColumns(cols []typing.ColumnMetadata) []sqldata.ISQLColu
 }
 
 // SubstituteDecodedParams replaces $1, $2, ... placeholders with their
-// decoded values as string literals; nil values become NULL.  The query is
-// scanned with the parser's own tokenizer, so a $n inside a string literal,
+// decoded values as string literals; null parameters become NULL.  The query
+// is scanned with the parser's own tokenizer, so a $n inside a string literal,
 // quoted identifier or comment is left alone.
-func SubstituteDecodedParams(query string, decodedValues []*string) string {
+func SubstituteDecodedParams(query string, decodedValues []paramdecoder.DecodedParam) string {
 	if len(decodedValues) == 0 {
 		return query
 	}
@@ -235,11 +236,11 @@ func placeholderIndex(token int, val []byte) (int, bool) {
 // for the stackql parser, which treats them as escapes; quotes are doubled
 // rather than backslash-escaped because internally routed queries reach the
 // backing RDBMS verbatim, where only a doubled quote stays inside the literal.
-func encodeParam(val *string) string {
-	if val == nil {
+func encodeParam(param paramdecoder.DecodedParam) string {
+	if param.IsNull() {
 		return "NULL"
 	}
-	escaped := strings.ReplaceAll(*val, `\`, `\\`)
+	escaped := strings.ReplaceAll(param.GetValue(), `\`, `\\`)
 	escaped = strings.ReplaceAll(escaped, "'", "''")
 	return "'" + escaped + "'"
 }

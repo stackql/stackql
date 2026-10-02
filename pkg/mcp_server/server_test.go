@@ -237,14 +237,3 @@ func TestSecureHTTPHandler(t *testing.T) {
 		}
 	}
 }
-
-func TestIsLoopbackAddress(t *testing.T) {
-	for address, want := range map[string]bool{
-		"127.0.0.1:9876": true, "localhost:9876": true, "[::1]:9876": true,
-		"0.0.0.0:9876": false, ":9876": false, "192.168.1.10:9876": false, "example.com:9876": false,
-	} {
-		if got := isLoopbackAddress(address); got != want {
-			t.Errorf("isLoopbackAddress(%q) = %v, want %v", address, got, want)
-		}
-	}
-}

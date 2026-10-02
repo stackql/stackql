@@ -307,7 +307,8 @@ func (pgb *standardPlanGraphBuilder) handleAuth(pbi planbuilderinput.PlanBuilder
 		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			authType := strings.ToLower(node.Type)
-			// Stage on a copy: a rejected AUTH must not alter the shared context.
+			// Auth works on its own clone of whatever it is given, so stage the
+			// client-supplied sources on a copy and keep them only on success.
 			candidate := authCtx.Clone()
 			if node.KeyFilePath != "" {
 				candidate.KeyFilePath = node.KeyFilePath

@@ -320,11 +320,11 @@ func (dr *basicStackQLDriver) HandleExecute(
 		}
 	}
 	// Decode params (handles both text and binary formats).
-	decodedValues, err := dr.paramDecoder.DecodeParams(paramOIDs, paramFormats, paramValues)
+	decodedStrings, err := dr.paramDecoder.DecodeParams(paramOIDs, paramFormats, paramValues)
 	if err != nil {
 		return nil, fmt.Errorf("parameter decoding error: %w", err)
 	}
-	resolved := queryshape.SubstituteDecodedParams(query, decodedValues)
+	resolved := queryshape.SubstituteDecodedParams(query, decodedStrings)
 	return dr.HandleSimpleQuery(ctx, resolved)
 }
 

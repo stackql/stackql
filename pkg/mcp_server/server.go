@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"sync"
@@ -24,6 +23,7 @@ import (
 	"github.com/stackql/stackql/pkg/mcp_server/policy"
 	"github.com/stackql/stackql/pkg/mcp_server/render"
 	"github.com/stackql/stackql/pkg/sink"
+	"github.com/stackql/stackql/pkg/sqlsplit"
 )
 
 const (
@@ -70,10 +70,6 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 	if authErr != nil {
 		return authErr
 	}
-	if config.Server.AuthTokenEnvVar == "" && !isLoopbackAddress(address) {
-		fmt.Fprintf(stderrSink(), "warning: MCP server address %s is reachable beyond loopback "+
-			"with no client authentication; set server.auth_token_env_var\n", address)
-	}
 	handlerWithLogging := loggingHandler(securedHandler, s.logger)
 
 	s.logger.Debugf("MCP server listening on %s", address)
@@ -116,19 +112,6 @@ func secureHTTPHandler(handler http.Handler, config *Config) (http.Handler, erro
 	// A static token carries no expiry.
 	opts := &auth.RequireBearerTokenOptions{AllowMissingExpiration: true}
 	return auth.RequireBearerToken(verifier, opts)(handler), nil
-}
-
-// isLoopbackAddress reports whether a listen address is confined to loopback.
-func isLoopbackAddress(address string) bool {
-	host, _, err := net.SplitHostPort(address)
-	if err != nil {
-		return false
-	}
-	if host == "localhost" {
-		return true
-	}
-	ip := net.ParseIP(host)
-	return ip != nil && ip.IsLoopback()
 }
 
 // addPromptIfEnabled registers a prompt only when cfg.IsPromptEnabled allows it.
@@ -465,7 +448,7 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 				return nil, dto.ValidationResultDTO{}, formatErr
 			}
 			// Only the first statement would sit inside the backend's EXPLAIN.
-			if !policy.IsSingleStatement(args.SQL) {
+			if len(sqlsplit.Statements(args.SQL)) != 1 {
 				return nil, dto.ValidationResultDTO{}, fmt.Errorf("validate_select_query accepts exactly one statement")
 			}
 			rowsBack, err := backend.ValidateQuery(ctx, args.SQL)

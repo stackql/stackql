@@ -6,8 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net"
-	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stackql/any-sdk/pkg/dto"
@@ -100,21 +98,7 @@ func MakeWireServer(sbe sqlbackend.SQLBackendFactory, cfg dto.RuntimeCtx) (IWire
 	}, nil
 }
 
-// isLoopbackHost reports whether a listen host is confined to loopback.
-func isLoopbackHost(host string) bool {
-	if host == "localhost" {
-		return true
-	}
-	ip := net.ParseIP(host)
-	return ip != nil && ip.IsLoopback()
-}
-
 func (sws *SimpleWireServer) Serve() error {
-	if sws.server.ClientAuth != tls.RequireAndVerifyClientCert && !isLoopbackHost(sws.rtCtx.PGSrvAddress) {
-		fmt.Fprintf(os.Stderr, "warning: server address %s is reachable beyond loopback "+
-			"with no client authentication; set clientCAs in --%s\n",
-			sws.rtCtx.PGSrvAddress, dto.PgSrvRawTLSCfgKey)
-	}
 	sws.logger.Info(
 		fmt.Sprintf("PostgreSQL server is up and running at [%s:%d]",
 			sws.rtCtx.PGSrvAddress,

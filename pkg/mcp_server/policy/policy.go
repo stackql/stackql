@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/pkg/sqlsplit"
 )
 
 // Server modes.  These are the legal values for Config.Server.Mode.
@@ -54,39 +54,20 @@ func (c QueryClass) String() string {
 // whether the common table expression heads a read-only statement.
 var withMutationRegexp = regexp.MustCompile(`(?i)\b(INSERT|UPDATE|DELETE|REPLACE|MERGE|UPSERT|EXEC)\b`)
 
-// ClassifyQuery returns the class of the SQL.  The payload is split exactly as
-// the execution layer splits it, so a mutation cannot hide behind a leading
-// read-only statement; the most privileged statement decides the class.
+// ClassifyQuery returns the class of the SQL.  Every statement in the payload
+// (see sqlsplit.Statements) is classified, so a mutation cannot hide behind a
+// leading read-only statement; the most privileged statement decides the class.
 // Empty or unrecognised inputs return QueryClassUnknown.
 func ClassifyQuery(sql string) QueryClass {
 	class := QueryClassUnknown
 	rank := -1
-	for _, stmt := range statements(sql) {
+	for _, stmt := range sqlsplit.Statements(sql) {
 		stmtClass := classifyStatement(stmt)
 		if stmtRank := classPrivilege(stmtClass); stmtRank > rank {
 			class, rank = stmtClass, stmtRank
 		}
 	}
 	return class
-}
-
-// IsSingleStatement reports whether the SQL holds exactly one statement.
-func IsSingleStatement(sql string) bool {
-	return len(statements(sql)) == 1
-}
-
-// statements splits a payload with the execution layer's own splitter and
-// returns the trimmed, non-blank pieces.
-func statements(sql string) []string {
-	// Error ignored as in the execution layer, which runs whatever pieces come back.
-	pieces, _ := sqlparser.SplitStatementToPieces(sql)
-	rv := make([]string, 0, len(pieces))
-	for _, piece := range pieces {
-		if trimmed := strings.TrimSpace(piece); trimmed != "" {
-			rv = append(rv, trimmed)
-		}
-	}
-	return rv
 }
 
 // classPrivilege ranks classes so that GateDecision is never more permissive

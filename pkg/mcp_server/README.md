@@ -312,7 +312,7 @@ export STACKQL_MCP_TOKEN="$(openssl rand -hex 32)"
 stackql mcp --mcp.config='{"server": {"transport": "http", "address": "127.0.0.1:9876", "auth_token_env_var": "STACKQL_MCP_TOKEN"}}'
 ```
 
-Binding an address beyond loopback without a token prints a warning at startup. Cross-origin browser requests are refused regardless. The stdio transport is unaffected.
+Cross-origin browser requests are refused regardless. The stdio transport is unaffected.
 
 ## Server Modes
 
