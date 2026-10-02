@@ -13,9 +13,10 @@ import (
 )
 
 // Decoder decodes raw parameter bytes according to their format codes
-// and OIDs, returning string representations for each.
+// and OIDs, returning string representations for each.  SQL NULL is a nil
+// entry, so it cannot collide with a client value.
 type Decoder interface {
-	DecodeParams(paramOIDs []uint32, paramFormats []int16, paramValues [][]byte) ([]string, error)
+	DecodeParams(paramOIDs []uint32, paramFormats []int16, paramValues [][]byte) ([]*string, error)
 }
 
 // NewDecoder creates a new parameter decoder.
@@ -27,11 +28,10 @@ type standardDecoder struct{}
 
 func (d *standardDecoder) DecodeParams(
 	paramOIDs []uint32, paramFormats []int16, paramValues [][]byte,
-) ([]string, error) {
-	result := make([]string, len(paramValues))
+) ([]*string, error) {
+	result := make([]*string, len(paramValues))
 	for i, val := range paramValues {
 		if val == nil {
-			result[i] = "NULL"
 			continue
 		}
 		format := resolveFormat(paramFormats, i)
@@ -43,7 +43,7 @@ func (d *standardDecoder) DecodeParams(
 		if err != nil {
 			return nil, fmt.Errorf("parameter $%d: %w", i+1, err)
 		}
-		result[i] = decoded
+		result[i] = &decoded
 	}
 	return result, nil
 }

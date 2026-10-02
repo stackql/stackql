@@ -19,7 +19,7 @@ func TestDecodeTextParams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if results[0] != "hello" || results[1] != "world" {
+	if *results[0] != "hello" || *results[1] != "world" {
 		t.Errorf("got %v", results)
 	}
 }
@@ -34,8 +34,23 @@ func TestDecodeNullParam(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if results[0] != "NULL" {
-		t.Errorf("got %q, want NULL", results[0])
+	if results[0] != nil {
+		t.Errorf("got %q, want nil", *results[0])
+	}
+}
+
+func TestDecodeTextNullStringIsNotNull(t *testing.T) {
+	d := paramdecoder.NewDecoder()
+	results, err := d.DecodeParams(
+		[]uint32{uint32(oid.T_text)},
+		nil,
+		[][]byte{[]byte("NULL")},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if results[0] == nil || *results[0] != "NULL" {
+		t.Errorf("got %v, want the string NULL", results[0])
 	}
 }
 
@@ -51,8 +66,8 @@ func TestDecodeBinaryInt4(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if results[0] != "42" {
-		t.Errorf("got %q, want 42", results[0])
+	if *results[0] != "42" {
+		t.Errorf("got %q, want 42", *results[0])
 	}
 }
 
@@ -68,8 +83,8 @@ func TestDecodeBinaryInt8(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if results[0] != "9999999999" {
-		t.Errorf("got %q, want 9999999999", results[0])
+	if *results[0] != "9999999999" {
+		t.Errorf("got %q, want 9999999999", *results[0])
 	}
 }
 
@@ -85,8 +100,8 @@ func TestDecodeBinaryFloat8(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if results[0] != "3.14" {
-		t.Errorf("got %q, want 3.14", results[0])
+	if *results[0] != "3.14" {
+		t.Errorf("got %q, want 3.14", *results[0])
 	}
 }
 
@@ -100,7 +115,7 @@ func TestDecodeBinaryBool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if results[0] != "true" || results[1] != "false" {
+	if *results[0] != "true" || *results[1] != "false" {
 		t.Errorf("got %v", results)
 	}
 }
@@ -117,7 +132,7 @@ func TestDecodeMixedFormats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if results[0] != "hello" || results[1] != "100" {
+	if *results[0] != "hello" || *results[1] != "100" {
 		t.Errorf("got %v", results)
 	}
 }
@@ -132,7 +147,7 @@ func TestDecodeUnknownOIDBinaryFallsBackToText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if results[0] != "raw-bytes" {
-		t.Errorf("got %q, want raw-bytes", results[0])
+	if *results[0] != "raw-bytes" {
+		t.Errorf("got %q, want raw-bytes", *results[0])
 	}
 }

@@ -650,10 +650,11 @@ def _http_delete(url, headers=None):
         return err.code
 
 
-def run_http_legacy_roundtrip(url):
+def run_http_legacy_roundtrip(url, extra_headers=None):
     """2025-06-18 client over Streamable HTTP: initialize (session id issued),
     initialized, then tools/list on that session. Returns the negotiated
-    version, whether a session id was issued and the tool names."""
+    version, whether a session id was issued and the tool names.
+    extra_headers (eg Authorization) are sent on every request."""
     status, headers, init = _http_post(url, {
         "jsonrpc": "2.0",
         "id": 1,
@@ -663,9 +664,11 @@ def run_http_legacy_roundtrip(url):
             "capabilities": {},
             "clientInfo": {"name": "robot-legacy-http", "version": "0.1.0"},
         },
-    })
+    }, extra_headers)
     session_id = headers.get("mcp-session-id", "")
-    session_headers = {"Mcp-Session-Id": session_id} if session_id else {}
+    session_headers = dict(extra_headers or {})
+    if session_id:
+        session_headers["Mcp-Session-Id"] = session_id
     _http_post(url, {"jsonrpc": "2.0", "method": "notifications/initialized"}, session_headers)
     _, _, listed = _http_post(url, {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}, session_headers)
     return {

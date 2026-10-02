@@ -18,7 +18,6 @@ package queryshape
 
 import (
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -183,51 +182,64 @@ func columnMetadataToSQLColumns(cols []typing.ColumnMetadata) []sqldata.ISQLColu
 	return result
 }
 
-var paramPlaceholderRegex = regexp.MustCompile(`\$(\d+)`)
-
-// SubstituteParams replaces $1, $2, ... placeholders with their bound values.
-// NULL parameters (nil entries in paramValues) are substituted as the literal NULL.
-// String values are single-quote escaped.
-//
-//nolint:revive // paramFormats retained for future binary format support
-func SubstituteParams(query string, paramFormats []int16, paramValues [][]byte) string { //nolint:revive // future use
-	if len(paramValues) == 0 {
-		return query
-	}
-	return paramPlaceholderRegex.ReplaceAllStringFunc(query, func(match string) string {
-		idxStr := match[1:] // strip leading $
-		idx, err := strconv.Atoi(idxStr)
-		if err != nil || idx < 1 || idx > len(paramValues) {
-			return match // leave unrecognised placeholders as-is
-		}
-		val := paramValues[idx-1]
-		if val == nil {
-			return "NULL"
-		}
-		text := string(val)
-		escaped := strings.ReplaceAll(text, "'", "''")
-		return "'" + escaped + "'"
-	})
-}
-
-// SubstituteDecodedParams replaces $1, $2, ... placeholders with
-// pre-decoded string values.  "NULL" values are substituted unquoted;
-// all other values are single-quote escaped.
-func SubstituteDecodedParams(query string, decodedValues []string) string {
+// SubstituteDecodedParams replaces $1, $2, ... placeholders with their
+// decoded values as string literals; nil values become NULL.  The query is
+// scanned with the parser's own tokenizer, so a $n inside a string literal,
+// quoted identifier or comment is left alone.
+func SubstituteDecodedParams(query string, decodedValues []*string) string {
 	if len(decodedValues) == 0 {
 		return query
 	}
-	return paramPlaceholderRegex.ReplaceAllStringFunc(query, func(match string) string {
-		idxStr := match[1:]
-		idx, err := strconv.Atoi(idxStr)
-		if err != nil || idx < 1 || idx > len(decodedValues) {
-			return match
+	var sb strings.Builder
+	copied := 0
+	tokenizer := sqlparser.NewStringTokenizer(query)
+	// Special comments would otherwise yield tokens with their own positions.
+	tokenizer.SkipSpecialComments = true
+	for {
+		token, val := tokenizer.Scan()
+		if token == 0 {
+			break
 		}
-		val := decodedValues[idx-1]
-		if val == "NULL" {
-			return "NULL"
+		idx, isPlaceholder := placeholderIndex(token, val)
+		if !isPlaceholder || idx > len(decodedValues) {
+			continue
 		}
-		escaped := strings.ReplaceAll(val, "'", "''")
-		return "'" + escaped + "'"
-	})
+		// Position sits one past the tokenizer's lookahead character.
+		end := tokenizer.Position - 1
+		start := end - len(val)
+		// A quoted identifier yields the same token but not the same source text.
+		if start < copied || query[start:end] != string(val) {
+			continue
+		}
+		sb.WriteString(query[copied:start])
+		sb.WriteString(encodeParam(decodedValues[idx-1]))
+		copied = end
+	}
+	sb.WriteString(query[copied:])
+	return sb.String()
+}
+
+// placeholderIndex returns n for a $n identifier token.
+func placeholderIndex(token int, val []byte) (int, bool) {
+	if token != sqlparser.ID || len(val) < 2 || val[0] != '$' {
+		return 0, false
+	}
+	idx, err := strconv.Atoi(string(val[1:]))
+	if err != nil || idx < 1 {
+		return 0, false
+	}
+	return idx, true
+}
+
+// encodeParam renders a value as a string literal.  Backslashes are doubled
+// for the stackql parser, which treats them as escapes; quotes are doubled
+// rather than backslash-escaped because internally routed queries reach the
+// backing RDBMS verbatim, where only a doubled quote stays inside the literal.
+func encodeParam(val *string) string {
+	if val == nil {
+		return "NULL"
+	}
+	escaped := strings.ReplaceAll(*val, `\`, `\\`)
+	escaped = strings.ReplaceAll(escaped, "'", "''")
+	return "'" + escaped + "'"
 }

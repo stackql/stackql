@@ -206,6 +206,10 @@ type ServerConfig struct {
 	TLSCertFile string `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
 	TLSKeyFile  string `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
 
+	// AuthTokenEnvVar names an env var holding a bearer token.  When set, the
+	// HTTP transport requires `Authorization: Bearer <token>` on every request.
+	AuthTokenEnvVar string `json:"auth_token_env_var,omitempty" yaml:"auth_token_env_var,omitempty"`
+
 	TransportCfg map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 
 	// Stateless serves Streamable HTTP without sessions (no Mcp-Session-Id),
@@ -261,6 +265,7 @@ type serverConfigWire struct {
 	Version               string         `json:"version" yaml:"version"`
 	TLSCertFile           string         `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
 	TLSKeyFile            string         `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
+	AuthTokenEnvVar       string         `json:"auth_token_env_var,omitempty" yaml:"auth_token_env_var,omitempty"`
 	TransportCfg          map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 	Stateless             bool           `json:"stateless,omitempty" yaml:"stateless,omitempty"`
 	ProtocolVersion       string         `json:"protocol_version,omitempty" yaml:"protocol_version,omitempty"`
@@ -282,6 +287,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.Version = w.Version
 	s.TLSCertFile = w.TLSCertFile
 	s.TLSKeyFile = w.TLSKeyFile
+	s.AuthTokenEnvVar = w.AuthTokenEnvVar
 	s.TransportCfg = w.TransportCfg
 	s.Stateless = w.Stateless
 	s.ProtocolVersion = w.ProtocolVersion

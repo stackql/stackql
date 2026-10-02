@@ -303,6 +303,17 @@ JSON example — a single-purpose server that exposes only `server_info`:
 
 When the server is launched via the `stackql mcp` (or `stackql srv --mcp.server.type=...`) command, these fields are parsed from the same `--mcp.config` JSON blob as the rest of the configuration — no additional flag is required.  For example, `stackql mcp --mcp.config='{"server": { "transport": "http",    "address": "127.0.0.1:9915"}, "enabled_tools": ["server_info"]}'`.
 
+## HTTP Client Authentication
+
+The HTTP transport is unauthenticated unless `server.auth_token_env_var` names an environment variable holding a bearer token. When set, every request must carry `Authorization: Bearer <token>` or it is answered with `401`; the server refuses to start if the variable is unset or empty. The token is read from the environment so it never appears in `--mcp.config` or the process arguments.
+
+```sh
+export STACKQL_MCP_TOKEN="$(openssl rand -hex 32)"
+stackql mcp --mcp.config='{"server": {"transport": "http", "address": "127.0.0.1:9876", "auth_token_env_var": "STACKQL_MCP_TOKEN"}}'
+```
+
+Binding an address beyond loopback without a token prints a warning at startup. Cross-origin browser requests are refused regardless. The stdio transport is unaffected.
+
 ## Server Modes
 
 `Config.Server.Mode` chooses one of four safety contracts.  All four allow SELECT and metadata reads; they differ in how they handle mutations and lifecycle operations.
@@ -318,6 +329,10 @@ When the server is launched via the `stackql mcp` (or `stackql srv --mcp.server.
 
 - If the client advertised the elicitation capability at initialise, the server sends an `elicitation/create` request with a short message describing the action and the SQL.  The user accepts, declines, or cancels.
 - If the client did NOT advertise elicitation, the tool is refused with a message that explains the gap and points the operator at `full_access` mode.
+
+A payload holding several statements is gated by its most privileged statement, so `SELECT 1; DELETE ...` is treated as a `DELETE`. `validate_select_query` accepts exactly one statement.
+
+Approval is answered by the client, so it guards against an agent acting without its user, not against an untrusted caller; pair the HTTP transport with [client authentication](#http-client-authentication) where callers are not trusted.
 
 The mode is global per server.  There is no per-tool override in this release.
 
@@ -444,7 +459,7 @@ No MCP SDK dependency is required as the package implements the MCP protocol dir
 
 1. **Full WebSocket Implementation**: Complete WebSocket transport support
 2. **Stdio Transport**: Complete stdio JSON-RPC implementation
-3. **Authentication**: Add authentication and authorization support
+3. **Authorization**: Per-client identity and roles (bearer token authentication is available for the HTTP transport)
 4. **Streaming**: Support for streaming large query results
 5. **Caching**: Query result caching for improved performance
 6. **Metrics**: Prometheus metrics for monitoring and observability

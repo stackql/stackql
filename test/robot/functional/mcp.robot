@@ -231,6 +231,20 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Pinned-Legacy.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Pinned-Legacy-stderr.txt
+    # server.auth_token_env_var: every HTTP request must carry the bearer token.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9931", "auth_token_env_var": "STACKQL_MCP_ROBOT_TOKEN", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   env:STACKQL_MCP_ROBOT_TOKEN=robot-mcp-token
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Bearer-Auth.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Bearer-Auth-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -868,6 +882,40 @@ MCP HTTP Mode Read Only Allows Desc Alias
     ${desc_obj}=    Parse MCP JSON Output    ${desc_result.stdout}
     Dictionary Should Contain Key    ${desc_obj}    rows
     Should Not Be Empty        ${desc_obj['rows']}
+
+MCP HTTP Mode Read Only Refuses Smuggled Statements
+    [Documentation]    The read_only server at 9920 gates every statement in a payload: a mutation behind a leading SELECT, or riding a hierarchy identifier, is refused.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${smuggled}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select 1; delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-select-stderr.txt
+    Should Not Be Equal As Integers    ${smuggled.rc}    0
+    Should Contain    ${smuggled.stderr}    read_only
+    ${validate}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      validate_select_query
+    ...                  \-\-exec.args        {"sql":"select 1; delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-validate.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-validate-stderr.txt
+    Should Not Be Equal As Integers    ${validate.rc}    0
+    Should Contain    ${validate.stderr}    exactly one statement
+    ${hierarchy}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      list_services
+    ...                  \-\-exec.args        {"provider":"google; delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall'"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-hierarchy.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-hierarchy-stderr.txt
+    Should Not Be Equal As Integers    ${hierarchy.rc}    0
+    Should Contain    ${hierarchy.stderr}    forbidden characters
 
 MCP HTTP Mode Safe Refuses Mutations Without Elicitation
     [Documentation]    Server at 9912 starts with mode=full_access (existing scenarios assume that).
@@ -1788,3 +1836,40 @@ MCP Server Refuses Unsupported Protocol Version
     Should Not Be Equal As Integers    ${result.rc}    0
     Should Contain    ${result.stderr}    invalid server.protocol_version "2020-01-01"
     Should Contain    ${result.stderr}    legal: auto, 2026-07-28, 2025-11-25
+
+MCP HTTP Bearer Token Authentication
+    [Documentation]    The server at 9931 sets server.auth_token_env_var: requests with no token
+    ...                or a wrong one get 401, the right token gets a working session, and a
+    ...                cross-origin browser request is refused even with the token.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${anon}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${anon['status']}    401
+    Should Be Equal    ${anon['tools']}    ${{[]}}
+    ${wrong}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931', {'Authorization': 'Bearer not-the-token'})    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${wrong['status']}    401
+    ${authed}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931', {'Authorization': 'Bearer robot-mcp-token'})    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${authed['status']}    200
+    Should Be True     ${authed['session_issued']}
+    List Should Contain Value    ${authed['tools']}    server_info
+    ${cross}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931', {'Authorization': 'Bearer robot-mcp-token', 'Origin': 'https://cross-origin.example'})    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${cross['status']}    403
+
+MCP Server Refuses Unset Bearer Token Env Var
+    [Documentation]    server.auth_token_env_var naming an unset env var fails at startup
+    ...                rather than serving unauthenticated.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Run Process    ${STACKQL_EXE}
+    ...                  mcp
+    ...                  \-\-mcp.server.type\=http
+    ...                  \-\-mcp.config
+    ...                  {"server": {"transport": "http", "address": "127.0.0.1:9932", "auth_token_env_var": "STACKQL_MCP_ROBOT_TOKEN_UNSET", "audit": {"disabled": true}} }
+    ...                  \-\-registry
+    ...                  ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                  \-\-auth
+    ...                  ${AUTH_CFG_STR}
+    ...                  \-\-tls.allowInsecure
+    ...                  timeout=90s
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Unset-Bearer-Token.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Unset-Bearer-Token-stderr.txt
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain    ${result.stderr}    server.auth_token_env_var names an unset or empty env var

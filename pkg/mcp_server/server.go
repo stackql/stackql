@@ -2,17 +2,21 @@ package mcp_server //nolint:revive // fine for now
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 
+	"github.com/modelcontextprotocol/go-sdk/auth"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/stackql/stackql/pkg/mcp_server/audit"
@@ -62,7 +66,15 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 		return server
 	}, &mcp.StreamableHTTPOptions{Stateless: config.IsStateless()})
 
-	handlerWithLogging := loggingHandler(handler, s.logger)
+	securedHandler, authErr := secureHTTPHandler(handler, config)
+	if authErr != nil {
+		return authErr
+	}
+	if config.Server.AuthTokenEnvVar == "" && !isLoopbackAddress(address) {
+		fmt.Fprintf(stderrSink(), "warning: MCP server address %s is reachable beyond loopback "+
+			"with no client authentication; set server.auth_token_env_var\n", address)
+	}
+	handlerWithLogging := loggingHandler(securedHandler, s.logger)
 
 	s.logger.Debugf("MCP server listening on %s", address)
 
@@ -81,6 +93,42 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 		return err
 	}
 	return nil
+}
+
+// secureHTTPHandler adds cross-origin protection and, when
+// server.auth_token_env_var is set, bearer token authentication.
+func secureHTTPHandler(handler http.Handler, config *Config) (http.Handler, error) {
+	handler = http.NewCrossOriginProtection().Handler(handler)
+	envVar := config.Server.AuthTokenEnvVar
+	if envVar == "" {
+		return handler, nil
+	}
+	token := os.Getenv(envVar)
+	if token == "" {
+		return nil, fmt.Errorf("server.auth_token_env_var names an unset or empty env var %q", envVar)
+	}
+	verifier := func(_ context.Context, presented string, _ *http.Request) (*auth.TokenInfo, error) {
+		if subtle.ConstantTimeCompare([]byte(presented), []byte(token)) != 1 {
+			return nil, auth.ErrInvalidToken
+		}
+		return &auth.TokenInfo{}, nil
+	}
+	// A static token carries no expiry.
+	opts := &auth.RequireBearerTokenOptions{AllowMissingExpiration: true}
+	return auth.RequireBearerToken(verifier, opts)(handler), nil
+}
+
+// isLoopbackAddress reports whether a listen address is confined to loopback.
+func isLoopbackAddress(address string) bool {
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return false
+	}
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // addPromptIfEnabled registers a prompt only when cfg.IsPromptEnabled allows it.
@@ -415,6 +463,10 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			format, formatErr := resolveRenderFormat(cfg, args.Format)
 			if formatErr != nil {
 				return nil, dto.ValidationResultDTO{}, formatErr
+			}
+			// Only the first statement would sit inside the backend's EXPLAIN.
+			if !policy.IsSingleStatement(args.SQL) {
+				return nil, dto.ValidationResultDTO{}, fmt.Errorf("validate_select_query accepts exactly one statement")
 			}
 			rowsBack, err := backend.ValidateQuery(ctx, args.SQL)
 			isValid := err == nil

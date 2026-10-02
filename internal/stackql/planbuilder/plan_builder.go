@@ -307,13 +307,19 @@ func (pgb *standardPlanGraphBuilder) handleAuth(pbi planbuilderinput.PlanBuilder
 		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			authType := strings.ToLower(node.Type)
+			// Stage on a copy: a rejected AUTH must not alter the shared context.
+			candidate := authCtx.Clone()
 			if node.KeyFilePath != "" {
-				authCtx.KeyFilePath = node.KeyFilePath
+				candidate.KeyFilePath = node.KeyFilePath
 			}
 			if node.KeyEnvVar != "" {
-				authCtx.KeyEnvVar = node.KeyEnvVar
+				candidate.KeyEnvVar = node.KeyEnvVar
 			}
-			_, err = prov.Auth(authCtx, authType, true)
+			_, err = prov.Auth(candidate, authType, true)
+			if err == nil {
+				authCtx.KeyFilePath = candidate.KeyFilePath
+				authCtx.KeyEnvVar = candidate.KeyEnvVar
+			}
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 		})
 	pgb.planGraphHolder.GetPrimitiveGraph().CreatePrimitiveNode(pr)

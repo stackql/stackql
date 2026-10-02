@@ -3,6 +3,8 @@ package mcp_server //nolint:testpackage,revive // fine for now
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
@@ -182,5 +184,67 @@ func TestNewMCPServerWithExampleBackend(t *testing.T) {
 
 	if server == nil {
 		t.Fatal("Server should not be nil")
+	}
+}
+
+func TestSecureHTTPHandler(t *testing.T) {
+	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	status := func(h http.Handler, headers map[string]string) int {
+		req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:9876/", strings.NewReader("{}"))
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec.Code
+	}
+
+	open, err := secureHTTPHandler(ok, DefaultHTTPConfig())
+	if err != nil {
+		t.Fatalf("no token configured: %v", err)
+	}
+	if got := status(open, nil); got != http.StatusOK {
+		t.Errorf("no token configured: status %d, want 200", got)
+	}
+	if got := status(open, map[string]string{"Origin": "https://evil.example"}); got != http.StatusForbidden {
+		t.Errorf("cross-origin request: status %d, want 403", got)
+	}
+
+	cfg := DefaultHTTPConfig()
+	cfg.Server.AuthTokenEnvVar = "STACKQL_MCP_TEST_TOKEN"
+	if _, err = secureHTTPHandler(ok, cfg); err == nil {
+		t.Error("an unset token env var must fail startup")
+	}
+	t.Setenv("STACKQL_MCP_TEST_TOKEN", "s3cret")
+	guarded, err := secureHTTPHandler(ok, cfg)
+	if err != nil {
+		t.Fatalf("token configured: %v", err)
+	}
+	for name, tc := range map[string]struct {
+		header string
+		want   int
+	}{
+		"missing": {"", http.StatusUnauthorized},
+		"wrong":   {"Bearer nope", http.StatusUnauthorized},
+		"right":   {"Bearer s3cret", http.StatusOK},
+	} {
+		headers := map[string]string{}
+		if tc.header != "" {
+			headers["Authorization"] = tc.header
+		}
+		if got := status(guarded, headers); got != tc.want {
+			t.Errorf("%s token: status %d, want %d", name, got, tc.want)
+		}
+	}
+}
+
+func TestIsLoopbackAddress(t *testing.T) {
+	for address, want := range map[string]bool{
+		"127.0.0.1:9876": true, "localhost:9876": true, "[::1]:9876": true,
+		"0.0.0.0:9876": false, ":9876": false, "192.168.1.10:9876": false, "example.com:9876": false,
+	} {
+		if got := isLoopbackAddress(address); got != want {
+			t.Errorf("isLoopbackAddress(%q) = %v, want %v", address, got, want)
+		}
 	}
 }

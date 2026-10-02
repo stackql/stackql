@@ -633,6 +633,23 @@ func TestMode_ReadOnly_RefusesAllMutationsAndLifecycle(t *testing.T) {
 	}
 }
 
+func TestMode_ReadOnly_RefusesSmuggledStatements(t *testing.T) {
+	be := &testBackend{}
+	cs := connectInProcess(t, readOnlyConfig(), be)
+
+	// A mutation behind a leading SELECT is gated like the mutation itself.
+	callExpectingError(t, cs, "run_select_query",
+		map[string]any{"sql": "select 1; delete from t"}, "read_only")
+	callExpectingError(t, cs, "run_mutation_query",
+		map[string]any{"sql": "select 1; create table t (x int)"}, "read_only")
+	// Validation wraps only the first statement in EXPLAIN, so it takes just one.
+	callExpectingError(t, cs, "validate_select_query",
+		map[string]any{"sql": "select 1; delete from t"}, "exactly one statement")
+	if be.lastQueryJSON.SQL != "" || be.lastExecQuery != "" || be.lastValidateSQL != "" {
+		t.Errorf("backend should not have been called: %+v", be)
+	}
+}
+
 func TestMode_Safe_RefusesMutationsWithoutElicitation(t *testing.T) {
 	be := &testBackend{}
 	cs := connectInProcess(t, DefaultConfig(), be) // default is safe

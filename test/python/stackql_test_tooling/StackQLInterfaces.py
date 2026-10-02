@@ -785,6 +785,15 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
 
 
   @keyword
+  def should_PG_client_bound_query_results_equal(self, conn_str :str, query :str, params :typing.Tuple, expected_output :typing.List[typing.Dict], **kwargs):
+    """Execute a parameterised query via psycopg (v3, extended query protocol with server side binding) and verify the rows."""
+    client = PsycoPGClient(conn_str)
+    result = client.exec_bound_query(query, params)
+    self.log(result)
+    return self.lists_should_be_equal(result, expected_output)
+
+
+  @keyword
   def should_PG_client_V2_session_inline_equal(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
     client = PsycoPG2Client(conn_str)
     result =  client.run_queries(

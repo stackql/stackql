@@ -96,6 +96,27 @@ Shell Session Invalid Registry Config Exits Cleanly
     Should Not Contain             ${result.stderr}    panic
     [Teardown]    NONE
 
+PG Server Warns When Exposed Without Client Authentication
+    [Documentation]    Binding beyond loopback with no client CAs warns on stderr at startup; a loopback bind does not.
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    Native server start only
+    ${exposed} =    Run Process    ${STACKQL_EXE}
+    ...    srv    \-\-registry\=${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('native')}
+    ...    \-\-pgsrv\.address\=0.0.0.0
+    ...    \-\-pgsrv\.port\=5667
+    ...    timeout=10s    on_timeout=kill
+    ...    stdout=${CURDIR}/tmp/PG-Server-Warns-When-Exposed.tmp
+    ...    stderr=${CURDIR}/tmp/PG-Server-Warns-When-Exposed-stderr.tmp
+    Should Contain    ${exposed.stderr}    reachable beyond loopback with no client authentication
+    ${loopback} =    Run Process    ${STACKQL_EXE}
+    ...    srv    \-\-registry\=${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('native')}
+    ...    \-\-pgsrv\.address\=127.0.0.1
+    ...    \-\-pgsrv\.port\=5668
+    ...    timeout=10s    on_timeout=kill
+    ...    stdout=${CURDIR}/tmp/PG-Server-Warns-When-Exposed-loopback.tmp
+    ...    stderr=${CURDIR}/tmp/PG-Server-Warns-When-Exposed-loopback-stderr.tmp
+    Should Not Contain    ${loopback.stderr}    no client authentication
+    [Teardown]    NONE
+
 PG Session GC Manual Behaviour Canonical
     [Tags]    shard-group:pg-server-generation
     Should PG Client Session Inline Equal Strict
@@ -262,6 +283,20 @@ PG Session Server Survives Defective Query
     ...    ${AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR}
     ...    ${AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR_EXPECTED}
     ...    stdout=${CURDIR}/tmp/PG-Session-Server-Survives-Defective-Query-and-Subsequently-Serves-Valid-Query.tmp
+    [Teardown]    NONE
+
+PG Session Extended Query Bound Params Stay Data
+    [Documentation]    Bound parameters are data, never SQL: the string NULL is not SQL NULL,
+    ...                a trailing backslash cannot swallow the closing quote, and a
+    ...                placeholder inside a string literal is not substituted.
+    ${params} =    Evaluate    ('NULL', 'x' + chr(92), 'y')
+    ${expected} =    Evaluate    [{'a': 'text', 'b': 'ne', 'c': 'y', 'd': '$1'}]
+    Should PG Client Bound Query Results Equal
+    ...    ${PSQL_UNENCRYPTED_CONN_STR}
+    ...    SELECT CASE WHEN %s \= 'NULL' THEN 'text' ELSE 'null' END AS a, CASE WHEN %s \= 'never' THEN 'eq' ELSE 'ne' END AS b, %s AS c, '$1' AS d
+    ...    ${params}
+    ...    ${expected}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Extended-Query-Bound-Params-Stay-Data.tmp
     [Teardown]    NONE
 
 PG Session Postgres Client V2 Typed Queries

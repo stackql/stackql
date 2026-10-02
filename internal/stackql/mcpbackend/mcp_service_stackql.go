@@ -27,11 +27,11 @@ var (
 
 const (
 	unlimitedRowLimit int = -1
-	// forbiddenRegistryCharacters mirrors the CLI registry command's guard
-	// (see internal/stackql/cmd/registry.go).  Interrogator methods that
-	// interpolate user-supplied registry identifiers reject these characters
-	// rather than substituting / escaping them, matching CLI semantics.
-	forbiddenRegistryCharacters string = ` ;\`
+	// forbiddenIdentifierCharacters extends the CLI registry command's guard
+	// (see internal/stackql/cmd/registry.go) to all whitespace.  Interrogator
+	// methods that interpolate user-supplied identifiers reject these
+	// characters rather than substituting / escaping them.
+	forbiddenIdentifierCharacters string = " ;\\\t\r\n"
 )
 
 // serverBuildInfo carries the runtime + build-time metadata reported by the
@@ -110,6 +110,17 @@ func NewSimpleStackqlInterrogator() StackqlInterrogator {
 	return &simpleStackqlInterrogator{}
 }
 
+// checkHierarchyIdentifiers stops a second statement riding in on an
+// interpolated hierarchy identifier.
+func checkHierarchyIdentifiers(hI dto.HierarchyInput) error {
+	for _, identifier := range []string{hI.Provider, hI.Service, hI.Resource, hI.Method} {
+		if strings.ContainsAny(identifier, forbiddenIdentifierCharacters) {
+			return fmt.Errorf("forbidden characters in provider, service, resource or method")
+		}
+	}
+	return nil
+}
+
 func (s *simpleStackqlInterrogator) GetShowProviders(_ dto.HierarchyInput, likeStr string) (string, error) {
 	sb := strings.Builder{}
 	sb.WriteString("SHOW PROVIDERS")
@@ -125,6 +136,9 @@ func (s *simpleStackqlInterrogator) GetShowServices(hI dto.HierarchyInput, likeS
 	if hI.Provider == "" {
 		return "", fmt.Errorf("provider not specified")
 	}
+	if err := checkHierarchyIdentifiers(hI); err != nil {
+		return "", err
+	}
 	sb := strings.Builder{}
 	sb.WriteString("SHOW SERVICES IN ")
 	sb.WriteString(hI.Provider)
@@ -139,6 +153,9 @@ func (s *simpleStackqlInterrogator) GetShowServices(hI dto.HierarchyInput, likeS
 func (s *simpleStackqlInterrogator) GetShowResources(hI dto.HierarchyInput, likeString string) (string, error) {
 	if hI.Provider == "" || hI.Service == "" {
 		return "", fmt.Errorf("provider and / or service not specified")
+	}
+	if err := checkHierarchyIdentifiers(hI); err != nil {
+		return "", err
 	}
 	sb := strings.Builder{}
 	sb.WriteString("SHOW RESOURCES IN ")
@@ -157,6 +174,9 @@ func (s *simpleStackqlInterrogator) GetShowMethods(hI dto.HierarchyInput) (strin
 	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
 		return "", fmt.Errorf("provider, service and / or resource not specified")
 	}
+	if err := checkHierarchyIdentifiers(hI); err != nil {
+		return "", err
+	}
 	sb := strings.Builder{}
 	sb.WriteString("SHOW METHODS IN ")
 	sb.WriteString(hI.Provider)
@@ -170,6 +190,9 @@ func (s *simpleStackqlInterrogator) GetShowMethods(hI dto.HierarchyInput) (strin
 func (s *simpleStackqlInterrogator) GetDescribeMethod(hI dto.HierarchyInput) (string, error) {
 	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" || hI.Method == "" {
 		return "", fmt.Errorf("provider, service, resource and / or method not specified")
+	}
+	if err := checkHierarchyIdentifiers(hI); err != nil {
+		return "", err
 	}
 	sb := strings.Builder{}
 	sb.WriteString("DESCRIBE METHOD EXTENDED ")
@@ -191,7 +214,7 @@ func (s *simpleStackqlInterrogator) GetQueryJSON(qI dto.QueryJSONInput) (string,
 }
 
 func (s *simpleStackqlInterrogator) GetRegistryList(provider string) (string, error) {
-	if provider != "" && strings.ContainsAny(provider, forbiddenRegistryCharacters) {
+	if provider != "" && strings.ContainsAny(provider, forbiddenIdentifierCharacters) {
 		return "", fmt.Errorf("forbidden characters in provider")
 	}
 	sb := strings.Builder{}
@@ -208,8 +231,8 @@ func (s *simpleStackqlInterrogator) GetRegistryPull(provider, version string) (s
 	if provider == "" {
 		return "", fmt.Errorf("provider not specified")
 	}
-	if strings.ContainsAny(provider, forbiddenRegistryCharacters) ||
-		strings.ContainsAny(version, forbiddenRegistryCharacters) {
+	if strings.ContainsAny(provider, forbiddenIdentifierCharacters) ||
+		strings.ContainsAny(version, forbiddenIdentifierCharacters) {
 		return "", fmt.Errorf("forbidden characters in provider or version")
 	}
 	sb := strings.Builder{}
