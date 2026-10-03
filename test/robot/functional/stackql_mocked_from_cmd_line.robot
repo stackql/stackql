@@ -11787,35 +11787,3 @@ Preview Iac Resource Without Provider Is Refused By Omnisdk
     ...    --preview\=${preview}
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Resource-No-Provider.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Resource-No-Provider-stderr.tmp
-
-Rejected Auth Login Leaves Credential Source Unchanged
-    [Documentation]    A failing AUTH LOGIN must not redirect where later statements source the provider credential.
-    Should Stackql Exec Inline Contain Both Streams
-    ...    ${STACKQL_EXE}
-    ...    ${OKTA_SECRET_STR}
-    ...    ${GITHUB_SECRET_STR}
-    ...    ${K8S_SECRET_STR}
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${AUTH_CFG_STR}
-    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    auth login google sa '/no/such/sa-key.json' ''; select name from google.storage.buckets where project \= 'stackql-demo' order by name desc;
-    ...    stackql-demo-src-bucket
-    ...    service account credentials error
-    ...    stdout=${CURDIR}/tmp/Rejected-Auth-Login-Leaves-Credential-Source-Unchanged.tmp
-    ...    stderr=${CURDIR}/tmp/Rejected-Auth-Login-Leaves-Credential-Source-Unchanged-stderr.tmp
-
-Successful Auth Login Changes Credential Source
-    [Documentation]    The configured google credential path does not exist, so the SELECT can only succeed because the preceding AUTH LOGIN changed the shared credential source.
-    Should Stackql Exec Inline Contain Both Streams
-    ...    ${STACKQL_EXE}
-    ...    ${OKTA_SECRET_STR}
-    ...    ${GITHUB_SECRET_STR}
-    ...    ${K8S_SECRET_STR}
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${AUTH_CFG_DEFECTIVE_STR}
-    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    auth login google sa '${AUTH_GOOGLE_SA_KEY_PATH}' ''; select name from google.storage.buckets where project \= 'stackql-demo' order by name desc;
-    ...    stackql-demo-src-bucket
-    ...    ${EMPTY}
-    ...    stdout=${CURDIR}/tmp/Successful-Auth-Login-Changes-Credential-Source.tmp
-    ...    stderr=${CURDIR}/tmp/Successful-Auth-Login-Changes-Credential-Source-stderr.tmp

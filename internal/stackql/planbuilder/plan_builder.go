@@ -307,20 +307,13 @@ func (pgb *standardPlanGraphBuilder) handleAuth(pbi planbuilderinput.PlanBuilder
 		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			authType := strings.ToLower(node.Type)
-			// Auth works on its own clone of whatever it is given, so stage the
-			// client-supplied sources on a copy and keep them only on success.
-			candidate := authCtx.Clone()
 			if node.KeyFilePath != "" {
-				candidate.KeyFilePath = node.KeyFilePath
+				authCtx.KeyFilePath = node.KeyFilePath
 			}
 			if node.KeyEnvVar != "" {
-				candidate.KeyEnvVar = node.KeyEnvVar
+				authCtx.KeyEnvVar = node.KeyEnvVar
 			}
-			_, err = prov.Auth(candidate, authType, true)
-			if err == nil {
-				authCtx.KeyFilePath = candidate.KeyFilePath
-				authCtx.KeyEnvVar = candidate.KeyEnvVar
-			}
+			_, err = prov.Auth(authCtx, authType, true)
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 		})
 	pgb.planGraphHolder.GetPrimitiveGraph().CreatePrimitiveNode(pr)
