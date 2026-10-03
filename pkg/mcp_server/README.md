@@ -295,24 +295,25 @@ JSON example — a single-purpose server that exposes only `server_info`:
 {
   "server": {
     "transport": "http",
-    "address": "127.0.0.1:9915"
+    "address": "127.0.0.1:9915",
+    "allow_unauthenticated": true
   },
   "enabled_tools": ["server_info"]
 }
 ```
 
-When the server is launched via the `stackql mcp` (or `stackql srv --mcp.server.type=...`) command, these fields are parsed from the same `--mcp.config` JSON blob as the rest of the configuration — no additional flag is required.  For example, `stackql mcp --mcp.config='{"server": { "transport": "http",    "address": "127.0.0.1:9915"}, "enabled_tools": ["server_info"]}'`.
+When the server is launched via the `stackql mcp` (or `stackql srv --mcp.server.type=...`) command, these fields are parsed from the same `--mcp.config` JSON blob as the rest of the configuration — no additional flag is required.  For example, `stackql mcp --mcp.config='{"server": { "transport": "http",    "address": "127.0.0.1:9915", "allow_unauthenticated": true}, "enabled_tools": ["server_info"]}'`.
 
 ## HTTP Client Authentication
 
-The HTTP transport is unauthenticated unless `server.auth_token_env_var` names an environment variable holding a bearer token. When set, every request must carry `Authorization: Bearer <token>` or it is answered with `401`; the server refuses to start if the variable is unset or empty. The token is read from the environment so it never appears in `--mcp.config` or the process arguments.
+The HTTP transport requires client authentication: `server.auth_token_env_var` names an environment variable holding a pre-shared bearer token, and every request must carry `Authorization: Bearer <token>` or it is answered with `401`. The server refuses to start if the variable is unset or empty. The token is read from the environment so it never appears in `--mcp.config` or the process arguments.
 
 ```sh
 export STACKQL_MCP_TOKEN="$(openssl rand -hex 32)"
 stackql mcp --mcp.config='{"server": {"transport": "http", "address": "127.0.0.1:9876", "auth_token_env_var": "STACKQL_MCP_TOKEN"}}'
 ```
 
-Cross-origin browser requests are refused regardless. The stdio transport is unaffected.
+Serving HTTP with no client authentication is an explicit opt-in, `"allow_unauthenticated": true`; without a token or the opt-in the HTTP transport refuses to start. Cross-origin browser requests are refused regardless. The stdio transport is unaffected.
 
 ## Server Modes
 

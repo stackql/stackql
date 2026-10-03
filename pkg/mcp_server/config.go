@@ -210,6 +210,11 @@ type ServerConfig struct {
 	// HTTP transport requires `Authorization: Bearer <token>` on every request.
 	AuthTokenEnvVar string `json:"auth_token_env_var,omitempty" yaml:"auth_token_env_var,omitempty"`
 
+	// AllowUnauthenticated is the explicit opt-in to serve the HTTP transport
+	// with no client authentication.  Without it or AuthTokenEnvVar the HTTP
+	// transport refuses to start.
+	AllowUnauthenticated bool `json:"allow_unauthenticated,omitempty" yaml:"allow_unauthenticated,omitempty"`
+
 	TransportCfg map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 
 	// Stateless serves Streamable HTTP without sessions (no Mcp-Session-Id),
@@ -266,6 +271,7 @@ type serverConfigWire struct {
 	TLSCertFile           string         `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
 	TLSKeyFile            string         `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
 	AuthTokenEnvVar       string         `json:"auth_token_env_var,omitempty" yaml:"auth_token_env_var,omitempty"`
+	AllowUnauthenticated  bool           `json:"allow_unauthenticated,omitempty" yaml:"allow_unauthenticated,omitempty"`
 	TransportCfg          map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 	Stateless             bool           `json:"stateless,omitempty" yaml:"stateless,omitempty"`
 	ProtocolVersion       string         `json:"protocol_version,omitempty" yaml:"protocol_version,omitempty"`
@@ -288,6 +294,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.TLSCertFile = w.TLSCertFile
 	s.TLSKeyFile = w.TLSKeyFile
 	s.AuthTokenEnvVar = w.AuthTokenEnvVar
+	s.AllowUnauthenticated = w.AllowUnauthenticated
 	s.TransportCfg = w.TransportCfg
 	s.Stateless = w.Stateless
 	s.ProtocolVersion = w.ProtocolVersion

@@ -199,12 +199,17 @@ func TestSecureHTTPHandler(t *testing.T) {
 		return rec.Code
 	}
 
-	open, err := secureHTTPHandler(ok, DefaultHTTPConfig())
+	if _, err := secureHTTPHandler(ok, DefaultHTTPConfig()); err == nil {
+		t.Error("no token and no opt-in must fail startup")
+	}
+	optedIn := DefaultHTTPConfig()
+	optedIn.Server.AllowUnauthenticated = true
+	open, err := secureHTTPHandler(ok, optedIn)
 	if err != nil {
-		t.Fatalf("no token configured: %v", err)
+		t.Fatalf("opted into unauthenticated service: %v", err)
 	}
 	if got := status(open, nil); got != http.StatusOK {
-		t.Errorf("no token configured: status %d, want 200", got)
+		t.Errorf("opted into unauthenticated service: status %d, want 200", got)
 	}
 	if got := status(open, map[string]string{"Origin": "https://evil.example"}); got != http.StatusForbidden {
 		t.Errorf("cross-origin request: status %d, want 403", got)
@@ -224,9 +229,11 @@ func TestSecureHTTPHandler(t *testing.T) {
 		header string
 		want   int
 	}{
-		"missing": {"", http.StatusUnauthorized},
-		"wrong":   {"Bearer nope", http.StatusUnauthorized},
-		"right":   {"Bearer s3cret", http.StatusOK},
+		"missing":     {"", http.StatusUnauthorized},
+		"wrong":       {"Bearer nope", http.StatusUnauthorized},
+		"no scheme":   {"s3cret", http.StatusUnauthorized},
+		"right":       {"Bearer s3cret", http.StatusOK},
+		"scheme case": {"bearer s3cret", http.StatusOK},
 	} {
 		headers := map[string]string{}
 		if tc.header != "" {
