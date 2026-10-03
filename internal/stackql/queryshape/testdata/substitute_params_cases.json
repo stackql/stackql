@@ -64,5 +64,53 @@
     "query": "SELECT * FROM t WHERE name = $1",
     "paramValues": [""],
     "expected": "SELECT * FROM t WHERE name = ''"
+  },
+  {
+    "description": "client string NULL stays a string",
+    "query": "SELECT * FROM t WHERE name = $1",
+    "paramValues": ["NULL"],
+    "expected": "SELECT * FROM t WHERE name = 'NULL'"
+  },
+  {
+    "description": "placeholder inside string literal left alone",
+    "query": "SELECT '$1' AS v, $1 AS w",
+    "paramValues": ["x"],
+    "expected": "SELECT '$1' AS v, 'x' AS w"
+  },
+  {
+    "description": "placeholder inside quoted identifier left alone",
+    "query": "SELECT \"$1\", $1 FROM t",
+    "paramValues": ["x"],
+    "expected": "SELECT \"$1\", 'x' FROM t"
+  },
+  {
+    "description": "placeholder inside comments left alone",
+    "query": "SELECT $1 /* $2 */ FROM t -- $2",
+    "paramValues": ["a", "b"],
+    "expected": "SELECT 'a' /* $2 */ FROM t -- $2"
+  },
+  {
+    "description": "trailing backslash cannot swallow the closing quote",
+    "query": "SELECT * FROM t WHERE a = $1 AND b = $2",
+    "paramValues": ["x\\", " OR 1 = 1 -- "],
+    "expected": "SELECT * FROM t WHERE a = 'x\\\\' AND b = ' OR 1 = 1 -- '"
+  },
+  {
+    "description": "backslash then quote",
+    "query": "SELECT * FROM t WHERE a = $1",
+    "paramValues": ["\\'"],
+    "expected": "SELECT * FROM t WHERE a = '\\\\'''"
+  },
+  {
+    "description": "double digit placeholder",
+    "query": "SELECT $10, $1",
+    "paramValues": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "ten"],
+    "expected": "SELECT 'ten', '1'"
+  },
+  {
+    "description": "multibyte text before a placeholder at end of query",
+    "query": "SELECT 'é' AS v, $1",
+    "paramValues": ["x"],
+    "expected": "SELECT 'é' AS v, 'x'"
   }
 ]

@@ -63,3 +63,8 @@ class PsycoPGClient(object):
   def run_queries_strict(self, queries :typing.List[str]) -> typing.List[typing.Dict]:
     return self._run_queries_strict(queries)
 
+
+  def exec_bound_query(self, query :str, params :tuple) -> typing.List[typing.Dict]:
+    """Execute with server side binding; psycopg (v3) sends Parse/Bind/Execute when params are supplied."""
+    with self._connection.execute(query, params) as r:
+      return [row for row in r]

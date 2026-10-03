@@ -14,7 +14,7 @@ We have a nice debug config for running an MCP server with `vscode`, please see 
 
 ```bash
 
-./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992"} }'
+./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true} }'
 
 ```
 
@@ -26,7 +26,7 @@ Read-only (mutations and lifecycle refused immediately):
 
 ```bash
 
-./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "mode": "read_only"} }'
+./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true, "mode": "read_only"} }'
 
 ```
 
@@ -34,7 +34,7 @@ Delete-safe (INSERTs/UPDATEs proceed; DELETEs and EXECs need approval):
 
 ```bash
 
-./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "mode": "delete_safe"} }'
+./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true, "mode": "delete_safe"} }'
 
 ```
 
@@ -42,7 +42,7 @@ Full access (everything proceeds without approval - use only when the client and
 
 ```bash
 
-./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "mode": "full_access"} }'
+./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true, "mode": "full_access"} }'
 
 ```
 
@@ -54,7 +54,7 @@ Audit is on by default.  To opt out:
 
 ```bash
 
-./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "audit": {"disabled": true}} }'
+./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true, "audit": {"disabled": true}} }'
 
 ```
 
@@ -210,7 +210,7 @@ Transport behaviour:
 - **Streamable HTTP** defaults to the stateful, session-per-client model (`Mcp-Session-Id`), which the SDK serves for revisions up to `2025-11-25`; a `2026-07-28` request is answered with JSON-RPC error `-32022` (`UnsupportedProtocolVersion`, SDK v1.8.0; a plain HTTP 400 before) whose `data.supported` lists the handshake revisions, and `server/discover` advertises the same, so the client negotiates down and existing HTTP hosts keep their sessions and elicitation unchanged.  Set `"stateless": true` in `server` (or pin `protocol_version` to `2026-07-28`, below) to serve `2026-07-28` natively: no `Mcp-Session-Id` is issued or read, `GET` and `DELETE` answer 405 (there is no session to tear down), `tools/list` / `prompts/list` / `resources/list` are connection-invariant, and gated writes use the input-required round trip.  A sessionless server still accepts a legacy `initialize` and serves reads to that client, but cannot retain the elicitation capability a legacy client declared at initialise (the SDK gives each request an ephemeral session), so legacy HTTP clients cannot approve gated writes on it.  Pick stateless for current-revision hosts, stateful for a mixed legacy fleet.
 
 ```bash
-./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "stateless": true} }'
+./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true, "stateless": true} }'
 ```
 
 The server holds no cross-call state: mode, audit and provider auth are process-level configuration, so nothing needed to move behind explicit handles (SEP-2567).  The robot suite drives stdio and both HTTP models with a 2025-06-18 handshake client and a 2026-07-28 stateless client, including the gated write on each revision.
@@ -220,7 +220,7 @@ The server holds no cross-call state: mode, audit and provider auth are process-
 By default the server advertises every revision the SDK supports and negotiates per client.  To narrow that:
 
 ```bash
-./build/stackql mcp --mcp.server.type=http --mcp.protocol.version=2026-07-28 --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992"} }'
+./build/stackql mcp --mcp.server.type=http --mcp.protocol.version=2026-07-28 --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true} }'
 ./build/stackql mcp --mcp.server.type=stdio --mcp.protocol.version=2025-11-25
 ```
 
@@ -271,7 +271,7 @@ The only sink shipped in this release is `file`.  One JSON object per line, fsyn
 ```bash
 ./build/stackql mcp \
   --mcp.server.type=http \
-  --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "audit": {"file": {"path": "/var/log/stackql-mcp.log", "max_size_mb": 100, "max_backups": 5, "max_age_days": 30}}} }'
+  --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true, "audit": {"file": {"path": "/var/log/stackql-mcp.log", "max_size_mb": 100, "max_backups": 5, "max_age_days": 30}}} }'
 ```
 
 Two ways to specify the location:

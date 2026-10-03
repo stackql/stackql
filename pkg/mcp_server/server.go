@@ -2,11 +2,14 @@ package mcp_server //nolint:revive // fine for now
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +23,7 @@ import (
 	"github.com/stackql/stackql/pkg/mcp_server/policy"
 	"github.com/stackql/stackql/pkg/mcp_server/render"
 	"github.com/stackql/stackql/pkg/sink"
+	"github.com/stackql/stackql/pkg/sqlsplit"
 )
 
 const (
@@ -62,7 +66,11 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 		return server
 	}, &mcp.StreamableHTTPOptions{Stateless: config.IsStateless()})
 
-	handlerWithLogging := loggingHandler(handler, s.logger)
+	securedHandler, authErr := secureHTTPHandler(handler, config)
+	if authErr != nil {
+		return authErr
+	}
+	handlerWithLogging := loggingHandler(securedHandler, s.logger)
 
 	s.logger.Debugf("MCP server listening on %s", address)
 
@@ -81,6 +89,41 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 		return err
 	}
 	return nil
+}
+
+// secureHTTPHandler adds cross-origin protection and client authentication.
+// The HTTP transport requires the pre-shared token named by
+// server.auth_token_env_var; serving without one is an explicit opt-in via
+// server.allow_unauthenticated.
+func secureHTTPHandler(handler http.Handler, config *Config) (http.Handler, error) {
+	handler = http.NewCrossOriginProtection().Handler(handler)
+	envVar := config.Server.AuthTokenEnvVar
+	if envVar == "" {
+		if !config.Server.AllowUnauthenticated {
+			return nil, fmt.Errorf("the HTTP transport requires server.auth_token_env_var, " +
+				"or server.allow_unauthenticated: true to serve without client authentication")
+		}
+		return handler, nil
+	}
+	token := os.Getenv(envVar)
+	if token == "" {
+		return nil, fmt.Errorf("server.auth_token_env_var names an unset or empty env var %q", envVar)
+	}
+	return requireBearerToken(token, handler), nil
+}
+
+// requireBearerToken answers 401 unless the request presents the pre-shared token.
+func requireBearerToken(token string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fields := strings.Fields(r.Header.Get("Authorization"))
+		if len(fields) != 2 || !strings.EqualFold(fields[0], "Bearer") ||
+			subtle.ConstantTimeCompare([]byte(fields[1]), []byte(token)) != 1 {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // addPromptIfEnabled registers a prompt only when cfg.IsPromptEnabled allows it.
@@ -415,6 +458,10 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			format, formatErr := resolveRenderFormat(cfg, args.Format)
 			if formatErr != nil {
 				return nil, dto.ValidationResultDTO{}, formatErr
+			}
+			// Only the first statement would sit inside the backend's EXPLAIN.
+			if len(sqlsplit.Statements(args.SQL)) != 1 {
+				return nil, dto.ValidationResultDTO{}, fmt.Errorf("validate_select_query accepts exactly one statement")
 			}
 			rowsBack, err := backend.ValidateQuery(ctx, args.SQL)
 			isValid := err == nil

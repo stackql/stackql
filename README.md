@@ -333,7 +333,8 @@ StackQL can be used via the interactive REPL shell, or via the `exec` command or
 * Server
   ```sh
   # serve client requests over the Postgres wire protocol (psycopg2, etc.) 
-  stackql srv --auth="${AUTH}"
+  # clients are not authenticated unless mTLS is configured via --pgsrv.tls, so keep the listener on loopback otherwise
+  stackql srv --pgsrv.address=127.0.0.1 --auth="${AUTH}"
   ```
 
 _For more examples, please check our [Blog][blog]_

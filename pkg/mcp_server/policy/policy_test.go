@@ -39,6 +39,16 @@ func TestClassifyQuery(t *testing.T) {
 		{"WITH t AS (SELECT 1) INSERT INTO x SELECT * FROM t", policy.QueryClassUnknown},
 		{"with t as (select 1) update x set a = 1", policy.QueryClassUnknown},
 		{"WITH", policy.QueryClassSelect}, // degenerate, no mutation keyword present
+		// Every statement is classified; the most privileged one decides.
+		{"SELECT 1; delete from t", policy.QueryClassMutationDelete},
+		{"SELECT 1;\nEXEC a.b.c", policy.QueryClassLifecycle},
+		{"select 1; insert into t values (1)", policy.QueryClassMutationCreate},
+		{"insert into t values (1); select 1", policy.QueryClassMutationCreate},
+		{"SELECT 1; create table t (x int)", policy.QueryClassUnknown},
+		{"SELECT;DELETE FROM t", policy.QueryClassMutationDelete},
+		{"select 1; select 2;", policy.QueryClassSelect},
+		{"select ';' as semi", policy.QueryClassSelect}, // quoted separator does not split
+		{";", policy.QueryClassUnknown},
 	}
 	for _, c := range cases {
 		t.Run(c.sql, func(t *testing.T) {

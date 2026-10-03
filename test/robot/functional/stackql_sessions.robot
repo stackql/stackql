@@ -264,6 +264,20 @@ PG Session Server Survives Defective Query
     ...    stdout=${CURDIR}/tmp/PG-Session-Server-Survives-Defective-Query-and-Subsequently-Serves-Valid-Query.tmp
     [Teardown]    NONE
 
+PG Session Extended Query Bound Params Stay Data
+    [Documentation]    Bound parameters are data, never SQL: the string NULL is not SQL NULL,
+    ...                a trailing backslash cannot swallow the closing quote, and a
+    ...                placeholder inside a string literal is not substituted.
+    ${params} =    Evaluate    ('NULL', 'x' + chr(92), 'y')
+    ${expected} =    Evaluate    [{'a': 'text', 'b': 'ne', 'c': 'y', 'd': '$1'}]
+    Should PG Client Bound Query Results Equal
+    ...    ${PSQL_UNENCRYPTED_CONN_STR}
+    ...    SELECT CASE WHEN %s \= 'NULL' THEN 'text' ELSE 'null' END AS a, CASE WHEN %s \= 'never' THEN 'eq' ELSE 'ne' END AS b, %s AS c, '$1' AS d
+    ...    ${params}
+    ...    ${expected}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Extended-Query-Bound-Params-Stay-Data.tmp
+    [Teardown]    NONE
+
 PG Session Postgres Client V2 Typed Queries
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"     TODO: FIX THIS... Skipping postgres backend test likely due to typing issues
     Should PG Client V2 Session Inline Equal

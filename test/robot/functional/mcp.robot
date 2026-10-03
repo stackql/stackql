@@ -10,7 +10,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9912", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9912", "mode": "full_access", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -20,7 +20,7 @@ Start MCP Servers
     ...                                   srv
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9913", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9913", "mode": "full_access", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -32,7 +32,7 @@ Start MCP Servers
     ...                                   srv
     ...                                   \-\-mcp.server.type\=reverse_proxy
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9914", "mode": "full_access", "audit": {"disabled": true}}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5445?default_query_exec_mode\=simple_protocol"} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9914", "mode": "full_access", "audit": {"disabled": true}}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5445?default_query_exec_mode\=simple_protocol"} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -44,7 +44,7 @@ Start MCP Servers
     ...                                   srv
     ...                                   \-\-mcp.server.type\=reverse_proxy
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"tls_cert_file": "test/server/mtls/credentials/pg_server_cert.pem", "tls_key_file": "test/server/mtls/credentials/pg_server_key.pem", "transport": "http", "address": "127.0.0.1:9004", "mode": "full_access", "audit": {"disabled": true}}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5446?default_query_exec_mode\=simple_protocol"} }
+    ...                                   {"server": {"tls_cert_file": "test/server/mtls/credentials/pg_server_cert.pem", "tls_key_file": "test/server/mtls/credentials/pg_server_key.pem", "transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9004", "mode": "full_access", "audit": {"disabled": true}}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5446?default_query_exec_mode\=simple_protocol"} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -58,7 +58,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9915", "mode": "full_access", "audit": {"disabled": true}}, "enabled_tools": ["server_info"] }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9915", "mode": "full_access", "audit": {"disabled": true}}, "enabled_tools": ["server_info"] }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -70,7 +70,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9916", "read_only": true, "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9916", "read_only": true, "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -82,7 +82,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9917", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9917", "mode": "full_access", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -97,7 +97,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9920", "mode": "read_only", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9920", "mode": "read_only", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -109,7 +109,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9921", "mode": "delete_safe", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9921", "mode": "delete_safe", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -121,7 +121,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9922", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9922", "mode": "full_access", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -135,7 +135,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9923", "mode": "full_access", "audit": {"file": {"path": "mcp-audit-9923.log"}}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9923", "mode": "full_access", "audit": {"file": {"path": "mcp-audit-9923.log"}}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -149,7 +149,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9924", "mode": "full_access", "render": "json", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9924", "mode": "full_access", "render": "json", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -164,7 +164,7 @@ Start MCP Servers
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.log.format\=otel
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9925", "mode": "full_access", "audit": {"file": {"path": "mcp-audit-otel-9925.log"}}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9925", "mode": "full_access", "audit": {"file": {"path": "mcp-audit-otel-9925.log"}}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -178,7 +178,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9926", "stateless": true, "mode": "safe", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9926", "stateless": true, "mode": "safe", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -192,7 +192,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9927", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9927", "mode": "full_access", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_MOCKED_CFG_STR.get_config_str('native')}
     ...                                   \-\-approot
@@ -211,7 +211,7 @@ Start MCP Servers
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.protocol.version\=2026-07-28
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9928", "mode": "safe", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9928", "mode": "safe", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -223,7 +223,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9929", "protocol_version": "2025-11-25", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9929", "protocol_version": "2025-11-25", "mode": "full_access", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -231,6 +231,20 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Pinned-Legacy.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Pinned-Legacy-stderr.txt
+    # server.auth_token_env_var: every HTTP request must carry the bearer token.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9931", "auth_token_env_var": "STACKQL_MCP_ROBOT_TOKEN", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   env:STACKQL_MCP_ROBOT_TOKEN=robot-mcp-token
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Bearer-Auth.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Bearer-Auth-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -868,6 +882,40 @@ MCP HTTP Mode Read Only Allows Desc Alias
     ${desc_obj}=    Parse MCP JSON Output    ${desc_result.stdout}
     Dictionary Should Contain Key    ${desc_obj}    rows
     Should Not Be Empty        ${desc_obj['rows']}
+
+MCP HTTP Mode Read Only Refuses Smuggled Statements
+    [Documentation]    The read_only server at 9920 gates every statement in a payload: a mutation behind a leading SELECT, or riding a hierarchy identifier, is refused.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${smuggled}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select 1; delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-select-stderr.txt
+    Should Not Be Equal As Integers    ${smuggled.rc}    0
+    Should Contain    ${smuggled.stderr}    read_only
+    ${validate}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      validate_select_query
+    ...                  \-\-exec.args        {"sql":"select 1; delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-validate.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-validate-stderr.txt
+    Should Not Be Equal As Integers    ${validate.rc}    0
+    Should Contain    ${validate.stderr}    exactly one statement
+    ${hierarchy}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      list_services
+    ...                  \-\-exec.args        {"provider":"google; delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall'"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-hierarchy.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-hierarchy-stderr.txt
+    Should Not Be Equal As Integers    ${hierarchy.rc}    0
+    Should Contain    ${hierarchy.stderr}    forbidden characters
 
 MCP HTTP Mode Safe Refuses Mutations Without Elicitation
     [Documentation]    Server at 9912 starts with mode=full_access (existing scenarios assume that).
@@ -1776,7 +1824,7 @@ MCP Server Refuses Unsupported Protocol Version
     ...                  \-\-mcp.server.type\=http
     ...                  \-\-mcp.protocol.version\=2020-01-01
     ...                  \-\-mcp.config
-    ...                  {"server": {"transport": "http", "address": "127.0.0.1:9930", "audit": {"disabled": true}} }
+    ...                  {"server": {"transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9930", "audit": {"disabled": true}} }
     ...                  \-\-registry
     ...                  ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                  \-\-auth
@@ -1788,3 +1836,60 @@ MCP Server Refuses Unsupported Protocol Version
     Should Not Be Equal As Integers    ${result.rc}    0
     Should Contain    ${result.stderr}    invalid server.protocol_version "2020-01-01"
     Should Contain    ${result.stderr}    legal: auto, 2026-07-28, 2025-11-25
+
+MCP HTTP Bearer Token Authentication
+    [Documentation]    The server at 9931 sets server.auth_token_env_var: requests with no token
+    ...                or a wrong one get 401, the right token gets a working session, and a
+    ...                cross-origin browser request is refused even with the token.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${anon}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${anon['status']}    401
+    Should Be Equal    ${anon['tools']}    ${{[]}}
+    ${wrong}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931', {'Authorization': 'Bearer not-the-token'})    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${wrong['status']}    401
+    ${authed}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931', {'Authorization': 'Bearer robot-mcp-token'})    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${authed['status']}    200
+    Should Be True     ${authed['session_issued']}
+    List Should Contain Value    ${authed['tools']}    server_info
+    ${cross}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931', {'Authorization': 'Bearer robot-mcp-token', 'Origin': 'https://cross-origin.example'})    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${cross['status']}    403
+
+MCP Server Refuses Unset Bearer Token Env Var
+    [Documentation]    server.auth_token_env_var naming an unset env var fails at startup
+    ...                rather than serving unauthenticated.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Run Process    ${STACKQL_EXE}
+    ...                  mcp
+    ...                  \-\-mcp.server.type\=http
+    ...                  \-\-mcp.config
+    ...                  {"server": {"transport": "http", "address": "127.0.0.1:9932", "auth_token_env_var": "STACKQL_MCP_ROBOT_TOKEN_UNSET", "audit": {"disabled": true}} }
+    ...                  \-\-registry
+    ...                  ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                  \-\-auth
+    ...                  ${AUTH_CFG_STR}
+    ...                  \-\-tls.allowInsecure
+    ...                  timeout=90s
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Unset-Bearer-Token.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Unset-Bearer-Token-stderr.txt
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain    ${result.stderr}    server.auth_token_env_var names an unset or empty env var
+
+MCP Server Refuses Unauthenticated HTTP Without Opt In
+    [Documentation]    The HTTP transport needs server.auth_token_env_var, or the explicit
+    ...                server.allow_unauthenticated opt-in; with neither it refuses to start.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Run Process    ${STACKQL_EXE}
+    ...                  mcp
+    ...                  \-\-mcp.server.type\=http
+    ...                  \-\-mcp.config
+    ...                  {"server": {"transport": "http", "address": "127.0.0.1:9933", "audit": {"disabled": true}} }
+    ...                  \-\-registry
+    ...                  ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                  \-\-auth
+    ...                  ${AUTH_CFG_STR}
+    ...                  \-\-tls.allowInsecure
+    ...                  timeout=90s
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Unauthenticated-Without-Opt-In.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Unauthenticated-Without-Opt-In-stderr.txt
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain    ${result.stderr}    requires server.auth_token_env_var

@@ -6,6 +6,8 @@ package policy
 import (
 	"regexp"
 	"strings"
+
+	"github.com/stackql/stackql/pkg/sqlsplit"
 )
 
 // Server modes.  These are the legal values for Config.Server.Mode.
@@ -17,9 +19,9 @@ const (
 )
 
 // QueryClass identifies the kind of statement a query tool is being asked to run.
-// The classifier is intentionally shallow: it looks at the first token only,
-// except for a leading WITH, which is resolved by scanning for a
-// data-modifying keyword (see ClassifyQuery).
+// The classifier is intentionally shallow: it looks at the first token of each
+// statement only, except for a leading WITH, which is resolved by scanning for
+// a data-modifying keyword (see ClassifyQuery).
 type QueryClass int
 
 const (
@@ -52,19 +54,42 @@ func (c QueryClass) String() string {
 // whether the common table expression heads a read-only statement.
 var withMutationRegexp = regexp.MustCompile(`(?i)\b(INSERT|UPDATE|DELETE|REPLACE|MERGE|UPSERT|EXEC)\b`)
 
-// ClassifyQuery returns the class of the SQL by inspecting only the first
-// whitespace-separated token.  It does not parse the statement.  Empty or
-// unrecognised inputs return QueryClassUnknown.
+// ClassifyQuery returns the class of the SQL.  Every statement in the payload
+// (see sqlsplit.Statements) is classified, so a mutation cannot hide behind a
+// leading read-only statement; the most privileged statement decides the class.
+// Empty or unrecognised inputs return QueryClassUnknown.
+func ClassifyQuery(sql string) QueryClass {
+	class := QueryClassUnknown
+	rank := -1
+	for _, stmt := range sqlsplit.Statements(sql) {
+		stmtClass := classifyStatement(stmt)
+		if stmtRank := classPrivilege(stmtClass); stmtRank > rank {
+			class, rank = stmtClass, stmtRank
+		}
+	}
+	return class
+}
+
+// classPrivilege ranks classes so that GateDecision is never more permissive
+// for a higher rank, in any mode.
+func classPrivilege(class QueryClass) int {
+	if class == QueryClassSelect {
+		return 0
+	}
+	if class == QueryClassMutationCreate {
+		return 1
+	}
+	return 2
+}
+
+// classifyStatement classifies a single trimmed statement by inspecting only
+// the first whitespace-separated token.  It does not parse the statement.
 //
 // A leading WITH is the one case that needs more than the first token: SQL
 // allows a common table expression to head a read-only SELECT but also an
 // INSERT, UPDATE or DELETE, so classifying every WITH as read-only would let
 // a mutation through the gate.  Such statements are resolved by classifyWith.
-func ClassifyQuery(sql string) QueryClass {
-	trimmed := strings.TrimSpace(sql)
-	if trimmed == "" {
-		return QueryClassUnknown
-	}
+func classifyStatement(trimmed string) QueryClass {
 	// First whitespace-separated token.
 	var verb string
 	if idx := strings.IndexAny(trimmed, " \t\r\n"); idx >= 0 {
@@ -201,7 +226,7 @@ func (p policy) Reason() string     { return p.reason }
 
 // NewPolicy is the factory.  When sql is empty (no SQL input on a metadata
 // tool, for example), defaultClass becomes the effective class; otherwise the
-// classifier inspects the SQL's first token.  Mode is normalised internally
+// classifier inspects every statement in the SQL.  Mode is normalised internally
 // so an empty / unknown value behaves like ModeSafe.
 func NewPolicy(mode, sql string, defaultClass QueryClass) Policy {
 	class := defaultClass
