@@ -243,4 +243,15 @@ func TestSecureHTTPHandler(t *testing.T) {
 			t.Errorf("%s token: status %d, want %d", name, got, tc.want)
 		}
 	}
+
+	// A refusal reads the request body, so closing the connection does not reset it.
+	for name, h := range map[string]http.Handler{"unauthorized": guarded, "cross-origin": open} {
+		body := strings.NewReader(`{"jsonrpc": "2.0", "id": 1, "method": "initialize"}`)
+		req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:9876/", body)
+		req.Header.Set("Origin", "https://evil.example")
+		h.ServeHTTP(httptest.NewRecorder(), req)
+		if body.Len() != 0 {
+			t.Errorf("%s refusal left %d unread body bytes", name, body.Len())
+		}
+	}
 }
