@@ -96,7 +96,11 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 // server.auth_token_env_var; serving without one is an explicit opt-in via
 // server.allow_unauthenticated.
 func secureHTTPHandler(handler http.Handler, config *Config) (http.Handler, error) {
-	handler = http.NewCrossOriginProtection().Handler(handler)
+	protection := http.NewCrossOriginProtection()
+	protection.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rejectRequest(w, r, http.StatusForbidden, "cross-origin request rejected")
+	}))
+	handler = protection.Handler(handler)
 	envVar := config.Server.AuthTokenEnvVar
 	if envVar == "" {
 		if !config.Server.AllowUnauthenticated {
@@ -119,11 +123,22 @@ func requireBearerToken(token string, next http.Handler) http.Handler {
 		if len(fields) != 2 || !strings.EqualFold(fields[0], "Bearer") ||
 			subtle.ConstantTimeCompare([]byte(fields[1]), []byte(token)) != 1 {
 			w.Header().Set("WWW-Authenticate", "Bearer")
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			rejectRequest(w, r, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// rejectedBodyDrainLimit bounds how much of a rejected request is read.
+const rejectedBodyDrainLimit = 64 << 10
+
+// rejectRequest answers an early refusal.  The unread body is drained first:
+// closing a connection with unread bytes resets it, and a Windows client then
+// drops the buffered response.
+func rejectRequest(w http.ResponseWriter, r *http.Request, status int, message string) {
+	io.Copy(io.Discard, io.LimitReader(r.Body, rejectedBodyDrainLimit)) //nolint:errcheck // best effort
+	http.Error(w, message, status)
 }
 
 // addPromptIfEnabled registers a prompt only when cfg.IsPromptEnabled allows it.
