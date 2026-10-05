@@ -62,5 +62,7 @@ python packaging/openai-plugin/scripts/smoke-test.py
 The smoke test exercises the plugin entrypoint, MCP initialization, tool
 discovery, provider download, and a provider query over stdio.
 
-For a release update, change the version in `plugin.json` and the pinned npm
-package in `bin/stackql-mcp.js` after that npm version is published.
+For a release update, run `make openai-plugin-manifest VERSION=X.Y.Z` from
+`packaging/mcpb` (it also runs as part of `make npm-manifest`). It stamps the
+version in `plugin.json` and the pinned npm package in `bin/stackql-mcp.js`;
+commit both once that npm version is published.

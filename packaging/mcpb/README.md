@@ -424,14 +424,12 @@ The local plugin under `packaging/openai-plugin` is an addendum to this release
 flow. It launches the npm wrapper over stdio and does not change the MCPB,
 Anthropic submission, PyPI, OCI, or MCP Registry artifacts.
 
-Update it only after `@stackql/mcp-server@X.Y.Z` is published:
-
-1. Set `version` in
-   `packaging/openai-plugin/plugins/stackql/.codex-plugin/plugin.json` to
-   `X.Y.Z`.
-2. Set the pinned `@stackql/mcp-server@X.Y.Z` in
-   `packaging/openai-plugin/plugins/stackql/bin/stackql-mcp.js`.
-3. From the repository root, run:
+`make npm-manifest` (and therefore `make npm-pack`) stamps the plugin's
+`version` and the pinned `@stackql/mcp-server@X.Y.Z` in the launcher; to stamp
+only the plugin run `make openai-plugin-manifest VERSION=X.Y.Z`. The plugin
+validator fails when the pin and `npm/package.json` disagree, so commit the
+plugin files together with the npm manifest. Once `@stackql/mcp-server@X.Y.Z`
+is published, from the repository root run:
 
 ```bash
 npm view @stackql/mcp-server@X.Y.Z version
@@ -462,6 +460,8 @@ make oci-push VERSION=X.Y.Z     multi-arch image build + push (needs docker logi
 make npm-manifest VERSION=X.Y.Z render npm/platforms.json from PUBLISHED .sha256s
 make npm-pack VERSION=X.Y.Z     build the @stackql/mcp-server tarball (publish is
                                 manual: cd npm && npm publish --access public)
+make openai-plugin-manifest VERSION=X.Y.Z   stamp the ChatGPT/Codex plugin pin
+                                (also runs as part of npm-manifest)
 make pypi-manifest VERSION=X.Y.Z render pypi platforms.json from PUBLISHED .sha256s
 make pypi-build VERSION=X.Y.Z   build sdist+wheel (publish is manual:
                                 python -m twine upload pypi/dist/*)

@@ -148,13 +148,9 @@ mcp-publisher login github
 make registry-publish VERSION=X.Y.Z
 ```
 
-### 10. Update the ChatGPT/Codex stdio plugin
+### 10. Commit the ChatGPT/Codex stdio plugin bump
 
-After 7a confirms `@stackql/mcp-server@X.Y.Z` is live, update the local plugin in a follow-up PR:
-
-a. Set `version` in `packaging/openai-plugin/plugins/stackql/.codex-plugin/plugin.json` to `X.Y.Z`.
-b. Set the pinned `@stackql/mcp-server@X.Y.Z` in `packaging/openai-plugin/plugins/stackql/bin/stackql-mcp.js`.
-c. Run:
+`make npm-pack` in 8a also stamped the plugin: `version` in `packaging/openai-plugin/plugins/stackql/.codex-plugin/plugin.json` and the pinned `@stackql/mcp-server@X.Y.Z` in `packaging/openai-plugin/plugins/stackql/bin/stackql-mcp.js` (`make openai-plugin-manifest VERSION=X.Y.Z` stamps just those two). After 8a confirms `@stackql/mcp-server@X.Y.Z` is live, verify and commit them together with the `package.json` / `pyproject.toml` bumps; the plugin validator fails when the pin and `packaging/mcpb/npm/package.json` disagree:
 
 ```bash
 npm view @stackql/mcp-server@X.Y.Z version

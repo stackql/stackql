@@ -12,6 +12,15 @@ Supported clients:
 ChatGPT web cannot run a local stdio server. Plugins are not available in the
 Codex IDE extension.
 
+## Known limitation: desktop Chat sessions
+
+The ChatGPT desktop app can start the plugin, complete the MCP handshake, and
+still not expose the StackQL tools to a Chat session. This is an open upstream
+bug, [openai/codex#38162](https://github.com/openai/codex/issues/38162),
+reproduced on desktop builds through 26.924. Codex threads in the desktop app
+and Codex CLI are unaffected. If a Chat session reports that no StackQL tools
+are available, start a Codex thread instead.
+
 ## Install
 
 Install Node.js 18 or later, then run:
