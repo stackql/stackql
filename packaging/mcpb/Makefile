@@ -62,6 +62,7 @@ OCI_STAGE := .oci-stage
         server-json registry-publish check-published clean clean-bin \
         linux-x64 linux-arm64 windows-x64 darwin-universal \
         oci-stage oci oci-push npm-manifest npm-pack pypi-manifest pypi-build \
+        openai-plugin-manifest \
         list help
 
 all: download package
@@ -237,7 +238,7 @@ oci-push: oci-stage
 # Render npm/platforms.json (bundle URLs + sha256 pins) and stamp the package
 # version. Run AFTER the .mcpb assets are published - it fetches the canonical
 # .sha256 files from the GitHub release, same rule as 'make server-json'.
-npm-manifest: check-version
+npm-manifest: check-version openai-plugin-manifest
 	bash scripts/render-npm-manifest.sh --version $(VERSION)
 
 # Build the publishable tarball. Publishing stays manual (npm 2FA):
@@ -245,6 +246,13 @@ npm-manifest: check-version
 npm-pack: npm-manifest
 	cd npm && npm pack
 	@echo "tarball ready under npm/ - publish manually with: cd npm && npm publish --access public"
+
+# --- ChatGPT/Codex stdio plugin -------------------------------------------------
+# Stamp packaging/openai-plugin (plugin.json version + the @stackql/mcp-server
+# pin in the launcher) so the plugin tracks the npm wrapper. Runs as part of
+# npm-manifest; commit the result together with the package.json bump.
+openai-plugin-manifest: check-version
+	bash scripts/render-platforms.sh --version $(VERSION) --vector openai-plugin
 
 # --- PyPI wrapper --------------------------------------------------------------
 # Same ordering rule as npm-manifest: run AFTER the .mcpb assets are published.

@@ -1,6 +1,6 @@
 {
   "name": "stackql",
-  "version": "0.10.591",
+  "version": "0.12.732",
   "description": "Query and manage cloud infrastructure with StackQL over a local MCP stdio server.",
   "author": {
     "name": "StackQL Studios",
@@ -33,6 +33,8 @@
       "List the cloud providers available through StackQL.",
       "Use StackQL to inventory resources in my cloud account.",
       "Use StackQL to investigate configuration drift in my cloud environment."
-    ]
+    ],
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
   }
 }

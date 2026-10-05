@@ -5,6 +5,7 @@ on:
     paths:
       - '.agents/plugins/marketplace.json'
       - 'packaging/openai-plugin/**'
+      - 'packaging/mcpb/npm/package.json'
       - '.github/workflows/openai-plugin.yml'
   workflow_dispatch:
 

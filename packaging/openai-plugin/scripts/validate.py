@@ -67,6 +67,16 @@ def validate() -> None:
     require('"--configfile"' in launcher, "launcher must configure .stackqlrc")
     require('"--auth"' not in launcher, "launcher must use provider default authentication")
 
+    npm_manifest = load_json(REPO_ROOT / "packaging" / "mcpb" / "npm" / "package.json")
+    require(npm_manifest.get("version") == version,
+            "plugin pin and packaging/mcpb/npm/package.json versions differ")
+
+    interface = manifest.get("interface", {})
+    for key in ("composerIcon", "logo"):
+        icon_ref = interface.get(key, "")
+        require(icon_ref.startswith("./"), f"interface.{key} must be a ./-relative path")
+        require((PLUGIN_ROOT / icon_ref).is_file(), f"interface.{key} target is missing")
+
 
 if __name__ == "__main__":
     try:

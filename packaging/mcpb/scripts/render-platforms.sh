@@ -19,6 +19,7 @@
 #   cargo   cargo/platforms.json                               cargo/Cargo.toml [package] version
 #   go      go/embed/platforms.json                            (module version is the git tag)
 #   dotnet  dotnet/src/StackQL.Mcp/platforms.json              dotnet/Directory.Build.props <Version>
+#   openai-plugin  (none - it launches the npm wrapper)        ../openai-plugin/plugins/stackql: .codex-plugin/plugin.json "version" + bin/stackql-mcp.js pin
 #
 # Usage:
 #   scripts/render-platforms.sh --version 0.10.601            # all vectors
@@ -33,6 +34,7 @@ PYPI_DIR="${PYPI_DIR:-$ROOT_DIR/pypi}"
 CARGO_DIR="${CARGO_DIR:-$ROOT_DIR/cargo}"
 GO_DIR="${GO_DIR:-$ROOT_DIR/go}"
 DOTNET_DIR="${DOTNET_DIR:-$ROOT_DIR/dotnet}"
+PLUGIN_DIR="${PLUGIN_DIR:-$ROOT_DIR/../openai-plugin/plugins/stackql}"
 # Canonical source for the .sha256 pins - always the GitHub release, the source
 # of truth. Overridable for testing but normally left alone.
 RELEASE_BASE="${RELEASE_BASE:-https://github.com/stackql/stackql/releases/download}"
@@ -41,7 +43,7 @@ RELEASE_BASE="${RELEASE_BASE:-https://github.com/stackql/stackql/releases/downlo
 # hold. This is the baseUrl written into platforms.json.
 DOWNLOAD_BASE="${DOWNLOAD_BASE:-https://releases.stackql.io/stackql}"
 
-ALL_VECTORS="npm pypi cargo go dotnet"
+ALL_VECTORS="npm pypi cargo go dotnet openai-plugin"
 
 VERSION="${VERSION:-}"
 VECTOR="all"
@@ -51,7 +53,7 @@ while [ $# -gt 0 ]; do
     --version=*) VERSION="${1#*=}"; shift ;;
     --vector)    VECTOR="$2"; shift 2 ;;
     --vector=*)  VECTOR="${1#*=}"; shift ;;
-    -h|--help)   sed -n '2,26p' "$0"; exit 0 ;;
+    -h|--help)   sed -n '2,27p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -145,13 +147,35 @@ render_dotnet() {
   sed_inplace "s#<Version>[^<]*</Version>#<Version>$VERSION</Version>#" "$props"
 }
 
+render_openai_plugin() {
+  # No platforms.json: the plugin launches the npm wrapper and inherits its
+  # pins. Stamp the manifest version and the @stackql/mcp-server pin so the
+  # plugin tracks the wrapper release (the plugin validator enforces parity
+  # with npm/package.json).
+  local manifest="$PLUGIN_DIR/.codex-plugin/plugin.json" launcher="$PLUGIN_DIR/bin/stackql-mcp.js"
+  grep -q '"@stackql/mcp-server@[0-9][0-9.]*"' "$launcher" || {
+    echo "error: $launcher has no @stackql/mcp-server pin to stamp" >&2; exit 1; }
+  sed_inplace "s#\"@stackql/mcp-server@[0-9][0-9.]*\"#\"@stackql/mcp-server@$VERSION\"#" "$launcher"
+  if command -v cygpath >/dev/null 2>&1; then
+    manifest="$(cygpath -m "$manifest")"
+  fi
+  PKG_JSON="$manifest" NEW_VERSION="$VERSION" node -e "
+const fs = require('fs');
+const p = process.env.PKG_JSON;
+const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
+pkg.version = process.env.NEW_VERSION;
+fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\n');
+"
+  echo "stamped $PLUGIN_DIR (version $VERSION)"
+}
+
 if [ "$VECTOR" = "all" ]; then
   vectors="$ALL_VECTORS"
 else
   vectors="$VECTOR"
 fi
 for v in $vectors; do
-  "render_$v"
+  "render_${v//-/_}"
 done
 
 echo "pins (v$VERSION):"
