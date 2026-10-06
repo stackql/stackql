@@ -9,9 +9,11 @@ import (
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/public/formulation"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/contributors"
+	"github.com/stackql/stackql/internal/stackql/dependencies"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
@@ -254,9 +256,43 @@ func NewShowInstructionExecutor(
 		columnOrder, keys = buildVersionShowOutput(extended)
 	case "CONTRIBUTORS":
 		columnOrder, keys = buildContributorsShowOutput(extended)
+	case "DEPENDENCIES":
+		return buildDependenciesShowOutput(node, extended, handlerCtx)
 	}
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
 		handlerCtx.GetTypingConfig()))
+}
+
+func buildDependenciesShowOutput(
+	node *sqlparser.Show, extended bool, handlerCtx handler.HandlerContext,
+) internaldto.ExecutorOutput {
+	var pattern *string
+	if node.ShowTablesOpt != nil && node.ShowTablesOpt.Filter != nil {
+		pattern = &node.ShowTablesOpt.Filter.Like
+	}
+	keys, err := dependencies.Rows(extended, pattern)
+	if err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	columns := dependencies.Columns(extended)
+	table := sqldata.NewSQLTable(0, "meta_table")
+	sqlColumns := make([]sqldata.ISQLColumn, len(columns))
+	for i, column := range columns {
+		sqlColumns[i] = handlerCtx.GetTypingConfig().GetPlaceholderColumn(
+			table, column, handlerCtx.GetTypingConfig().GetDefaultOID())
+	}
+	sqlRows := make([]sqldata.ISQLRow, 0, len(keys))
+	for _, key := range util.DefaultRowSort(keys) {
+		values := make([]interface{}, len(columns))
+		for i, column := range columns {
+			if value, ok := keys[key][column].(string); ok {
+				values[i] = []byte(value)
+			}
+		}
+		sqlRows = append(sqlRows, sqldata.NewSQLRow(values))
+	}
+	stream := sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(sqlColumns, 0, 0, sqlRows))
+	return internaldto.NewExecutorOutput(stream, nil, nil, nil, nil)
 }
 
 // buildInsertShowOutput renders the SHOW INSERT result for a resource method.

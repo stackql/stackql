@@ -272,7 +272,7 @@ func (pb *standardPrimitiveGenerator) inferProviderForShow(
 		pb.PrimitiveComposer.SetProvider(prov)
 	case "PROVIDERS":
 		// no provider, might create some dummy object dunno
-	case "VERSION", "CONTRIBUTORS":
+	case "VERSION", "CONTRIBUTORS", "DEPENDENCIES":
 		// no provider needed
 	case "RESOURCES":
 		prov, err := handlerCtx.GetProvider(node.OnTable.Qualifier.GetRawVal())

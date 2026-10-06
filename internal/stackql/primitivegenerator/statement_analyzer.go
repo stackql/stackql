@@ -1668,6 +1668,11 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 		return nil
 	case "PROVIDERS":
 		// TODO
+	case "DEPENDENCIES":
+		if node.HasOnTable() || (node.ShowTablesOpt != nil && node.ShowTablesOpt.Filter != nil &&
+			node.ShowTablesOpt.Filter.Filter != nil) {
+			return fmt.Errorf("SHOW DEPENDENCIES supports only an optional LIKE clause")
+		}
 	case "VERSION", "CONTRIBUTORS":
 		// no further analysis required
 	case "RESOURCES":

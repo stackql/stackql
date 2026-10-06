@@ -9,11 +9,29 @@ import subprocess
 _DEFAULT_PLANCACHEENABLED = 'false'
 
 
+def generate_dependency_inventory() -> int:
+    go_env = json.loads(subprocess.check_output(
+        ['go', 'env', '-json', 'GOOS', 'GOARCH', 'GOHOSTOS', 'GOHOSTARCH'],
+        text=True,
+    ))
+    generator_env = os.environ.copy()
+    generator_env['GOOS'] = go_env['GOHOSTOS']
+    generator_env['GOARCH'] = go_env['GOHOSTARCH']
+    return subprocess.call(
+        ['go', 'run', './cicd/go/dependency-metadata', '-targets',
+         f"{go_env['GOOS']}/{go_env['GOARCH']}"],
+        env=generator_env,
+    )
+
+
 def build_stackql(verbose :bool) -> int:
     os.environ['BUILDMAJORVERSION'] = os.environ.get('BUILDMAJORVERSION', '1')
     os.environ['BUILDMINORVERSION'] = os.environ.get('BUILDMINORVERSION', '1')
     os.environ['BUILDPATCHVERSION'] = os.environ.get('BUILDPATCHVERSION', '1')
     os.environ['CGO_ENABLED'] = os.environ.get('CGO_ENABLED', '0')
+    metadata_status = generate_dependency_inventory()
+    if metadata_status != 0:
+        return metadata_status
     return subprocess.call(
         f'go build {"-x -v" if verbose else ""} -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={os.environ.get("BUILDMAJORVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={os.environ.get("BUILDMINORVERSION")} '
