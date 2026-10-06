@@ -39,6 +39,9 @@ does not match. `EXTENDED` changes columns, not selected rows. No matches return
 the normal columns with zero rows.
 The existing JSON renderer represents an empty result as `null`; CSV preserves
 the column header without adding a data row.
+Result streams carry their column schema independently of rows, so PostgreSQL
+wire clients retain column metadata even when a filter matches nothing. Declared
+SHOW schemas and native SQL column metadata are preserved through the same path.
 
 SQL string literals use the existing parser's escaping rules, including doubled
 single quotes. After SQL literal decoding, backslashes are literal, not a separate

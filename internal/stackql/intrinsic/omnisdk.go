@@ -274,10 +274,7 @@ func (rs *rowStream) result(batch []omnisdk.Row) sqldata.ISQLResult {
 			}
 		}
 	}
-	columns := make([]sqldata.ISQLColumn, 0, len(rs.columns))
-	for _, col := range rs.columns {
-		columns = append(columns, rs.typCfg.GetPlaceholderColumn(rs.table, col.name, col.oid()))
-	}
+	columns := rs.GetColumns()
 	rows := make([]sqldata.ISQLRow, 0, len(batch))
 	for _, row := range batch {
 		values := make([]interface{}, 0, len(rs.columns))
@@ -287,6 +284,14 @@ func (rs *rowStream) result(batch []omnisdk.Row) sqldata.ISQLResult {
 		rows = append(rows, sqldata.NewSQLRow(values))
 	}
 	return sqldata.NewSQLResult(columns, uint64(len(rows)), 0, rows)
+}
+
+func (rs *rowStream) GetColumns() []sqldata.ISQLColumn {
+	columns := make([]sqldata.ISQLColumn, 0, len(rs.columns))
+	for _, col := range rs.columns {
+		columns = append(columns, rs.typCfg.GetPlaceholderColumn(rs.table, col.name, col.oid()))
+	}
+	return columns
 }
 
 // outputColumns lays the columns out in select-list order. A star is filled
@@ -635,6 +640,13 @@ func (ps *primedStream) Read() (sqldata.ISQLResult, error) {
 		return ps.first, ps.firstErr
 	}
 	return ps.inner.Read()
+}
+
+func (ps *primedStream) GetColumns() []sqldata.ISQLColumn {
+	if ps.first == nil {
+		return nil
+	}
+	return ps.first.GetColumns()
 }
 
 func (ps *primedStream) Write(sqldata.ISQLResult) error {

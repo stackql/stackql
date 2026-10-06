@@ -94,6 +94,24 @@ Show Dependencies PostgreSQL Wire Metadata And Nulls
     ${empty}=    Create List
     Should PG Client V2 Session Inline Equal    ${POSTGRES_URL_UNENCRYPTED_CONN}    ${queries}    ${empty}
 
+Zero Row Services And Select Preserve Their Schema
+    [Tags]    dependency-wire
+    FOR    ${query}    IN
+    ...    SHOW SERVICES IN google LIKE 'no-such-service';
+    ...    SELECT 'ignored' AS alias WHERE 1=0;
+        ${csv}=    Dependency CSV    ${query}
+        Length Should Be    ${csv}    1
+        Should Be True    len($csv[0]) > 0
+        ${descriptions}=    Evaluate    [{'name': name, 'type_code': 25} for name in $csv[0]]
+        Should PG Client Column Descriptions Equal
+        ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
+        ...    ${query}
+        ...    ${descriptions}
+        ${queries}=    Create List    ${query}
+        ${empty}=    Create List
+        Should PG Client V2 Session Inline Equal    ${POSTGRES_URL_UNENCRYPTED_CONN}    ${queries}    ${empty}
+    END
+
 *** Keywords ***
 Dependency Output
     [Arguments]    ${query}    ${format}

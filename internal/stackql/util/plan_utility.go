@@ -365,7 +365,7 @@ func PrepareResultSet(
 			payload.Err,
 		)
 	}
-	if payload.RowMap == nil || len(payload.RowMap) == 0 {
+	if len(payload.RowMap) == 0 && len(payload.ColumnOrder) == 0 {
 		return internaldto.NewExecutorOutput(
 			nil,
 			payload.OutputBody,
@@ -471,7 +471,7 @@ func PrepareResultSet(
 			}
 		}
 	}
-	resultStream := sqldata.NewChannelSQLResultStream()
+	resultStream := sqldata.NewChannelSQLResultStream(columns)
 	rv := internaldto.NewExecutorOutput(
 		resultStream,
 		payload.OutputBody,
@@ -504,9 +504,7 @@ func emptyProtectResultSet(
 			rCols[f] = typCfg.GetPlaceholderColumn(table, columns[f], typCfg.GetDefaultOID())
 		}
 		rv.SetSQLResultFn(func() sqldata.ISQLResultStream {
-			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
-				sqldata.NewSQLRow([]interface{}{}),
-			}))
+			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, nil))
 		})
 	}
 	return rv

@@ -289,10 +289,29 @@ func buildDependenciesShowOutput(
 				values[i] = []byte(value)
 			}
 		}
-		sqlRows = append(sqlRows, sqldata.NewSQLRow(values))
+		sqlRows = append(sqlRows, newDependencySQLRow(values))
 	}
 	stream := sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(sqlColumns, 0, 0, sqlRows))
 	return internaldto.NewExecutorOutput(stream, nil, nil, nil, nil)
+}
+
+type dependencySQLRow struct {
+	sqldata.ISQLRow
+}
+
+func newDependencySQLRow(values []interface{}) sqldata.ISQLRow {
+	return &dependencySQLRow{ISQLRow: sqldata.NewSQLRow(values)}
+}
+
+func (row *dependencySQLRow) GetRowDataForPgWire() []interface{} {
+	values := row.ISQLRow.GetRowDataForPgWire()
+	for i, value := range values {
+		if value == nil {
+			// The wire text encoder distinguishes a nil byte slice from an empty string.
+			values[i] = []byte(nil)
+		}
+	}
+	return values
 }
 
 // buildInsertShowOutput renders the SHOW INSERT result for a resource method.

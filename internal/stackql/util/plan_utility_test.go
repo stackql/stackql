@@ -1,11 +1,40 @@
 package util //nolint:testpackage // exercise unexported helpers
 
 import (
+	"io"
 	"testing"
 
+	"github.com/lib/pq/oid"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
+
+func TestPrepareResultSetPreservesEmptySchema(t *testing.T) {
+	cfg, err := typing.NewTypingConfig("sqlite3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := internaldto.NewPrepareResultSetDTO(nil, nil, []string{"alias", "name"}, nil, nil, nil, cfg)
+	payload.ColumnOIDs = []oid.Oid{oid.T_int4, oid.T_text}
+	output := PrepareResultSet(payload)
+	if output.GetError() != nil {
+		t.Fatal(output.GetError())
+	}
+	stream := output.GetSQLResult()
+	for range 2 {
+		columns := stream.GetColumns()
+		if len(columns) != 2 || columns[0].GetName() != "alias" ||
+			columns[0].GetObjectID() != uint32(oid.T_int4) || columns[1].GetName() != "name" {
+			t.Fatalf("unexpected columns: %v", columns)
+		}
+	}
+	result, err := stream.Read()
+	if err != io.EOF || result == nil || len(result.GetRows()) != 0 {
+		t.Fatalf("expected a schema-bearing zero-row result and EOF, got %v, %v", result, err)
+	}
+}
 
 func mustParse(t *testing.T, sql string) sqlparser.Statement {
 	t.Helper()
