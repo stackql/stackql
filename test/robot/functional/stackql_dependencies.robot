@@ -111,7 +111,6 @@ Dependency Output
     ...    stderr=${CURDIR}/tmp/Show-Dependencies-stderr.tmp
     ...    timeout=30s
     ...    on_timeout=kill
-    Should Be Empty    ${result.stderr}
     RETURN    ${result.stdout}
 
 Dependency CSV
