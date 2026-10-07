@@ -36,7 +36,7 @@ _googleProject="stackql-demo" && \
 ### What streams, and what does not
 
 - Use `--output jsonl` or `--output otel`. Each row is written and flushed as it arrives. The default table output holds every row until the query completes.
-- `ORDER BY`, `GROUP BY`, `HAVING`, `DISTINCT` and aggregates are refused on these relations, since each needs every row before it can emit one.
+- `ORDER BY`, `GROUP BY`, `HAVING`, `DISTINCT` and aggregates are refused on these relations, since each needs every row before it can emit one, unless [staging](#staging) is enabled.
 - `LIMIT` without `ORDER BY` is pushed down and stops the requests early.
 - Supported joins are `INNER JOIN` and `LEFT JOIN` with `ON`. A condition in `ON` that feeds a required input of the joined relation becomes a request per row of the left side.
 
@@ -155,3 +155,67 @@ from stackql_unstable_google.iam.service_accounts s
 inner join stackql_unstable_google.iam.service_account_keys k on k.serviceAccountsId = s.email
 where s.projectsId = '${_googleProject}' and k.projectsId = '${_googleProject}';"
 ```
+
+## Staging
+
+Add `"staging":true` to `--preview` to run `ORDER BY`, `GROUP BY`, `HAVING`, `DISTINCT`, aggregates and `OFFSET` over `stackql_unstable_*` relations.  `omnisdk` still runs the joins and filters; its final result is staged in one query-owned table in the SQL backend, which evaluates the rest of the statement.  Queries without those clauses stream as before and stage nothing.  See [the staging design note](/docs/technical/omnisdk_staging.md).
+
+Staged results are not streamed: the final result is read in full before it is returned.  `SELECT *` and subqueries are refused when staging applies.
+
+### Live test
+
+Each query below has been run against the live GitHub API.
+
+```bash
+./build/stackql exec "registry pull github v26.08.00448;"
+
+## Chuck these in ./cicd/vol/vendor-secrets/secrets.sh
+## export STACKQL_GITHUB_USERNAME='<github username>'
+## export STACKQL_GITHUB_PASSWORD='<github personal access token>'
+
+source ./cicd/vol/vendor-secrets/secrets.sh
+
+## Ordering, LIMIT and OFFSET prior and preview
+./build/stackql exec --auth '{ "github": { "credentialsenvvar": "STACKQL_GITHUB_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }' --output csv \
+"select name, stargazers_count
+   from github.repos.repos
+   where org = 'stackql'
+   order by stargazers_count desc limit 5 offset 1;"
+
+
+./build/stackql exec --preview='{"unstable":true,"staging":true}' --auth '{ "github": { "credentialsenvvar": "STACKQL_GITHUB_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }' --output csv \
+"select name, stargazers_count
+   from stackql_unstable_github.repos.repos
+   where org = 'stackql'
+   order by stargazers_count desc limit 5 offset 1;"
+
+./build/stackql exec --preview='{"omni":"all","staging":true}' --auth '{ "github": { "credentialsenvvar": "STACKQL_GITHUB_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }' --output csv \
+"select name, stargazers_count
+   from github.repos.repos
+   where org = 'stackql'
+   order by stargazers_count desc limit 5 offset 1;"
+
+
+## Grouping and aggregation.
+./build/stackql exec --preview='{"unstable":true,"staging":true}' --output csv \
+"select language, count(*) as repo_count
+   from stackql_unstable_github.repos.repos
+   where org = 'stackql'
+   group by language order by repo_count desc;"
+
+## Aggregate with no column references.
+./build/stackql exec --preview='{"unstable":true,"staging":true}' --output csv \
+"select count(*) as member_count
+   from stackql_unstable_github.orgs.members
+   where org = 'stackql';"
+```
+
+Without `"staging":true` the same queries are refused, for example with `ORDER BY cannot be applied to stackql_unstable_* relations`.
+
+Staged tables are dropped as soon as each result has been read.  To confirm, add `--sqlBackend='{"dsn":"file:/tmp/stackql-staging.db"}'` to the commands above, then:
+
+```bash
+sqlite3 /tmp/stackql-staging.db "select name from sqlite_master where name like '__iql__.queries.%';"
+```
+
+An empty result means every staged table was released.

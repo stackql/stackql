@@ -105,19 +105,9 @@ func translateSelect(node *sqlparser.Select, currentProvider string) (docQuery, 
 	if err != nil {
 		return nil, err
 	}
-	if len(node.From) != 1 {
-		return nil, fmt.Errorf("a comma-separated FROM cannot be applied to %s relations; use JOIN ... ON",
-			UnstablePrefix+"*")
-	}
-	t := &translator{currentProvider: currentProvider}
-	if err = t.from(node.From[0], query.Base, nil); err != nil {
+	t, where, err := translateSource(node, currentProvider)
+	if err != nil {
 		return nil, err
-	}
-	var where []query.Predicate
-	if node.Where != nil {
-		if where, err = conjuncts(node.Where.Expr); err != nil {
-			return nil, err
-		}
 	}
 	outputs, names, err := selectOutputs(node.SelectExprs)
 	if err != nil {
@@ -128,6 +118,27 @@ func translateSelect(node *sqlparser.Select, currentProvider string) (docQuery, 
 		return nil, err
 	}
 	return newDocQuery(q, names, limit, t.bundles), nil
+}
+
+// translateSource translates a SELECT's FROM and WHERE: the joins omnisdk runs
+// and the conjuncts it applies to them.
+func translateSource(node *sqlparser.Select, currentProvider string) (*translator, []query.Predicate, error) {
+	if len(node.From) != 1 {
+		return nil, nil, fmt.Errorf("a comma-separated FROM cannot be applied to %s relations; use JOIN ... ON",
+			UnstablePrefix+"*")
+	}
+	t := &translator{currentProvider: currentProvider}
+	if err := t.from(node.From[0], query.Base, nil); err != nil {
+		return nil, nil, err
+	}
+	if node.Where == nil {
+		return t, nil, nil
+	}
+	where, err := conjuncts(node.Where.Expr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return t, where, nil
 }
 
 // unsupportedDocClauses names what omnisdk returns unapplied: its row stream is

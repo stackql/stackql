@@ -27,6 +27,8 @@ const defaultBatchSize = 100
 
 const defaultFlushInterval = 50 * time.Millisecond
 
+const omniAll = "all"
+
 func relationName(path string) string {
 	return strings.ReplaceAll(path, ".", "_")
 }
@@ -611,6 +613,12 @@ func omnisdkAuth(authCtx *dto.AuthCtx) *omnisdk.Auth {
 		UsernameEnvVar: authCtx.EnvVarUsername,
 		PasswordEnvVar: authCtx.EnvVarPassword,
 	}
+	if strings.EqualFold(authCtx.Type, "api_key") && auth.Name == "" {
+		auth.Name = "Authorization"
+		if auth.ValuePrefix == "" {
+			auth.ValuePrefix = "Bearer "
+		}
+	}
 	if credentials, credErr := authCtx.GetCredentialsBytes(); credErr == nil {
 		auth.SecretAccessKey = string(credentials)
 		auth.Credentials = string(credentials)
@@ -727,6 +735,8 @@ type backendInput interface {
 	getFlushInterval() time.Duration
 	getInsecureSkipTLSVerify() bool
 	getUnstableEnabled() bool
+	getStagingEnabled() bool
+	getOmniAll() bool
 }
 
 type standardBackendInput struct {
@@ -735,6 +745,8 @@ type standardBackendInput struct {
 	flushInterval         time.Duration
 	insecureSkipTLSVerify bool
 	unstableEnabled       bool
+	stagingEnabled        bool
+	omniAll               bool
 }
 
 // previewCfg is the parsed --preview argument. Cobra binds the raw string in
@@ -755,6 +767,11 @@ type previewCfgDTO struct {
 	Endpoint              json.RawMessage `json:"endpoint"`
 	InsecureSkipTLSVerify bool            `json:"insecureSkipTLSVerify"`
 	Unstable              bool            `json:"unstable"`
+	// Staging opts SELECTs over document-driven relations into RDBMS staging
+	// for the SQL omnisdk leaves unapplied, instead of refusing them.
+	Staging bool `json:"staging"`
+	// Omni "all" routes every provider through omnisdk, never any-sdk.
+	Omni string `json:"omni"`
 }
 
 func (c previewCfgDTO) endpoint() string {
@@ -786,6 +803,8 @@ func newBackendInput(cfg previewCfgDTO) backendInput {
 		flushInterval:         defaultFlushInterval,
 		insecureSkipTLSVerify: cfg.InsecureSkipTLSVerify,
 		unstableEnabled:       cfg.Unstable,
+		stagingEnabled:        cfg.Staging,
+		omniAll:               strings.EqualFold(cfg.Omni, omniAll),
 	}
 	if cfg.BatchSize > 0 {
 		rv.batchSize = cfg.BatchSize
@@ -805,6 +824,10 @@ func (b *standardBackendInput) getFlushInterval() time.Duration { return b.flush
 func (b *standardBackendInput) getInsecureSkipTLSVerify() bool { return b.insecureSkipTLSVerify }
 
 func (b *standardBackendInput) getUnstableEnabled() bool { return b.unstableEnabled }
+
+func (b *standardBackendInput) getStagingEnabled() bool { return b.stagingEnabled }
+
+func (b *standardBackendInput) getOmniAll() bool { return b.omniAll }
 
 // sourceKey is the row key a column reads from: its own name, unless an alias
 // renamed it.

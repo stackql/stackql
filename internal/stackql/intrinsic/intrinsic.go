@@ -6,6 +6,7 @@ import (
 
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/public/formulation"
+	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -50,6 +51,8 @@ type queryContext interface {
 	GetTypingConfig() typing.Config
 	GetAuthContext(providerName string) (*dto.AuthCtx, error)
 	GetRuntimeContext() dto.RuntimeCtx
+	GetSQLEngine() sqlengine.SQLEngine
+	GetASTFormatter() sqlparser.NodeFormatter
 }
 
 func GeneratePrimitiveFunc(
