@@ -41,7 +41,9 @@ jobs:
       - name: Build StackQL
         env:
           CGO_ENABLED: '0'
-        run: go build -o ${{ matrix.binary }} ./stackql
+        run: |
+          go generate ./internal/stackql/dependencies
+          go build -o ${{ matrix.binary }} ./stackql
       - name: Validate package
         run: ${{ matrix.python }} packaging/openai-plugin/scripts/validate.py
       - name: Test stdio connector

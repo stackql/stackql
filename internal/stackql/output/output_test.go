@@ -38,6 +38,10 @@ func (s *errResultStream) Read() (sqldata.ISQLResult, error) {
 	return nil, s.err
 }
 
+func (s *errResultStream) GetColumns() []sqldata.ISQLColumn {
+	return nil
+}
+
 func (s *errResultStream) Write(sqldata.ISQLResult) error {
 	return nil
 }

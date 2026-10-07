@@ -4,6 +4,7 @@ mcp-publisher
 # CI staging
 go.sum.bkp
 /tmp
+/internal/stackql/dependencies/metadata.json
 
 # Windows
 *.exe

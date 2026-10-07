@@ -47,7 +47,11 @@ As of now, `stackql` handles `xml` SERDE through the core, and does not route th
 
 ## Building locally
 
+Generate the offline [binary dependency inventory](show_dependencies.md) before
+compilation (the Python build script performs this automatically):
+
 ```bash
+CGO_ENABLED=0 go generate ./internal/stackql/dependencies
 env CGO_ENABLED=0 PLANCACHEENABLED=false go build \
   -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
@@ -278,4 +282,3 @@ https://docs.aws.amazon.com/sdk-for-go/api/aws/signer/v4/
 - Asynchronous responses, such as [`google.compute.instances`](https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert) and [`google.compute.networks`](https://cloud.google.com/compute/docs/reference/rest/v1/networks/insert).  The returning clause is a projection on the reponse body **after** the await flow has concluded.
 
 Future use cases for `UPDATE RETURNING`, `REPLACE RETURNING` and `DELETE RETURNING` will function the same observable fashion.
-

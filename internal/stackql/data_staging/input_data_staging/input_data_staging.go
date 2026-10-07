@@ -99,7 +99,11 @@ func (np *naiveNativeResultSetPreparator) PrepareNativeResultSet() internaldto.E
 			}
 		}
 	}
-	resultStream := sqldata.NewChannelSQLResultStream()
+	if err = rows.Err(); err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	result := sqldata.NewSQLResult(columns, 0, 0, outRows)
+	resultStream := sqldata.NewChannelSQLResultStream(result)
 	rv := internaldto.NewExecutorOutput(
 		resultStream,
 		nil,
@@ -107,14 +111,8 @@ func (np *naiveNativeResultSetPreparator) PrepareNativeResultSet() internaldto.E
 		nil,
 		nil,
 	)
-	if len(outRows) == 0 {
-		outRows = append(outRows, sqldata.NewSQLRow([]interface{}{}))
-	}
-	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, outRows)) //nolint:errcheck // output stream
+	resultStream.Write(result) //nolint:errcheck // output stream
 	resultStream.Close()
-	if len(outRows) == 0 {
-		np.nativeProtect(rv, colz)
-	}
 	return rv
 }
 
@@ -147,9 +145,7 @@ func (np *naiveNativeResultSetPreparator) nativeProtect(
 			rCols[f] = np.typCfg.GetPlaceholderColumn(table, columns[f], np.typCfg.GetDefaultOID())
 		}
 		rv.SetSQLResultFn(func() sqldata.ISQLResultStream {
-			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
-				sqldata.NewSQLRow([]interface{}{}),
-			}))
+			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, nil))
 		})
 	}
 	return rv

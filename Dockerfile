@@ -14,6 +14,8 @@ ADD stackql ${SRC_DIR}/stackql
 
 ADD mcp_client ${SRC_DIR}/mcp_client
 
+ADD cicd/go ${SRC_DIR}/cicd/go
+
 ADD test ${SRC_DIR}/test
 
 COPY go.mod go.sum ${SRC_DIR}/
@@ -46,6 +48,7 @@ ENV SRC_DIR=/work/stackql/src
 ENV BUILD_DIR=/work/stackql/build
 
 RUN   cd ${SRC_DIR} \
+      && CGO_ENABLED=0 go generate ./internal/stackql/dependencies \
       && CGO_ENABLED=0 go test ./... \
       && CGO_ENABLED=0 go build -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \

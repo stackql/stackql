@@ -7,6 +7,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/getkin/kin-openapi v0.88.0
 	github.com/google/go-jsonnet v0.17.0
+	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgtype v1.10.0
 	github.com/jackc/pgx/v5 v5.9.2
@@ -22,7 +23,7 @@ require (
 	github.com/stackql-labs/omnisdk v0.1.3-alpha05
 	github.com/stackql/any-sdk v0.6.0-alpha01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
-	github.com/stackql/psql-wire v0.1.2-beta01
+	github.com/stackql/psql-wire v0.1.3-beta01
 	github.com/stackql/stackql-parser v0.0.16-alpha02
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.38.0
