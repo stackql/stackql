@@ -102,7 +102,8 @@ func (np *naiveNativeResultSetPreparator) PrepareNativeResultSet() internaldto.E
 	if err = rows.Err(); err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
-	resultStream := sqldata.NewChannelSQLResultStream(columns)
+	result := sqldata.NewSQLResult(columns, 0, 0, outRows)
+	resultStream := sqldata.NewChannelSQLResultStream(result)
 	rv := internaldto.NewExecutorOutput(
 		resultStream,
 		nil,
@@ -110,7 +111,7 @@ func (np *naiveNativeResultSetPreparator) PrepareNativeResultSet() internaldto.E
 		nil,
 		nil,
 	)
-	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, outRows)) //nolint:errcheck // output stream
+	resultStream.Write(result) //nolint:errcheck // output stream
 	resultStream.Close()
 	return rv
 }

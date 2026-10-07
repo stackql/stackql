@@ -471,7 +471,8 @@ func PrepareResultSet(
 			}
 		}
 	}
-	resultStream := sqldata.NewChannelSQLResultStream(columns)
+	result := sqldata.NewSQLResult(columns, 0, 0, rows)
+	resultStream := sqldata.NewChannelSQLResultStream(result)
 	rv := internaldto.NewExecutorOutput(
 		resultStream,
 		payload.OutputBody,
@@ -479,7 +480,7 @@ func PrepareResultSet(
 		payload.Msg,
 		payload.Err,
 	)
-	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, rows)) //nolint:errcheck // TODO: handle error
+	resultStream.Write(result) //nolint:errcheck // TODO: handle error
 	resultStream.Close()
 	return rv
 }

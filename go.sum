@@ -374,8 +374,8 @@ github.com/stackql/any-sdk v0.6.0-alpha01 h1:mqy0bmZ1wghr7mUgLyaexoRU6rsUZCWXU9M
 github.com/stackql/any-sdk v0.6.0-alpha01/go.mod h1:ahkRgwHHEn7RTmSfKrshPVk6i4X1BdHknSeBflSyRac=
 github.com/stackql/go-suffix-map v0.0.1-alpha01 h1:TDUDS8bySu41Oo9p0eniUeCm43mnRM6zFEd6j6VUaz8=
 github.com/stackql/go-suffix-map v0.0.1-alpha01/go.mod h1:QAi+SKukOyf4dBtWy8UMy+hsXXV+yyEE4vmBkji2V7g=
-github.com/stackql/psql-wire v0.1.2-beta01.0.20261006230444-20c3d93330b0 h1:onwioH5mUIau7mTH8lIjlPL/YBR67+646adpK7md9Bo=
-github.com/stackql/psql-wire v0.1.2-beta01.0.20261006230444-20c3d93330b0/go.mod h1:a44Wd8kDC3irFLpGutarKDBqhJ/aqXlj1aMzO5bVJYg=
+github.com/stackql/psql-wire v0.1.2-beta01.0.20261007004105-1b2ac7430bb2 h1:grcb/uoYzNsItW1/qx8BAHlOl3OQ+FrNQmO5j/JaBUg=
+github.com/stackql/psql-wire v0.1.2-beta01.0.20261007004105-1b2ac7430bb2/go.mod h1:a44Wd8kDC3irFLpGutarKDBqhJ/aqXlj1aMzO5bVJYg=
 github.com/stackql/readline v0.0.2-alpha05 h1:ID4QzGdplFBsrSnTuz8pvKzWw96JbrJg8fsLry2UriU=
 github.com/stackql/readline v0.0.2-alpha05/go.mod h1:OFAYOdXk/X4+5GYiDXFfaGrk+bCN6Qv0SYY5HNzD2E0=
 github.com/stackql/stackql-parser v0.0.16-alpha02 h1:kU3THgY23jS39Uv8b0xnFp329gWWWsKbsyvbFWeGrL8=
