@@ -147,7 +147,7 @@ func previewArgs(ctx queryContext, cloud string, params map[string]string) omnis
 	input := previewCfg
 	return omnisdk.Args{
 		Params:                params,
-		Auth:                  omnisdkAuth(providerAuthContext(ctx, cloud)),
+		AuthByProvider:        providerAuthByProvider(ctx, cloud),
 		Endpoint:              input.getEndpoint(),
 		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify(),
 	}

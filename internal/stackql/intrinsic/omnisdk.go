@@ -157,7 +157,7 @@ func openStream(
 	input := previewCfg
 	args := omnisdk.Args{
 		Params:                params,
-		Auth:                  omnisdkAuth(providerAuthContext(ctx, resourcePath)),
+		AuthByProvider:        providerAuthByProvider(ctx, resourcePath),
 		Endpoint:              input.getEndpoint(),
 		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify(),
 	}
@@ -572,16 +572,28 @@ var cloudProviders = map[string]string{ //nolint:gochecknoglobals // fixed mappi
 // resource. It carries both the credentials and the tuning values.
 func providerAuthContext(ctx queryContext, resourcePath string) *dto.AuthCtx {
 	cloud, _, _ := strings.Cut(resourcePath, ".")
-	providerName, ok := cloudProviders[cloud]
-	if !ok {
-		// A document-driven provider is addressed by its own stackql name.
-		providerName = cloud
-	}
+	providerName := authProviderName(cloud)
 	authCtx, err := ctx.GetAuthContext(providerName)
 	if err != nil {
 		return nil
 	}
 	return authCtx
+}
+
+func authProviderName(cloud string) string {
+	if providerName, ok := cloudProviders[cloud]; ok {
+		return providerName
+	}
+	// A document-driven provider is addressed by its own stackql name.
+	return cloud
+}
+
+func providerAuthByProvider(ctx queryContext, cloud string) map[string]*omnisdk.Auth {
+	authCtx := providerAuthContext(ctx, cloud)
+	if authCtx == nil {
+		return nil
+	}
+	return map[string]*omnisdk.Auth{authProviderName(cloud): omnisdkAuth(authCtx)}
 }
 
 func omnisdkAuth(authCtx *dto.AuthCtx) *omnisdk.Auth {
