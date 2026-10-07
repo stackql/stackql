@@ -23,7 +23,7 @@ require (
 	github.com/stackql-labs/omnisdk v0.1.3-alpha05
 	github.com/stackql/any-sdk v0.6.0-alpha01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
-	github.com/stackql/psql-wire v0.1.2-beta01.0.20261007004105-1b2ac7430bb2
+	github.com/stackql/psql-wire v0.1.2-beta01.0.20261007005816-83031391569a
 	github.com/stackql/stackql-parser v0.0.16-alpha02
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.38.0
