@@ -13,7 +13,9 @@ servers pinned via server.protocol_version / --mcp.protocol.version.
 import json
 import os
 import subprocess
+import tempfile
 import threading
+import time
 
 _LINE_ENDINGS = {
     "lf": b"\n",
@@ -263,6 +265,55 @@ def _tool_result_text(response):
     if result.get("isError"):
         parts.append("isError=true")
     return "\n".join(parts)
+
+
+def run_stdio_startup_script(stackql_exe, argv, calls, timeout_seconds=90):
+    """Exercise startup arguments, tool restrictions and an idle stdio session."""
+    with tempfile.TemporaryFile() as stderr_file:
+        proc = subprocess.Popen(
+            [stackql_exe, *argv], stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=stderr_file,
+        )
+        watchdog = threading.Timer(timeout_seconds, proc.kill)
+        watchdog.start()
+        lines, results = [], {}
+        try:
+            def send(message):
+                proc.stdin.write(_frame_messages([message], b"\n"))
+                proc.stdin.flush()
+
+            send({
+                "jsonrpc": "2.0", "id": 1, "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-06-18", "capabilities": {},
+                    "clientInfo": {"name": "robot-startup", "version": "1"},
+                },
+            })
+            results["initialize"] = _await_response(proc, 1, lines)
+            send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+            send({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+            listed = _await_response(proc, 2, lines) or {}
+            results["tools"] = [t["name"] for t in listed.get("result", {}).get("tools", [])]
+            for request_id, call in enumerate(calls, start=3):
+                send({"jsonrpc": "2.0", "id": request_id, "method": "tools/call", "params": call})
+                results[call["name"]] = _tool_result_text(_await_response(proc, request_id, lines))
+            time.sleep(1)
+            send({"jsonrpc": "2.0", "id": 100, "method": "ping"})
+            results["ping"] = _await_response(proc, 100, lines)
+            results["alive_after_idle"] = proc.poll() is None
+            proc.stdin.close()
+            lines.append(proc.stdout.read())
+            proc.wait(timeout=timeout_seconds)
+        finally:
+            watchdog.cancel()
+            if proc.poll() is None:
+                proc.kill()
+                proc.wait()
+        stderr_file.seek(0)
+        results["stderr"] = stderr_file.read().decode("utf-8", errors="replace")
+    results["stdout"] = b"".join(lines).decode("utf-8", errors="replace")
+    results["returncode"] = proc.returncode
+    return results
 
 
 def run_stdio_credential_script(

@@ -9,6 +9,10 @@ python cicd/python/build.py --build
 
 **Note**: before starting an MCP server, remember to export all appropriate auth env vars.
 
+`--mcp.config` accepts an inline JSON object for both `mcp` and `srv --mcp.server.type=...`.
+File paths and YAML are not supported. Malformed JSON, unknown fields, wrong types and invalid settings
+fail startup before listeners open. Empty tool allowlists retain their existing meaning: all tools are enabled.
+
 We have a nice debug config for running an MCP server with `vscode`, please see [the `vscode` debug launch config](/.vscode/launch.json) for that.  Otherwise, you can run with stackql (assuming locally built into `./build/stackql`):
 
 

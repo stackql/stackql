@@ -17,7 +17,7 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -99,6 +99,8 @@ var mcpSrvCmd = &cobra.Command{
   `,
 	//nolint:revive // acceptable for now
 	Run: func(cmd *cobra.Command, args []string) {
+		config, configErr := loadMCPConfig()
+		iqlerror.PrintErrorAndExitOneIfError(configErr)
 		flagErr := dependentFlagHandler(&runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(flagErr)
 		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
@@ -106,10 +108,7 @@ var mcpSrvCmd = &cobra.Command{
 		handlerCtx, err := entryutil.BuildHandlerContext(runtimeCtx, nil, queryCache, inputBundle, false)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		iqlerror.PrintErrorAndExitOneIfNil(handlerCtx, "handler context is unexpectedly nil")
-		if mcpServerType == "" {
-			mcpServerType = "http"
-		}
-		runMCPServer(handlerCtx)
+		runMCPServer(handlerCtx, config)
 	},
 }
 
@@ -137,18 +136,16 @@ func logTerminationOnSignal() {
 	}()
 }
 
-func runMCPServer(handlerCtx handler.HandlerContext) {
-	defer func() {
-		if r := recover(); r != nil {
-			mcpDiagf("panic: %v\n%s", r, debug.Stack())
-			os.Exit(1)
-		}
-	}()
-	logTerminationOnSignal()
-	var config mcp_server.Config
-	json.Unmarshal([]byte(mcpConfig), &config) //nolint:errcheck // TODO: investigate
+func loadMCPConfig() (*mcp_server.Config, error) {
+	config, err := mcp_server.LoadFromJSON([]byte(mcpConfig))
+	if err != nil {
+		return nil, errors.New("invalid --mcp.config: expected an inline JSON object with known fields and valid values")
+	}
 	if config.Server.Transport == "" {
 		config.Server.Transport = mcpServerType
+		if config.Server.Transport == "" {
+			config.Server.Transport = "http"
+		}
 	}
 	if mcpLogFormat != "" {
 		config.Server.Audit.Format = mcpLogFormat
@@ -156,6 +153,20 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	if mcpProtocolVersion != "" {
 		config.Server.ProtocolVersion = mcpProtocolVersion
 	}
+	if validationErr := config.Validate(); validationErr != nil {
+		return nil, validationErr
+	}
+	return config, nil
+}
+
+func runMCPServer(handlerCtx handler.HandlerContext, config *mcp_server.Config) {
+	defer func() {
+		if r := recover(); r != nil {
+			mcpDiagf("panic: %v\n%s", r, debug.Stack())
+			os.Exit(1)
+		}
+	}()
+	logTerminationOnSignal()
 	// MCP clients must be able to distinguish "query ran, zero rows" from
 	// "query failed upstream" (issue #670), so data acquisition failures
 	// surface as statement errors rather than empty result sets.  This is
@@ -208,7 +219,7 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	}
 	server, serverErr := mcp_server.NewAgnosticBackendServer(
 		backend,
-		&config,
+		config,
 		logging.GetLogger(),
 	)
 	iqlerror.PrintErrorAndExitOneIfError(serverErr)
@@ -216,7 +227,8 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	// rather than silently returning success (issue #668).
 	mcpDiagf(
 		"starting: version=%s platform=%s pid=%d transport=%s args=%q",
-		bi.GetSemVersion(), bi.GetPlatform(), os.Getpid(), transport, os.Args,
+		bi.GetSemVersion(), bi.GetPlatform(), os.Getpid(), transport,
+		mcpDiagnosticArgs(os.Args, rootCmd.PersistentFlags()),
 	)
 	startErr := server.Start(context.Background())
 	if startErr != nil {
