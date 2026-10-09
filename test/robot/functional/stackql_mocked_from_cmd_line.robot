@@ -11212,6 +11212,36 @@ Unstable Github Org Members Jsonl Row Set Matches Expectation
     ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
     ...    "insecureSkipTLSVerify":true,"unstable":true}
     ${expected} =    Catenate    SEPARATOR=\n
+    ...    {"id":"1","login":"some-jimbo-40","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-39","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-38","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-37","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-36","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-35","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-34","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-33","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-32","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-31","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-30","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-29","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-28","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-27","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-26","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-25","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-24","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-23","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-22","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-21","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-20","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-19","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-18","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-17","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-16","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-15","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-14","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-13","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-12","type":"User"}
+    ...    {"id":"1","login":"some-jimbo-11","type":"User"}
     ...    {"id":"1","login":"some-jimbo-10","type":"User"}
     ...    {"id":"1","login":"some-jimbo-9","type":"User"}
     ...    {"id":"1","login":"some-jimbo-8","type":"User"}
@@ -11313,6 +11343,103 @@ Unstable Google Kms Key Rings Joined To Crypto Keys Jsonl Row Set Matches Expect
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings-Joined-To-Crypto-Keys.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings-Joined-To-Crypto-Keys-stderr.tmp
 
+Unstable Github Org Members Filtered By Like Jsonl Row Set Matches Expectation
+    [Documentation]    LIKE is evaluated by omnisdk on the streamed rows, every page included.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    {"login":"some-jimbo-1","type":"User"}
+    ...    {"login":"some-jimbo-10","type":"User"}
+    ...    {"login":"some-jimbo-11","type":"User"}
+    ...    {"login":"some-jimbo-12","type":"User"}
+    ...    {"login":"some-jimbo-13","type":"User"}
+    ...    {"login":"some-jimbo-14","type":"User"}
+    ...    {"login":"some-jimbo-15","type":"User"}
+    ...    {"login":"some-jimbo-16","type":"User"}
+    ...    {"login":"some-jimbo-17","type":"User"}
+    ...    {"login":"some-jimbo-18","type":"User"}
+    ...    {"login":"some-jimbo-19","type":"User"}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, type from stackql_unstable_github.orgs.members
+    ...    where org = 'dummyorg' and login like 'some-jimbo-1%';
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-Like.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-Like-stderr.tmp
+
+Unstable Github Org Members Filtered By Between And Is Not Null Jsonl Row Set Matches Expectation
+    [Documentation]    BETWEEN orders text as text, and IS NOT NULL holds for every member with a type.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    {"login":"some-jimbo-2","type":"User"}
+    ...    {"login":"some-jimbo-20","type":"User"}
+    ...    {"login":"some-jimbo-21","type":"User"}
+    ...    {"login":"some-jimbo-22","type":"User"}
+    ...    {"login":"some-jimbo-23","type":"User"}
+    ...    {"login":"some-jimbo-24","type":"User"}
+    ...    {"login":"some-jimbo-25","type":"User"}
+    ...    {"login":"some-jimbo-26","type":"User"}
+    ...    {"login":"some-jimbo-27","type":"User"}
+    ...    {"login":"some-jimbo-28","type":"User"}
+    ...    {"login":"some-jimbo-29","type":"User"}
+    ...    {"login":"some-jimbo-3","type":"User"}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, type from stackql_unstable_github.orgs.members
+    ...    where org = 'dummyorg' and login between 'some-jimbo-2' and 'some-jimbo-3'
+    ...    and type is not null;
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-Between.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-Between-stderr.tmp
+
+Unstable Github Org Members Comma Joined To Themselves Jsonl Row Set Matches Expectation
+    [Documentation]    A comma-separated FROM is a cross join, narrowed by WHERE.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    {"login":"some-jimbo-3","type":"User"}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select a.login, a.type from stackql_unstable_github.orgs.members a, stackql_unstable_github.orgs.members b
+    ...    where a.org = 'dummyorg' and b.org = 'dummyorg' and a.login = b.login and a.login = 'some-jimbo-3';
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Comma-Joined.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Comma-Joined-stderr.tmp
+
 Unstable Github Org Members Filtered By In List Jsonl Row Set Matches Expectation
     [Documentation]    A condition no request parameter can carry is applied by
     ...                omnisdk as a filter on the streamed rows.
@@ -11385,7 +11512,7 @@ Unstable Github Org Members Staged Group By Exact Match
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
-    ...    type,member_count\nUser,10
+    ...    type,member_count\nUser,40
     ...    \-o\=csv
     ...    --preview\=${preview}
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Staged-Group-By.tmp

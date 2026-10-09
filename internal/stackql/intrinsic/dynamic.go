@@ -83,8 +83,11 @@ func dynamicSelectFunc(
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
 		}
-		plan, planErr := omnisdk.NewGraphQuery(
-			registryRoot(ctx), graph, previewArgs(ctx, graphCloud(graph.Addresses()), params))
+		args, argsErr := previewArgs(ctx, graphCloud(graph.Addresses()), params)
+		if argsErr != nil {
+			return internaldto.NewErroneousExecutorOutput(argsErr)
+		}
+		plan, planErr := omnisdk.NewGraphQuery(registryRoot(ctx), graph, args)
 		if planErr != nil {
 			return internaldto.NewErroneousExecutorOutput(planErr)
 		}

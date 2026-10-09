@@ -141,16 +141,21 @@ func streamPlan(
 }
 
 // previewArgs assembles the SDK arguments both services need: the scope left
-// over after the control predicates, the credential for the cloud in play, and
-// the backend tuning.
-func previewArgs(ctx queryContext, cloud string, params map[string]string) omnisdk.Args {
+// over after the control predicates, the credential for the cloud in play, the
+// backend tuning, and the backend's SQL dialect.
+func previewArgs(ctx queryContext, cloud string, params map[string]string) (omnisdk.Args, error) {
+	dialect, err := backendDialect(ctx)
+	if err != nil {
+		return omnisdk.Args{}, err
+	}
 	input := previewCfg
 	return omnisdk.Args{
 		Params:                params,
 		AuthByProvider:        providerAuthByProvider(ctx, cloud),
 		Endpoint:              input.getEndpoint(),
 		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify(),
-	}
+		Dialect:               dialect.catalogue(),
+	}, nil
 }
 
 // previewSelectFunc routes a SELECT over an extended preview relation.

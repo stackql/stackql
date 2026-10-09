@@ -86,9 +86,11 @@ func iacSelectFunc(
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
 		}
-		plan, planErr := omnisdk.Converge(
-			registryRoot(ctx), collection, state, runID, resources,
-			previewArgs(ctx, convergeCloud(resources), params))
+		args, argsErr := previewArgs(ctx, convergeCloud(resources), params)
+		if argsErr != nil {
+			return internaldto.NewErroneousExecutorOutput(argsErr)
+		}
+		plan, planErr := omnisdk.Converge(registryRoot(ctx), collection, state, runID, resources, args)
 		if planErr != nil {
 			return internaldto.NewErroneousExecutorOutput(planErr)
 		}

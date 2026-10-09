@@ -11,6 +11,7 @@ from robot.api.deco import keyword, library
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.Collections import Collections
 from robot.libraries.Process import Process
+
 from robot.libraries.OperatingSystem import OperatingSystem 
 
 from .registry_cfg import RegistryCfg
@@ -19,6 +20,18 @@ from .psycopg_client import PsycoPGClient
 from .psycopg2_client import PsycoPG2Client
 from .sqlalchemy_client import SQLAlchemyClient
 from .sqlite_exe_locate import resolve_sqlite_exe
+
+
+# STACKQL_ROBOT_DEFAULT_PREVIEW, when set, is a --preview value every stackql run takes unless the
+# test passes its own: the whole suite run with the document-driven (omnisdk) paths opted in.
+DEFAULT_PREVIEW_ENV_VAR = 'STACKQL_ROBOT_DEFAULT_PREVIEW'
+
+
+def _with_default_preview(args) -> tuple:
+  default = os.environ.get(DEFAULT_PREVIEW_ENV_VAR, '')
+  if default == '' or any(type(a) == str and a.startswith('--preview=') for a in args):
+    return tuple(args)
+  return tuple(args) + (f'--preview={default}',)
 
 SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED :str = 'sqlite_embedded'
 SQL_BACKEND_POSTGRES_TCP :str = 'postgres_tcp'
@@ -261,6 +274,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     *args,
     **cfg
   ):
+    args = _with_default_preview(args)
     if type(query) == bytes:
       query = query.decode("utf-8") 
     reg_location = registry_cfg.get_source_path_for_docker()
@@ -390,6 +404,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     *args,
     **cfg
   ):
+    args = _with_default_preview(args)
     reg_location = registry_cfg.get_source_path_for_docker()
     supplied_args = []
     if cfg.pop('stackql_rollback_eager', False):
@@ -472,6 +487,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     *args,
     **cfg
   ):
+    args = _with_default_preview(args)
     self.set_environment_variable("OKTA_SECRET_KEY", okta_secret_str)
     self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
@@ -549,6 +565,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     *args,
     **cfg
   ):
+    args = _with_default_preview(args)
     self.set_environment_variable("OKTA_SECRET_KEY", okta_secret_str)
     self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
