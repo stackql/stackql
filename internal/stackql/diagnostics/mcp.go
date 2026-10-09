@@ -1,10 +1,11 @@
-package cmd
+package diagnostics
 
 import (
 	"bytes"
 	"encoding/json"
 	"io"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -13,23 +14,43 @@ import (
 
 const diagnosticRedacted = "[REDACTED]"
 
+// Diagnoser produces arguments safe for startup logging.
+type Diagnoser interface {
+	Diagnose() []string
+}
+
+type standardDiagnoser struct {
+	args          []string
+	flags         *pflag.FlagSet
+	sanitizeValue func(string, string) string
+}
+
+// NewMCPServerDiagnoser selects MCP credential masking without resolving references.
+func NewMCPServerDiagnoser(args []string, flags *pflag.FlagSet) Diagnoser {
+	return &standardDiagnoser{
+		args:          slices.Clone(args),
+		flags:         flags,
+		sanitizeValue: mcpDiagnosticValue,
+	}
+}
+
 // ParseAll visits values without setting flags or resolving credentials.
-func mcpDiagnosticArgs(args []string, flags *pflag.FlagSet) []string {
-	if len(args) == 0 {
+func (d *standardDiagnoser) Diagnose() []string {
+	if len(d.args) == 0 {
 		return nil
 	}
-	out := []string{args[0]}
+	out := []string{d.args[0]}
 	diagnosticFlags := pflag.NewFlagSet("diagnostics", pflag.ContinueOnError)
 	diagnosticFlags.SetOutput(io.Discard)
-	diagnosticFlags.SetNormalizeFunc(flags.GetNormalizeFunc())
-	flags.VisitAll(func(flag *pflag.Flag) {
+	diagnosticFlags.SetNormalizeFunc(d.flags.GetNormalizeFunc())
+	d.flags.VisitAll(func(flag *pflag.Flag) {
 		copyFlag := *flag
 		diagnosticFlags.AddFlag(&copyFlag)
 	})
 	diagnosticFlags.ParseErrorsAllowlist.UnknownFlags = true
 	// A parse failure omits the remaining arguments; never print the error.
-	_ = diagnosticFlags.ParseAll(args[1:], func(flag *pflag.Flag, value string) error {
-		out = append(out, "--"+flag.Name+"="+mcpDiagnosticValue(flag.Name, value))
+	_ = diagnosticFlags.ParseAll(d.args[1:], func(flag *pflag.Flag, value string) error {
+		out = append(out, "--"+flag.Name+"="+d.sanitizeValue(flag.Name, value))
 		return nil
 	})
 	return out

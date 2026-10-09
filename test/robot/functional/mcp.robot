@@ -329,12 +329,25 @@ MCP Stdio Startup Masks Credentials And Preserves Configuration
     Should Contain    ${result['stderr']}    transport=stdio
     Should Not Contain    ${result['stdout']}    [stackql mcp]
 
+MCP Config Transport Overrides Command Default
+    [Documentation]    Explicit stdio configuration takes precedence over the command's HTTP default.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${config}=    Set Variable    {"server":{"transport":"stdio","audit":{"disabled":true}},"enabled_tools":["server_info"]}
+    ${argv}=    Evaluate    ["mcp", "--mcp.config=" + $config, "--registry", $REGISTRY_NO_VERIFY_CFG_JSON_STR, "--auth", $AUTH_CFG_STR, "--tls.allowInsecure"]
+    ${calls}=    Evaluate    [{"name":"server_info","arguments":{}}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_startup_script($STACKQL_EXE, $argv, $calls)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['returncode']}    0
+    Should Contain    ${result['initialize']}    result
+    Should Contain    ${result['server_info']}    stdio
+    Should Contain    ${result['stderr']}    transport=stdio
+    Should Be True    ${result['alive_after_idle']}
+
 MCP Failed Startup Masks Diagnostic Credentials
-    [Documentation]    A transport failure still emits useful startup diagnostics without credentials.
+    [Documentation]    The default HTTP transport still emits useful failure diagnostics without credentials.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${result}=    Run Process    ${STACKQL_EXE}    mcp
-    ...    \-\-mcp.server.type\=http    \-\-http.proxy.password\=HIDE_proxy
-    ...    \-\-mcp.config\={"server":{"transport":"http","auth_token_env_var":"STACKQL_MISSING_STARTUP_TOKEN","audit":{"disabled":true}},"backend":{"dsn":"HIDE_backend"}}
+    ...    \-\-http.proxy.password\=HIDE_proxy
+    ...    \-\-mcp.config\={"server":{"auth_token_env_var":"STACKQL_MISSING_STARTUP_TOKEN","audit":{"disabled":true}},"backend":{"dsn":"HIDE_backend"}}
     ...    \-\-registry    ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...    env:STACKQL_MISSING_STARTUP_TOKEN=${EMPTY}    timeout=30s
     Should Not Be Equal As Integers    ${result.rc}    0

@@ -1,4 +1,4 @@
-package cmd //nolint:testpackage // diagnostic helpers are private
+package diagnostics //nolint:testpackage // diagnostic helpers are private
 
 import (
 	"encoding/json"
@@ -109,7 +109,8 @@ func TestMCPDiagnosticArgsNonMutation(t *testing.T) {
 	flags.String("future", "", "")
 	args := []string{"stackql", "mcp", "--http.proxy.password=HIDE_equal", "--http.proxy.password", "-HIDE_dash", "-pHIDE_alias", "-p=HIDE_alias_equal", "-p", "HIDE_alias_separate", "--http.proxy.password=", "--auth", `{"p":{"password":"HIDE_auth","credentialsenvvar":"MY_CLIENT_SECRET"}}`, "--var", "password=visible,token=also-visible", "--var=secret=visible-too", "-vojson", "--future=future-visible", "--unknown=HIDE_unknown", "--unknown", "HIDE_value", "HIDE_positional", "--", "--future=HIDE_after_dash"}
 	before := slices.Clone(args)
-	got := strings.Join(mcpDiagnosticArgs(args, flags), " ")
+	diagnoser := NewMCPServerDiagnoser(args, flags)
+	got := strings.Join(diagnoser.Diagnose(), " ")
 	if strings.Contains(got, "HIDE_") {
 		t.Errorf("secret/payload disclosed: %s", got)
 	}
@@ -128,8 +129,15 @@ func TestMCPDiagnosticArgsNonMutation(t *testing.T) {
 	if password != "runtime-password" {
 		t.Fatal("runtime credential mutated")
 	}
-	if got := mcpDiagnosticArgs([]string{"stackql", "--http.proxy.password"}, flags); !reflect.DeepEqual(got, []string{"stackql"}) {
+	args[1] = "--future=changed"
+	if repeated := strings.Join(diagnoser.Diagnose(), " "); repeated != got {
+		t.Errorf("diagnostic changed on reuse: %s", repeated)
+	}
+	if got := NewMCPServerDiagnoser([]string{"stackql", "--http.proxy.password"}, flags).Diagnose(); !reflect.DeepEqual(got, []string{"stackql"}) {
 		t.Errorf("missing flag value: %v", got)
+	}
+	if got := NewMCPServerDiagnoser(nil, flags).Diagnose(); len(got) != 0 {
+		t.Errorf("empty argv: %v", got)
 	}
 }
 

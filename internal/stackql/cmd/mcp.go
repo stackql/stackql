@@ -33,6 +33,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
+	"github.com/stackql/stackql/internal/stackql/diagnostics"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
@@ -99,6 +100,9 @@ var mcpSrvCmd = &cobra.Command{
   `,
 	//nolint:revive // acceptable for now
 	Run: func(cmd *cobra.Command, args []string) {
+		if mcpServerType == "" {
+			mcpServerType = "http"
+		}
 		config, configErr := loadMCPConfig()
 		iqlerror.PrintErrorAndExitOneIfError(configErr)
 		flagErr := dependentFlagHandler(&runtimeCtx)
@@ -143,9 +147,6 @@ func loadMCPConfig() (*mcp_server.Config, error) {
 	}
 	if config.Server.Transport == "" {
 		config.Server.Transport = mcpServerType
-		if config.Server.Transport == "" {
-			config.Server.Transport = "http"
-		}
 	}
 	if mcpLogFormat != "" {
 		config.Server.Audit.Format = mcpLogFormat
@@ -228,7 +229,7 @@ func runMCPServer(handlerCtx handler.HandlerContext, config *mcp_server.Config) 
 	mcpDiagf(
 		"starting: version=%s platform=%s pid=%d transport=%s args=%q",
 		bi.GetSemVersion(), bi.GetPlatform(), os.Getpid(), transport,
-		mcpDiagnosticArgs(os.Args, rootCmd.PersistentFlags()),
+		diagnostics.NewMCPServerDiagnoser(os.Args, rootCmd.PersistentFlags()).Diagnose(),
 	)
 	startErr := server.Start(context.Background())
 	if startErr != nil {
