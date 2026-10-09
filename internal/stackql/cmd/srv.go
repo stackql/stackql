@@ -22,6 +22,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/psqlwire"
+	"github.com/stackql/stackql/pkg/mcp_server"
 )
 
 const MIN = 1
@@ -39,6 +40,12 @@ var srvCmd = &cobra.Command{
   `,
 	//nolint:revive // acceptable for now
 	Run: func(cmd *cobra.Command, args []string) {
+		var mcpCfg *mcp_server.Config
+		if mcpServerType != "" {
+			var configErr error
+			mcpCfg, configErr = loadMCPConfig()
+			iqlerror.PrintErrorAndExitOneIfError(configErr)
+		}
 		flagErr := dependentFlagHandler(&runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(flagErr)
 		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
@@ -49,7 +56,7 @@ var srvCmd = &cobra.Command{
 		server, err := psqlwire.MakeWireServer(sbe, runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		if mcpServerType != "" {
-			go runMCPServer(handlerCtx.Clone()) //nolint:errcheck // TODO: investigate
+			go runMCPServer(handlerCtx.Clone(), mcpCfg)
 		}
 		server.Serve() //nolint:errcheck // TODO: investigate
 	},

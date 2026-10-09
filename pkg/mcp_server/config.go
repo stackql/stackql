@@ -1,7 +1,9 @@
 package mcp_server //nolint:revive,stylecheck,mnd // fine for now
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -314,7 +316,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 // UnmarshalJSON honours the legacy `read_only: true` shim.
 func (s *ServerConfig) UnmarshalJSON(data []byte) error {
 	var w serverConfigWire
-	if err := json.Unmarshal(data, &w); err != nil {
+	if err := decodeConfigJSON(data, &w); err != nil {
 		return err
 	}
 	s.fromWire(w)
@@ -480,6 +482,11 @@ func DefaultSSEConfig() *Config {
 
 // Validate validates the configuration and returns an error if invalid.
 func (c *Config) Validate() error {
+	switch c.Server.Transport {
+	case "", serverTransportStdIO, serverTransportHTTP, serverTransportSSE:
+	default:
+		return fmt.Errorf("invalid server.transport %q (legal: stdio, http, sse)", c.Server.Transport)
+	}
 	if !policy.IsLegalMode(c.Server.Mode) {
 		return fmt.Errorf("invalid server.mode %q (legal: read_only, safe, delete_safe, full_access)", c.Server.Mode)
 	}
@@ -504,10 +511,20 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// LoadFromJSON loads configuration from JSON data.
+func decodeConfigJSON(data []byte, dst any) error {
+	data = bytes.TrimSpace(data)
+	if !json.Valid(data) || len(data) == 0 || data[0] != '{' {
+		return errors.New("expected a JSON object")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	return decoder.Decode(dst)
+}
+
+// LoadFromJSON loads configuration from a JSON object, rejecting unknown fields.
 func LoadFromJSON(data []byte) (*Config, error) {
 	config := &Config{}
-	if err := json.Unmarshal(data, config); err != nil {
+	if err := decodeConfigJSON(data, config); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON config: %w", err)
 	}
 	if err := config.Validate(); err != nil {

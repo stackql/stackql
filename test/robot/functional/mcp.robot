@@ -260,6 +260,102 @@ Suite Setup     Start MCP Servers
 
 
 *** Test Cases ***
+
+MCP Startup Rejects Malformed Security Configuration
+    [Documentation]    Both entrypoints reject invalid inline JSON before exposing listeners or tools.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${configs}=    Create List
+    ...    {"server":{"mode":"read_only","request_timeout":123},"backend":{"dsn":"HIDE_dsn"}}
+    ...    {"server":{"mode":"HIDE_invalid_mode"}}
+    ...    {"server":{"request_timeout":"HIDE_bad_duration"}}
+    ...    {"server":{"read_only":"HIDE_wrong_type"}}
+    ...    {"server":{"transport":"HIDE_invalid_transport"}}
+    ...    {"enabled_tools":"HIDE_wrong_shape"}
+    ...    {"enabled_tools":["server_info"],"HIDE_unknown_field":true}
+    ...    {"server":{"read_ony":true},"backend":{"dsn":"HIDE_dsn"}}
+    ...    {"server":{"audit":{"disable":true}},"backend":{"dsn":"HIDE_dsn"}}
+    ...    {"enabled_tools":["server_info"],"backend":{"dsn":"HIDE_malformed"}
+    ...    {"server":null}
+    ...    {"enabled_tools":["server_info"]} {"backend":{"dsn":"HIDE_trailing"}}
+    ...    HIDE_config_file.json
+    ...    server: {mode: read_only}
+    ...    null
+    ...    []
+    FOR    ${entrypoint}    IN    mcp    srv
+        FOR    ${transport}    IN    http    stdio
+            FOR    ${config}    IN    @{configs}
+                ${result}=    Run Process    ${STACKQL_EXE}    ${entrypoint}
+                ...    \-\-mcp.server.type\=${transport}    \-\-mcp.config    ${config}
+                ...    \-\-registry    ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+                ...    \-\-pgsrv.port\=0    timeout=30s
+                Should Not Be Equal As Integers    ${result.rc}    0
+                Should Contain    ${result.stderr}    invalid --mcp.config
+                Should Not Contain    ${result.stderr}    HIDE_
+                Should Not Contain    ${result.stderr}    starting:
+                Should Be Empty    ${result.stdout}
+            END
+        END
+    END
+
+MCP Stdio Startup Masks Credentials And Preserves Configuration
+    [Documentation]    Bundle-style repeated flags retain restrictions, credentials and idle stdio operation.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${auth}=    Evaluate    json.loads($AUTH_CFG_STR)    json
+    ${extra_auth}=    Evaluate    {"type":"basic","username":"visible-user","password":"HIDE_password","client_secret":"HIDE_client","private_key":"HIDE_private","passphrase":"HIDE_phrase","credentialsenvvar":"MY_CLIENT_SECRET","successor":{"api_key":"HIDE_successor"}}
+    Set To Dictionary    ${auth}    diagnostic_fixture=${extra_auth}
+    ${auth_json}=    Evaluate    json.dumps($auth)    json
+    ${config}=    Set Variable    {"server":{"read_only":true,"request_timeout":"1ms","audit":{"disabled":true},"transport_cfg":{"nested":[{"access-token":"HIDE_transport","client_secret_env_var":"PASSWORD_ENV"}]}},"backend":{"dsn":"HIDE_backend"},"enabled_tools":["server_info","run_select_query","run_mutation_query"]}
+    ${argv}=    Evaluate    ["mcp", "--mcp.server.type=stdio", "--approot", $REPOSITORY_ROOT + "/test/tmp", "--mcp.config", '{"server":{"audit":{"disabled":true}}}', "--auth=" + $auth_json, '--mcp.config={"server":{"transport_cfg":"HIDE_discarded"}}', "--mcp.config=" + $config, "--registry", $REGISTRY_NO_VERIFY_CFG_JSON_STR, "--tls.allowInsecure", "--http.proxy.password=HIDE_first", "--http.proxy.password", "-HIDE_second", "--http.proxy.user=proxy-user", "--var", "password=public,token=literal", "--var=secret=public-too", "--otel.config", '{"exporter":{"endpoint":"http://collector.example/v1/logs","headers":{"X-Custom":"HIDE_header"},"batch_size":10}}', "--pgsrv.tls", '{"keyContents":"HIDE_tls","certContents":"VISIBLE_CERT"}']
+    ${sql}=    Set Variable    select id from stackql_auth_testing.collectors.collectors order by id desc;
+    ${calls}=    Evaluate    [{"name":"server_info","arguments":{}},{"name":"run_select_query","arguments":{"sql":$sql}},{"name":"run_mutation_query","arguments":{"sql":"DELETE FROM stackql_auth_testing.collectors.collectors WHERE id = '100000001';"}}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_startup_script($STACKQL_EXE, $argv, $calls)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['returncode']}    0
+    Should Contain    ${result['initialize']}    result
+    Length Should Be    ${result['tools']}    3
+    Should Contain    ${result['server_info']}    read_only
+    Should Contain    ${result['run_select_query']}    100000001
+    Should Not Contain    ${result['run_select_query']}    isError=true
+    Should Contain    ${result['run_mutation_query']}    isError=true
+    Should Be True    ${result['alive_after_idle']}
+    Should Contain    ${result['ping']}    result
+    Should Not Contain    ${result['stderr']}    HIDE_
+    Should Not Contain    ${result['stderr']}    mypassword
+    Should Contain    ${result['stderr']}    [REDACTED]
+    FOR    ${visible}    IN    MY_CLIENT_SECRET    PASSWORD_ENV    proxy-user    visible-user    password=public,token=literal    secret=public-too    collector.example/v1/logs    X-Custom    VISIBLE_CERT    OKTA_SECRET_KEY
+        Should Contain    ${result['stderr']}    ${visible}
+    END
+    ${registry_url}=    Evaluate    json.loads($REGISTRY_NO_VERIFY_CFG_JSON_STR)['url'].replace(chr(92), chr(92) * 2)    json
+    Should Contain    ${result['stderr']}    ${registry_url}
+    Should Contain    ${result['stderr']}    transport=stdio
+    Should Not Contain    ${result['stdout']}    [stackql mcp]
+
+MCP Config Transport Overrides Command Default
+    [Documentation]    Explicit stdio configuration takes precedence over the command's HTTP default.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${config}=    Set Variable    {"server":{"transport":"stdio","audit":{"disabled":true}},"enabled_tools":["server_info"]}
+    ${argv}=    Evaluate    ["mcp", "--mcp.config=" + $config, "--registry", $REGISTRY_NO_VERIFY_CFG_JSON_STR, "--auth", $AUTH_CFG_STR, "--tls.allowInsecure"]
+    ${calls}=    Evaluate    [{"name":"server_info","arguments":{}}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_startup_script($STACKQL_EXE, $argv, $calls)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['returncode']}    0
+    Should Contain    ${result['initialize']}    result
+    Should Contain    ${result['server_info']}    stdio
+    Should Contain    ${result['stderr']}    transport=stdio
+    Should Be True    ${result['alive_after_idle']}
+
+MCP Failed Startup Masks Diagnostic Credentials
+    [Documentation]    The default HTTP transport still emits useful failure diagnostics without credentials.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Run Process    ${STACKQL_EXE}    mcp
+    ...    \-\-http.proxy.password\=HIDE_proxy
+    ...    \-\-mcp.config\={"server":{"auth_token_env_var":"STACKQL_MISSING_STARTUP_TOKEN","audit":{"disabled":true}},"backend":{"dsn":"HIDE_backend"}}
+    ...    \-\-registry    ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...    env:STACKQL_MISSING_STARTUP_TOKEN=${EMPTY}    timeout=30s
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain    ${result.stderr}    starting:
+    Should Contain    ${result.stderr}    transport=http
+    Should Contain    ${result.stderr}    STACKQL_MISSING_STARTUP_TOKEN
+    Should Not Contain    ${result.stderr}    HIDE_
+    Should Be Empty    ${result.stdout}
 MCP HTTP Server Run List Tools
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s

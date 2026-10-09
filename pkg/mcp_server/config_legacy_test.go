@@ -8,6 +8,40 @@ import (
 	"github.com/stackql/stackql/pkg/mcp_server/policy"
 )
 
+func TestLoadFromJSONRejectsMalformedSecurityConfig(t *testing.T) {
+	for _, raw := range []string{
+		``, `null`, `[]`, `config.json`, `server: {mode: read_only}`, `{} {}`,
+		`{"server":{"mode":"read_only","request_timeout":123}}`,
+		`{"server":{"request_timeout":"not-a-duration"}}`,
+		`{"server":{"mode":"unknown"}}`, `{"server":{"transport":"unknown"}}`,
+		`{"server":{"read_only":"true"}}`, `{"server":null}`,
+		`{"enabled_tools":"server_info"}`, `{"enabled_tools":[123]}`,
+		`{"enabled_tools":["server_info"],}`, `{"enabled_tool":["server_info"]}`,
+		`{"server":{"read_ony":true}}`, `{"server":{"audit":{"disable":true}}}`,
+		`{"backend":{"connection_string":"postgres://localhost"}}`,
+	} {
+		t.Run(raw, func(t *testing.T) {
+			cfg, err := LoadFromJSON([]byte(raw))
+			if err == nil || cfg != nil {
+				t.Fatalf("accepted malformed config: cfg=%+v err=%v", cfg, err)
+			}
+		})
+	}
+}
+
+func TestLoadFromJSONPreservesRestrictionsAndZeroLimits(t *testing.T) {
+	cfg, err := LoadFromJSON([]byte(`{"server":{"read_only":true,"request_timeout":"0s","max_concurrent_requests":0,"transport_cfg":{"custom":{"setting":true}}},"enabled_tools":["server_info"]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.GetMode() != policy.ModeReadOnly || !cfg.IsToolEnabled("server_info") || cfg.IsToolEnabled("run_mutation_query") {
+		t.Fatalf("restrictions lost: %+v", cfg)
+	}
+	if cfg.Server.RequestTimeout != 0 || cfg.Server.MaxConcurrentRequests != 0 {
+		t.Fatal("zero limits changed")
+	}
+}
+
 func TestLoadFromJSON_LegacyReadOnlyTrueMapsToReadOnlyMode(t *testing.T) {
 	data := []byte(`{"server":{"transport":"http","read_only":true}}`)
 	cfg, err := LoadFromJSON(data)
