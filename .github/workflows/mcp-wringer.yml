@@ -1,0 +1,193 @@
+# MCP robustness gate: fuzzes the stackql MCP server built from the pull
+# request with mcp-wringer (https://github.com/stackql/mcp-wringer) on every
+# platform the project ships, in every server mode the fuzzer can drive:
+#
+#   stdio, protocol revision 2025-11-25  (server at its default "auto" ceiling)
+#   stdio, protocol revision 2026-07-28  (server pinned to the sessionless revision)
+#   Streamable HTTP, stateful, 2025-11-25
+#   Streamable HTTP, stateless, 2026-07-28
+#
+# The server runs hermetically: a throwaway approot, the repository's file://
+# provider registry, audit off, and no credentials.  mcp-wringer only calls
+# tools annotated readOnlyHint, and each stdio case restarts the server.
+# Every mode uses a fixed seed, so a failure replays with the reproducer file
+# in the uploaded report artifact:
+#   npx @stackql/mcp-wringer replay <file.repro.json>
+#
+# cicd/mcp-wringer/mcp-server.mjs owns the server invocation.
+
+name: mcp-wringer
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'LICENSE'
+      - 'get-app/**'
+      - 'packaging/**'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: mcp-wringer-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The Action reads MCP_WRINGER_* exactly like the CLI.  Settings shared by
+  # every mode live here; the protocol revision is set per step.
+  MCP_WRINGER_PROFILE: standard
+  MCP_WRINGER_SEED: "20261009"
+  MCP_WRINGER_FAIL_ON: medium
+  # The standard profile caps a run at 120 s, which truncates stdio runs on
+  # slow runners because every case restarts the Go binary.  Raise the cap so
+  # all 256 cases run and the case set is identical on every platform.
+  MCP_WRINGER_DURATION_MS: "600000"
+  # Per-request and target startup timeout.  Generous for cold starts on the
+  # Intel macOS and emulated Windows runners.
+  MCP_WRINGER_TIMEOUT_MS: "15000"
+
+jobs:
+  fuzz:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            runner: ubuntu-24.04
+          - name: linux-arm64
+            runner: ubuntu-24.04-arm
+          - name: darwin-amd64
+            runner: macos-15-intel
+          - name: darwin-arm64
+            runner: macos-15
+          - name: windows-amd64
+            runner: windows-latest
+          # There is no native windows/arm64 release; the shipped binary is
+          # the amd64 exe under Windows 11 x64 emulation, so that is what is
+          # fuzzed here (see the winarmsmoke job in build.yml).
+          - name: windows-arm64-emulated
+            runner: windows-11-arm
+            goarch: amd64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version: '1.25.3'
+          check-latest: true
+          cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: Build stackql
+        shell: bash
+        env:
+          CGO_ENABLED: "0"
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          set -euo pipefail
+          output=build/stackql
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            output=build/stackql.exe
+          fi
+          go build -o "$output" ./stackql
+          "$output" --version
+
+      - name: Prepare server arguments
+        id: prepare
+        shell: bash
+        run: node cicd/mcp-wringer/mcp-server.mjs prepare
+
+      # ---- stdio ----------------------------------------------------------
+
+      - name: Fuzz stdio (2025-11-25)
+        id: stdio-2025
+        uses: stackql/mcp-wringer@v0
+        env:
+          MCP_WRINGER_SPEC_REVISION: "2025-11-25"
+        with:
+          command: ${{ steps.prepare.outputs.binary }}
+          args: ${{ steps.prepare.outputs.stdio_args_2025_11_25 }}
+          report_directory: ${{ runner.temp }}/mcp-wringer-reports/stdio-2025-11-25
+
+      - name: Fuzz stdio (2026-07-28)
+        id: stdio-2026
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        uses: stackql/mcp-wringer@v0
+        env:
+          MCP_WRINGER_SPEC_REVISION: "2026-07-28"
+        with:
+          command: ${{ steps.prepare.outputs.binary }}
+          args: ${{ steps.prepare.outputs.stdio_args_2026_07_28 }}
+          report_directory: ${{ runner.temp }}/mcp-wringer-reports/stdio-2026-07-28
+
+      # ---- Streamable HTTP, stateful ---------------------------------------
+
+      - name: Start Streamable HTTP server (stateful)
+        id: http-stateful-server
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        shell: bash
+        run: node cicd/mcp-wringer/mcp-server.mjs start --name stateful --port 9876
+
+      - name: Fuzz Streamable HTTP stateful (2025-11-25)
+        id: http-stateful
+        if: ${{ !cancelled() && steps.http-stateful-server.outcome == 'success' }}
+        uses: stackql/mcp-wringer@v0
+        env:
+          MCP_WRINGER_SPEC_REVISION: "2025-11-25"
+        with:
+          url: ${{ steps.http-stateful-server.outputs.url }}
+          report_directory: ${{ runner.temp }}/mcp-wringer-reports/http-stateful-2025-11-25
+
+      - name: Stop Streamable HTTP server (stateful)
+        if: ${{ always() && steps.http-stateful-server.outcome == 'success' }}
+        shell: bash
+        run: node cicd/mcp-wringer/mcp-server.mjs stop --name stateful
+
+      # ---- Streamable HTTP, stateless --------------------------------------
+
+      - name: Start Streamable HTTP server (stateless, 2026-07-28)
+        id: http-stateless-server
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        shell: bash
+        run: node cicd/mcp-wringer/mcp-server.mjs start --name stateless --port 9877 --protocol-version 2026-07-28
+
+      - name: Fuzz Streamable HTTP stateless (2026-07-28)
+        id: http-stateless
+        if: ${{ !cancelled() && steps.http-stateless-server.outcome == 'success' }}
+        uses: stackql/mcp-wringer@v0
+        env:
+          MCP_WRINGER_SPEC_REVISION: "2026-07-28"
+        with:
+          url: ${{ steps.http-stateless-server.outputs.url }}
+          report_directory: ${{ runner.temp }}/mcp-wringer-reports/http-stateless-2026-07-28
+
+      - name: Stop Streamable HTTP server (stateless)
+        if: ${{ always() && steps.http-stateless-server.outcome == 'success' }}
+        shell: bash
+        run: node cicd/mcp-wringer/mcp-server.mjs stop --name stateless
+
+      # ---- reports ---------------------------------------------------------
+
+      - name: Upload reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: mcp-wringer-reports-${{ matrix.name }}
+          path: ${{ runner.temp }}/mcp-wringer-reports
+          if-no-files-found: warn
