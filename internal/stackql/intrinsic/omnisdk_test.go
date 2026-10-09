@@ -303,3 +303,23 @@ func TestRowsReachOutputBeforeNextPage(t *testing.T) {
 type writerFunc func([]byte) (int, error)
 
 func (f writerFunc) Write(b []byte) (int, error) { return f(b) }
+
+func TestOmnisdkAuthAPIKeyDefaultsMatchCanonicalProviders(t *testing.T) {
+	for _, tc := range []struct {
+		in         dto.AuthCtx
+		wantName   string
+		wantPrefix string
+	}{
+		{in: dto.AuthCtx{Type: "api_key", ValuePrefix: "token "}, wantName: "Authorization", wantPrefix: "token "},
+		{in: dto.AuthCtx{Type: "api_key"}, wantName: "Authorization", wantPrefix: "Bearer "},
+		{in: dto.AuthCtx{Type: "api_key", Name: "X-Api-Key"}, wantName: "X-Api-Key", wantPrefix: ""},
+		{in: dto.AuthCtx{Type: "bearer"}, wantName: "", wantPrefix: ""},
+	} {
+		authCtx := tc.in
+		got := omnisdkAuth(&authCtx)
+		if got.Name != tc.wantName || got.ValuePrefix != tc.wantPrefix {
+			t.Errorf("%+v: got name %q prefix %q, want %q %q",
+				tc.in, got.Name, got.ValuePrefix, tc.wantName, tc.wantPrefix)
+		}
+	}
+}

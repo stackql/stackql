@@ -297,3 +297,28 @@ func TestMutationTablesIgnoresImplicitDual(t *testing.T) {
 		t.Fatalf("got isDoc %v, err %v", isDoc, err)
 	}
 }
+
+func TestDocProviderUnderOmniAll(t *testing.T) {
+	previous := previewCfg
+	t.Cleanup(func() { previewCfg = previous })
+	for _, tc := range []struct {
+		cfg        previewCfgDTO
+		name       string
+		wantBundle string
+		wantDoc    bool
+	}{
+		{cfg: previewCfgDTO{}, name: "aws", wantDoc: false},
+		{cfg: previewCfgDTO{Unstable: true}, name: "aws", wantDoc: false},
+		{cfg: previewCfgDTO{Unstable: true}, name: "stackql_unstable_aws", wantBundle: "aws", wantDoc: true},
+		{cfg: previewCfgDTO{Omni: "all"}, name: "aws", wantBundle: "aws", wantDoc: true},
+		{cfg: previewCfgDTO{Omni: "all"}, name: "stackql_unstable_aws", wantBundle: "aws", wantDoc: true},
+		{cfg: previewCfgDTO{Omni: "all"}, name: ProviderName, wantDoc: false},
+		{cfg: previewCfgDTO{Omni: "all"}, name: "", wantDoc: false},
+	} {
+		previewCfg = newBackendInput(tc.cfg)
+		bundle, isDoc := docProvider(tc.name)
+		if bundle != tc.wantBundle || isDoc != tc.wantDoc {
+			t.Errorf("%+v %q: got %q %v, want %q %v", tc.cfg, tc.name, bundle, isDoc, tc.wantBundle, tc.wantDoc)
+		}
+	}
+}

@@ -46,3 +46,5 @@ mcp-audit-*.log
 
 ## Generic sink default name (used by pkg/sink tests / non-MCP callers)
 sink_*.log
+
+/*.db

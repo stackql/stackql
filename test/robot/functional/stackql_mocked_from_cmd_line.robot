@@ -11245,6 +11245,83 @@ Unstable Github Org Members Filtered By In List Jsonl Row Set Matches Expectatio
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-In-List.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-In-List-stderr.tmp
 
+Unstable Github Org Members Staged Order By With Offset Exact Match
+    [Documentation]    With staging opted into, the ORDER BY, LIMIT and OFFSET
+    ...                omnisdk leaves unapplied are evaluated by the SQL backend
+    ...                over the staged result, so the row order is asserted.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true,"staging":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, type from stackql_unstable_github.orgs.members
+    ...    where org = 'dummyorg' order by login desc limit 3 offset 1;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    login,type\nsome-jimbo-8,User\nsome-jimbo-7,User\nsome-jimbo-6,User
+    ...    \-o\=csv
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Staged-Order-By-With-Offset.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Staged-Order-By-With-Offset-stderr.tmp
+
+Unstable Github Org Members Staged Group By Exact Match
+    [Documentation]    With staging opted into, grouping and aggregation run in
+    ...                the SQL backend over the staged result.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true,"staging":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select type, count(*) as member_count from stackql_unstable_github.orgs.members
+    ...    where org = 'dummyorg' group by type;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    type,member_count\nUser,10
+    ...    \-o\=csv
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Staged-Group-By.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Staged-Group-By-stderr.tmp
+
+Omni All Github Org Members Staged Order By With Offset Exact Match
+    [Documentation]    With omni set to all, a canonical provider name is routed
+    ...                to omnisdk rather than any-sdk, and staging applies the
+    ...                ORDER BY, LIMIT and OFFSET.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"omni":"all","staging":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select login, type from github.orgs.members
+    ...    where org = 'dummyorg' order by login desc limit 3 offset 1;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    login,type\nsome-jimbo-8,User\nsome-jimbo-7,User\nsome-jimbo-6,User
+    ...    \-o\=csv
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Omni-All-Github-Org-Members-Staged-Order-By-With-Offset.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Omni-All-Github-Org-Members-Staged-Order-By-With-Offset-stderr.tmp
+
 Unstable Github Org Update Reports Despatch
     [Documentation]    A document-driven UPDATE without RETURNING: omnisdk sends
     ...                the effect and stackql reports it. The mock refuses any
