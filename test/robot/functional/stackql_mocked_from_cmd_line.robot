@@ -1251,6 +1251,101 @@ Create Table Scenario Working
     ...    ${outputStr}
     ...    stderr=${CURDIR}/tmp/Create-Table-Scenario-Working.tmp
 
+Select Expressions Over User Space Table and Materialized View Survive Purge
+    [Documentation]    Expressions in a SELECT over user space tables and materialized
+    ...                views are evaluated rather than collapsed to the referenced column
+    ...                (issue #798), and PURGE leaves user space tables and materialized
+    ...                views intact (issue #799).
+    ${inputStr} =    Catenate
+    ...    create table repos_798 (repo text, enabled text);
+    ...    insert into repos_798 (repo, enabled) values ('a', 'true'), ('b', 'false');
+    ...    select repo, case when enabled = 'true' then 'pass' else 'fail' end as status from repos_798 order by repo;
+    ...    select repo, upper(enabled) as u, enabled || '!' as e from repos_798 order by repo;
+    ...    create materialized view mv_798 as select repo, enabled from repos_798;
+    ...    select repo, case when enabled = 'true' then 'pass' else 'fail' end as status, enabled || '!' as e from mv_798 order by repo;
+    ...    select count(*) as n from mv_798;
+    ...    purge conservative;
+    ...    select count(*) as n from mv_798;
+    ...    purge;
+    ...    select count(*) as n from mv_798;
+    ...    select count(*) as n from repos_798;
+    ...    drop materialized view mv_798;
+    ...    drop table repos_798;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------|--------|
+    ...    |${SPACE}repo${SPACE}|${SPACE}status${SPACE}|
+    ...    |------|--------|
+    ...    |${SPACE}a${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}pass${SPACE}${SPACE}${SPACE}|
+    ...    |------|--------|
+    ...    |${SPACE}b${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}fail${SPACE}${SPACE}${SPACE}|
+    ...    |------|--------|
+    ...    |------|-------|--------|
+    ...    |${SPACE}repo${SPACE}|${SPACE}${SPACE}${SPACE}u${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}e${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------|-------|--------|
+    ...    |${SPACE}a${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}TRUE${SPACE}${SPACE}|${SPACE}true!${SPACE}${SPACE}|
+    ...    |------|-------|--------|
+    ...    |${SPACE}b${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}FALSE${SPACE}|${SPACE}false!${SPACE}|
+    ...    |------|-------|--------|
+    ...    |------|--------|--------|
+    ...    |${SPACE}repo${SPACE}|${SPACE}status${SPACE}|${SPACE}${SPACE}${SPACE}e${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------|--------|--------|
+    ...    |${SPACE}a${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}pass${SPACE}${SPACE}${SPACE}|${SPACE}true!${SPACE}${SPACE}|
+    ...    |------|--------|--------|
+    ...    |${SPACE}b${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}fail${SPACE}${SPACE}${SPACE}|${SPACE}false!${SPACE}|
+    ...    |------|--------|--------|
+    ...    |---|
+    ...    |${SPACE}n${SPACE}|
+    ...    |---|
+    ...    |${SPACE}2${SPACE}|
+    ...    |---|
+    ...    |--------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}PURGE${SPACE}of${SPACE}type${SPACE}'conservative'${SPACE}${SPACE}${SPACE}|
+    ...    |${SPACE}successfully${SPACE}completed${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |---|
+    ...    |${SPACE}n${SPACE}|
+    ...    |---|
+    ...    |${SPACE}2${SPACE}|
+    ...    |---|
+    ...    |--------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------|
+    ...    |${SPACE}purge${SPACE}'GLOBAL'${SPACE}completed${SPACE}|
+    ...    |--------------------------|
+    ...    |---|
+    ...    |${SPACE}n${SPACE}|
+    ...    |---|
+    ...    |${SPACE}2${SPACE}|
+    ...    |---|
+    ...    |---|
+    ...    |${SPACE}n${SPACE}|
+    ...    |---|
+    ...    |${SPACE}2${SPACE}|
+    ...    |---|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    insert into table completed
+    ...    DDL Execution Completed
+    ...    Global PURGE successfully completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Select-Expressions-Over-User-Space-Table-and-Materialized-View-Survive-Purge.tmp
+    ...    stderr=${CURDIR}/tmp/Select-Expressions-Over-User-Space-Table-and-Materialized-View-Survive-Purge-stderr.tmp
+
+
 Create Static Materialized View Scenario Working
     ${inputStr} =    Catenate
     ...    create materialized view mv_one as select 1 as one;

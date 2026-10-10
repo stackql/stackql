@@ -114,6 +114,17 @@ func (v *standardQueryRewriteAstVisitor) isExpressionProjection(node *sqlparser.
 	return !isColumnReference
 }
 
+// cloneRelationalColumn returns a fresh column carrying the catalogued identity
+// (name, type, width, oid) of col, so that projection-level decoration such as
+// an alias or qualifier never mutates the relation's shared catalogue entry.
+func cloneRelationalColumn(col typing.RelationalColumn) typing.RelationalColumn {
+	rv := typing.NewRelationalColumn(col.GetName(), col.GetType()).WithWidth(col.GetWidth())
+	if oID, hasOID := col.GetOID(); hasOID {
+		rv = rv.WithOID(oID)
+	}
+	return rv
+}
+
 // TODO: introduce dependency on RDBMS
 func (v *standardQueryRewriteAstVisitor) getTypeFromParserType(t sqlparser.ValType) string {
 	//nolint:exhaustive // acceptable
@@ -685,7 +696,21 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				return nil
 			}
 
-			relationalCol, ok := indirect.GetRelationalColumnByIdentifier(col.Name)
+			// Only a bare column reference binds to the relation's catalogued
+			// column. An expression over a column (CASE, function call,
+			// concatenation, ...) is not that column: binding it collapsed the
+			// projection to the referenced column (issue #798). The catalogued
+			// column is shared across the whole statement, so it is copied
+			// before per-projection decoration is applied.
+			var relationalCol typing.RelationalColumn
+			var ok bool
+			if !v.isExpressionProjection(node) {
+				var catalogueCol typing.RelationalColumn
+				catalogueCol, ok = indirect.GetRelationalColumnByIdentifier(col.Name)
+				if ok {
+					relationalCol = cloneRelationalColumn(catalogueCol)
+				}
+			}
 			if !ok {
 				if col.Val != nil {
 					relationalCol = typing.NewRelationalColumn(col.Name, v.getTypeFromParserType(col.Type)).WithDecorated(col.DecoratedColumn)

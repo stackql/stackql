@@ -413,6 +413,10 @@ func (eng *sqLiteSystem) obtainRelationalColumnFromExternalSQLtable(
 	return relationalColumn, nil
 }
 
+// Garbage collection and purge act on provider cache tables only. The physical
+// tables behind user space tables and materialized views are user data and are
+// excluded via the "__iql__.tables" and "__iql__.materialized_views" catalogues
+// (issue #799).
 func (eng *sqLiteSystem) gCCollectObsoleted(minTransactionID int) error {
 	maxTxnColName := eng.controlAttributes.GetControlMaxTxnColumnName()
 	obtainQuery := fmt.Sprintf(
@@ -427,6 +431,10 @@ func (eng *sqLiteSystem) gCCollectObsoleted(minTransactionID int) error {
 			name not like '__iql__%%' 
 			and
 			name NOT LIKE 'sqlite_%%' 
+			and
+			name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			name NOT IN (SELECT table_name FROM "__iql__.tables")
 		`,
 		maxTxnColName,
 		minTransactionID,
@@ -458,6 +466,10 @@ func (eng *sqLiteSystem) gCCollectAll() error {
 			name not like '__iql__%%' 
 			and
 			name NOT LIKE 'sqlite_%%' 
+			and
+			name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			name NOT IN (SELECT table_name FROM "__iql__.tables")
 		`
 	deleteQueryResultSet, err := eng.sqlEngine.Query(obtainQuery)
 	if err != nil {
@@ -1449,6 +1461,10 @@ func (eng *sqLiteSystem) gcPurgeEphemeral() error {
 		name not like '__iql__%' 
 		and
 		name NOT LIKE 'sqlite_%' 
+		and
+		name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+		and
+		name NOT IN (SELECT table_name FROM "__iql__.tables")
 	`
 	rows, err := eng.sqlEngine.Query(query, eng.analyticsNamespaceLikeString)
 	if err != nil {
@@ -1481,6 +1497,10 @@ func (eng *sqLiteSystem) purgeAll() error {
 			name NOT LIKE '__iql__%'
 			and
 			name NOT LIKE 'sqlite_%'
+			and
+			name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			name NOT IN (SELECT table_name FROM "__iql__.tables")
 		`
 	deleteQueryResultSet, err := eng.sqlEngine.Query(obtainQuery)
 	if err != nil {

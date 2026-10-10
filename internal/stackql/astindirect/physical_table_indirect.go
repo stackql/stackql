@@ -1,3 +1,4 @@
+//nolint:dupl // mirrors materialized_view_indirect.go; consolidation deferred
 package astindirect
 
 import (
@@ -78,7 +79,7 @@ func (v *physicalTable) GetRelationalColumnByIdentifier(name string) (typing.Rel
 		if col.GetName() == name {
 			return col, true
 		}
-		if col.GetAlias() == name {
+		if col.GetAlias() != "" && col.GetAlias() == name {
 			return col, true
 		}
 	}
