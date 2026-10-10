@@ -139,7 +139,11 @@ func stagedSelectFunc(
 	node *sqlparser.Select,
 	currentProvider string,
 ) func() internaldto.ExecutorOutput {
-	staged, err := planStagedSelect(node, currentProvider, ctx.GetASTFormatter())
+	dialect, err := backendDialect(ctx)
+	if err != nil {
+		return refuse(err)
+	}
+	staged, err := planStagedSelect(node, newDocTranslator(currentProvider, dialect), ctx.GetASTFormatter())
 	if err != nil {
 		return refuse(err)
 	}
@@ -247,10 +251,10 @@ func (r *stagedRefs) collectSelectExprs(
 // formatted over the staged table.
 func planStagedSelect(
 	node *sqlparser.Select,
-	currentProvider string,
+	translator docTranslator,
 	formatter sqlparser.NodeFormatter,
 ) (stagedSelect, error) {
-	t, where, err := translateSource(node, currentProvider)
+	src, err := translator.source(node)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +286,7 @@ func planStagedSelect(
 		refs.outputs = append(refs.outputs, query.NewOutput("", query.NewStar("")))
 		refs.names = append(refs.names, stagedColumnPrefix+"0")
 	}
-	q, err := query.New(t.joins, where, refs.outputs)
+	q, err := query.New(src.joins(), src.where(), refs.outputs)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +307,7 @@ func planStagedSelect(
 	buf := sqlparser.NewTrackedBuffer(refs.formatter(formatter))
 	outer.Format(buf)
 	return newStagedSelect(
-		newDocQuery(q, refs.names, 0, t.bundles), refs.names, outputNames, buf.String()+limit), nil
+		newDocQuery(q, refs.names, 0, src.bundles()), refs.names, outputNames, buf.String()+limit), nil
 }
 
 // stagedLimit renders LIMIT and OFFSET in the form both backends accept.

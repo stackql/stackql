@@ -84,7 +84,7 @@ func TestPlanStagedSelectOuterStatement(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		staged, err := planStagedSelect(sel, "", tc.formatter)
+		staged, err := planStagedSelect(sel, newDocTranslator("", sqliteDialect{}), tc.formatter)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -102,7 +102,7 @@ func TestPlanStagedSelectOuterStatement(t *testing.T) {
 		}
 	}
 	if _, err := planStagedSelect(parseSelect(t,
-		"select * from stackql_unstable_github.orgs.members order by login"), "",
+		"select * from stackql_unstable_github.orgs.members order by login"), newDocTranslator("", sqliteDialect{}),
 		astformat.SQLiteSelectExprsFormatter); err == nil ||
 		err.Error() != "'*' cannot be staged for stackql_unstable_* relations; name the columns" {
 		t.Fatalf("star refusal: got %v", err)

@@ -666,11 +666,18 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
+    # sdk omni runs the mocked suite with omnisdk's document-driven paths opted in, best effort.
+    continue-on-error: ${{ matrix.sdk == 'omni' }}
     strategy:
       matrix:
         registry:
           - test/registry-mocked
           - test/registry
+        sdk:
+          - any
+        include:
+          - registry: test/registry-mocked
+            sdk: omni
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
@@ -986,7 +993,7 @@ jobs:
     - name: Run robot mocked functional tests
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
-      if: success()
+      if: success() && matrix.sdk != 'omni'
       run: |
         if [ "${{ matrix.registry }}" = "test/registry" ]; then
           robot \
@@ -1000,12 +1007,28 @@ jobs:
         fi
 
     - name: Output from mocked functional tests
-      if: always()
+      if: always() && matrix.sdk != 'omni'
       run: |
         cat ./test/robot/reports/output.xml
 
+    # Omni cutover readiness, best effort: the same suite with every stackql run opted in to the
+    # document-driven (omnisdk) paths. Reports a traffic light; never fails the job.
+    - name: Omni readiness traffic light
+      if: matrix.sdk == 'omni'
+      continue-on-error: true
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        STACKQL_ROBOT_DEFAULT_PREVIEW: '{"unstable":true,"staging":true}'
+      run: |
+        pgrep -f flask | xargs kill -9 || true
+        if python cicd/python/build.py --robot-test --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true" } }'; then
+          echo "🟢 Omni readiness: all robot tests pass with the omni preview" >> "${GITHUB_STEP_SUMMARY}"
+        else
+          echo "🟡 Omni readiness: some robot tests fail with the omni preview" >> "${GITHUB_STEP_SUMMARY}"
+        fi
+
     - name: Run robot mocked functional tests with aggressive concurrency
-      if: success() && matrix.registry != 'test/registry'
+      if: success() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
         pgrep -f flask | xargs kill -9 || true
@@ -1013,12 +1036,12 @@ jobs:
         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1  } }'
 
     - name: Output from mocked functional tests with aggressive concurrency
-      if: always() && matrix.registry != 'test/registry'
+      if: always() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       run: |
         cat ./test/robot/reports/output.xml
     
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.registry != 'test/registry'
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -1031,17 +1054,17 @@ jobs:
         python cicd/python/build.py --robot-test-integration
     
     - name: Prepare Test DB
-      if: success() && matrix.registry != 'test/registry'
+      if: success() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
 
     - name: Test Script
-      if: success() && matrix.registry != 'test/registry'
+      if: success() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       run: python3 "${TESTSCRIPT}"
       env:
         TESTSCRIPT: ${{env.TESTSCRIPT}}
     
     - name: install and test deb package
-      if: matrix.registry != 'test/registry'
+      if: matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
@@ -1060,7 +1083,7 @@ jobs:
         echo "stackql version: ${stackqlVersion}"
     
     - name: Output from mocked deb package functional tests
-      if: always() && matrix.registry != 'test/registry'
+      if: always() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |
