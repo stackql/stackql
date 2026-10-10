@@ -1,3 +1,4 @@
+//nolint:dupl // mirrors physical_table_indirect.go; consolidation deferred
 package astindirect
 
 import (

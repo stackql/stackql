@@ -1306,6 +1306,10 @@ func (eng *postgresSystem) GCCollectObsoleted(minTransactionID int) error {
 	return eng.gCCollectObsoleted(minTransactionID)
 }
 
+// Garbage collection and purge act on provider cache tables only. The physical
+// tables behind user space tables and materialized views are user data and are
+// excluded via the "__iql__.tables" and "__iql__.materialized_views" catalogues
+// (issue #799).
 func (eng *postgresSystem) gCCollectObsoleted(minTransactionID int) error {
 	maxTxnColName := eng.controlAttributes.GetControlMaxTxnColumnName()
 	obtainQuery := fmt.Sprintf(
@@ -1322,6 +1326,14 @@ func (eng *postgresSystem) gCCollectObsoleted(minTransactionID int) error {
 			table_schema = $2
 		  and
 			table_name not like '__iql__%%'
+			and
+			table_name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			table_name NOT IN (SELECT table_name FROM "__iql__.tables")
+			and
+			(table_schema || '.' || table_name) NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			(table_schema || '.' || table_name) NOT IN (SELECT table_name FROM "__iql__.tables")
 		`,
 		eng.tableSchema,
 		maxTxnColName,
@@ -1360,6 +1372,14 @@ func (eng *postgresSystem) gCCollectAll() error {
 			table_schema = $2
 		  and
 			table_name not like '__iql__%%'
+			and
+			table_name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			table_name NOT IN (SELECT table_name FROM "__iql__.tables")
+			and
+			(table_schema || '.' || table_name) NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			(table_schema || '.' || table_name) NOT IN (SELECT table_name FROM "__iql__.tables")
 		`,
 		eng.tableSchema,
 	)
@@ -1522,6 +1542,14 @@ func (eng *postgresSystem) gcPurgeEphemeral() error {
 		table_name NOT like $3
 		and 
 		table_name not like '__iql__%' 
+		and
+		table_name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+		and
+		table_name NOT IN (SELECT table_name FROM "__iql__.tables")
+		and
+		(table_schema || '.' || table_name) NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+		and
+		(table_schema || '.' || table_name) NOT IN (SELECT table_name FROM "__iql__.tables")
 	`
 	rows, err := eng.sqlEngine.Query(query, eng.tableCatalog, eng.tableSchema, eng.analyticsNamespaceLikeString)
 	if err != nil {
@@ -1552,6 +1580,14 @@ func (eng *postgresSystem) purgeAll() error {
 			table_schema = $2
 		  AND
 			table_name NOT LIKE '__iql__%'
+			and
+			table_name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			table_name NOT IN (SELECT table_name FROM "__iql__.tables")
+			and
+			(table_schema || '.' || table_name) NOT IN (SELECT view_name FROM "__iql__.materialized_views")
+			and
+			(table_schema || '.' || table_name) NOT IN (SELECT table_name FROM "__iql__.tables")
 		`
 	deleteQueryResultSet, err := eng.sqlEngine.Query(obtainQuery, eng.tableCatalog, eng.tableSchema)
 	if err != nil {
