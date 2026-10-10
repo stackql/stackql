@@ -12,7 +12,10 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/pkg/mcp_server/audit"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
+	"github.com/stackql/stackql/pkg/sink"
 )
 
 // testBackend is a controllable Backend used to assert tool wiring end-to-end.
@@ -27,6 +30,7 @@ type testBackend struct {
 	validateOut      []map[string]any
 	validateErr      error
 	execOut          map[string]any
+	execCalls        int
 	listRegistryOut  []map[string]any
 	pullProviderOut  map[string]any
 	reloadCredsOut   dto.CredentialsReloadDTO
@@ -47,6 +51,7 @@ func (b *testBackend) ServerInfo(_ context.Context, _ any) (dto.ServerInfoOutput
 	return b.serverInfoOut, nil
 }
 func (b *testBackend) ExecQuery(_ context.Context, q string) (map[string]any, error) {
+	b.execCalls++
 	b.lastExecQuery = q
 	return b.execOut, nil
 }
@@ -1143,5 +1148,80 @@ func TestCurrentRevisionClient_SafeModeRefusesWithoutElicitation(t *testing.T) {
 	}
 	if be.lastExecQuery != "" {
 		t.Fatalf("backend must not run, got %q", be.lastExecQuery)
+	}
+}
+
+// --- Audit failure modes (issue #826) ---
+
+// failingSink fails every Record call so the gate's failure_mode handling is
+// exercised deterministically.
+type failingSink struct{ records int }
+
+func (s *failingSink) Record(context.Context, any) error {
+	s.records++
+	return errors.New("probe audit failure")
+}
+
+func (s *failingSink) Close() error { return nil }
+
+// connectWithSink registers the real gated tools against an arbitrary sink.
+func connectWithSink(t *testing.T, cfg *Config, backend Backend, auditSink sink.Sink) *mcp.ClientSession {
+	t.Helper()
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "v0"}, nil)
+	if err := registerTools(server, cfg, backend, logrus.New(), auditSink); err != nil {
+		t.Fatalf("registerTools: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	t.Cleanup(cancel)
+	t1, t2 := mcp.NewInMemoryTransports()
+	if _, err := server.Connect(ctx, t1, nil); err != nil {
+		t.Fatalf("server connect: %v", err)
+	}
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "v0"}, nil)
+	cs, err := client.Connect(ctx, t2, nil)
+	if err != nil {
+		t.Fatalf("client connect: %v", err)
+	}
+	t.Cleanup(func() { _ = cs.Close() })
+	return cs
+}
+
+func TestAudit_FailureModesHonoured(t *testing.T) {
+	cases := []struct {
+		mode          string
+		selectFails   bool
+		mutationFails bool
+	}{
+		{audit.FailureModeStrict, true, true},
+		{audit.FailureModeStrictMutations, false, true},
+		{audit.FailureModeBestEffort, false, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.mode, func(t *testing.T) {
+			cfg := fullAccessConfig()
+			cfg.Server.Audit.Disabled = false
+			cfg.Server.Audit.FailureMode = tc.mode
+			be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
+			s := &failingSink{}
+			cs := connectWithSink(t, cfg, be, s)
+
+			selRes := callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1"})
+			if selRes.IsError != tc.selectFails {
+				t.Errorf("select IsError=%v, want %v", selRes.IsError, tc.selectFails)
+			}
+			mutRes := callTool(t, cs, "run_mutation_query", map[string]any{"sql": "insert into t values (1)"})
+			if mutRes.IsError != tc.mutationFails {
+				t.Errorf("mutation IsError=%v, want %v", mutRes.IsError, tc.mutationFails)
+			}
+			if tc.mutationFails && !strings.Contains(firstText(t, mutRes), "audit record could not be written") {
+				t.Errorf("mutation error must name the audit failure, got %q", firstText(t, mutRes))
+			}
+			if be.execCalls != 1 {
+				t.Errorf("mutation executed %d times, want exactly 1", be.execCalls)
+			}
+			if s.records != 2 {
+				t.Errorf("sink saw %d records, want 2", s.records)
+			}
+		})
 	}
 }

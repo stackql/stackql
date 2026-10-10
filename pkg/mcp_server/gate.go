@@ -162,7 +162,7 @@ func addToolWithGate[In, Out any](
 			// proceed to tool execution below
 		case policy.DecisionRefuseImmediate:
 			err := fmt.Errorf("tool %q refused: %s", t.Name, p.Reason())
-			recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
+			_ = recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
 				audit.DecisionRefuseImmediate, started, err, wireContext(req, nil))
 			return nil, zero, err
 		case policy.DecisionNeedsApproval:
@@ -175,7 +175,7 @@ func addToolWithGate[In, Out any](
 			}
 			auditDecision = outcome
 			if err != nil {
-				recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
+				_ = recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
 					outcome, started, err, wireContext(req, nil))
 				return nil, zero, err
 			}
@@ -186,14 +186,13 @@ func addToolWithGate[In, Out any](
 		if err == nil {
 			produced = out
 		}
-		recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
+		auditErr := recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
 			auditDecision, started, err, wireContext(req, produced))
 		if err != nil {
 			return result, out, err
 		}
-		if auditErr := finalizeAudit(cfg, p.Class()); auditErr != nil {
-			// Reserved: future strict-mode-on-audit-failure surfacing.
-			_ = auditErr
+		if auditErr != nil {
+			return nil, zero, auditErr
 		}
 		return result, out, nil
 	}
@@ -286,9 +285,9 @@ func recordAudit(
 	started time.Time,
 	toolErr error,
 	wire audit.WireContext,
-) {
+) error {
 	if auditSink == nil {
-		return
+		return nil
 	}
 	event := audit.Event{
 		Timestamp:  started,
@@ -311,8 +310,9 @@ func recordAudit(
 		event.Error = toolErr.Error()
 	}
 	if err := auditSink.Record(ctx, event); err != nil {
-		handleAuditFailure(cfg, class, err)
+		return handleAuditFailure(cfg, gate.toolName, class, err)
 	}
+	return nil
 }
 
 // wireContext collects the transport facts the OTel encoding records: the
@@ -338,29 +338,34 @@ func wireContext(req *mcp.CallToolRequest, out any) audit.WireContext {
 	return wire
 }
 
-// finalizeAudit is a placeholder hook for future strict-mode hardening.
-func finalizeAudit(_ *Config, _ policy.QueryClass) error { return nil }
-
-// handleAuditFailure decides whether an audit-sink error becomes a
-// client-visible failure or just gets logged.  The decision is per the
-// configured failure_mode.
-func handleAuditFailure(cfg *Config, class policy.QueryClass, err error) {
+// handleAuditFailure logs an audit-sink error and, when the configured
+// failure_mode says so, returns the client-visible error.  SELECTs under
+// strict_mutations only log.
+func handleAuditFailure(cfg *Config, toolName string, class policy.QueryClass, err error) error {
 	mode := cfg.Server.Audit.GetFailureMode()
 	switch mode {
 	case audit.FailureModeStrict:
 		fmt.Fprintf(stderrSink(), "audit write failed (strict): %v\n", err)
+		return auditFailureError(toolName, mode, err)
 	case audit.FailureModeStrictMutations:
-		// SELECTs proceed silently with a stderr note; mutations would
-		// already have errored at recordAudit's caller via the returned
-		// error chain in a future revision.  For now we log uniformly.
 		if class == policy.QueryClassSelect {
 			fmt.Fprintf(stderrSink(), "audit write failed (best-effort for select): %v\n", err)
-			return
+			return nil
 		}
 		fmt.Fprintf(stderrSink(), "audit write failed (strict_mutations): %v\n", err)
+		return auditFailureError(toolName, mode, err)
 	case audit.FailureModeBestEffort:
 		fmt.Fprintf(stderrSink(), "audit write failed (best-effort): %v\n", err)
 	default:
 		fmt.Fprintf(stderrSink(), "audit write failed: %v\n", err)
 	}
+	return nil
+}
+
+// auditFailureError states that the tool already ran, so a client does not
+// blindly retry a mutation that may have completed.
+func auditFailureError(toolName, mode string, err error) error {
+	return fmt.Errorf(
+		"tool %q executed but its audit record could not be written (failure_mode=%s): %w",
+		toolName, mode, err)
 }

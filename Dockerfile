@@ -162,13 +162,23 @@ ARG STACKQL_CFG_ROOT=/opt/stackql
 
 ARG STACKQL_PG_PORT=5477
 
+# Runtime identity for the production stage (issue #833).  Override at build
+# time to match a host user when bind-mounting writable volumes, or at run
+# time with `docker run --user` / compose `user:`.
+ARG STACKQL_UID=1000
+
+ARG STACKQL_GID=1000
+
 ENV APP_DIR="${APP_DIR}"
 
 ENV STACKQL_CFG_ROOT="${STACKQL_CFG_ROOT}"
 
 ENV STACKQL_PG_PORT="${STACKQL_PG_PORT}"
 
-RUN mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}/keys ${STACKQL_CFG_ROOT}/srv/credentials ${STACKQL_CFG_ROOT}/credentials/dummy ${STACKQL_CFG_ROOT}/registry ${STACKQL_CFG_ROOT}/logs ${STACKQL_CFG_ROOT}/db
+RUN groupadd --gid ${STACKQL_GID} stackql \
+    && useradd --uid ${STACKQL_UID} --gid ${STACKQL_GID} --home-dir ${STACKQL_CFG_ROOT} --no-create-home --shell /bin/bash stackql \
+    && mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}/keys ${STACKQL_CFG_ROOT}/srv/credentials ${STACKQL_CFG_ROOT}/credentials/dummy ${STACKQL_CFG_ROOT}/registry ${STACKQL_CFG_ROOT}/logs ${STACKQL_CFG_ROOT}/db \
+    && chown -R ${STACKQL_UID}:${STACKQL_GID} ${STACKQL_CFG_ROOT}
 
 ENV PATH="${APP_DIR}:${PATH}"
 
@@ -181,6 +191,8 @@ RUN apt-get update \
     && update-ca-certificates
 
 EXPOSE ${STACKQL_PG_PORT}/tcp
+
+USER ${STACKQL_UID}:${STACKQL_GID}
 
 WORKDIR ${STACKQL_CFG_ROOT}
 

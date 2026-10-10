@@ -1120,7 +1120,7 @@ func (eng *sqLiteSystem) TableOldestUpdateUTC(
 	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
 	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
 		fmt.Sprintf(
-			"SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = '%s';",
+			"SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = ?;",
 			updateColName,
 			genIDColName,
 			ssnIDColName,
@@ -1128,8 +1128,8 @@ func (eng *sqLiteSystem) TableOldestUpdateUTC(
 			insIDColName,
 			tableName,
 			requestEncodingColName,
-			requestEncoding,
 		),
+		requestEncoding,
 	)
 	//nolint:nestif // TODO: simplify nested if statements
 	if err == nil && rows != nil {

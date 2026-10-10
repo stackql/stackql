@@ -1435,7 +1435,7 @@ func (eng *postgresSystem) TableOldestUpdateUTC(
 	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
 	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
 		fmt.Sprintf(
-			"SELECT min(%s) as oldest_update, %s, %s, %s, %s FROM \"%s\".\"%s\" WHERE %s = '%s' GROUP BY %s, %s, %s, %s;",
+			"SELECT min(%s) as oldest_update, %s, %s, %s, %s FROM \"%s\".\"%s\" WHERE %s = $1 GROUP BY %s, %s, %s, %s;",
 			updateColName,
 			genIDColName,
 			ssnIDColName,
@@ -1444,12 +1444,12 @@ func (eng *postgresSystem) TableOldestUpdateUTC(
 			eng.tableSchema,
 			tableName,
 			requestEncodingColName,
-			requestEncoding,
 			genIDColName,
 			ssnIDColName,
 			txnIDColName,
 			insIDColName,
 		),
+		requestEncoding,
 	)
 	if err == nil && rows != nil {
 		defer rows.Close()
