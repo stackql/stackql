@@ -10,6 +10,7 @@ Usage:
 """
 
 import sys
+import struct
 import zipfile
 
 # Mach-O magics: fat (universal) both endians, plus thin 64-bit for safety.
@@ -20,8 +21,21 @@ MACHO_MAGICS = (
     b"\xfe\xed\xfa\xcf",  # MH_CIGAM_64
 )
 
+def is_pe_machine(data: bytes, machine: int) -> bool:
+    if len(data) < 64 or data[:2] != b"MZ":
+        return False
+    offset = struct.unpack_from("<I", data, 0x3C)[0]
+    return (
+        offset + 6 <= len(data)
+        and data[offset:offset + 4] == b"PE\0\0"
+        and struct.unpack_from("<H", data, offset + 4)[0] == machine
+    )
+
+
 CHECKS = [
-    ("server/win32/stackql.exe", "windows PE (MZ)", lambda b: b[:2] == b"MZ"),
+    ("server/windows-x64/stackql.exe", "windows x64 PE", lambda b: is_pe_machine(b, 0x8664)),
+    ("server/windows-arm64/stackql.exe", "windows ARM64 PE", lambda b: is_pe_machine(b, 0xAA64)),
+    ("server/win32/stackql.ps1", "PowerShell dispatch shim", lambda b: b.startswith(b"$ErrorActionPreference")),
     ("server/linux-x64/stackql", "linux ELF", lambda b: b[:4] == b"\x7fELF"),
     ("server/linux-arm64/stackql", "linux ELF", lambda b: b[:4] == b"\x7fELF"),
     ("server/darwin/stackql", "Mach-O (universal)", lambda b: b[:4] in MACHO_MAGICS),
@@ -43,7 +57,7 @@ def main() -> int:
                 failures.append(f"MISSING: {member} ({description})")
                 continue
             with bundle.open(member) as fh:
-                head = fh.read(16)
+                head = fh.read()
             if not predicate(head):
                 failures.append(
                     f"WRONG TYPE: {member} expected {description}, "

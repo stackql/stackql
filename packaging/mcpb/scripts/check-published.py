@@ -64,7 +64,7 @@ MCP_SERVER_NAME = "io.github.stackql/stackql-mcp"
 MCP_REGISTRY = "https://registry.modelcontextprotocol.io/v0"
 GITHUB_MCP_REGISTRY = "https://api.mcp.github.com/v0"
 
-PLATFORM_TARGETS = ("linux-x64", "linux-arm64", "windows-x64", "darwin-universal")
+PLATFORM_TARGETS = ("linux-x64", "linux-arm64", "windows-x64", "windows-arm64", "darwin-universal")
 BUNDLE_TARGETS = PLATFORM_TARGETS + ("multiplatform",)
 
 

@@ -72,9 +72,10 @@ jobs:
             runner: macos-15
           - name: windows-amd64
             runner: windows-latest
-          # There is no native windows/arm64 release; the shipped binary is
-          # the amd64 exe under Windows 11 x64 emulation, so that is what is
-          # fuzzed here (see the winarmsmoke job in build.yml).
+          - name: windows-arm64
+            runner: windows-11-arm
+            goarch: arm64
+          # Retain coverage for x64 binaries under Windows on ARM emulation.
           - name: windows-arm64-emulated
             runner: windows-11-arm
             goarch: amd64

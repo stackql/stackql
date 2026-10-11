@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -73,9 +74,11 @@ def extract_bundle(bundle: Path, dest: Path) -> tuple[Path, dict]:
         binary = Path(command.replace("${__dirname}", str(dest)))
     else:
         binary = dest / manifest["server"]["entry_point"]
+    if not binary.exists() and shutil.which(command):
+        binary = Path(shutil.which(command))
     if not binary.exists():
         fail(f"server command {binary} not found in bundle")
-    log(f"launch target: {binary.relative_to(dest)} (version {manifest.get('version')})")
+    log(f"launch target: {binary} (version {manifest.get('version')})")
     return binary, manifest
 
 
@@ -86,7 +89,9 @@ def manifest_args(manifest: dict, extract_dir: Path, home_dir: Path) -> list[str
     the server runs without writing to its cwd (Claude Desktop launches
     extensions with cwd '/', which is read-only on macOS).
     """
-    args = manifest["server"]["mcp_config"].get("args", [])
+    config = manifest["server"]["mcp_config"]
+    override = config.get("platform_overrides", {}).get(sys.platform, {})
+    args = override.get("args", config.get("args", []))
     resolved = [
         a.replace("${__dirname}", str(extract_dir)).replace("${HOME}", str(home_dir))
         for a in args
@@ -162,7 +167,8 @@ def run_command(cmd: list[str]) -> None:
     """Smoke-test an arbitrary command that speaks MCP stdio (docker image,
     npm wrapper, ...). The command must accept extra stackql flags appended
     after its own arguments (used to pass --auth for the github provider)."""
-    exercise(cmd + [f"--auth={GITHUB_AUTH}"])
+    with tempfile.TemporaryDirectory(prefix="mcpb-launcher-smoke-") as tmp:
+        exercise(cmd + ["--approot", str(Path(tmp) / ".stackql"), f"--auth={GITHUB_AUTH}"])
     log("smoke test passed")
 
 

@@ -32,6 +32,7 @@ function platformKey() {
   if (platform === "linux" && arch === "x64") return "linux-x64";
   if (platform === "linux" && arch === "arm64") return "linux-arm64";
   if (platform === "win32" && arch === "x64") return "windows-x64";
+  if (platform === "win32" && arch === "arm64") return "windows-arm64";
   if (platform === "darwin") return "darwin-universal"; // universal binary covers x64 + arm64
   return null;
 }
@@ -75,7 +76,7 @@ async function ensureBinary() {
     throw new Error(`unsupported platform: ${process.platform}/${process.arch}`);
   }
   const info = manifest.platforms[key];
-  const binName = key === "windows-x64" ? "stackql.exe" : "stackql";
+  const binName = key.startsWith("windows-") ? "stackql.exe" : "stackql";
   const binPath = path.join(
     os.homedir(), ".stackql", "mcp-server-bin", manifest.version, key, binName
   );

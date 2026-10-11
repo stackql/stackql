@@ -19,7 +19,7 @@ name: mcp-packaging
 
 on:
   pull_request:
-    paths: ['packaging/**']
+    paths: ['packaging/**', '.github/workflows/mcp-packaging.yml']
   workflow_dispatch:
     inputs:
       version:
@@ -35,6 +35,29 @@ defaults:
     working-directory: packaging/mcpb
 
 jobs:
+  test:
+    name: packaging regressions (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, windows-latest, windows-11-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.13'
+          architecture: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
+      - uses: actions/setup-go@v7.0.0
+        if: runner.os == 'Windows'
+        with:
+          go-version: '1.25.3'
+      - run: npm ci --prefix npm
+      - run: python scripts/test-packaging.py
+
   version:
     name: resolve version
     runs-on: ubuntu-24.04
@@ -88,35 +111,71 @@ jobs:
           if-no-files-found: error
 
   bundle-windows:
-    name: windows-x64 (build)
+    name: ${{ matrix.target }} (build)
     needs: version
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [windows-x64, windows-arm64]
     steps:
       - uses: actions/checkout@v6
       - name: Build bundle
-        run: make one TARGET=windows-x64 VERSION=${{ needs.version.outputs.version }}
+        run: make one TARGET=${{ matrix.target }} VERSION=${{ needs.version.outputs.version }}
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v7
         with:
-          name: stackql-mcp-windows-x64
+          name: stackql-mcp-${{ matrix.target }}
           path: |
-            packaging/mcpb/dist/stackql-mcp-windows-x64.mcpb
-            packaging/mcpb/dist/stackql-mcp-windows-x64.mcpb.sha256
+            packaging/mcpb/dist/stackql-mcp-${{ matrix.target }}.mcpb
+            packaging/mcpb/dist/stackql-mcp-${{ matrix.target }}.mcpb.sha256
           if-no-files-found: error
 
   smoke-windows:
-    name: windows-x64 (smoke)
-    needs: bundle-windows
-    runs-on: windows-latest
+    name: ${{ matrix.target }} (smoke)
+    needs: [version, bundle, bundle-windows]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: windows-x64, runner: windows-latest, arch: x64 }
+          - { target: windows-arm64, runner: windows-11-arm, arch: arm64 }
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.13'
+          architecture: ${{ matrix.arch }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          architecture: ${{ matrix.arch }}
       - name: Download bundle artifact
         uses: actions/download-artifact@v8
         with:
-          name: stackql-mcp-windows-x64
+          pattern: stackql-mcp-*
           path: packaging/mcpb/dist
+          merge-multiple: true
       - name: Smoke test (deterministic MCP handshake)
-        run: python scripts/smoke-test.py dist/stackql-mcp-windows-x64.mcpb
+        run: python scripts/smoke-test.py dist/stackql-mcp-${{ matrix.target }}.mcpb
+      - name: Render wrapper test manifests
+        shell: bash
+        env:
+          CHECKSUM_DIR: ${{ github.workspace }}/packaging/mcpb/dist
+        run: |
+          bash scripts/render-platforms.sh --version ${{ needs.version.outputs.version }} --vector npm
+          bash scripts/render-platforms.sh --version ${{ needs.version.outputs.version }} --vector pypi
+      - name: Install wrappers
+        run: |
+          npm ci --prefix npm
+          python -m pip install ./pypi
+      - name: Smoke test npm and PyPI launchers
+        env:
+          STACKQL_MCP_BUNDLE: ${{ github.workspace }}/packaging/mcpb/dist/stackql-mcp-${{ matrix.target }}.mcpb
+        run: |
+          python scripts/smoke-test.py --cmd "node npm/bin/stackql-mcp.js"
+          python scripts/smoke-test.py --cmd "stackql-mcp-server"
 
   oci:
     name: oci (build + smoke)
@@ -129,7 +188,7 @@ jobs:
       - name: Smoke test (deterministic MCP handshake)
         run: python3 scripts/smoke-test.py --docker stackql/stackql-mcp:${{ needs.version.outputs.version }}
 
-  # Multiplatform bundle for single-artefact venues, built from the four
+  # Multiplatform bundle for single-artefact venues, built from the five
   # per-platform bundle artifacts (byte-identical binaries); verify-combined.py
   # asserts every binary's machine type.
   combined:
@@ -144,7 +203,7 @@ jobs:
           pattern: stackql-mcp-*
           path: packaging/mcpb/dist
           merge-multiple: true
-      - name: Build combined bundle (hard-fails unless all four bundles present)
+      - name: Build combined bundle (hard-fails unless all five bundles present)
         run: make combined VERSION=${{ needs.version.outputs.version }}
       - name: Upload combined bundle artifact
         uses: actions/upload-artifact@v7
@@ -173,6 +232,8 @@ jobs:
             py: python3
           - runner: windows-latest
             py: python
+          - runner: windows-11-arm
+            py: python
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v6
@@ -187,7 +248,7 @@ jobs:
   publish:
     name: upload bundles to release
     if: needs.version.outputs.is_publish == 'true'
-    needs: [version, bundle, bundle-windows, smoke-windows, oci, combined, combined-smoke]
+    needs: [version, test, bundle, bundle-windows, smoke-windows, oci, combined, combined-smoke]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -241,10 +302,11 @@ jobs:
   # verifies the pin for real.
   sdk:
     name: sdk ${{ matrix.vector }} (${{ matrix.runner }})
-    needs: [version, bundle, bundle-windows, publish]
+    needs: [version, test, bundle, bundle-windows, publish]
     # 'publish' is skipped on PRs; run when it succeeded or was skipped.
     if: >-
       !cancelled()
+      && needs.test.result == 'success'
       && needs.bundle.result == 'success'
       && needs.bundle-windows.result == 'success'
       && (needs.publish.result == 'success' || needs.publish.result == 'skipped')
@@ -254,11 +316,14 @@ jobs:
         include:
           - { vector: cargo,  runner: ubuntu-24.04,  target: linux-x64,        py: python3 }
           - { vector: cargo,  runner: windows-latest, target: windows-x64,      py: python }
+          - { vector: cargo,  runner: windows-11-arm, target: windows-arm64,    py: python }
           - { vector: cargo,  runner: macos-latest,   target: darwin-universal, py: python3 }
           - { vector: go,     runner: ubuntu-24.04,  target: linux-x64,        py: python3 }
           - { vector: go,     runner: windows-latest, target: windows-x64,      py: python }
+          - { vector: go,     runner: windows-11-arm, target: windows-arm64,    py: python }
           - { vector: dotnet, runner: ubuntu-24.04,  target: linux-x64,        py: python3 }
           - { vector: dotnet, runner: windows-latest, target: windows-x64,      py: python }
+          - { vector: dotnet, runner: windows-11-arm, target: windows-arm64,    py: python }
     runs-on: ${{ matrix.runner }}
     env:
       VERSION: ${{ needs.version.outputs.version }}
@@ -267,12 +332,15 @@ jobs:
       - name: Download this run's bundle (PR smoke input)
         uses: actions/download-artifact@v8
         with:
-          name: stackql-mcp-${{ matrix.target }}
+          pattern: stackql-mcp-*
           path: packaging/mcpb/dist
+          merge-multiple: true
       - name: Point the launcher at the local bundle on PRs
         if: needs.version.outputs.is_publish != 'true'
         shell: bash
-        run: echo "STACKQL_MCP_BUNDLE=${{ github.workspace }}/packaging/mcpb/dist/stackql-mcp-${{ matrix.target }}.mcpb" >> "$GITHUB_ENV"
+        run: |
+          echo "STACKQL_MCP_BUNDLE=${{ github.workspace }}/packaging/mcpb/dist/stackql-mcp-${{ matrix.target }}.mcpb" >> "$GITHUB_ENV"
+          echo "CHECKSUM_DIR=${{ github.workspace }}/packaging/mcpb/dist" >> "$GITHUB_ENV"
       - name: GNU make (windows)
         if: runner.os == 'Windows'
         shell: bash
@@ -282,6 +350,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+          targets: ${{ matrix.target == 'windows-arm64' && 'aarch64-pc-windows-msvc' || '' }}
+      - name: Build native ARM64 Rust launcher
+        if: matrix.vector == 'cargo' && matrix.target == 'windows-arm64'
+        shell: bash
+        run: echo "CARGO_BUILD_TARGET=aarch64-pc-windows-msvc" >> "$GITHUB_ENV"
       - if: matrix.vector == 'cargo'
         uses: Swatinem/rust-cache@v2
         with:

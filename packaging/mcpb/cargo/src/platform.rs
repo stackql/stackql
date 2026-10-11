@@ -3,12 +3,13 @@ use crate::error::{Error, Result};
 /// A platform the packaging repo publishes a .mcpb bundle for.
 ///
 /// Keys mirror stackql/stackql packaging/mcpb: linux-x64, linux-arm64,
-/// windows-x64, darwin-universal.
+/// windows-x64, windows-arm64, darwin-universal.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Platform {
     LinuxX64,
     LinuxArm64,
     WindowsX64,
+    WindowsArm64,
     DarwinUniversal,
 }
 
@@ -23,6 +24,7 @@ impl Platform {
             ("linux", "x86_64") => Ok(Platform::LinuxX64),
             ("linux", "aarch64") => Ok(Platform::LinuxArm64),
             ("windows", "x86_64") => Ok(Platform::WindowsX64),
+            ("windows", "aarch64") => Ok(Platform::WindowsArm64),
             // The darwin bundle is a universal binary, so any macOS arch works.
             ("macos", _) => Ok(Platform::DarwinUniversal),
             _ => Err(Error::UnsupportedPlatform { os, arch }),
@@ -35,6 +37,7 @@ impl Platform {
             Platform::LinuxX64 => "linux-x64",
             Platform::LinuxArm64 => "linux-arm64",
             Platform::WindowsX64 => "windows-x64",
+            Platform::WindowsArm64 => "windows-arm64",
             Platform::DarwinUniversal => "darwin-universal",
         }
     }
@@ -42,7 +45,7 @@ impl Platform {
     /// Name of the server binary inside the bundle's server/ directory.
     pub fn binary_name(self) -> &'static str {
         match self {
-            Platform::WindowsX64 => "stackql.exe",
+            Platform::WindowsX64 | Platform::WindowsArm64 => "stackql.exe",
             _ => "stackql",
         }
     }
@@ -67,6 +70,10 @@ mod tests {
             "windows-x64"
         );
         assert_eq!(
+            Platform::from_os_arch("windows", "aarch64").unwrap().key(),
+            "windows-arm64"
+        );
+        assert_eq!(
             Platform::from_os_arch("macos", "aarch64").unwrap().key(),
             "darwin-universal"
         );
@@ -79,12 +86,13 @@ mod tests {
     #[test]
     fn unsupported_platform_is_an_error() {
         assert!(Platform::from_os_arch("freebsd", "x86_64").is_err());
-        assert!(Platform::from_os_arch("windows", "aarch64").is_err());
+        assert!(Platform::from_os_arch("windows", "x86").is_err());
     }
 
     #[test]
     fn windows_binary_has_exe_suffix() {
         assert_eq!(Platform::WindowsX64.binary_name(), "stackql.exe");
+        assert_eq!(Platform::WindowsArm64.binary_name(), "stackql.exe");
         assert_eq!(Platform::LinuxX64.binary_name(), "stackql");
     }
 }

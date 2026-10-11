@@ -33,7 +33,17 @@
       ],
       "platform_overrides": {
         "darwin": { "command": "${__dirname}/server/darwin/stackql" },
-        "win32": { "command": "${__dirname}/server/win32/stackql.exe" },
+        "win32": {
+          "command": "powershell.exe",
+          "args": [
+            "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+            "-File", "${__dirname}/server/win32/stackql.ps1",
+            "mcp", "--mcp.server.type=stdio",
+            "--approot", "${HOME}/.stackql",
+            "--env.file", "${HOME}/.stackql/.env",
+            "--mcp.config", "{\"server\": {\"audit\": {\"disabled\": true}}}"
+          ]
+        },
         "linux": { "command": "${__dirname}/server/linux/stackql" }
       }
     }

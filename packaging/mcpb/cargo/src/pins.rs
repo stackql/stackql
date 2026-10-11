@@ -51,6 +51,7 @@ mod tests {
             Platform::LinuxX64,
             Platform::LinuxArm64,
             Platform::WindowsX64,
+            Platform::WindowsArm64,
             Platform::DarwinUniversal,
         ] {
             let pin = pin_for(platform).unwrap();

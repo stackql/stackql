@@ -11,6 +11,7 @@ const (
 	PlatformLinuxX64        = "linux-x64"
 	PlatformLinuxARM64      = "linux-arm64"
 	PlatformWindowsX64      = "windows-x64"
+	PlatformWindowsARM64    = "windows-arm64"
 	PlatformDarwinUniversal = "darwin-universal"
 )
 
@@ -26,8 +27,11 @@ func PlatformKey(goos, goarch string) (string, error) {
 			return PlatformLinuxARM64, nil
 		}
 	case "windows":
-		if goarch == "amd64" {
+		switch goarch {
+		case "amd64":
 			return PlatformWindowsX64, nil
+		case "arm64":
+			return PlatformWindowsARM64, nil
 		}
 	case "darwin":
 		if goarch == "amd64" || goarch == "arm64" {
@@ -45,7 +49,7 @@ func CurrentPlatformKey() (string, error) {
 // exeName returns the name the extracted server binary uses inside the
 // shared cache for the given platform key.
 func exeName(platformKey string) string {
-	if platformKey == PlatformWindowsX64 {
+	if platformKey == PlatformWindowsX64 || platformKey == PlatformWindowsARM64 {
 		return "stackql.exe"
 	}
 	return "stackql"
