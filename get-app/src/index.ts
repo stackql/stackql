@@ -145,8 +145,8 @@ echo "Installed ./stackql ($os/$arch). Run it with ./stackql or move it onto you
 
 const INSTALL_PS1 = `#Requires -Version 5
 # stackql installer - https://get-stackql.io/install.ps1
-# Downloads the latest Windows release archive and extracts stackql.exe into the
-# current directory.
+# Detects the native Windows architecture (AMD64 or ARM64), downloads the matching
+# latest release archive and extracts stackql.exe into the current directory.
 # Usage: irm https://get-stackql.io/install.ps1 | iex
 $ErrorActionPreference = 'Stop'
 
@@ -162,11 +162,29 @@ if ($PSVersionTable.Platform -eq 'Unix') {
 }
 
 $base = "${RELEASE_BASE}"
-$asset = 'stackql_windows_amd64.zip'
-$arch = $env:PROCESSOR_ARCHITECTURE
-if ($arch -ne 'AMD64' -and $arch -ne 'ARM64') {
+
+# Detect the native OS architecture. $env:PROCESSOR_ARCHITECTURE describes this
+# PowerShell process, so it reads AMD64 when x64 PowerShell runs under emulation
+# on ARM64. The system value in the registry is the same for every process, so
+# prefer it, then the WOW64 variable, then the process variable.
+$arch = $null
+try {
+  $arch = (Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment' -Name PROCESSOR_ARCHITECTURE -ErrorAction Stop).PROCESSOR_ARCHITECTURE
+} catch {}
+if (-not $arch) { $arch = $env:PROCESSOR_ARCHITEW6432 }
+if (-not $arch) { $arch = $env:PROCESSOR_ARCHITECTURE }
+if (-not $arch) {
+  Write-Host "stackql: couldn't detect your CPU architecture, defaulting to x64 (AMD64)."
+  $arch = 'AMD64'
+}
+
+if ($arch -eq 'ARM64') {
+  $asset = 'stackql_windows_arm64.zip'
+} elseif ($arch -eq 'AMD64') {
+  $asset = 'stackql_windows_amd64.zip'
+} else {
   Write-Host "stackql: there's no prebuilt Windows binary for your CPU ($arch)."
-  Write-Host "Prebuilt Windows builds cover x64 (AMD64) and ARM64 (via emulation)."
+  Write-Host "Prebuilt Windows builds cover x64 (AMD64) and ARM64."
   Write-Host "Browse all downloads: ${RELEASES_URL}"
   return
 }
@@ -177,7 +195,7 @@ Write-Host "Downloading $asset ..."
 Invoke-WebRequest -Uri "$base/$asset" -OutFile $zip
 Expand-Archive -Path $zip -DestinationPath $dest -Force
 Remove-Item $zip
-Write-Host "Installed .\\stackql.exe. Run it with .\\stackql.exe or move it onto your PATH."
+Write-Host "Installed .\\stackql.exe (Windows/$arch). Run it with .\\stackql.exe or move it onto your PATH."
 `;
 
 // Served when the sh installer is fetched by PowerShell - valid PowerShell that

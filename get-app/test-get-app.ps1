@@ -104,6 +104,11 @@ Assert-Body "/install (curl)        -> sh installer"      "$Base/install"     $U
 # Explicit endpoints serve their real script for the matching shell.
 Assert-Body "/install.ps1 (ps)      -> ps1 installer"     "$Base/install.ps1" $UaPs   '#Requires -Version 5'
 Assert-Body "/install.sh (curl)     -> sh installer"      "$Base/install.sh"  $UaCurl '#!/bin/sh'
+# The PowerShell installer selects the native Windows architecture's asset.
+Assert-Body "/install (powershell)  -> amd64 asset"       "$Base/install"     $UaPs   'stackql_windows_amd64.zip'
+Assert-Body "/install (powershell)  -> arm64 asset"       "$Base/install"     $UaPs   'stackql_windows_arm64.zip'
+Assert-Body "/install.ps1 (ps)      -> amd64 asset"       "$Base/install.ps1" $UaPs   'stackql_windows_amd64.zip'
+Assert-Body "/install.ps1 (ps)      -> arm64 asset"       "$Base/install.ps1" $UaPs   'stackql_windows_arm64.zip'
 # Wrong-shell guards point at the correct command instead of erroring.
 Assert-Body "/install.ps1 (curl)    -> 'use install.sh'"  "$Base/install.ps1" $UaCurl 'install.sh | sh'
 Assert-Body "/install.sh (ps)       -> 'use install.ps1'" "$Base/install.sh"  $UaPs   'install.ps1 | iex'
