@@ -322,7 +322,6 @@ jobs:
         name: stackql_windows_${{matrix.isa}}
         path: build/stackql.exe
 
-    # Consumed by winarmsmoke, so that the MCP robot scenarios run there too.
     - name: Upload MCP client artifact
       uses: actions/upload-artifact@v7.0.1
       if: success()
