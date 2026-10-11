@@ -1027,6 +1027,18 @@ jobs:
           echo "🟡 Omni readiness: some robot tests fail with the omni preview" >> "${GITHUB_STEP_SUMMARY}"
         fi
 
+    - name: Output from omni functional tests
+      if: always() && matrix.sdk == 'omni'
+      run: |
+        cat ./test/robot/reports/output.xml
+
+    - name: Upload Robot Reports Artifact
+      uses: actions/upload-artifact@v7.0.1
+      if: always() && github.repository == 'stackql/stackql-devel' && matrix.registry == 'test/registry-mocked'
+      with:
+        name: stackql_linux_${{ matrix.sdk }}_robot_reports
+        path: test/robot/reports
+
     - name: Run robot mocked functional tests with aggressive concurrency
       if: success() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       run: |
