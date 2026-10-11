@@ -46,6 +46,10 @@ jobs:
             || { echo "::error::PyPI stackql-mcp-server $v not published (release doc step 7b)"; fail=1; }
           docker manifest inspect "docker.io/stackql/stackql-mcp:$v" >/dev/null \
             || { echo "::error::OCI image stackql/stackql-mcp:$v not on Docker Hub (mcp-packaging oci-publish job)"; fail=1; }
+          for target in linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal; do
+            curl -fsSLI "https://github.com/$GITHUB_REPOSITORY/releases/download/v$v/stackql-mcp-$target.mcpb" >/dev/null \
+              || { echo "::error::MCP bundle $target missing from v$v (mcp-packaging publish job)"; fail=1; }
+          done
           exit $fail
       - name: Fetch published bundle checksums from the release
         env:

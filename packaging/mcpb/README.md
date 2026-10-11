@@ -6,7 +6,7 @@ This directory was imported (with full history) from the standalone `stackql/sta
 
 This is a scripted post-release step. It does not build or sign the stackql binaries - that happens upstream in the normal stackql build, code-signing, and notarisation process. Here the already-signed release artefacts are pulled, packaged, and shipped.
 
-In addition to the four per-platform bundles, `make combined VERSION=X.Y.Z` builds `stackql-mcp-multiplatform.mcpb` - a single artefact carrying all platform binaries (selected at install via `mcp_config.platform_overrides`, with a `uname -m` shim dispatching the two Linux architectures). It exists for single-artefact venues, principally the Anthropic MCP Directory listing (see [docs/anthropic-submission.md](docs/anthropic-submission.md)); per-platform bundles remain the recommended path everywhere else (direct download, npm/PyPI wrappers, OCI, registry). It sources binaries from the already-built per-platform bundles - byte-identical, signatures preserved - and hard-fails unless all four are present.
+In addition to the five per-platform bundles, `make combined VERSION=X.Y.Z` builds `stackql-mcp-multiplatform.mcpb` - a single artefact carrying all platform binaries (selected at install via `mcp_config.platform_overrides`, with architecture shims selecting the native Linux and Windows binaries). It exists for single-artefact venues, principally the Anthropic MCP Directory listing (see [docs/anthropic-submission.md](docs/anthropic-submission.md)); per-platform bundles remain the recommended path everywhere else (direct download, npm/PyPI wrappers, OCI, registry). It sources binaries from the already-built per-platform bundles - byte-identical, signatures preserved - and hard-fails unless all five are present.
 
 The end-user install story is in [docs/install.md](docs/install.md). The marketplace submission checklist is in [docs/anthropic-submission.md](docs/anthropic-submission.md). The broader list of registries and aggregators is in [listings.md](listings.md).
 
@@ -37,6 +37,7 @@ One bundle is produced per target:
 - `stackql-mcp-linux-x64.mcpb`
 - `stackql-mcp-linux-arm64.mcpb`
 - `stackql-mcp-windows-x64.mcpb`
+- `stackql-mcp-windows-arm64.mcpb`
 - `stackql-mcp-darwin-universal.mcpb` (one universal binary covers both Mac arches)
 
 ## Layout
@@ -98,7 +99,7 @@ The primary release path. The stackql release being packaged is pinned in [relea
 The sequence:
 
 1. **Upstream release happens** - `stackql/stackql` publishes `vX.Y.Z` with the core assets (per-arch zips and the notarised `.pkg`).
-2. **PR bumps the pin** - raise a PR to main changing `stackql_release` in `release.yaml`. [ci.yml](.github/workflows/ci.yml) builds all four bundles against the real release assets and runs the deterministic smoke test on a native runner per platform (`ubuntu-latest`, `ubuntu-24.04-arm`, `windows-latest`, `macos-latest` - the darwin slice runs `pkgutil` on the macos runner). A green PR means the bundles build and the embedded binaries speak MCP.
+2. **PR bumps the pin** - raise a PR to main changing `stackql_release` in `release.yaml`. [ci.yml](.github/workflows/ci.yml) builds all five bundles against the real release assets and runs the deterministic smoke test on a native runner per platform (`ubuntu-latest`, `ubuntu-24.04-arm`, `windows-latest`, `macos-latest` - the darwin slice runs `pkgutil` on the macos runner). A green PR means the bundles build and the embedded binaries speak MCP.
 3. **Merge to main** - nothing is published yet.
 4. **Push the matching tag** - `git tag vX.Y.Z && git push origin vX.Y.Z`. [publish.yml](.github/workflows/publish.yml) fails fast if the tag does not exactly match `release.yaml`, rebuilds and re-tests everything, then uploads the `.mcpb` + `.sha256` files not yet on the `stackql/stackql` `vX.Y.Z` release via `make publish` (existing assets are skipped: immutable once pinned).
 
@@ -108,7 +109,7 @@ To re-publish the pinned release without moving the tag (e.g. after enabling sig
 
 ```bash
 # refresh the canonical sha files from the release, re-render
-for t in linux-x64 linux-arm64 windows-x64 darwin-universal; do
+for t in linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal; do
   curl -fsSL -o dist/stackql-mcp-$t.mcpb.sha256 \
     https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-$t.mcpb.sha256
 done
@@ -175,7 +176,7 @@ Your GitHub account must be a member of the `stackql` org with permission to pub
 
 ### Step 1 - build and publish bundles (Machine A: workstation)
 
-This machine builds three of four bundles: linux-x64, linux-arm64, windows-x64. The darwin target will skip cleanly with a `pkgutil not found` notice - Machine B handles that one.
+This machine builds four of five bundles: linux-x64, linux-arm64, windows-x64, windows-arm64. The darwin target will skip cleanly with a `pkgutil not found` notice - Machine B handles that one.
 
 ```bash
 # 1.1 Build everything that can be built here.
@@ -209,11 +210,11 @@ python scripts/smoke-test.py dist/stackql-mcp-darwin-universal.mcpb
 make publish VERSION=0.10.500
 ```
 
-After this, all four bundles are attached to the GitHub release.
+After this, all five bundles are attached to the GitHub release.
 
 ### Step 3 - render and publish the MCP Registry entry
 
-Run this on Machine A **after** Machine B has finished its upload, so all four `.sha256` files can be fetched.
+Run this on Machine A **after** Machine B has finished its upload, so all five `.sha256` files can be fetched.
 
 ```bash
 # 3.1 Fetch the darwin .sha256 that Machine B uploaded.
@@ -285,7 +286,7 @@ gh release download v0.10.500 --repo stackql/stackql \
 | `scripts/smoke-test.py`                         | nothing                                                        | -                             | Talks only to the embedded MCP server.                 |
 | `scripts/gemini-smoke.py`                       | `GEMINI_API_KEY`                                               | env var                       | Optional. Soft-skips with exit 0 if unset.             |
 | `make publish`                                  | GitHub token with `contents:write` on `stackql/stackql`        | `gh auth login` (token in gh) | Same login on both Machine A and Machine B.            |
-| `make server-json`                              | all four `dist/*.sha256` files                                 | files on disk                 | Step 3.1 fetches the darwin one from the release page. |
+| `make server-json`                              | all five `dist/*.sha256` files                                 | files on disk                 | Step 3.1 fetches the darwin one from the release page. |
 | `make registry-publish`                         | `mcp-publisher login github` for an account on the stackql org | token in `mcp-publisher` config | Browser-flow OAuth; refresh annually.                  |
 | CI publish (`publish.yml`)                      | `STACKQL_RELEASE_TOKEN` repo secret                            | fine-grained PAT              | `contents:write` on `stackql/stackql`. Default `GITHUB_TOKEN` cannot upload cross-repo. |
 | Anthropic Desktop Extensions submission        | privacy policy, logo, screenshots, contacts                    | filled into web form          | See [docs/anthropic-submission.md](docs/anthropic-submission.md). |
@@ -448,7 +449,7 @@ make VERSION=X.Y.Z              download release artefacts + build all bundles
 make download VERSION=X.Y.Z     fetch release artefacts into bin/
 make package VERSION=X.Y.Z      build bundles from whatever is in bin/
 make <target> VERSION=X.Y.Z     build a single target from current bin/ state
-                                (linux-x64|linux-arm64|windows-x64|darwin-universal)
+                                (linux-x64|linux-arm64|windows-x64|windows-arm64|darwin-universal)
 make one TARGET=<t> VERSION=X.Y.Z   download just one target's artefact and build
                                     that one bundle (use on a Mac for darwin)
 make signed VERSION=X.Y.Z       build with MCPB_SELF_SIGN=true (testing only)

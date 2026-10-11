@@ -18,7 +18,7 @@ type Binary struct {
 	// (for example "0.10.601"). It namespaces the shared cache.
 	Version string
 	// PlatformKey is one of the packaging platform keys
-	// (linux-x64, linux-arm64, windows-x64, darwin-universal).
+	// (linux-x64, linux-arm64, windows-x64, windows-arm64, darwin-universal).
 	PlatformKey string
 	// SHA256 is the lowercase hex sha256 of Data, recorded at generate
 	// time from the pin-verified bundle. Extraction re-verifies it.
@@ -33,7 +33,7 @@ func (b Binary) validate() error {
 		return fmt.Errorf("stackql mcp: Binary.Version is required")
 	}
 	switch b.PlatformKey {
-	case PlatformLinuxX64, PlatformLinuxARM64, PlatformWindowsX64, PlatformDarwinUniversal:
+	case PlatformLinuxX64, PlatformLinuxARM64, PlatformWindowsX64, PlatformWindowsARM64, PlatformDarwinUniversal:
 	default:
 		return fmt.Errorf("stackql mcp: unknown platform key %q", b.PlatformKey)
 	}

@@ -5,7 +5,7 @@
 #   make download VERSION=X.Y.Z     just fetch the release artefacts into bin/
 #   make package VERSION=X.Y.Z      just build bundles from whatever is in bin/
 #   make <target> VERSION=X.Y.Z     build a single target
-#                                   (linux-x64|linux-arm64|windows-x64|darwin-universal)
+#                                   (linux-x64|linux-arm64|windows-x64|windows-arm64|darwin-universal)
 #   make one TARGET=<t> VERSION=X.Y.Z  download + build a single target and
 #                                      fail hard if its bundle is not produced.
 #                                      Use this on a Mac to build only the
@@ -18,8 +18,8 @@
 #                                   Requires 'gh auth login' with contents:write
 #                                   on stackql/stackql.
 #   make server-json VERSION=X.Y.Z  render registry/server.json from the template,
-#                                   pinning the four per-platform SHA-256s.
-#                                   Requires all four dist/*.sha256 files (run
+#                                   pinning the five per-platform SHA-256s.
+#                                   Requires all five dist/*.sha256 files (run
 #                                   on a machine that has gathered all bundles).
 #   make registry-publish VERSION=X.Y.Z
 #                                   publish registry/server.json to the Official
@@ -53,6 +53,7 @@ RELEASE_BASE := https://github.com/stackql/stackql/releases/download
 ASSETS := stackql_linux_amd64.zip \
           stackql_linux_arm64.zip \
           stackql_windows_amd64.zip \
+          stackql_windows_arm64.zip \
           stackql_darwin_multiarch.pkg
 
 OCI_IMAGE ?= stackql/stackql-mcp
@@ -60,7 +61,7 @@ OCI_STAGE := .oci-stage
 
 .PHONY: all check-version check-target download package combined one signed sign publish \
         server-json registry-publish check-published clean clean-bin \
-        linux-x64 linux-arm64 windows-x64 darwin-universal \
+        linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal \
         oci-stage oci oci-push npm-manifest npm-pack pypi-manifest pypi-build \
         openai-plugin-manifest \
         list help
@@ -73,7 +74,7 @@ help:
 	@echo "  make download VERSION=X.Y.Z     fetch release artefacts into $(BIN_DIR)/"
 	@echo "  make package VERSION=X.Y.Z      build bundles from whatever is in $(BIN_DIR)/"
 	@echo "  make <target> VERSION=X.Y.Z     build a single target"
-	@echo "                                  (linux-x64|linux-arm64|windows-x64|darwin-universal)"
+	@echo "                                  (linux-x64|linux-arm64|windows-x64|windows-arm64|darwin-universal)"
 	@echo "  make one TARGET=<t> VERSION=X.Y.Z  download + build a single target,"
 	@echo "                                  fail hard if the bundle is not produced"
 	@echo "                                  (use on a Mac for darwin-universal)"
@@ -119,9 +120,9 @@ download: check-version
 
 check-target:
 	@case "$(TARGET)" in \
-	  linux-x64|linux-arm64|windows-x64|darwin-universal) ;; \
-	  "" ) echo "error: TARGET is required (linux-x64|linux-arm64|windows-x64|darwin-universal)" >&2; exit 2 ;; \
-	  *  ) echo "error: unknown TARGET '$(TARGET)' (linux-x64|linux-arm64|windows-x64|darwin-universal)" >&2; exit 2 ;; \
+	  linux-x64|linux-arm64|windows-x64|windows-arm64|darwin-universal) ;; \
+	  "" ) echo "error: TARGET is required (linux-x64|linux-arm64|windows-x64|windows-arm64|darwin-universal)" >&2; exit 2 ;; \
+	  *  ) echo "error: unknown TARGET '$(TARGET)' (linux-x64|linux-arm64|windows-x64|windows-arm64|darwin-universal)" >&2; exit 2 ;; \
 	esac
 
 # Download just one platform's artefact and build only that bundle. Designed
@@ -135,6 +136,7 @@ one: check-version check-target
 	  linux-x64)        asset=stackql_linux_amd64.zip ;; \
 	  linux-arm64)      asset=stackql_linux_arm64.zip ;; \
 	  windows-x64)      asset=stackql_windows_amd64.zip ;; \
+	  windows-arm64)    asset=stackql_windows_arm64.zip ;; \
 	  darwin-universal) asset=stackql_darwin_multiarch.pkg ;; \
 	esac; \
 	url="$(RELEASE_BASE)/v$(VERSION)/$$asset"; \
@@ -169,9 +171,9 @@ signed: check-version
 sign:
 	bash scripts/sign.sh
 
-# Render registry/server.json from the template, pinning the four per-platform
+# Render registry/server.json from the template, pinning the five per-platform
 # SHA-256s read from dist/*.sha256. Fails hard if any sha file is missing -
-# run this on a machine that has gathered all four bundles (typically the
+# run this on a machine that has gathered all five bundles (typically the
 # workstation, after the Mac slice has been published and downloaded back, or
 # after copying the darwin sha file across).
 server-json: check-version
@@ -319,6 +321,9 @@ linux-arm64: check-version
 
 windows-x64: check-version
 	$(call build_one, ! -name 'stackql_windows_amd64.zip')
+
+windows-arm64: check-version
+	$(call build_one, ! -name 'stackql_windows_arm64.zip')
 
 darwin-universal: check-version
 	$(call build_one, ! -name 'stackql_darwin*.pkg')

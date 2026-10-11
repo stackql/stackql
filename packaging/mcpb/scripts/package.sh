@@ -159,7 +159,7 @@ build_combined() {
   # Multiplatform bundle for single-artefact venues; binaries come from the
   # per-platform bundles in DIST_DIR, never rebuilt.  linux dispatches via an
   # arch shim (platform_overrides keys on OS only) execing per uname -m.
-  local required="linux-x64 linux-arm64 windows-x64 darwin-universal"
+  local required="linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal"
   local missing="" label
   for label in $required; do
     [ -e "$DIST_DIR/stackql-mcp-${label}.mcpb" ] || missing="$missing $label"
@@ -172,10 +172,31 @@ build_combined() {
   local stage out
   stage="$(mktemp -d)"
   mkdir -p "$stage/server/darwin" "$stage/server/linux" "$stage/server/linux-x64" "$stage/server/linux-arm64" "$stage/server/win32"
+  mkdir -p "$stage/server/windows-x64" "$stage/server/windows-arm64"
   extract_bundle_binary "$DIST_DIR/stackql-mcp-darwin-universal.mcpb" "server/stackql"     "$stage/server/darwin/stackql"
   extract_bundle_binary "$DIST_DIR/stackql-mcp-linux-x64.mcpb"        "server/stackql"     "$stage/server/linux-x64/stackql"
   extract_bundle_binary "$DIST_DIR/stackql-mcp-linux-arm64.mcpb"      "server/stackql"     "$stage/server/linux-arm64/stackql"
-  extract_bundle_binary "$DIST_DIR/stackql-mcp-windows-x64.mcpb"      "server/stackql.exe" "$stage/server/win32/stackql.exe"
+  extract_bundle_binary "$DIST_DIR/stackql-mcp-windows-x64.mcpb"      "server/stackql.exe" "$stage/server/windows-x64/stackql.exe"
+  extract_bundle_binary "$DIST_DIR/stackql-mcp-windows-arm64.mcpb"    "server/stackql.exe" "$stage/server/windows-arm64/stackql.exe"
+  cat > "$stage/server/win32/stackql.ps1" <<'SHIM'
+$ErrorActionPreference = 'Stop'
+$arch = [Environment]::GetEnvironmentVariable('PROCESSOR_ARCHITECTURE', 'Machine')
+switch ($arch) {
+    'ARM64' { $target = 'windows-arm64' }
+    'AMD64' { $target = 'windows-x64' }
+    default { throw "Unsupported Windows architecture: $arch" }
+}
+$start = New-Object System.Diagnostics.ProcessStartInfo
+$start.FileName = Join-Path $PSScriptRoot "..\$target\stackql.exe"
+$start.UseShellExecute = $false
+# Quote native argv without PowerShell 5.1 stripping embedded JSON quotes.
+$start.Arguments = ($args | ForEach-Object {
+    '"' + ($_ -replace '(\\*)"', '$1$1\"' -replace '(\\+)$', '$1$1') + '"'
+}) -join ' '
+$child = [System.Diagnostics.Process]::Start($start)
+$child.WaitForExit()
+exit $child.ExitCode
+SHIM
   # Linux arch dispatch shim (see note above).
   cat > "$stage/server/linux/stackql" <<'SHIM'
 #!/bin/sh
@@ -187,7 +208,7 @@ esac
 SHIM
   chmod +x "$stage/server/darwin/stackql" "$stage/server/linux/stackql" \
            "$stage/server/linux-x64/stackql" "$stage/server/linux-arm64/stackql" \
-           "$stage/server/win32/stackql.exe" 2>/dev/null || true
+           "$stage/server/windows-x64/stackql.exe" "$stage/server/windows-arm64/stackql.exe" 2>/dev/null || true
   cp "$ROOT_DIR/assets/icon.png" "$stage/icon.png"
   cp "$ROOT_DIR/LICENSE" "$stage/LICENSE"
   cp "$ROOT_DIR/manifest/BUNDLE_README.md" "$stage/README.md"
@@ -331,6 +352,16 @@ elif have "$BIN_DIR/windows-amd64/stackql.exe"; then
   pack_bundle "windows-x64" "$BIN_DIR/windows-amd64/stackql.exe" "stackql.exe"; built=$((built+1))
 else
   echo "skip windows-x64     (no stackql_windows_amd64.zip or bin/windows-amd64/stackql.exe)"
+fi
+
+# windows arm64
+windows_arm64_zip="$(first_glob "$BIN_DIR/stackql_windows_arm64.zip" || true)"
+if [ -n "$windows_arm64_zip" ]; then
+  pack_from_zip "windows-arm64" "$windows_arm64_zip" "stackql.exe" && built=$((built+1))
+elif have "$BIN_DIR/windows-arm64/stackql.exe"; then
+  pack_bundle "windows-arm64" "$BIN_DIR/windows-arm64/stackql.exe" "stackql.exe"; built=$((built+1))
+else
+  echo "skip windows-arm64   (no stackql_windows_arm64.zip or bin/windows-arm64/stackql.exe)"
 fi
 
 # darwin universal (.pkg only - bare binaries are not accepted because they

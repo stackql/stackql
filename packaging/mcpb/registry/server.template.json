@@ -39,6 +39,13 @@
       "transport": { "type": "stdio" }
     },
     {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/stackql/stackql/releases/download/v__VERSION__/stackql-mcp-windows-arm64.mcpb",
+      "version": "__VERSION__",
+      "fileSha256": "__SHA_WINDOWS_ARM64__",
+      "transport": { "type": "stdio" }
+    },
+    {
       "registryType": "oci",
       "identifier": "docker.io/stackql/stackql-mcp:__VERSION__",
       "transport": { "type": "stdio" }

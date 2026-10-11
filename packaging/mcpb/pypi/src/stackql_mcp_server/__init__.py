@@ -46,7 +46,11 @@ def _platform_key() -> str | None:
             return "linux-arm64"
         return None
     if sys.platform == "win32":
-        return "windows-x64" if machine in ("x86_64", "amd64") else None
+        if machine in ("x86_64", "amd64"):
+            return "windows-x64"
+        if machine in ("arm64", "aarch64"):
+            return "windows-arm64"
+        return None
     if sys.platform == "darwin":
         return "darwin-universal"  # universal binary covers x64 + arm64
     return None
@@ -88,7 +92,7 @@ def _ensure_binary() -> str:
 
     manifest = _load_manifest()
     info = manifest["platforms"][key]
-    bin_name = "stackql.exe" if key == "windows-x64" else "stackql"
+    bin_name = "stackql.exe" if key.startswith("windows-") else "stackql"
     bin_path = (
         Path.home() / ".stackql" / "mcp-server-bin" / manifest["version"] / key / bin_name
     )

@@ -2,7 +2,7 @@
 #
 # render-platforms.sh - the one renderer for every wrapper/SDK vector.
 #
-# Fetches the four canonical .mcpb.sha256 files from the published GitHub
+# Fetches the five canonical .mcpb.sha256 files from the published GitHub
 # release, writes platforms.json (bundle names + sha256 pins + proxy baseUrl)
 # into each vector directory, and stamps the version into each vector's
 # manifest file. platforms.json is the ONLY pin source for every vector; the
@@ -42,6 +42,8 @@ RELEASE_BASE="${RELEASE_BASE:-https://github.com/stackql/stackql/releases/downlo
 # the same release assets, so the sha256 pins (fetched from RELEASE_BASE) still
 # hold. This is the baseUrl written into platforms.json.
 DOWNLOAD_BASE="${DOWNLOAD_BASE:-https://releases.stackql.io/stackql}"
+# PR validation only; publishing always uses the release checksums.
+CHECKSUM_DIR="${CHECKSUM_DIR:-}"
 
 ALL_VECTORS="npm pypi cargo go dotnet openai-plugin"
 
@@ -68,17 +70,24 @@ base_url="$DOWNLOAD_BASE/$VERSION"   # proxy front door (no v prefix) - written 
 
 fetch_sha() {
   # args: target-label -> prints the hex digest from the published .sha256
-  local target="$1" line
-  line="$(curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors "$sha_base/stackql-mcp-$target.mcpb.sha256")" || {
-    echo "error: could not fetch sha256 for $target - are the v$VERSION .mcpb assets published?" >&2
-    exit 1
-  }
-  echo "$line" | awk '{print $1; exit}'
+  local target="$1" line digest
+  if [ -n "$CHECKSUM_DIR" ]; then
+    line="$(cat "$CHECKSUM_DIR/stackql-mcp-$target.mcpb.sha256")" || return 1
+  else
+    line="$(curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors "$sha_base/stackql-mcp-$target.mcpb.sha256")" || {
+      echo "error: could not fetch sha256 for $target - are the v$VERSION .mcpb assets published?" >&2
+      return 1
+    }
+  fi
+  digest="$(echo "$line" | awk '{print $1; exit}')"
+  [[ "$digest" =~ ^[[:xdigit:]]{64}$ ]] || { echo "error: invalid sha256 for $target" >&2; return 1; }
+  echo "$digest"
 }
 
 SHA_LINUX_X64="$(fetch_sha linux-x64)"
 SHA_LINUX_ARM64="$(fetch_sha linux-arm64)"
 SHA_WINDOWS_X64="$(fetch_sha windows-x64)"
+SHA_WINDOWS_ARM64="$(fetch_sha windows-arm64)"
 SHA_DARWIN_UNIVERSAL="$(fetch_sha darwin-universal)"
 
 # The one platforms.json shape, byte-identical across vectors.
@@ -93,6 +102,7 @@ write_platforms_json() {
     "linux-x64": { "bundle": "stackql-mcp-linux-x64.mcpb", "sha256": "$SHA_LINUX_X64" },
     "linux-arm64": { "bundle": "stackql-mcp-linux-arm64.mcpb", "sha256": "$SHA_LINUX_ARM64" },
     "windows-x64": { "bundle": "stackql-mcp-windows-x64.mcpb", "sha256": "$SHA_WINDOWS_X64" },
+    "windows-arm64": { "bundle": "stackql-mcp-windows-arm64.mcpb", "sha256": "$SHA_WINDOWS_ARM64" },
     "darwin-universal": { "bundle": "stackql-mcp-darwin-universal.mcpb", "sha256": "$SHA_DARWIN_UNIVERSAL" }
   }
 }
@@ -182,4 +192,5 @@ echo "pins (v$VERSION):"
 echo "  linux-x64        $SHA_LINUX_X64"
 echo "  linux-arm64      $SHA_LINUX_ARM64"
 echo "  windows-x64      $SHA_WINDOWS_X64"
+echo "  windows-arm64    $SHA_WINDOWS_ARM64"
 echo "  darwin-universal $SHA_DARWIN_UNIVERSAL"

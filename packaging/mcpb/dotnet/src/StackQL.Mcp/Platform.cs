@@ -14,6 +14,7 @@ internal static class Platform
     public const string LinuxX64 = "linux-x64";
     public const string LinuxArm64 = "linux-arm64";
     public const string WindowsX64 = "windows-x64";
+    public const string WindowsArm64 = "windows-arm64";
     public const string DarwinUniversal = "darwin-universal";
 
     /// <summary>
@@ -37,6 +38,7 @@ internal static class Platform
             return arch switch
             {
                 Architecture.X64 => WindowsX64,
+                Architecture.Arm64 => WindowsArm64,
                 _ => throw Unsupported("Windows", arch),
             };
         }

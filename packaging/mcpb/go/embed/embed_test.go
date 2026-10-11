@@ -31,7 +31,8 @@ func TestPlatformKey(t *testing.T) {
 		{"windows", "amd64", PlatformWindowsX64, false},
 		{"darwin", "amd64", PlatformDarwinUniversal, false},
 		{"darwin", "arm64", PlatformDarwinUniversal, false},
-		{"windows", "arm64", "", true},
+		{"windows", "arm64", PlatformWindowsARM64, false},
+		{"windows", "386", "", true},
 		{"plan9", "amd64", "", true},
 	}
 	for _, c := range cases {
@@ -131,6 +132,18 @@ func TestEnsureExtracted(t *testing.T) {
 	info2, _ := os.Stat(path)
 	if !info1.ModTime().Equal(info2.ModTime()) {
 		t.Error("cached binary was rewritten on second call")
+	}
+}
+
+func TestEnsureExtractedWindowsARM64(t *testing.T) {
+	binary := testBinary(t, []byte("windows-arm64 fixture"))
+	binary.PlatformKey = PlatformWindowsARM64
+	path, err := EnsureExtracted(t.TempDir(), binary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Base(path) != "stackql.exe" || filepath.Base(filepath.Dir(path)) != PlatformWindowsARM64 {
+		t.Fatalf("unexpected Windows ARM64 cache path: %s", path)
 	}
 }
 

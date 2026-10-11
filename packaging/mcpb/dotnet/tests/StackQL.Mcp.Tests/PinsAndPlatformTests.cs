@@ -6,17 +6,18 @@ namespace StackQL.Mcp.Tests;
 public class PinsAndPlatformTests
 {
     [Fact]
-    public void Pins_Load_HasVersionBaseUrlAndAllFourPlatforms()
+    public void Pins_Load_HasVersionBaseUrlAndAllPlatforms()
     {
         var pins = Pins.Load();
 
         Assert.False(string.IsNullOrWhiteSpace(pins.Version));
         Assert.StartsWith("https://releases.stackql.io/stackql/", pins.BaseUrl);
         Assert.EndsWith(pins.Version, pins.BaseUrl);
-        Assert.Equal(4, pins.Platforms.Count);
+        Assert.Equal(5, pins.Platforms.Count);
         foreach (var key in new[]
                  {
-                     Platform.LinuxX64, Platform.LinuxArm64, Platform.WindowsX64, Platform.DarwinUniversal,
+                     Platform.LinuxX64, Platform.LinuxArm64, Platform.WindowsX64, Platform.WindowsArm64,
+                     Platform.DarwinUniversal,
                  })
         {
             var sha = pins.Sha256For(key);
@@ -37,6 +38,7 @@ public class PinsAndPlatformTests
     [Theory]
     [InlineData("linux-x64", "stackql-mcp-linux-x64.mcpb")]
     [InlineData("windows-x64", "stackql-mcp-windows-x64.mcpb")]
+    [InlineData("windows-arm64", "stackql-mcp-windows-arm64.mcpb")]
     [InlineData("darwin-universal", "stackql-mcp-darwin-universal.mcpb")]
     public void Pins_BundleNameFor_FollowsConvention(string platform, string expected)
     {
@@ -44,12 +46,13 @@ public class PinsAndPlatformTests
     }
 
     [Fact]
-    public void Platform_CurrentKey_IsOneOfTheFour()
+    public void Platform_CurrentKey_IsSupported()
     {
         var key = Platform.CurrentKey();
         Assert.Contains(key, new[]
         {
-            Platform.LinuxX64, Platform.LinuxArm64, Platform.WindowsX64, Platform.DarwinUniversal,
+            Platform.LinuxX64, Platform.LinuxArm64, Platform.WindowsX64, Platform.WindowsArm64,
+            Platform.DarwinUniversal,
         });
     }
 

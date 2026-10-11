@@ -16,6 +16,7 @@ Download the `.mcpb` for your platform from the latest stackql release:
 - Linux x86_64: `https://github.com/stackql/stackql/releases/latest/download/stackql-mcp-linux-x64.mcpb`
 - Linux arm64: `https://github.com/stackql/stackql/releases/latest/download/stackql-mcp-linux-arm64.mcpb`
 - Windows x86_64: `https://github.com/stackql/stackql/releases/latest/download/stackql-mcp-windows-x64.mcpb`
+- Windows ARM64: `https://github.com/stackql/stackql/releases/latest/download/stackql-mcp-windows-arm64.mcpb`
 - macOS (universal): `https://github.com/stackql/stackql/releases/latest/download/stackql-mcp-darwin-universal.mcpb`
 
 Each `.mcpb` has a matching `.sha256` next to it on the release page. To verify before installing:

@@ -28,6 +28,9 @@ jobs:
           - os: windows-latest
             python: python
             binary: stackql-plugin-smoke.exe
+          - os: windows-11-arm
+            python: python
+            binary: stackql-plugin-smoke.exe
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:

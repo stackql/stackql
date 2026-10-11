@@ -126,7 +126,7 @@ python -m twine upload pypi/dist/*
 
 Manual fallback (if the workflow fails or an out-of-band publish is needed):
 
-Requires the latest `mcp-publisher` CLI and a classic GitHub PAT (scope `read:org` only, no repo scopes) created by a `stackql` org Owner at https://github.com/settings/tokens/new. The server.json renderer reads the four `.sha256` files from the local `dist/` directory, so download the published checksum files from the release first.
+Requires the latest `mcp-publisher` CLI and a classic GitHub PAT (scope `read:org` only, no repo scopes) created by a `stackql` org Owner at https://github.com/settings/tokens/new. The server.json renderer reads the five `.sha256` files from the local `dist/` directory, so download the published checksum files from the release first.
 
 Install/upgrade the CLI (linux amd64 shown; assets exist per platform):
 
@@ -139,7 +139,7 @@ Publish:
 
 ```bash
 cd packaging/mcpb
-for t in linux-x64 linux-arm64 windows-x64 darwin-universal; do
+for t in linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal; do
   curl -fsSL -o dist/stackql-mcp-$t.mcpb.sha256 \
     "https://github.com/stackql/stackql/releases/download/vX.Y.Z/stackql-mcp-$t.mcpb.sha256"
 done
