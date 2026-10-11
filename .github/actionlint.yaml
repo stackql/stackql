@@ -9,3 +9,4 @@ self-hosted-runner:
     - windows-11-arm # GitHub-hosted arm64 Windows runner, newer than actionlint's built-in label list
     - ubuntu-24.04-arm # GitHub-hosted arm64 Linux runner, newer than actionlint's built-in label list
     - ubuntu-24.04 # GitHub-hosted Linux runner, newer than actionlint's built-in label list
+    - windows-11-arm
