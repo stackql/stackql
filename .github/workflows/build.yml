@@ -103,7 +103,16 @@ jobs:
 
   winbuild:
     name: Windows Build
-    runs-on: windows-latest
+    runs-on: ${{ matrix.isa == 'amd64' && 'windows-latest' || 'windows-11-arm' }}
+    defaults:
+      ## This is a nop hack to prevent actionlint from assuming bash
+      run:
+        shell: pwsh
+    strategy:
+      matrix:
+        isa:
+          - amd64
+          - arm64
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
@@ -128,6 +137,7 @@ jobs:
       with:
         cache: pip
         python-version: '3.12' 
+        architecture: x64 # needed due to missing arm64 distributions
 
     - name: Cache Chocolatey packages
       id: cache-choco
@@ -197,7 +207,7 @@ jobs:
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
         GOOS: windows
-        GOARCH: amd64
+        GOARCH: ${{matrix.isa}}
       run: |
         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
         $Version = convertfrom-stringdata (get-content ./cicd/version.txt -raw)
@@ -309,139 +319,16 @@ jobs:
       uses: actions/upload-artifact@v7.0.1
       if: success()
       with:
-        name: stackql_windows_amd64
+        name: stackql_windows_${{matrix.isa}}
         path: build/stackql.exe
 
-    # Consumed by winarmsmoke, so that the MCP robot scenarios run there too.
     - name: Upload MCP client artifact
       uses: actions/upload-artifact@v7.0.1
       if: success()
       with:
-        name: stackql_mcp_client_windows_amd64
+        name: stackql_mcp_client_windows_${{matrix.isa}}
         path: build/stackql_mcp_client.exe
 
-  winarmsmoke:
-    name: Windows arm64 Smoke (x64 emulation)
-    needs: winbuild
-    runs-on: windows-11-arm
-    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
-    steps:
-
-    - name: Get rid of disruptive line endings before checkout
-      run: |
-        git config --global core.autocrlf false
-
-    # The checkout supplies the robot suite and must precede the artifact
-    # downloads, because it cleans the workspace.
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v7.0.1
-
-    # We deliberately do NOT build here: there is no native windows/arm64 build
-    # (goreleaser only targets windows/amd64). This job downloads the amd64 .exe
-    # produced by winbuild and runs it on a native arm64 host, validating that it
-    # works under Windows 11's built-in x64 emulation - the basis for the
-    # "runs on Windows-on-ARM via emulation" claim in the install docs.
-    - name: Download Windows amd64 artifact
-      uses: actions/download-artifact@v8.0.1
-      with:
-        name: stackql_windows_amd64
-        path: build
-
-    - name: Download Windows amd64 MCP client artifact
-      uses: actions/download-artifact@v8.0.1
-      with:
-        name: stackql_mcp_client_windows_amd64
-        path: build
-
-    - name: Confirm host is arm64 (binary under test is x64)
-      shell: pwsh
-      run: |
-        Write-Host "PROCESSOR_ARCHITECTURE = $env:PROCESSOR_ARCHITECTURE"
-        if ($env:PROCESSOR_ARCHITECTURE -notmatch 'ARM64') {
-          throw "expected an arm64 host so the x64 binary is emulated, got '$env:PROCESSOR_ARCHITECTURE'"
-        }
-
-    - name: Smoke test - version and exec under emulation
-      shell: pwsh
-      run: |
-        $ErrorActionPreference = 'Stop'
-        $bin = ".\build\stackql.exe"
-
-        Write-Host "== stackql --version =="
-        & $bin --version
-        if ($LASTEXITCODE -ne 0) { throw "stackql --version failed (exit $LASTEXITCODE)" }
-
-        # 'exec' runs a query in batch mode (no TTY needed) and exercises the same
-        # embedded sqlite engine the interactive shell uses, so it fully covers the
-        # "x64 binary runs under emulation" claim. The interactive shell is not
-        # smoke-tested here: it's a REPL that requires a TTY, so piping a query to
-        # it yields EOF + "goodbye" without ever executing the query.
-        # Native command output is an array of lines; Out-String collapses it so
-        # -match returns a scalar boolean.
-        Write-Host "== stackql exec ""select 'StackQL'"" =="
-        $execOut = (& $bin exec "select 'StackQL' as smoke" | Out-String)
-        if ($LASTEXITCODE -ne 0) { throw "stackql exec failed (exit $LASTEXITCODE)" }
-        Write-Host $execOut
-        if ($execOut -notmatch 'StackQL') { throw "exec did not return 'StackQL'" }
-
-        Write-Host "Windows arm64 (x64 emulation) smoke PASSED"
-
-    # The robot harness below mirrors winbuild, run against the emulated binary.
-    # Python is x64 (so itself emulated) because the pinned test dependencies
-    # psycopg2-binary, psycopg-binary and cryptography publish no win_arm64 wheels.
-    - name: Setup Python
-      uses: actions/setup-python@v7.0.0
-      with:
-        cache: pip
-        python-version: '3.12'
-        architecture: x64
-
-    - name: Choco install openssl
-      uses: crazy-max/ghaction-chocolatey@v4.1.0
-      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
-      with:
-        args: "install --force openssl --version 3.1.1"
-
-    - name: Choco install packages
-      uses: crazy-max/ghaction-chocolatey@v4.1.0
-      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
-      with:
-        args: "install --force postgresql13 sqlite"
-
-    - name: Install Python dependencies
-      run: |
-        pip3 install -r cicd/requirements.txt
-
-    - name: Generate rewritten registry for simulations
-      run: |
-        python3 test\python\stackql_test_tooling\registry_rewrite.py --srcdir "$pwd\test\registry\src" --destdir "$pwd\test\registry-mocked\src"
-
-    # winbuild leaves the MCP client under both names; the robot tooling
-    # addresses it without the extension.
-    - name: Mirror winbuild binary layout
-      shell: pwsh
-      run: |
-        Copy-Item -Path ".\build\stackql_mcp_client.exe" -Destination ".\build\stackql_mcp_client" -Force
-        ls ".\build"
-
-    - name: Create certificates for robot tests
-      run: |
-        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
-
-    - name: Run robot mocked functional tests
-      env:
-        PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
-        SQLITE_EXE: C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.exe
-        PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
-      run: |
-        python cicd/python/build.py --robot-test
-
-    - name: Output from mocked functional tests
-      if: always()
-      run: |
-        cat ./test/robot/reports/output.xml || echo "no functional test output present"
 
   linuxbuild:
     name: Linux Build
