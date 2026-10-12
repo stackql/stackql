@@ -19,7 +19,7 @@ $script:Failures = 0
 function Pass { param([string]$Name) Write-Host "  PASS " -ForegroundColor Green -NoNewline; Write-Host $Name }
 function Fail { param([string]$Name) Write-Host "  FAIL " -ForegroundColor Red -NoNewline; Write-Host $Name; $script:Failures++ }
 
-foreach ($f in @('stackql', 'stackql.exe', 'stackql.zip', 'stackql.pkg')) {
+foreach ($f in @('stackql', 'stackql.exe', 'stackql.zip', 'stackql.pkg', 'stackql_windows_amd64.zip', 'stackql_windows_arm64.zip')) {
   if (Test-Path $f) { Remove-Item $f -Force }
 }
 Get-ChildItem -Filter 'stackql-*-shell.sh' -ErrorAction SilentlyContinue | Remove-Item -Force
@@ -77,6 +77,23 @@ function Assert-Location {
   }
 }
 
+# Read the machine type from a Windows binary's PE header: AMD64 or ARM64.
+function Get-PeArch {
+  param([string]$Path)
+  $reader = New-Object System.IO.BinaryReader([System.IO.File]::OpenRead((Resolve-Path $Path).Path))
+  try {
+    $reader.BaseStream.Position = 0x3c
+    $reader.BaseStream.Position = $reader.ReadInt32() + 4
+    switch ($reader.ReadUInt16()) {
+      0x8664 { 'AMD64' }
+      0xaa64 { 'ARM64' }
+      default { 'unknown' }
+    }
+  } finally {
+    $reader.Dispose()
+  }
+}
+
 function Write-Box {
   param([string]$Msg)
   $line = '-' * ($Msg.Length + 4)
@@ -104,11 +121,9 @@ Assert-Body "/install (curl)        -> sh installer"      "$Base/install"     $U
 # Explicit endpoints serve their real script for the matching shell.
 Assert-Body "/install.ps1 (ps)      -> ps1 installer"     "$Base/install.ps1" $UaPs   '#Requires -Version 5'
 Assert-Body "/install.sh (curl)     -> sh installer"      "$Base/install.sh"  $UaCurl '#!/bin/sh'
-# The PowerShell installer selects the native Windows architecture's asset.
-Assert-Body "/install (powershell)  -> amd64 asset"       "$Base/install"     $UaPs   'stackql_windows_amd64.zip'
-Assert-Body "/install (powershell)  -> arm64 asset"       "$Base/install"     $UaPs   'stackql_windows_arm64.zip'
-Assert-Body "/install.ps1 (ps)      -> amd64 asset"       "$Base/install.ps1" $UaPs   'stackql_windows_amd64.zip'
-Assert-Body "/install.ps1 (ps)      -> arm64 asset"       "$Base/install.ps1" $UaPs   'stackql_windows_arm64.zip'
+# Both endpoints serve the arch-aware installer (fails against a pre-ARM64 deploy).
+Assert-Body "/install (powershell)  -> arch-aware ps1"    "$Base/install"     $UaPs   'stackql_windows_arm64.zip'
+Assert-Body "/install.ps1 (ps)      -> arch-aware ps1"    "$Base/install.ps1" $UaPs   'stackql_windows_arm64.zip'
 # Wrong-shell guards point at the correct command instead of erroring.
 Assert-Body "/install.ps1 (curl)    -> 'use install.sh'"  "$Base/install.ps1" $UaCurl 'install.sh | sh'
 Assert-Body "/install.sh (ps)       -> 'use install.ps1'" "$Base/install.sh"  $UaPs   'install.ps1 | iex'
@@ -153,10 +168,30 @@ if (Test-Path $Bin) {
   Write-Host ("  {0}  {1:N0} bytes" -f $item.Name, $item.Length)
   Write-Host ""
 
+  Write-Host "Architecture check:"
+  # Native architecture from WMI, a different source from the registry value the
+  # installer reads, so a wrong pick (e.g. under x64 emulation on ARM64) fails.
+  try {
+    $cpu = Get-CimInstance -ClassName Win32_Processor -Property Architecture |
+      Select-Object -First 1 -ExpandProperty Architecture
+    $native = switch ($cpu) { 9 { 'AMD64' } 12 { 'ARM64' } default { "unknown ($cpu)" } }
+  } catch {
+    $native = 'unknown'
+  }
+  $binArch = Get-PeArch $Bin
+  if ($native -like 'unknown*') {
+    Fail "couldn't read the native architecture from WMI ($native)"
+  } elseif ($binArch -eq $native) {
+    Pass "$Bin is the native Windows/$native build"
+  } else {
+    Fail "$Bin is a Windows/$binArch build, expected native Windows/$native"
+  }
+  Write-Host ""
+
   Write-Host "Execution check:"
   try {
     & ".\$Bin" --version
-    Pass "runnable $Bin for Windows/$env:PROCESSOR_ARCHITECTURE"
+    Pass "runnable $Bin for Windows/$binArch"
   } catch {
     Fail "$Bin did not run on this platform"
   }
