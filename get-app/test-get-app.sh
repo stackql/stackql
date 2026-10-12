@@ -64,6 +64,9 @@ check_redirect() {
   esac
 }
 
+# Print $3 bytes of file $1 from offset $2 as one lowercase hex string.
+hex_at() { od -An -tx1 -j "$2" -N "$3" "$1" | tr -d ' \n'; }
+
 print_box "Installing StackQL for MacOS/Linux"
 
 echo "Origin check:"
@@ -123,6 +126,54 @@ if [ -e "$BIN" ]; then
   else
     echo "  (file not available, skipping arch detail)"
   fi
+  echo
+
+  echo "Architecture check:"
+  case "$(uname -s)" in
+    Darwin)
+      # macOS ships one universal (fat) binary, so both slices must be present.
+      # Fat header: big-endian magic and slice count, then a 20-byte entry per
+      # slice that starts with its CPU type.
+      slices=""
+      if [ "$(hex_at "$BIN" 0 4)" = "cafebabe" ]; then
+        n=$(( 0x$(hex_at "$BIN" 4 4) ))
+        i=0
+        while [ "$i" -lt "$n" ]; do
+          case "$(hex_at "$BIN" $((8 + 20 * i)) 4)" in
+            01000007) slices="$slices x86_64" ;;
+            0100000c) slices="$slices arm64" ;;
+          esac
+          i=$((i + 1))
+        done
+      fi
+      case "$slices" in
+        *x86_64*arm64* | *arm64*x86_64*) pass "$BIN is a universal macOS binary (x86_64 + arm64)" ;;
+        *) fail "$BIN is not a universal x86_64 + arm64 macOS binary (slices:${slices:- none})" ;;
+      esac
+      ;;
+    Linux)
+      # Linux ships separate amd64 and arm64 binaries, so the ELF machine field
+      # (offset 18, little-endian) must match this host.
+      case "$(hex_at "$BIN" 18 2)" in
+        3e00) bin_arch=amd64 ;;
+        b700) bin_arch=arm64 ;;
+        *)    bin_arch=unknown ;;
+      esac
+      case "$(uname -m)" in
+        x86_64 | amd64)  host_arch=amd64 ;;
+        aarch64 | arm64) host_arch=arm64 ;;
+        *)               host_arch=$(uname -m) ;;
+      esac
+      if [ "$bin_arch" = "$host_arch" ]; then
+        pass "$BIN is the native Linux/$host_arch build"
+      else
+        fail "$BIN is a Linux/$bin_arch build, expected native Linux/$host_arch"
+      fi
+      ;;
+    *)
+      echo "  (skipped: no architecture check for $(uname -s))"
+      ;;
+  esac
   echo
 
   echo "Permissions:"

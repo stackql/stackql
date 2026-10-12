@@ -15,8 +15,13 @@ Behaviour:
   `irm https://get-stackql.io/install | iex` (Windows).
 - `GET /install.sh` - always the POSIX `sh` installer. Runs `uname` client-side
   to pick the right OS + arch asset and drops `./stackql` in the current dir.
-- `GET /install.ps1` - always the PowerShell installer. Downloads and expands the
-  Windows zip (`stackql.exe`) into the current directory.
+- `GET /install.ps1` - always the PowerShell installer. Detects the native
+  Windows architecture and downloads and expands the matching zip
+  (`stackql_windows_amd64.zip` or `stackql_windows_arm64.zip`, containing
+  `stackql.exe`) into the current directory. ARM64 is detected even when x64
+  PowerShell runs under emulation, by reading the system `PROCESSOR_ARCHITECTURE`
+  from the registry before the process environment. AMD64 is used only when no
+  architecture can be detected.
 - `GET /install/<provider>` (also `GET /install.sh/<provider>`) - cloud shell /
   web terminal helper installer. Serves an `sh` installer that drops `./stackql`
   **and** the matching helper script (e.g. `stackql-aws-cloud-shell.sh`) into the
@@ -46,8 +51,8 @@ stackql release assets are not uniform, so the installers do a little more than 
 plain download-and-extract:
 
 - Linux (`stackql_linux_amd64.zip`, `stackql_linux_arm64.zip`) and Windows
-  (`stackql_windows_amd64.zip`) ship as zip archives containing the
-  `stackql`/`stackql.exe` binary.
+  (`stackql_windows_amd64.zip`, `stackql_windows_arm64.zip`) ship as zip archives
+  containing the `stackql`/`stackql.exe` binary.
 - macOS ships only as a multi-arch `.pkg` installer
   (`stackql_darwin_multiarch.pkg`). The `sh` installer extracts the universal
   binary from the pkg payload (`pkgutil --expand-full`) so the `curl | sh` flow

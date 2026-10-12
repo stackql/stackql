@@ -24,6 +24,7 @@ Download the following artifacts from the latest build on the `main` branch incl
 - `stackql_linux_amd64`
 - `stackql_linux_arm64`
 - `stackql_windows_amd64` (used in step 4)
+- `stackql_windows_arm64` (used in step 4)
 
 ### 3. Add the following assets to the release:
 
@@ -38,14 +39,16 @@ Using the  [stackql/stackql-windows-installer](https://github.com/stackql/stackq
 
 - `stackql_windows_amd64.msi`
 - `stackql_windows_amd64.zip`
+- `stackql_windows_arm64.msi`
+- `stackql_windows_arm64.zip`
 
-place the from the `stackql_windows_amd64.zip` file from step 2 in the `downloaded` directory of the `stackql-windows-installer` project, then run the following via PowerShell:
+place the `stackql_windows_amd64.zip` and `stackql_windows_arm64.zip` files from step 2 (both from the same build) in the `downloaded` directory of the `stackql-windows-installer` project, then run the following via PowerShell:
 
 ```powershell
 .\build.ps1 true
 ```
 
-then run the following to publish the `MSI` and `ZIP` assets to the corresponding release:  
+then run the following to publish the `MSI` and `ZIP` assets for both architectures to the corresponding release (the `get-stackql.io` PowerShell installer downloads `stackql_windows_arm64.zip` on ARM64 machines, so every release needs it):  
 
 ```powershell
 .\release.ps1
