@@ -21,7 +21,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.10.1
 	github.com/stackql-labs/omnisdk v0.1.4-alpha05
-	github.com/stackql/any-sdk v0.6.0-alpha01
+	github.com/stackql/any-sdk v0.6.1-alpha01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.3-beta01
 	github.com/stackql/stackql-parser v0.0.16-alpha02
