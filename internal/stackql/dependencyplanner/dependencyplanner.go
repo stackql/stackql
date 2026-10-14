@@ -28,6 +28,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
+	"github.com/stackql/stackql/pkg/astformat"
 )
 
 type DependencyPlanner interface {
@@ -811,58 +812,76 @@ func (dp *standardDependencyPlanner) isVectorParam(param interface{}) bool {
 	return false
 }
 
-//nolint:gocognit,nestif // live with it
+//nolint:nestif // live with it
+func (dp *standardDependencyPlanner) getSQLStreamFromEdge(
+	e dataflow.Edge,
+	toAc taxonomy.AnnotationCtx,
+	tcc internaldto.TxnControlCounters,
+) (streaming.MapStream, error) {
+	columnDescriptors, err := e.GetColumnDescriptors()
+	if err != nil {
+		return nil, err
+	}
+	selectCtx, err := dp.generateSelectDML(e.GetSource().GetAnnotation(), columnDescriptors, tcc, nil)
+	if err != nil {
+		return nil, err
+	}
+	ann := e.GetSource().GetAnnotation()
+	meta := ann.GetTableMeta()
+	insertContainer, err := tableinsertioncontainer.NewTableInsertionContainer(meta,
+		dp.handlerCtx.GetSQLEngine(),
+		dp.handlerCtx.GetTxnCounterMgr())
+	if err != nil {
+		return nil, err
+	}
+	toParams := toAc.GetParameters()
+
+	transformedToStaticParams, paramTransformErr := util.TransformSQLRawParameters(toParams, false)
+	if paramTransformErr != nil {
+		return nil, paramTransformErr
+	}
+	for k, v := range transformedToStaticParams {
+		hasSourceAttr := e.HasSourceAttribute(k)
+		if !hasSourceAttr {
+			vIsUnpopulated := k == v
+			if vIsUnpopulated {
+				delete(transformedToStaticParams, k)
+			}
+		}
+	}
+	return sqlstream.NewSimpleSQLMapStream(
+		selectCtx,
+		insertContainer,
+		dp.handlerCtx.GetDrmConfig(),
+		dp.handlerCtx.GetSQLEngine(),
+		transformedToStaticParams,
+	), nil
+}
+
+//nolint:gocognit // live with it
 func (dp *standardDependencyPlanner) getStreamFromEdge(
 	e dataflow.Edge,
 	toAc taxonomy.AnnotationCtx,
 	tcc internaldto.TxnControlCounters,
 ) (streaming.MapStream, error) {
 	if e.IsSQL() {
-		selectCtx, err := dp.generateSelectDML(e, tcc)
-		if err != nil {
-			return nil, err
-		}
-		ann := e.GetSource().GetAnnotation()
-		meta := ann.GetTableMeta()
-		insertContainer, err := tableinsertioncontainer.NewTableInsertionContainer(meta,
-			dp.handlerCtx.GetSQLEngine(),
-			dp.handlerCtx.GetTxnCounterMgr())
-		if err != nil {
-			return nil, err
-		}
-		toParams := toAc.GetParameters()
-
-		transformedToStaticParams, paramTransformErr := util.TransformSQLRawParameters(toParams, false)
-		if paramTransformErr != nil {
-			return nil, paramTransformErr
-		}
-		for k, v := range transformedToStaticParams {
-			hasSourceAttr := e.HasSourceAttribute(k)
-			if !hasSourceAttr {
-				vIsUnpopulated := k == v
-				if vIsUnpopulated {
-					delete(transformedToStaticParams, k)
-				}
-			}
-		}
-		return sqlstream.NewSimpleSQLMapStream(
-			selectCtx,
-			insertContainer,
-			dp.handlerCtx.GetDrmConfig(),
-			dp.handlerCtx.GetSQLEngine(),
-			transformedToStaticParams,
-		), nil
+		return dp.getSQLStreamFromEdge(e, toAc, tcc)
 	}
 	projection, err := e.GetProjection()
 	if err != nil {
 		return nil, err
 	}
-	projection = sourceResponseProjection(projection, e.GetSource().GetAnnotation().GetSchema().Tabulate(false, ""))
 	method, err := toAc.GetTableMeta().GetMethod()
 	if err != nil {
 		return nil, err
 	}
 	requestParameters := method.GetParametersIncludingNativeCasing()
+	sourceFilters, err := dp.sourceOnlyFilters(e.GetSource().GetAnnotation())
+	if err != nil {
+		return nil, err
+	}
+	sqlProjection := destinationRequestProjection(projection, requestParameters)
+	projection = sourceResponseProjection(projection, e.GetSource().GetAnnotation().GetSchema().Tabulate(false, ""))
 	projection = destinationRequestProjection(projection, requestParameters)
 	incomingCols := make(map[string]struct{})
 	for _, v := range projection {
@@ -888,7 +907,139 @@ func (dp *standardDependencyPlanner) getStreamFromEdge(
 			return nil, err
 		}
 	}
+	if len(sourceFilters) > 0 {
+		return dp.filteredSourceStream(e.GetSource().GetAnnotation(), sqlProjection, staticParams, sourceFilters, tcc)
+	}
 	return streaming.NewSimpleProjectionMapStream(projection, staticParams), nil
+}
+
+// filteredSourceStream reads the dependent table's request parameters from
+// the source table's stored rows, restricted by the source only filters, so
+// that no request is made for a source row that the WHERE clause discards.
+func (dp *standardDependencyPlanner) filteredSourceStream(
+	sourceAnnotation taxonomy.AnnotationCtx,
+	projection map[string]string,
+	staticParams map[string]interface{},
+	filters []string,
+	tcc internaldto.TxnControlCounters,
+) (streaming.MapStream, error) {
+	alias := sourceAnnotation.GetTableMeta().GetAlias()
+	var columnDescriptors []formulation.ColumnDescriptor
+	for source, destination := range projection {
+		sourceColumn := &sqlparser.ColName{
+			Name:      sqlparser.NewColIdent(source),
+			Qualifier: sqlparser.TableName{Name: sqlparser.NewTableIdent(alias)},
+		}
+		decoratedColumn := fmt.Sprintf(`%s AS "%s"`, sqlparser.ColDelimitedString(sourceColumn), destination)
+		columnDescriptors = append(
+			columnDescriptors,
+			formulation.NewColumnDescriptor(destination, "", "", decoratedColumn, nil, nil, nil),
+		)
+	}
+	selectCtx, err := dp.generateSelectDML(sourceAnnotation, columnDescriptors, tcc, filters)
+	if err != nil {
+		return nil, err
+	}
+	insertContainer, err := tableinsertioncontainer.NewTableInsertionContainer(
+		sourceAnnotation.GetTableMeta(),
+		dp.handlerCtx.GetSQLEngine(),
+		dp.handlerCtx.GetTxnCounterMgr())
+	if err != nil {
+		return nil, err
+	}
+	return sqlstream.NewSimpleSQLMapStream(
+		selectCtx,
+		insertContainer,
+		dp.handlerCtx.GetDrmConfig(),
+		dp.handlerCtx.GetSQLEngine(),
+		staticParams,
+	), nil
+}
+
+// sourceOnlyFilters returns the top level WHERE conjuncts that refer only to
+// response columns of the source table, rendered for its stored rows.
+// It returns none when the source table may be null extended by an outer
+// join, since a WHERE clause may then retain rows the source table does not
+// match.  Conjuncts on request parameters are already enforced by the
+// source request itself, and unqualified columns are not attributed.
+func (dp *standardDependencyPlanner) sourceOnlyFilters(sourceAnnotation taxonomy.AnnotationCtx) ([]string, error) {
+	where := dp.sqlStatement.Where
+	if where == nil || where.Type != sqlparser.WhereStr || isAnnotationIndirection(sourceAnnotation) {
+		return nil, nil
+	}
+	alias := sourceAnnotation.GetTableMeta().GetAlias()
+	if alias == "" || isNullExtended(dp.sqlStatement.From, alias, false) {
+		return nil, nil
+	}
+	method, err := sourceAnnotation.GetTableMeta().GetMethod()
+	if err != nil {
+		return nil, err
+	}
+	requestParameters := make(map[string]struct{})
+	for name, parameter := range method.GetParametersIncludingNativeCasing() {
+		requestParameters[name] = struct{}{}
+		requestParameters[parameter.GetName()] = struct{}{}
+	}
+	for name := range sourceAnnotation.GetParameters() {
+		requestParameters[name] = struct{}{}
+	}
+	var filters []string
+	for _, conjunct := range sqlparser.SplitAndExpression(nil, where.Expr) {
+		if isSourceOnlyResponseExpr(conjunct, alias, requestParameters) {
+			filters = append(filters, astformat.String(conjunct, dp.handlerCtx.GetASTFormatter()))
+		}
+	}
+	return filters, nil
+}
+
+func isSourceOnlyResponseExpr(expr sqlparser.Expr, alias string, requestParameters map[string]struct{}) bool {
+	columnCount := 0
+	eligible := true
+	//nolint:errcheck // the visitor never returns an error
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		switch node := node.(type) {
+		case *sqlparser.ColName:
+			_, isRequestParameter := requestParameters[node.Name.GetRawVal()]
+			if node.Qualifier.Name.GetRawVal() != alias || !node.Qualifier.Qualifier.IsEmpty() || isRequestParameter {
+				eligible = false
+			}
+			columnCount++
+		case *sqlparser.Subquery, *sqlparser.ExistsExpr, *sqlparser.ValuesFuncExpr, *sqlparser.Default:
+			eligible = false
+		}
+		return eligible, nil
+	}, expr)
+	return eligible && columnCount > 0
+}
+
+// isNullExtended reports whether the table aliased by alias sits on the
+// optional side of an outer join within the table expressions.
+func isNullExtended(tableExprs sqlparser.TableExprs, alias string, isOptionalSide bool) bool {
+	for _, tableExpr := range tableExprs {
+		switch tableExpr := tableExpr.(type) {
+		case *sqlparser.AliasedTableExpr:
+			if tableExpr.As.GetRawVal() == alias {
+				return isOptionalSide
+			}
+		case *sqlparser.ParenTableExpr:
+			if isNullExtended(tableExpr.Exprs, alias, isOptionalSide) {
+				return true
+			}
+		case *sqlparser.JoinTableExpr:
+			leftOptional, rightOptional := isOptionalSide, isOptionalSide
+			switch tableExpr.Join {
+			case sqlparser.LeftJoinStr, sqlparser.LeftOuterJoinStr, sqlparser.NaturalLeftJoinStr:
+				rightOptional = true
+			case sqlparser.RightJoinStr, sqlparser.RightOuterJoinStr, sqlparser.NaturalRightJoinStr:
+				leftOptional = true
+			}
+			if isNullExtended(sqlparser.TableExprs{tableExpr.LeftExpr}, alias, leftOptional) ||
+				isNullExtended(sqlparser.TableExprs{tableExpr.RightExpr}, alias, rightOptional) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func sourceResponseProjection(projection map[string]string, tab formulation.Tabulation) map[string]string {
@@ -940,14 +1091,17 @@ func (dp *standardDependencyPlanner) harvestFilter(sourceAnnotation taxonomy.Ann
 }
 
 func (dp *standardDependencyPlanner) generateSelectDML(
-	e dataflow.Edge,
+	ann taxonomy.AnnotationCtx,
+	columnDescriptors []formulation.ColumnDescriptor,
 	tcc internaldto.TxnControlCounters,
+	filters []string,
 ) (drm.PreparedStatementCtx, error) {
-	ann := e.GetSource().GetAnnotation()
 	whereStr, _ := dp.harvestFilter(ann)
-	columnDescriptors, err := e.GetColumnDescriptors()
-	if err != nil {
-		return nil, err
+	for _, filter := range filters {
+		if whereStr != "" {
+			whereStr += " AND "
+		}
+		whereStr += fmt.Sprintf("(%s)", filter)
 	}
 	discoID, discoIDErr := dp.handlerCtx.GetSQLEngine().GetCurrentDiscoveryGenerationID(ann.GetHIDs().GetProviderStr())
 	if discoIDErr != nil {

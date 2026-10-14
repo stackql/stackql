@@ -181,6 +181,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.NamespaceCfgRaw, dto.NamespaceCfgRawKey, "{}", "JSON / YAML string representing namespaces for cacheing, views etc")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.StoreTxnCfgRaw, dto.StoreTxnCfgRawKey, "{}", "JSON / YAML string representing Txn store config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.GCCfgRaw, dto.GCCfgRawKey, "{}", "JSON / YAML string representing GC config")
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.UpstreamErrorCfgRaw, dto.UpstreamErrorCfgRawKey, "{}", `JSON / YAML string representing upstream errors that reads ignore, eg {"http": {"ignoreStatusCodes": ["5xx"]}}`)
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ACIDCfgRaw, dto.ACIDCfgRawKey, "{}", "JSON / YAML string representing ACID config")
 	rootCmd.PersistentFlags().StringVar(&previewCfgRaw, intrinsic.CfgRawKey, "{}", "JSON string configuring the "+intrinsic.ProviderName+
 		" provider backend; keys: batchSize, flushInterval, endpoint, unstable")

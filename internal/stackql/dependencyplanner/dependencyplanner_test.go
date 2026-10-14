@@ -7,6 +7,7 @@ import (
 
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/any-sdk/public/formulation"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 type projectionColumn struct {
@@ -82,5 +83,52 @@ func TestSourceResponseProjection(t *testing.T) {
 	}
 	if len(rows) != 1 || rows[0]["access_key_id"] != "test-key" {
 		t.Fatalf("projected rows = %v", rows)
+	}
+}
+
+func parseSelect(t *testing.T, query string) *sqlparser.Select {
+	t.Helper()
+	stmt, err := sqlparser.Parse(query)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	selectStmt, ok := stmt.(*sqlparser.Select)
+	if !ok {
+		t.Fatalf("not a select: %T", stmt)
+	}
+	return selectStmt
+}
+
+func TestIsSourceOnlyResponseExpr(t *testing.T) {
+	requestParameters := map[string]struct{}{"org": {}}
+	for where, expected := range map[string]bool{
+		"r.archived = 0":                 true,
+		"r.archived = 0 and r.size > 1":  true,
+		"r.org = 'stackql'":              false,
+		"archived = 0":                   false,
+		"b.type = 'x'":                   false,
+		"r.name = b.repo":                false,
+		"1 = 1":                          false,
+		"r.name in (select name from t)": false,
+	} {
+		stmt := parseSelect(t, "select 1 from t where "+where)
+		if got := isSourceOnlyResponseExpr(stmt.Where.Expr, "r", requestParameters); got != expected {
+			t.Errorf("isSourceOnlyResponseExpr(%q) = %t, want %t", where, got, expected)
+		}
+	}
+}
+
+func TestIsNullExtended(t *testing.T) {
+	for from, expected := range map[string]bool{
+		"a r inner join b on r.x = b.x":                            false,
+		"a r left outer join b on r.x = b.x":                       false,
+		"b left outer join a r on r.x = b.x":                       true,
+		"a r right join b on r.x = b.x":                            true,
+		"c inner join (b left join a r on r.x = b.x) on c.y = b.y": true,
+	} {
+		stmt := parseSelect(t, "select 1 from "+from)
+		if got := isNullExtended(stmt.From, "r", false); got != expected {
+			t.Errorf("isNullExtended(%q) = %t, want %t", from, got, expected)
+		}
 	}
 }
