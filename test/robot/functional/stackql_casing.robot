@@ -15,6 +15,42 @@ Documentation     Functional coverage for the any-sdk casing engine, exercised t
 ...               backward-compatibility block.
 
 *** Test Cases ***
+Snake Case Join Source Projects Native Response Field
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select target.echoed_query from stackql_native_test.casing.echo source inner join stackql_native_test.casing.echo_strict target on target.vpc_id \= source.vpc_id where source.vpc_id \= 'vpc-join';
+    ...    VpcId\=vpc-join
+
+Snake Case Join Retains Request Only Destination Column
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select target.vpc_id, target.echoed_query from stackql_native_test.casing.echo source inner join stackql_native_test.casing.echo_request_only target on target.vpc_id \= source.vpc_id where source.vpc_id \= 'vpc-request-only';
+    ...    VpcId\=vpc-request-only
+
+Single Word Native Parameter Has One SQL Column
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select echoed_query from stackql_native_test.casing.echo_filter where filter \= 'SERVICE_CONTROL_POLICY';
+    ...    Filter\=SERVICE_CONTROL_POLICY
+
 Snake Case Aliases Multi Word Response Column Projects Value
     [Documentation]    Wire field VpcId is exposed as snake_case column vpc_id and its VALUE
     ...    (echoed back by the mock) now projects via GetWireName (issue 108) instead of NULL.
