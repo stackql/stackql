@@ -174,6 +174,11 @@ repas_collab_specialcase_call_count = 0
 def get_aware_collaborators(org, repositoryId):
     global repos_collab_call_count
     global repas_collab_specialcase_call_count
+    if org == 'joinfaultorg':
+        # The archived repository's collaborators fail with an empty bodied 500.
+        if repositoryId == 'archived-repo':
+            return '', 500
+        return jsonify([{"login": f"{repositoryId}-collaborator", "type": "User", "role_name": "admin"}]), 200
     if org == 'specialcaseorg':
         repas_collab_specialcase_call_count += 1
         if repas_collab_specialcase_call_count == 1:
@@ -418,6 +423,15 @@ def get_special_org_repos():
     response = json.load(open(os.path.join(templates_dir, 'specialcase-repositories.json'), 'r'))
     logger.info("Special organization repositories data sent")
     return jsonify(response), 200
+
+
+@app.route('/orgs/joinfaultorg/repos', methods=['GET'])
+def get_join_fault_org_repos():
+    return jsonify([
+        {"id": 1, "name": "active-repo-a", "archived": False},
+        {"id": 2, "name": "archived-repo", "archived": True},
+        {"id": 3, "name": "active-repo-b", "archived": False},
+    ]), 200
 
 
 @app.route('/orgs/ratelimitedorg/repos', methods=['GET'])

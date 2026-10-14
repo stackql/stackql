@@ -2037,6 +2037,53 @@ GitHub Join Input Params Select
     ...    ${SELECT_GITHUB_JOIN_IN_PARAMS_EXPECTED}
     ...    ${CURDIR}/tmp/GitHub-Join-Input-Params-Select.tmp
 
+GitHub Join Source Only Filter Prevents Dependent Requests
+    [Documentation]    The archived repository (id 2) has a collaborators endpoint that returns 500, so the
+    ...    query succeeds only if the WHERE filter on the driving table prevents that request.
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    name,login
+    ...    active-repo-a,active-repo-a-collaborator
+    ...    active-repo-b,active-repo-b-collaborator
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select r.name, col.login from github.repos.collaborators col inner join github.repos.repos r on col.repo \= r.name where col.owner \= 'joinfaultorg' and r.org \= 'joinfaultorg' and r.id <> 2 order by r.name;
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    \-o\=csv
+    ...    stdout=${CURDIR}/tmp/GitHub-Join-Source-Only-Filter-Prevents-Dependent-Requests.tmp
+    ...    stderr=${CURDIR}/tmp/GitHub-Join-Source-Only-Filter-Prevents-Dependent-Requests-stderr.tmp
+
+GitHub Join Ignores Opted In Upstream Status
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    the container shell strips the quotes from the JSON flag value
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    name,login
+    ...    active-repo-a,active-repo-a-collaborator
+    ...    active-repo-b,active-repo-b-collaborator
+    ${stderrStr} =    Catenate    SEPARATOR=\n
+    ...    http response status code: 500, response body is nil
+    ...    ignoring upstream response: 500 INTERNAL SERVER ERROR
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select r.name, col.login from github.repos.collaborators col inner join github.repos.repos r on col.repo \= r.name where col.owner \= 'joinfaultorg' and r.org \= 'joinfaultorg' order by r.name;
+    ...    ${outputStr}
+    ...    ${stderrStr}
+    ...    \-o\=csv
+    ...    \-\-upstream.errors\={"http": {"ignoreStatusCodes": ["5xx"]}}
+    ...    stdout=${CURDIR}/tmp/GitHub-Join-Ignores-Opted-In-Upstream-Status.tmp
+    ...    stderr=${CURDIR}/tmp/GitHub-Join-Ignores-Opted-In-Upstream-Status-stderr.tmp
+
 Filter on Implicit Selectable Object
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
