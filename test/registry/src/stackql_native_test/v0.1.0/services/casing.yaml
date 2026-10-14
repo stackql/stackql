@@ -181,6 +181,29 @@ components:
         insert: []
         delete: []
         update: []
+    echo_filter:
+      id: stackql_native_test.casing.echo_filter
+      name: echo_filter
+      title: Echo a single-word native-cased required parameter
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1casing~1echo_filter/get'
+          request:
+            nativeCasing: pascal
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: $
+            schema_override:
+              $ref: '#/components/schemas/echo_query_only_response'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/echo_filter/methods/select'
+        insert: []
+        delete: []
+        update: []
     echo_header:
       id: stackql_native_test.casing.echo_header
       name: echo_header
@@ -314,6 +337,27 @@ paths:
       servers:
         - url: http://localhost:1070
       summary: Echo received query parameters, VpcId required
+  /casing/echo_filter:
+    get:
+      operationId: casing/echo_filter/get
+      parameters:
+        - in: query
+          name: Filter
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  echoed_query:
+                    type: string
+      servers:
+        - url: http://localhost:1070
   /casing/echo_header:
     get:
       operationId: casing/echo_header/get

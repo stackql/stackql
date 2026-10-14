@@ -132,6 +132,10 @@ def create_app() -> Flask:
             }
         )
 
+    @app.get("/casing/echo_filter")
+    def casing_echo_filter_get():
+        return jsonify({"echoed_query": request.query_string.decode("utf-8")})
+
     # ---- OCI request signing (oci_signing_v1) target -----------------------
 
     @app.get("/oci/buckets")
