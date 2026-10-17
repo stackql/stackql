@@ -212,6 +212,14 @@ type ServerConfig struct {
 	// HTTP transport requires `Authorization: Bearer <token>` on every request.
 	AuthTokenEnvVar string `json:"auth_token_env_var,omitempty" yaml:"auth_token_env_var,omitempty"`
 
+	// ApprovalKeyEnvVar names an env var holding the HMAC-SHA256 key that
+	// signs the approval RequestState (issue #827).  Unset, each process
+	// uses a random key, which suits stdio and a single HTTP instance.  Set
+	// it to the same value on every instance of a sessionless Streamable
+	// HTTP deployment behind a load balancer.  The value must hold at least
+	// 32 bytes and is never logged or audited.
+	ApprovalKeyEnvVar string `json:"approval_key_env_var,omitempty" yaml:"approval_key_env_var,omitempty"`
+
 	// AllowUnauthenticated is the explicit opt-in to serve the HTTP transport
 	// with no client authentication.  Without it or AuthTokenEnvVar the HTTP
 	// transport refuses to start.
@@ -273,6 +281,7 @@ type serverConfigWire struct {
 	TLSCertFile           string         `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
 	TLSKeyFile            string         `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
 	AuthTokenEnvVar       string         `json:"auth_token_env_var,omitempty" yaml:"auth_token_env_var,omitempty"`
+	ApprovalKeyEnvVar     string         `json:"approval_key_env_var,omitempty" yaml:"approval_key_env_var,omitempty"`
 	AllowUnauthenticated  bool           `json:"allow_unauthenticated,omitempty" yaml:"allow_unauthenticated,omitempty"`
 	TransportCfg          map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 	Stateless             bool           `json:"stateless,omitempty" yaml:"stateless,omitempty"`
@@ -296,6 +305,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.TLSCertFile = w.TLSCertFile
 	s.TLSKeyFile = w.TLSKeyFile
 	s.AuthTokenEnvVar = w.AuthTokenEnvVar
+	s.ApprovalKeyEnvVar = w.ApprovalKeyEnvVar
 	s.AllowUnauthenticated = w.AllowUnauthenticated
 	s.TransportCfg = w.TransportCfg
 	s.Stateless = w.Stateless

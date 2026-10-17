@@ -128,6 +128,7 @@ func addToolWithGate[In, Out any](
 	s *mcp.Server,
 	cfg *Config,
 	auditSink sink.Sink,
+	approvals *approvalBinder,
 	descriptions toolDescriptions,
 	gate toolGate,
 	t *mcp.Tool,
@@ -166,7 +167,7 @@ func addToolWithGate[In, Out any](
 				audit.DecisionRefuseImmediate, started, err, wireContext(req, nil))
 			return nil, zero, err
 		case policy.DecisionNeedsApproval:
-			outcome, prompt, err := approvalOutcome(req, t.Name, p.Reason(), sql, p.Class())
+			outcome, prompt, err := approvalOutcome(req, approvals, args, t.Name, p.Reason(), sql, p.Class())
 			if prompt != nil {
 				// First pass: hand the approval prompt back as an input
 				// request; the client (or the SDK, for pre-2026-07-28
@@ -205,17 +206,52 @@ func addToolWithGate[In, Out any](
 const approvalInputKey = "stackql_approval"
 
 // approvalOutcome resolves the gated-write approval as a multi round-trip
-// request. On the first pass it returns the elicitation prompt for the caller
-// to hand back as an input-required result; on the retry it reads the user's
-// answer from InputResponses and returns the audit decision-outcome plus an
+// request. On the first pass it returns the elicitation prompt, carrying a
+// signed RequestState bound to this tool, its arguments and SQL, and the
+// session, for the caller to hand back as an input-required result. On the
+// retry it checks elicitation support, then verifies the echoed RequestState
+// against the call, and only then reads the user's answer from
+// InputResponses (issue #827). It returns the audit decision-outcome plus an
 // error when the action was refused. The SDK middleware performs the round
-// trip on the server side for pre-2026-07-28 clients, so both lifecycle
-// models share this path.
+// trip on the server side for pre-2026-07-28 clients and echoes the
+// RequestState itself, so both lifecycle models share this path and its
+// checks.
 func approvalOutcome(
 	req *mcp.CallToolRequest,
+	approvals *approvalBinder,
+	args any,
 	toolName, reason, sql string, class policy.QueryClass,
 ) (string, *mcp.CallToolResult, error) {
+	// Capabilities come from the request _meta (2026-07-28) or the
+	// initialize params (earlier revisions); the SDK resolves both.  The
+	// check runs before any answer is read, so an answer from a client that
+	// never advertised elicitation is refused.
+	caps := req.ClientCapabilities()
+	if caps == nil || caps.Elicitation == nil {
+		err := fmt.Errorf(
+			"tool %q refused: %s and the MCP client does not support elicitation. "+
+				"Restart the server in 'full_access' mode if you trust this client, "+
+				"or use an elicitation-capable client",
+			toolName, reason)
+		return audit.DecisionNeedsApprovalUnavailable, nil, err
+	}
+	if approvals == nil {
+		return audit.DecisionNeedsApprovalUnavailable,
+			nil, fmt.Errorf("tool %q refused: approval binding is not configured", toolName)
+	}
+	digest, err := approvalDigest(toolName, args, sql)
+	if err != nil {
+		return audit.DecisionNeedsApprovalUnavailable, nil, fmt.Errorf("tool %q refused: %w", toolName, err)
+	}
+	binding := approvalBinding{tool: toolName, digest: digest}
+	if req.Session != nil {
+		binding.session = req.Session.ID()
+	}
 	if answer, answered := req.Params.InputResponses[approvalInputKey]; answered {
+		if verr := approvals.verify(req.Params.RequestState, binding); verr != nil {
+			return audit.DecisionNeedsApprovalDeclined,
+				nil, fmt.Errorf("tool %q refused: approval rejected: %w", toolName, verr)
+		}
 		res, isElicit := answer.(*mcp.ElicitResult)
 		if !isElicit {
 			return audit.DecisionNeedsApprovalDeclined,
@@ -235,16 +271,9 @@ func approvalOutcome(
 				nil, fmt.Errorf("tool %q refused: unexpected elicitation action %q", toolName, res.Action)
 		}
 	}
-	// Capabilities come from the request _meta (2026-07-28) or the
-	// initialize params (earlier revisions); the SDK resolves both.
-	caps := req.ClientCapabilities()
-	if caps == nil || caps.Elicitation == nil {
-		err := fmt.Errorf(
-			"tool %q refused: %s and the MCP client does not support elicitation. "+
-				"Restart the server in 'full_access' mode if you trust this client, "+
-				"or use an elicitation-capable client",
-			toolName, reason)
-		return audit.DecisionNeedsApprovalUnavailable, nil, err
+	state, err := approvals.issue(binding)
+	if err != nil {
+		return audit.DecisionNeedsApprovalUnavailable, nil, fmt.Errorf("tool %q refused: %w", toolName, err)
 	}
 	message := fmt.Sprintf("Approve %s (%s)?", toolName, class.String())
 	if sql != "" {
@@ -260,6 +289,7 @@ func approvalOutcome(
 				},
 			},
 		},
+		RequestState: state,
 	}, nil
 }
 

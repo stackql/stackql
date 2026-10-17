@@ -891,6 +891,7 @@ type rawClientConn struct {
 	t    *testing.T
 	ctx  context.Context
 	conn mcp.Connection
+	srv  *simpleMCPServer
 }
 
 func newRawClientConn(t *testing.T, cfg *Config, backend Backend) *rawClientConn {
@@ -911,7 +912,7 @@ func newRawClientConn(t *testing.T, cfg *Config, backend Backend) *rawClientConn
 		t.Fatalf("client transport connect: %v", err)
 	}
 	t.Cleanup(func() { _ = conn.Close() })
-	return &rawClientConn{t: t, ctx: ctx, conn: conn}
+	return &rawClientConn{t: t, ctx: ctx, conn: conn, srv: mcpSrv.(*simpleMCPServer)}
 }
 
 func (c *rawClientConn) send(id int64, method, params string) {
@@ -1092,31 +1093,19 @@ func TestLegacyRevisionClient_SafeModeApprovalViaElicitationRequest(t *testing.T
 }
 
 // A 2026-07-28 client sends no handshake: the version and capabilities
-// travel in _meta, the approval comes back as an input-required result, and
-// the retry carries the answer in inputResponses.
+// travel in _meta, the approval comes back as an input-required result
+// carrying a signed requestState, and the retry echoes that state with the
+// answer in inputResponses.
 func TestCurrentRevisionClient_SafeModeApprovalViaInputRequests(t *testing.T) {
 	be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
 	c := newRawClientConn(t, DefaultConfig(), be)
-	meta := `"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28",` +
-		`"io.modelcontextprotocol/clientCapabilities":{"elicitation":{"form":{}}}}`
 
-	c.send(1, "tools/call", `{`+meta+`,"name":"run_mutation_query","arguments":{"sql":"delete from t"}}`)
-	var first struct {
-		ResultType    string                     `json:"resultType"`
-		InputRequests map[string]json.RawMessage `json:"inputRequests"`
-	}
-	if err := json.Unmarshal(c.expectResponse(1), &first); err != nil {
-		t.Fatalf("first result: %v", err)
-	}
-	if first.ResultType != "input_required" || first.InputRequests[approvalInputKey] == nil {
-		t.Fatalf("expected an input_required result keyed %q, got %+v", approvalInputKey, first)
-	}
+	state := c.expectApprovalPrompt(1)
 	if be.lastExecQuery != "" {
 		t.Fatalf("backend must not run before approval, got %q", be.lastExecQuery)
 	}
 
-	c.send(2, "tools/call", `{`+meta+`,"name":"run_mutation_query","arguments":{"sql":"delete from t"},`+
-		`"inputResponses":{"`+approvalInputKey+`":{"action":"accept"}}}`)
+	c.send(2, "tools/call", currentRevisionRetry(currentRevisionMeta, currentRevisionDeleteArgs, "accept", state))
 	result := c.expectResponse(2)
 	if strings.Contains(string(result), `"isError":true`) {
 		t.Fatalf("accepted retry errored: %s", result)
@@ -1126,9 +1115,9 @@ func TestCurrentRevisionClient_SafeModeApprovalViaInputRequests(t *testing.T) {
 	}
 
 	be.lastExecQuery = ""
-	c.send(3, "tools/call", `{`+meta+`,"name":"run_mutation_query","arguments":{"sql":"delete from t"},`+
-		`"inputResponses":{"`+approvalInputKey+`":{"action":"decline"}}}`)
-	if declined := c.expectResponse(3); !strings.Contains(string(declined), "declined approval") {
+	state = c.expectApprovalPrompt(3)
+	c.send(4, "tools/call", currentRevisionRetry(currentRevisionMeta, currentRevisionDeleteArgs, "decline", state))
+	if declined := c.expectResponse(4); !strings.Contains(string(declined), "declined approval") {
 		t.Fatalf("declined retry should refuse: %s", declined)
 	}
 	if be.lastExecQuery != "" {
@@ -1168,8 +1157,12 @@ func (s *failingSink) Close() error { return nil }
 func connectWithSink(t *testing.T, cfg *Config, backend Backend, auditSink sink.Sink) *mcp.ClientSession {
 	t.Helper()
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "v0"}, nil)
-	if err := registerTools(server, cfg, backend, logrus.New(), auditSink); err != nil {
-		t.Fatalf("registerTools: %v", err)
+	approvals, err := newApprovalBinder(cfg)
+	if err != nil {
+		t.Fatalf("newApprovalBinder: %v", err)
+	}
+	if regErr := registerTools(server, cfg, backend, logrus.New(), auditSink, approvals); regErr != nil {
+		t.Fatalf("registerTools: %v", regErr)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	t.Cleanup(cancel)
