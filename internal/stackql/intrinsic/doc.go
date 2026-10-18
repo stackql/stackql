@@ -248,7 +248,7 @@ func openDocQuery(ctx queryContext, translated docQuery) (omnisdk.Rows, string, 
 		return nil, "", argsErr
 	}
 	args.Tuning.Limit = translated.getLimit()
-	plan, planErr := omnisdk.NewGraphSelectQuery(registry, res.Graph(), args)
+	plan, planErr := omnisdk.NewGraphQuery(registry, res.Graph(), args)
 	if planErr != nil {
 		return nil, "", planErr
 	}

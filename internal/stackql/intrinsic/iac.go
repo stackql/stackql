@@ -1,8 +1,8 @@
 package intrinsic
 
-// stackql_preview.iac presents omnisdk's converge run as a relation, and the
-// blueprints that render one as a catalogue alongside it. A run is issued as an imperative - these
-// resources, under this collection name - and idempotence, ordering, locking and
+// stackql_preview.iac presents omnisdk's converge run and destroy as relations, and the
+// blueprints that render a run as a catalogue alongside them. A run is issued as an imperative -
+// these resources, under this collection name - and idempotence, ordering, locking and
 // compensation are the SDK's problem, not stackql's.
 
 import (
@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -21,6 +22,9 @@ import (
 // state directory. It sits under the application root, which is already local
 // disk: O_EXCL and link are unreliable on a network share.
 const stateDirName = "iac"
+
+// runIDLayout stamps a run that names no run id, as omnisdk's Converge always has.
+const runIDLayout = "20060102T150405Z"
 
 // resourceDTO is the wire shape of one entry in the 'resources' predicate. It
 // is omnisdk's ManagedResource with the interface flattened into data.
@@ -53,36 +57,33 @@ func iacSelectFunc(
 	node *sqlparser.Select,
 	resource string,
 ) (func() internaldto.ExecutorOutput, bool) {
-	if !strings.EqualFold(resource, convergeRelation) {
-		return blueprintSelectFunc(resource)
+	switch {
+	case strings.EqualFold(resource, convergeRelation):
+		return convergeSelectFunc(ctx, node)
+	case strings.EqualFold(resource, destroyRelation):
+		return destroySelectFunc(ctx, node)
 	}
+	return blueprintSelectFunc(resource)
+}
+
+// convergeSelectFunc routes a SELECT over the converge relation.
+func convergeSelectFunc(ctx queryContext, node *sqlparser.Select) (func() internaldto.ExecutorOutput, bool) {
 	relation := relationAddress(iacService, convergeRelation)
-	params, refusal := previewPredicates(node, relation)
+	params, ledger, refusal := ledgerPredicates(ctx, node, relation)
 	if refusal != nil {
 		return refusal, true
 	}
-	collection := popPredicate(params, collectionPredicate)
-	if strings.TrimSpace(collection) == "" {
-		return refuse(fmt.Errorf(
-			"relation '%s' needs a '%s' predicate; it is the ledger key prefix, the lease scope "+
-				"and the correlation stamp, and it is how a later run addresses the same resources",
-			relation, collectionPredicate)), true
-	}
 	handle := popPredicate(params, blueprintPredicate)
 	spec := popPredicate(params, resourcesPredicate)
-	state := popPredicate(params, statePredicate)
-	runID := popPredicate(params, runIDPredicate)
-	if (handle == "") == (spec == "") {
+	file := popPredicate(params, resourcesFilePredicate)
+	if countSupplied(handle, spec, file) != 1 {
 		return refuse(fmt.Errorf(
-			"relation '%s' needs exactly one of '%s' or '%s'; "+
-				"a blueprint renders the resources, a specification states them",
-			relation, blueprintPredicate, resourcesPredicate)), true
-	}
-	if state == "" {
-		state = filepath.Join(ctx.GetRuntimeContext().ApplicationFilesRootPath, stateDirName)
+			"relation '%s' needs exactly one of '%s', '%s' or '%s'; "+
+				"a blueprint renders the resources, a specification or a file states them",
+			relation, blueprintPredicate, resourcesPredicate, resourcesFilePredicate)), true
 	}
 	return func() internaldto.ExecutorOutput {
-		resources, err := convergeResources(handle, spec, params)
+		resources, err := convergeResources(handle, spec, file, params)
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
 		}
@@ -90,7 +91,7 @@ func iacSelectFunc(
 		if argsErr != nil {
 			return internaldto.NewErroneousExecutorOutput(argsErr)
 		}
-		plan, planErr := omnisdk.Converge(registryRoot(ctx), collection, state, runID, resources, args)
+		plan, planErr := omnisdk.Prepare(registryRoot(ctx), omnisdk.DesiredState(resources), ledger, args)
 		if planErr != nil {
 			return internaldto.NewErroneousExecutorOutput(planErr)
 		}
@@ -98,12 +99,79 @@ func iacSelectFunc(
 	}, true
 }
 
-// convergeResources renders what a run converges, from whichever of the two
+// destroySelectFunc routes a SELECT over the destroy relation. What the collection holds comes
+// from its ledger alone, so the remaining predicates are only the scope the deletes run in. With
+// no resources to name a provider, credentials come from each cloud's canonical environment
+// variables.
+func destroySelectFunc(ctx queryContext, node *sqlparser.Select) (func() internaldto.ExecutorOutput, bool) {
+	relation := relationAddress(iacService, destroyRelation)
+	params, ledger, refusal := ledgerPredicates(ctx, node, relation)
+	if refusal != nil {
+		return refusal, true
+	}
+	return func() internaldto.ExecutorOutput {
+		args, argsErr := previewArgs(ctx, "", params)
+		if argsErr != nil {
+			return internaldto.NewErroneousExecutorOutput(argsErr)
+		}
+		plan, planErr := omnisdk.Prepare(registryRoot(ctx), omnisdk.Destroy(), ledger, args)
+		if planErr != nil {
+			return internaldto.NewErroneousExecutorOutput(planErr)
+		}
+		return streamPlan(ctx, plan, destroyRelation, node.SelectExprs)
+	}, true
+}
+
+// ledgerPredicates reads the predicates every ledger backed relation takes: the collection it
+// addresses, and the state directory and run id, each defaulted when absent. The predicates left
+// over are returned for the caller.
+func ledgerPredicates(
+	ctx queryContext,
+	node *sqlparser.Select,
+	relation string,
+) (map[string]string, omnisdk.WALConfig, func() internaldto.ExecutorOutput) {
+	params, refusal := previewPredicates(node, relation)
+	if refusal != nil {
+		return nil, nil, refusal
+	}
+	collection := popPredicate(params, collectionPredicate)
+	if strings.TrimSpace(collection) == "" {
+		return nil, nil, refuse(fmt.Errorf(
+			"relation '%s' needs a '%s' predicate; it is the ledger key prefix, the lease scope "+
+				"and the correlation stamp, and it is how a later run addresses the same resources",
+			relation, collectionPredicate))
+	}
+	state := popPredicate(params, statePredicate)
+	runID := popPredicate(params, runIDPredicate)
+	if state == "" {
+		state = filepath.Join(ctx.GetRuntimeContext().ApplicationFilesRootPath, stateDirName)
+	}
+	if runID == "" {
+		runID = time.Now().UTC().Format(runIDLayout)
+	}
+	return params, omnisdk.NewLedger(collection, state, runID), nil
+}
+
+// countSupplied counts the non-empty values.
+func countSupplied(values ...string) int {
+	count := 0
+	for _, value := range values {
+		if value != "" {
+			count++
+		}
+	}
+	return count
+}
+
+// convergeResources renders what a run converges, from whichever of the three
 // predicates was supplied.
 func convergeResources(
-	handle, spec string, params map[string]string) ([]omnisdk.ManagedResource, error) {
-	if handle != "" {
+	handle, spec, file string, params map[string]string) ([]omnisdk.ManagedResource, error) {
+	switch {
+	case handle != "":
 		return blueprintResources(handle, params)
+	case file != "":
+		return omnisdk.LoadResources(file)
 	}
 	return specResources(spec)
 }
