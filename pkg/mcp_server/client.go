@@ -5,14 +5,11 @@ package mcp_server //nolint:revive // fine for now
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -40,212 +37,43 @@ func NewMCPClient(clientType string, baseURL string, clientCfgMap map[string]any
 	}
 }
 
-//nolint:nestif,gocognit,gocyclo,cyclop,funlen // complex but acceptable for now
-func getHTTPClient(logger *logrus.Logger, clientCfgMap map[string]any) (*http.Client, error) {
-	if clientCfgMap != nil && clientCfgMap["ca_file"] != nil {
-		logger.Infof("Configuring HTTP client with custom CA certificate")
-		caFile, isString := clientCfgMap["ca_file"].(string)
-		if !isString {
-			return nil, fmt.Errorf("ca_file must be a string")
-		}
-		caBytes, err := os.ReadFile(caFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file '%s': %w", caFile, err)
-		}
-		logger.Infof("Read CA file '%s' (%d bytes)", caFile, len(caBytes))
-
-		// Start from system pool when possible
-		var caCertPool *x509.CertPool
-		if sysPool, sysErr := x509.SystemCertPool(); sysErr == nil && sysPool != nil {
-			caCertPool = sysPool
-			logger.Debug("Using system cert pool as base")
-		} else {
-			caCertPool = x509.NewCertPool()
-			logger.Debug("System cert pool unavailable; using new pool")
-		}
-
-		// Capture the first certificate (candidate leaf) for promote_leaf_to_ca.
-		var firstCertRaw []byte
-		{
-			tmp := caBytes
-			for {
-				var blk *pem.Block
-				blk, tmp = pem.Decode(tmp)
-				if blk == nil {
-					break
-				}
-				if blk.Type == "CERTIFICATE" {
-					firstCertRaw = blk.Bytes
-					break
-				}
-			}
-		}
-
-		if ok := caCertPool.AppendCertsFromPEM(caBytes); !ok {
-			// Fallback: manual decode to provide diagnostics
-			logger.Warn("AppendCertsFromPEM returned false; attempting manual PEM decode for diagnostics")
-			blockCount := 0
-			validCerts := 0
-			rest := caBytes
-			for {
-				var b *pem.Block
-				b, rest = pem.Decode(rest)
-				if b == nil {
-					break
-				}
-				blockCount++
-				if b.Type == "CERTIFICATE" {
-					if _, perr := x509.ParseCertificate(b.Bytes); perr == nil {
-						validCerts++
-					} else {
-						logger.Errorf("Failed to parse certificate PEM block %d: %v", blockCount, perr)
-					}
-				} else {
-					logger.Debugf("Ignoring non-certificate PEM block type=%s", b.Type)
-				}
-			}
-			return nil, fmt.Errorf("failed to append CA certificate '%s' into trust store: no valid CERTIFICATE PEM blocks found (blocks=%d, valid=%d)", caFile, blockCount, validCerts)
-		} else {
-			logger.Infof("Successfully appended custom CA(s) from '%s'", caFile)
-			// Added: inspect for CA certificates
-			rest := caBytes
-			certBlockIdx := 0
-			caCount := 0
-			for {
-				var b *pem.Block
-				b, rest = pem.Decode(rest)
-				if b == nil {
-					break
-				}
-				if b.Type != "CERTIFICATE" {
-					continue
-				}
-				certBlockIdx++
-				parsed, perr := x509.ParseCertificate(b.Bytes)
-				if perr != nil {
-					logger.Debugf("Skipping unparsable certificate block %d: %v", certBlockIdx, perr)
-					continue
-				}
-				if parsed.IsCA {
-					caCount++
-				}
-			}
-			if caCount == 0 {
-				logger.Warnf("No CA certificates (IsCA=true) found in '%s'. If this file contains only the server leaf certificate it cannot establish standard trust. Supply the issuing CA (or chain) or enable 'promote_leaf_to_ca'.", caFile)
-			} else {
-				logger.Debugf("Detected %d CA certificate(s) in '%s'", caCount, caFile)
-			}
-		}
-
-		// Read optional flags
-		promoteLeaf := false
-		if v, ok := clientCfgMap["promote_leaf_to_ca"]; ok {
-			b, okb := v.(bool)
-			if !okb {
-				return nil, fmt.Errorf("promote_leaf_to_ca must be a boolean")
-			}
-			promoteLeaf = b
-		}
-
-		insecureSkipVerify := false
-		if v, ok := clientCfgMap["insecure_skip_verify"]; ok {
-			suppliedSkipVerify, isBool := v.(bool)
-			if !isBool {
-				return nil, fmt.Errorf("insecure_skip_verify must be a boolean")
-			}
-			insecureSkipVerify = suppliedSkipVerify
-		}
-
-		var serverName string
-		if v, ok := clientCfgMap["server_name"]; ok {
-			if s, ok2 := v.(string); ok2 {
-				serverName = s
-			} else {
-				return nil, fmt.Errorf("server_name must be a string")
-			}
-		}
-
-		// If server_name not supplied and base URL host differs from cert common name/SAN (common in IP usage),
-		// user should supply server_name explicitly; we just log hint.
-		if serverName == "" {
-			if rawURL, ok := clientCfgMap["base_url"].(string); ok {
-				if parsed, perr := url.Parse(rawURL); perr == nil && parsed.Hostname() != "" {
-					// SNI will default to this hostname; log for clarity.
-					logger.Debugf("Using implicit SNI server name '%s'", parsed.Hostname())
-				}
-			}
-		} else {
-			logger.Infof("Using explicit TLS server_name (SNI): %s", serverName)
-		}
-
-		//nolint:gosec // testing client only
-		tlsConfig := &tls.Config{
-			RootCAs:            caCertPool,
-			MinVersion:         tls.VersionTLS12,
-			InsecureSkipVerify: insecureSkipVerify, // may be overridden below if promoting leaf
-			ServerName:         serverName,
-		}
-
-		// If no CA certs and user wants to promote the leaf, install custom verifier.
-		if promoteLeaf {
-			if firstCertRaw == nil {
-				return nil, fmt.Errorf("promote_leaf_to_ca enabled but no certificate PEM blocks found in '%s'", caFile)
-			}
-			// Re-parse to log fingerprint
-			if leafCert, perr := x509.ParseCertificate(firstCertRaw); perr == nil {
-				fp := sha256.Sum256(leafCert.Raw)
-				logger.Warnf("Promoting leaf certificate (CN=%s, SHA256=%X) to trust anchor (non-CA). NOT recommended for production.", leafCert.Subject.CommonName, fp[:8])
-			} else {
-				logger.Warnf("Promoting leaf certificate (parse error for fingerprint: %v)", perr)
-			}
-			tlsConfig.InsecureSkipVerify = true // we will verify manually
-			expected := make([]byte, len(firstCertRaw))
-			copy(expected, firstCertRaw)
-
-			tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				if len(rawCerts) == 0 {
-					return fmt.Errorf("no server certificates presented")
-				}
-				if !bytes.Equal(rawCerts[0], expected) {
-					return fmt.Errorf("server leaf certificate mismatch with promoted leaf")
-				}
-				// Optionally parse for additional sanity
-				if cert, certParseErr := x509.ParseCertificate(rawCerts[0]); certParseErr == nil {
-					if serverName != "" && serverName != cert.Subject.CommonName {
-						// Do hostname verification if a serverName was forced.
-						if verr := cert.VerifyHostname(serverName); verr != nil {
-							return fmt.Errorf("hostname verification failed for promoted leaf: %w", verr)
-						}
-					}
-				}
-				return nil
-			}
-		}
-
-		tr := &http.Transport{
-			TLSClientConfig: tlsConfig,
-		}
-
-		// Optionally apply TLS config globally so libraries using http.DefaultClient inherit it.
-		if v, ok := clientCfgMap["apply_tls_globally"]; ok {
-			if b, okb := v.(bool); !okb {
-				return nil, fmt.Errorf("apply_tls_globally must be a boolean")
-			} else if b {
-				if defTr, okd := http.DefaultTransport.(*http.Transport); okd {
-					// Shallow clone to avoid races; copy keeps other fields (proxy, dialer, etc.)
-					cloned := defTr.Clone()
-					cloned.TLSClientConfig = tlsConfig
-					http.DefaultTransport = cloned
-					logger.Warn("Applied custom TLS config globally (http.DefaultTransport). This affects all outbound HTTP requests in this process.")
-				} else {
-					logger.Warn("apply_tls_globally requested but http.DefaultTransport is not *http.Transport; skipped")
-				}
-			}
-		}
-
-		return &http.Client{Transport: tr}, nil
+func getHTTPClient(clientCfgMap map[string]any) (*http.Client, error) {
+	if clientCfgMap == nil || clientCfgMap["ca_file"] == nil {
+		return http.DefaultClient, nil
 	}
-	return http.DefaultClient, nil
+	caFile, ok := clientCfgMap["ca_file"].(string)
+	if !ok {
+		return nil, fmt.Errorf("ca_file must be a string")
+	}
+	serverName := ""
+	if value, exists := clientCfgMap["server_name"]; exists {
+		serverName, ok = value.(string)
+		if !ok {
+			return nil, fmt.Errorf("server_name must be a string")
+		}
+	}
+	caBytes, err := os.ReadFile(caFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CA file %q: %w", caFile, err)
+	}
+	roots, err := x509.SystemCertPool()
+	if err != nil || roots == nil {
+		roots = x509.NewCertPool()
+	}
+	if !roots.AppendCertsFromPEM(caBytes) {
+		return nil, fmt.Errorf("no valid certificates in CA file %q", caFile)
+	}
+	defaultTransport, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		return nil, fmt.Errorf("default HTTP transport must be *http.Transport")
+	}
+	transport := defaultTransport.Clone()
+	transport.TLSClientConfig = &tls.Config{
+		RootCAs:    roots,
+		MinVersion: tls.VersionTLS12,
+		ServerName: serverName,
+	}
+	return &http.Client{Transport: transport}, nil
 }
 
 func newHTTPMCPClient(baseURL string, clientCfgMap map[string]any, logger *logrus.Logger) (MCPClient, error) {
@@ -253,7 +81,7 @@ func newHTTPMCPClient(baseURL string, clientCfgMap map[string]any, logger *logru
 		logger = logrus.New()
 		logger.SetLevel(logrus.InfoLevel)
 	}
-	httpClient, httpClientErr := getHTTPClient(logger, clientCfgMap)
+	httpClient, httpClientErr := getHTTPClient(clientCfgMap)
 	if httpClientErr != nil {
 		return nil, fmt.Errorf("error creating HTTP client: %w", httpClientErr)
 	}
@@ -286,7 +114,7 @@ func (c *httpMCPClient) connect() (*mcp.ClientSession, error) {
 	}, nil)
 
 	// Connect to the server.
-	return client.Connect(ctx, &mcp.StreamableClientTransport{Endpoint: url}, nil)
+	return client.Connect(ctx, &mcp.StreamableClientTransport{Endpoint: url, HTTPClient: c.httpClient}, nil)
 }
 
 func (c *httpMCPClient) connectOrDie() *mcp.ClientSession {
