@@ -206,16 +206,10 @@ func addToolWithGate[In, Out any](
 const approvalInputKey = "stackql_approval"
 
 // approvalOutcome resolves the gated-write approval as a multi round-trip
-// request. On the first pass it returns the elicitation prompt, carrying a
-// signed RequestState bound to this tool, its arguments and SQL, and the
-// session, for the caller to hand back as an input-required result. On the
-// retry it checks elicitation support, then verifies the echoed RequestState
-// against the call, and only then reads the user's answer from
-// InputResponses (issue #827). It returns the audit decision-outcome plus an
-// error when the action was refused. The SDK middleware performs the round
-// trip on the server side for pre-2026-07-28 clients and echoes the
-// RequestState itself, so both lifecycle models share this path and its
-// checks.
+// request. The first pass returns the elicitation prompt with a signed
+// RequestState. The retry checks elicitation support and the echoed state
+// before reading the answer (issue #827, see docs/mcp.md). It returns the
+// audit decision-outcome plus an error when the action was refused.
 func approvalOutcome(
 	req *mcp.CallToolRequest,
 	approvals *approvalBinder,

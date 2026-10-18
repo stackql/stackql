@@ -315,13 +315,6 @@ stackql mcp --mcp.config='{"server": {"transport": "http", "address": "127.0.0.1
 
 Serving HTTP with no client authentication is an explicit opt-in, `"allow_unauthenticated": true`; without a token or the opt-in the HTTP transport refuses to start. Cross-origin browser requests are refused regardless. The stdio transport is unaffected.
 
-`server.approval_key_env_var` follows the same pattern for the key that signs approval prompts (see [Server Modes](#server-modes)). It is optional, and only a sessionless deployment behind several instances needs it. The key is read at startup and never logged or written to the audit sink.
-
-```sh
-export STACKQL_MCP_APPROVAL_KEY="$(openssl rand -hex 32)"
-stackql mcp --mcp.config='{"server": {"transport": "http", "stateless": true, "auth_token_env_var": "STACKQL_MCP_TOKEN", "approval_key_env_var": "STACKQL_MCP_APPROVAL_KEY"}}'
-```
-
 ## Server Modes
 
 `Config.Server.Mode` chooses one of four safety contracts.  All four allow SELECT and metadata reads; they differ in how they handle mutations and lifecycle operations.
@@ -342,7 +335,7 @@ A payload holding several statements is gated by its most privileged statement, 
 
 Approval is answered by the client, so it guards against an agent acting without its user, not against an untrusted caller; pair the HTTP transport with [client authentication](#http-client-authentication) where callers are not trusted.
 
-The approval prompt carries a `requestState` that the client echoes with its answer. It is authenticated with HMAC-SHA256 under a server key and binds the answer to the tool, a SHA-256 digest of the canonical arguments and SQL, the session id where the transport has one, a nonce and a 10 minute expiry. An answer with missing, altered or expired state, or state that does not match the call, is refused before the answer is read and the backend is not called. The elicitation capability check runs first, so the SDK-mediated round trip for pre-2026-07-28 clients takes the same path. A per-process set of used nonces accepts each state once. The key is random per process unless `server.approval_key_env_var` names an environment variable holding at least 32 bytes, which a sessionless HTTP deployment (`stateless: true` or `protocol_version: 2026-07-28`) behind several instances sets to the same value everywhere. The used-nonce set is not shared across instances, so there a replayed answer is bounded only by the expiry. This binding keeps a cooperating client's answers tied to the prompt that asked for them. It does not prove a person saw the prompt, because a client that lies can accept its own prompt. Use `read_only` or a narrowed tool set against untrusted clients.
+The approval prompt carries a signed `requestState` that the client echoes with its answer, and an answer whose state is missing or does not match the call is refused before the backend runs. See [docs/mcp.md](/docs/mcp.md#server-modes) for the binding details and `server.approval_key_env_var` for sharing the signing key across instances.
 
 The mode is global per server.  There is no per-tool override in this release.
 
