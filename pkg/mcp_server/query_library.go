@@ -812,20 +812,21 @@ func searchHitsToRows(hits []dto.QueryLibraryHitDTO) []map[string]any {
 
 // registerQueryLibraryTools publishes the two read-only library tools.
 func registerQueryLibraryTools(
-	server *mcp.Server, cfg *Config, auditSink sink.Sink, descriptions toolDescriptions,
+	server *mcp.Server, cfg *Config, auditSink sink.Sink, approvals *approvalBinder, descriptions toolDescriptions,
 ) error {
 	client := newQueryLibraryClient(cfg.QueryLibrary)
 	return errors.Join(
-		registerQueryLibrarySearchTool(server, cfg, auditSink, descriptions, client),
-		registerQueryLibraryGetTool(server, cfg, auditSink, descriptions, client),
+		registerQueryLibrarySearchTool(server, cfg, auditSink, approvals, descriptions, client),
+		registerQueryLibraryGetTool(server, cfg, auditSink, approvals, descriptions, client),
 	)
 }
 
 func registerQueryLibrarySearchTool(
-	server *mcp.Server, cfg *Config, auditSink sink.Sink, descriptions toolDescriptions, client *queryLibraryClient,
+	server *mcp.Server, cfg *Config, auditSink sink.Sink, approvals *approvalBinder,
+	descriptions toolDescriptions, client *queryLibraryClient,
 ) error {
 	return addToolWithGate(
-		server, cfg, auditSink, descriptions, queryLibrarySearchGate(),
+		server, cfg, auditSink, approvals, descriptions, queryLibrarySearchGate(),
 		&mcp.Tool{Name: "query_library_search"},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryLibrarySearchInput,
 		) (*mcp.CallToolResult, dto.QueryLibrarySearchDTO, error) {
@@ -852,10 +853,11 @@ func registerQueryLibrarySearchTool(
 }
 
 func registerQueryLibraryGetTool(
-	server *mcp.Server, cfg *Config, auditSink sink.Sink, descriptions toolDescriptions, client *queryLibraryClient,
+	server *mcp.Server, cfg *Config, auditSink sink.Sink, approvals *approvalBinder,
+	descriptions toolDescriptions, client *queryLibraryClient,
 ) error {
 	return addToolWithGate(
-		server, cfg, auditSink, descriptions, queryLibraryGetGate(),
+		server, cfg, auditSink, approvals, descriptions, queryLibraryGetGate(),
 		&mcp.Tool{Name: "query_library_get"},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryLibraryGetInput,
 		) (*mcp.CallToolResult, dto.QueryLibraryGetDTO, error) {

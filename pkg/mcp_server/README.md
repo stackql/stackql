@@ -335,6 +335,8 @@ A payload holding several statements is gated by its most privileged statement, 
 
 Approval is answered by the client, so it guards against an agent acting without its user, not against an untrusted caller; pair the HTTP transport with [client authentication](#http-client-authentication) where callers are not trusted.
 
+The approval prompt carries a signed `requestState` that the client echoes with its answer, and an answer whose state is missing or does not match the call is refused before the backend runs. See [docs/mcp.md](/docs/mcp.md#server-modes) for the binding details and `server.approval_key_env_var` for sharing the signing key across instances.
+
 The mode is global per server.  There is no per-tool override in this release.
 
 ### Default-mode change (breaking)
