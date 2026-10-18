@@ -459,10 +459,11 @@ def run_stdio_stateless_roundtrip(
     protocol version and client capabilities ride in params._meta on every
     request. Runs tools/list, then a gated mutation whose approval comes back
     as an input_required result and is answered on the retry via
-    inputResponses. Returns the tool names, the first mutation result shape,
-    the retried mutation text and the raw streams.  `protocol_version` pins
-    the server (issue #784); a pin below 2026-07-28 answers tools/list with
-    the -32022 downgrade error surfaced as list_error_code / _supported.
+    inputResponses, echoing the signed requestState. Returns the tool names,
+    the first mutation result shape, the retried mutation text and the raw
+    streams.  `protocol_version` pins the server (issue #784); a pin below
+    2026-07-28 answers tools/list with the -32022 downgrade error surfaced as
+    list_error_code / _supported.
     """
     server_cfg = {"mode": mode, "audit": {"disabled": True}}
     if protocol_version:
@@ -514,6 +515,10 @@ def run_stdio_stateless_roundtrip(
             retry_params["inputResponses"] = {
                 key: {"action": approval_action} for key in input_requests
             }
+            # The server binds the answer to this prompt with a signed
+            # requestState, which the retry must echo unchanged.
+            if first.get("requestState"):
+                retry_params["requestState"] = first["requestState"]
             send({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": retry_params})
             retry_response = _await_response(proc, 3, stdout_lines)
         try:
@@ -781,7 +786,8 @@ def run_http_stateless_roundtrip(url):
 def run_http_stateless_gated_write(url, mutation_sql, approval_action="accept"):
     """2026-07-28 client over Streamable HTTP against a safe-mode server: the
     gated tools/call comes back input_required with an elicitation/create
-    input request, and the retry carries `approval_action` in inputResponses.
+    input request, and the retry carries `approval_action` in inputResponses
+    together with the signed requestState echoed from the first result.
     """
     call_params = {
         "_meta": _STATELESS_META,
@@ -799,6 +805,9 @@ def run_http_stateless_gated_write(url, mutation_sql, approval_action="accept"):
         retry_params["inputResponses"] = {
             key: {"action": approval_action} for key in input_requests
         }
+        # Echo the signed requestState that binds the answer to this prompt.
+        if first.get("requestState"):
+            retry_params["requestState"] = first["requestState"]
         _, _, retry_response = _http_post_stateless(url, {
             "jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": retry_params,
         })
