@@ -6,6 +6,13 @@ Library           Collections
 *** Keywords ***
 Start MCP Servers
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Create Directory    ${CURDIR}${/}tmp${/}mcp-tls
+    ${cert}=    Run Process    openssl    req    -x509    -newkey    rsa:2048    -nodes
+    ...    -keyout    test/robot/functional/tmp/mcp-tls/server_key.pem
+    ...    -out    test/robot/functional/tmp/mcp-tls/server_cert.pem
+    ...    -days    1    -subj    /CN\=localhost
+    ...    -addext    subjectAltName\=IP:127.0.0.1,DNS:localhost
+    Should Be Equal As Integers    ${cert.rc}    0    ${cert.stderr}
     Start Process                         ${STACKQL_EXE}
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
@@ -44,7 +51,7 @@ Start MCP Servers
     ...                                   srv
     ...                                   \-\-mcp.server.type\=reverse_proxy
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"tls_cert_file": "test/server/mtls/credentials/pg_server_cert.pem", "tls_key_file": "test/server/mtls/credentials/pg_server_key.pem", "transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9004", "mode": "full_access", "audit": {"disabled": true}}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5446?default_query_exec_mode\=simple_protocol"} }
+    ...                                   {"server": {"tls_cert_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem", "tls_key_file": "test/robot/functional/tmp/mcp-tls/server_key.pem", "transport": "http", "allow_unauthenticated": true, "address": "127.0.0.1:9004", "mode": "full_access", "audit": {"disabled": true}}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5446?default_query_exec_mode\=simple_protocol"} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -583,7 +590,7 @@ Concurrent psql and Reverse Proxy MCP HTTPS Server Query Tool
     ...                  exec
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=https://127.0.0.1:9004
-    ...                  \-\-client\-cfg      { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...                  \-\-client\-cfg      { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...                  \-\-exec.action      run_select_query
     ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
     ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTPS-Server-Query-Tool.txt
@@ -604,6 +611,29 @@ Concurrent psql and Reverse Proxy MCP HTTPS Server Query Tool
     Should Contain       ${psql_client_result.stdout}       cloudkms.googleapis.com
     Should Be Equal As Integers    ${psql_client_result.rc}    0
 
+MCP HTTPS Rejects Untrusted Certificate
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Run Process    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-exec.action    server_info
+    ...    timeout=30s
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain    ${result.stderr}    x509:
+
+MCP HTTPS Rejects Wrong Server Name
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Run Process    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem", "server_name": "wrong.example" }
+    ...    \-\-exec.action    server_info
+    ...    timeout=30s
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain    ${result.stderr}    x509:
+
 MCP HTTPS Server JSON DTO Server Info
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${srvinfo}=    Run Process
@@ -612,7 +642,7 @@ MCP HTTPS Server JSON DTO Server Info
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    server_info
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-server-info.txt
@@ -630,7 +660,7 @@ MCP HTTPS List Providers Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    list_providers
     ...    \-\-exec.args
@@ -649,7 +679,7 @@ MCP HTTPS List Services Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    list_services
     ...    \-\-exec.args
@@ -668,7 +698,7 @@ MCP HTTPS List Resources Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    list_resources
     ...    \-\-exec.args
@@ -688,7 +718,7 @@ MCP HTTPS List Methods Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    list_methods
     ...    \-\-exec.args
@@ -708,7 +738,7 @@ MCP HTTPS Describe Method Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    describe_method
     ...    \-\-exec.args
@@ -729,7 +759,7 @@ MCP HTTPS Server Validate Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    validate_select_query
     ...    \-\-exec.args
@@ -748,7 +778,7 @@ MCP HTTPS Server Validate Canonical Negative
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    validate_select_query
     ...    \-\-exec.args
@@ -767,7 +797,7 @@ MCP HTTPS Server Query Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    run_select_query
     ...    \-\-exec.args
@@ -786,7 +816,7 @@ MCP HTTPS Server Exec Query Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    run_mutation_query
     ...    \-\-exec.args
@@ -841,7 +871,7 @@ MCP HTTPS Run Lifecycle Operation Canonical
     ...    \-\-client\-type\=http
     ...    \-\-url\=https://127.0.0.1:9004
     ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    { "ca_file": "test/robot/functional/tmp/mcp-tls/server_cert.pem" }
     ...    \-\-exec.action
     ...    run_lifecycle_operation
     ...    \-\-exec.args

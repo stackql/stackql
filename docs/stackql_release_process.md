@@ -4,13 +4,13 @@ Follow these steps to release a new version of `stackql`, as hardware tokens and
 
 ### 1. Push a tag and create a release
 
-Push a tag using the semver, `v{major}.{minor}.{build_number}`, for example `v0.12.718`  
+Push a tag using the semver, `v{major}.{minor}.{build_number}`, for example `v0.12.778`
 
 The `build_number` is the latest successful GitHub Actions build number for the `build` job on a merge to `main`  
 
 ```bash
-git tag v0.12.718
-git push origin v0.12.718
+git tag v0.12.778
+git push origin v0.12.778
 ```
 
 Create a release from the tag (set to latest)
@@ -33,26 +33,28 @@ Download the following artifacts from the latest build on the `main` branch incl
 - `stackql_linux_amd64.zip` (downloaded in step 2)
 - `stackql_linux_arm64.zip` (downloaded in step 2)
 
-### 4. Package, Sign and Upload Windows Version
+### 4. Package, Sign and Upload Windows x64 and ARM64 Versions
 
-Using the  [stackql/stackql-windows-installer](https://github.com/stackql/stackql-windows-installer) project along with a Microsoft Authenticode CodeSigning hardware token, create the windows packages:
+Using the [stackql/stackql-windows-installer](https://github.com/stackql/stackql-windows-installer) project and a Microsoft Authenticode code signing hardware token, create all four Windows release assets:
 
 - `stackql_windows_amd64.msi`
 - `stackql_windows_amd64.zip`
 - `stackql_windows_arm64.msi`
 - `stackql_windows_arm64.zip`
 
-place the `stackql_windows_amd64.zip` and `stackql_windows_arm64.zip` files from step 2 (both from the same build) in the `downloaded` directory of the `stackql-windows-installer` project, then run the following via PowerShell:
+Native Windows ARM64 MSI and ZIP assets are available from `v0.12.778`. Save both unsigned ZIPs from the same build in step 2 as `downloaded\stackql_windows_amd64.zip` and `downloaded\stackql_windows_arm64.zip` in the installer repo. From that repo's root, run:
 
 ```powershell
 .\build.ps1 true
 ```
 
-then run the following to publish the `MSI` and `ZIP` assets for both architectures to the corresponding release (the `get-stackql.io` PowerShell installer downloads `stackql_windows_arm64.zip` on ARM64 machines, so every release needs it):  
+This builds both architectures, signs both executables and both MSIs, and creates ZIPs containing the signed executables. Publish all four assets to the existing release:
 
 ```powershell
 .\release.ps1
 ```
+
+The upload script checks that all package versions match and the MSI and EXE signatures are valid. Existing assets are skipped. The Windows MCPB packages in step 6 consume these signed ZIPs. The `get-stackql.io` PowerShell installer downloads `stackql_windows_arm64.zip` on ARM64 machines, so every release needs it.
 
 ### 5. Package, Sign, Notarize and Upload the Multi Arch Darwin Version
 
@@ -61,22 +63,33 @@ Using a Mac with the correct certificate chain configured (MacInCloud), from the
 ```bash
 sh create-installer.sh {build_number}
 # for instance
-sh create-installer.sh 718
+sh create-installer.sh 778
 ```
 
 this will create a signed, notarized package file `stackql_darwin_multiarch.pkg` and add it to the relase assets.
 
 ### 6. Build and push MCPB assets to the release
 
-Invoke the `mcp-packaging` workflow in [stackql/stackql](https://github.com/stackql/stackql)
+Run the [mcp-packaging workflow](https://github.com/stackql/stackql/actions/workflows/mcp-packaging.yml) from `main`, with `version` set to the release version without `v` (for example, `0.12.778`). Start it only after both Linux ZIPs, both signed Windows ZIPs, and the notarized Darwin PKG are attached to that release.
 
-The `mcp-packaging` workflow does the following:
+The workflow builds these five platform bundles from the release assets:
 
-- attaches the `.mcpb` bundles (and `.sha256` files) to the release
+| Release asset | MCPB package |
+| --- | --- |
+| `stackql_linux_amd64.zip` | `stackql-mcp-linux-x64.mcpb` |
+| `stackql_linux_arm64.zip` | `stackql-mcp-linux-arm64.mcpb` |
+| `stackql_windows_amd64.zip` | `stackql-mcp-windows-x64.mcpb` |
+| `stackql_windows_arm64.zip` | `stackql-mcp-windows-arm64.mcpb` |
+| `stackql_darwin_multiarch.pkg` | `stackql-mcp-darwin-universal.mcpb` |
+
+It also creates `stackql-mcp-multiplatform.mcpb`, containing all five platform binaries and selecting the native Windows x64 or ARM64 executable at launch. The workflow:
+
+- smoke-tests the bundles and wrappers, including native Windows ARM64 on `windows-11-arm`
+- attaches all six `.mcpb` bundles and their `.mcpb.sha256` files to the release
 - pushes the multi-arch OCI image to Docker Hub
 - publishes packages to crates.io (rust), nuget (dotnet), and the go mirror
 
-requires secrets: `CARGO_REGISTRY_TOKEN`, `NUGET_API_KEY`, `SDK_MIRROR_TOKEN`  
+Required repository secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `CARGO_REGISTRY_TOKEN`, and `SDK_MIRROR_TOKEN`. NuGet uses Trusted Publishing (OIDC); the manual fallback below uses `NUGET_API_KEY`.
 
 manual fallback:
 
@@ -94,12 +107,12 @@ Push a tag to [releases.stackql.io](https://github.com/stackql/releases.stackql.
 > note: the tag needs to match the tag for the release
 
 ```
-git tag v0.12.718 && git push origin v0.12.718
+git tag v0.12.778 && git push origin v0.12.778
 ```
 
 ### 8. Publish the MCP wrapper packages (manual last mile)
 
-Export the end vars `packaging/mcpb/.env` first
+Export the environment variables from `packaging/mcpb/.env` first. Run these steps after all five platform bundles and their checksums are published. The manifests pin the published checksums, including `windows-arm64`; npm and PyPI select the matching bundle for the runtime architecture.
 
 #### 8a. npm (`@stackql/mcp-server`)
 
@@ -127,6 +140,8 @@ python -m twine upload pypi/dist/*
 
 ### 9. Official MCP Registry (`io.github.stackql/stackql-mcp`) - dispatch last
 
+Run [mcp-registry-publish](https://github.com/stackql/stackql/actions/workflows/mcp-registry-publish.yml) from `main` with the same version without `v`. The five platform MCPB packages (including `windows-arm64`), OCI image, npm package, and PyPI package must already be published at that version. The registry entry pins each platform bundle's published checksum.
+
 Manual fallback (if the workflow fails or an out-of-band publish is needed):
 
 Requires the latest `mcp-publisher` CLI and a classic GitHub PAT (scope `read:org` only, no repo scopes) created by a `stackql` org Owner at https://github.com/settings/tokens/new. The server.json renderer reads the five `.sha256` files from the local `dist/` directory, so download the published checksum files from the release first.
@@ -142,6 +157,7 @@ Publish:
 
 ```bash
 cd packaging/mcpb
+mkdir -p dist
 for t in linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal; do
   curl -fsSL -o dist/stackql-mcp-$t.mcpb.sha256 \
     "https://github.com/stackql/stackql/releases/download/vX.Y.Z/stackql-mcp-$t.mcpb.sha256"
@@ -165,10 +181,12 @@ The marketplace entry is version-independent. This step does not change the MCPB
 
 ## Assurance
 
-To ensure the mcp server for latest release is published across all surfaces run:
+To check publication across all MCP distribution targets, including Windows ARM64 bundles, checksums, and registry pins, run:
 
 ```bash
 # from within a python venv created previously
 # in the `packaging/mcpb` directory, run...
-make check-published
+make check-published VERSION=0.12.778
 ```
+
+Use the version being released; omit `VERSION` to check the latest release.

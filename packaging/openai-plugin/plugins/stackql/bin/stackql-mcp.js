@@ -8,7 +8,7 @@ const stackqlRoot =
   process.env.STACKQL_PLUGIN_CONFIG_DIR || path.join(os.homedir(), ".stackql");
 const args = [
   "-y",
-  "@stackql/mcp-server@0.12.732",
+  "@stackql/mcp-server@0.12.778",
   "--approot",
   stackqlRoot,
   "--env.file",

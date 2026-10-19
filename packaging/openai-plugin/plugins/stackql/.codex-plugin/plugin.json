@@ -1,6 +1,6 @@
 {
   "name": "stackql",
-  "version": "0.12.732",
+  "version": "0.12.778",
   "description": "Query and manage cloud infrastructure with StackQL over a local MCP stdio server.",
   "author": {
     "name": "StackQL Studios",
