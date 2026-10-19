@@ -59,11 +59,19 @@ func (w *sqlWriter) Insert(ctx context.Context, id QueryID, columns []Column, ro
 	if width == 0 {
 		return fmt.Errorf("omnistaging: insert into %s requires columns", w.dialect.TableName(id))
 	}
-	chunkSize := w.dialect.MaxBindParameters() / width
+	maxBind := w.dialect.MaxBindParameters()
+	chunkSize := maxBind / width
+	if chunkSize == 0 {
+		return fmt.Errorf(
+			"omnistaging: %d columns of %s exceed the %d bind parameter limit",
+			width, w.dialect.TableName(id), maxBind,
+		)
+	}
 	for start := 0; start < len(rows); start += chunkSize {
 		end := min(start+chunkSize, len(rows))
 		chunk := rows[start:end]
-		args := make([]any, 0, len(chunk)*width)
+		// a chunk never carries more than maxBind values, so this bounds the allocation without a product
+		args := make([]any, 0, maxBind)
 		for _, row := range chunk {
 			if len(row) != width {
 				return fmt.Errorf(

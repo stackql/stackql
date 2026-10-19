@@ -195,9 +195,6 @@ Local testing of the application:
 3. Run robot tests:
     - Functional tests, mocked as needed `robot -d test/robot/reports test/robot/functional`.
     - Integration tests `robot -d test/robot/reports test/robot/integration`.  For these, you will need to set various envirnonment variables as per the github actions.
-4. Run the deprecated manual python tests:
-    - Prepare with `cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite`.
-    - Run with `python3 test/deprecated/python/main.py`.
 
 [This article](https://medium.com/cbi-engineering/mocking-techniques-for-go-805c10f1676b) gives a nice overview of mocking in golang.
 
@@ -213,8 +210,6 @@ Then: `go test -cover ../...`.
 ### Functional and Integration testing
 
 Automated functional and integration testing are done largely through robot framework.  Please see [the robot test readme](/test/robot/README.md).
-
-There is some legacy, deprecated [manual python testing](/test/deprecated/python/main.py) which will be migrated to robot and decommissioned.
 
 ### Linting
 

@@ -11352,6 +11352,41 @@ Unstable Google Kms Key Rings Jsonl Row Set Matches Expectation
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Unstable-Google-Kms-Key-Rings-stderr.tmp
 
+Unstable Google Storage Buckets Jsonl Renders Objects As JSON And Numbers Without Exponent
+    [Documentation]    Serde regression for streamed relations: an object column
+    ...                must come out as JSON text, not Go ``map[k:v]`` syntax, and
+    ...                a number of 1e7 or more must not take exponent form.
+    ...                Runs against omnisdk's bundled mock, whose GCS listing
+    ...                carries both shapes.
+    [Setup]    Write Gcp Service Account    ${OMNISDK_MOCK_GCP_SA_HOST}
+    [Teardown]    Remove Preview Mock Environment
+    ${gcp_sa} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"
+    ...    /opt/test/tmp/omnisdk-gcp-sa.json    ${OMNISDK_MOCK_GCP_SA_HOST}
+    Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${gcp_sa}
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"endpoint":"http://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_OMNISDK}",
+    ...    "unstable":true}
+    ${auth} =    Set Variable    {"google":{"credentialsfilepath":"${gcp_sa}"}}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select name, labels, projectNumber from stackql_unstable_google.storage.buckets
+    ...    where project = 'testing-project';
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    {"name":"gcs-plain","labels":"{\\"env\\":\\"dev\\",\\"team\\":\\"platform\\"}","projectNumber":"12000000"}
+    ...    {"name":"gcs-cmek","labels":"{\\"env\\":\\"prod\\"}","projectNumber":"12000001"}
+    Should StackQL Exec Inline Jsonl Set Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${auth}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Google-Storage-Buckets-Serde.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Google-Storage-Buckets-Serde-stderr.tmp
+
 Unstable Google Kms Key Rings Joined To Crypto Keys Jsonl Row Set Matches Expectation
     [Documentation]    A join over document-driven relations, resolved by
     ...                omnisdk: the ON condition feeds each key ring's id into

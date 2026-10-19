@@ -325,12 +325,17 @@ def gcp_v3_projects():
 
 @app.get("/storage/v1/b")
 def gcp_storage_buckets():
+    # labels (object) and projectNumber (bare number >= 1e7) are not projected by the
+    # audit relations; they exist so the document-driven buckets relation can assert
+    # that objects render as JSON and large numbers never take exponent form.
     return jsonify(items=[
         {"name": "gcs-plain", "iamConfiguration": {"publicAccessPrevention": "inherited"},
-         "versioning": {"enabled": False}},  # no logging block: usage logs off
+         "versioning": {"enabled": False},  # no logging block: usage logs off
+         "labels": {"env": "dev", "team": "platform"}, "projectNumber": 12000000},
         {"name": "gcs-cmek", "encryption": {"defaultKmsKeyName": "projects/p/locations/l/keyRings/r/cryptoKeys/k"},
          "iamConfiguration": {"publicAccessPrevention": "enforced"}, "versioning": {"enabled": True},
-         "logging": {"logBucket": "gcs-usage-logs", "logObjectPrefix": "gcs/"}},
+         "logging": {"logBucket": "gcs-usage-logs", "logObjectPrefix": "gcs/"},
+         "labels": {"env": "prod"}, "projectNumber": 12000001},
     ])
 
 
