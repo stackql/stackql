@@ -53,7 +53,6 @@ on:
       - '.github/workflows/contributors.yml'
 env:
   GOTESTCMD: "go test -timeout 1200s -v ./..."
-  TESTSCRIPT: "test/deprecated/python/main.py"
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
   PLANCACHEENABLED: "false"
@@ -305,14 +304,6 @@ jobs:
         PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
       run: | #Ideally there wiuld be forced kill of flaks here but dont know how to do that in windows
         python cicd/python/build.py --robot-test-integration
-    
-    - name: Prepare Test DB
-      if: success()
-      run: copy test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
-
-    - name: Test Script
-      if: success()
-      run: python.exe test/deprecated/python/main.py
 
     - name: Upload Artifact
       # uses: actions/upload-artifact@v3
@@ -951,17 +942,7 @@ jobs:
         pgrep -f flask | xargs kill -9 || true
         echo "## End ##"
         python cicd/python/build.py --robot-test-integration
-    
-    - name: Prepare Test DB
-      if: success() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
-      run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
 
-    - name: Test Script
-      if: success() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
-      run: python3 "${TESTSCRIPT}"
-      env:
-        TESTSCRIPT: ${{env.TESTSCRIPT}}
-    
     - name: install and test deb package
       if: matrix.registry != 'test/registry' && matrix.sdk != 'omni'
       env:
@@ -1192,16 +1173,6 @@ jobs:
         pgrep -f flask | xargs kill -9 || true
         echo "## End ##"
         python cicd/python/build.py --robot-test-integration
-    
-    - name: Prepare Test DB
-      if: success()
-      run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
-
-    - name: Test Script
-      if: success()
-      run: python3 "${TESTSCRIPT}"
-      env:
-        TESTSCRIPT: ${{env.TESTSCRIPT}}
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7.0.1
@@ -1417,9 +1388,19 @@ jobs:
           fi
 
   macosbuild:
-    name: MacOS Build
-    runs-on: macos-15-intel
+    name: MacOS Build (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15-intel
+            arch: amd64
+            build_platform: macOS
+          - runner: macos-15
+            arch: arm64
+            build_platform: darwin_arm64
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v7.0.1
@@ -1455,12 +1436,13 @@ jobs:
         # Use overwrite to force the links for version 16
         brew link --force --overwrite libpq@16
         
-        # Update PATH so the CI finds the brew version of psql
+        # Update PATH so the CI finds the brew version of psql;
+        # the prefix is resolved because it differs on Apple Silicon.
         echo "$(brew --prefix libpq@16)/bin" >> "$GITHUB_PATH"
         
         pip3 install -r cicd/requirements.txt
         
-        psql --version
+        "$(brew --prefix libpq@16)/bin/psql" --version
     
     - name: Generate rewritten registry for simulations
       run: |
@@ -1479,9 +1461,11 @@ jobs:
       env:
         BUILDCOMMITSHA: ${{github.sha}}
         BUILDBRANCH: ${{github.ref}}
-        BUILDPLATFORM: ${{runner.os}}
+        BUILDPLATFORM: ${{ matrix.build_platform }}
         BUILDPATCHVERSION: ${{github.run_number}}
         CGO_ENABLED: 0
+        GOOS: darwin
+        GOARCH: ${{ matrix.arch }}
       run: |
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
@@ -1539,7 +1523,7 @@ jobs:
       uses: actions/upload-artifact@v7.0.1
       if: always() && github.repository == 'stackql/stackql-devel'
       with:
-        name: stackql_darwin_amd64_robot_reports
+        name: stackql_darwin_${{ matrix.arch }}_robot_reports
         path: test/robot/reports
 
 
@@ -1547,7 +1531,7 @@ jobs:
       uses: actions/upload-artifact@v7.0.1
       if: always() && github.repository == 'stackql/stackql-devel'
       with:
-        name: stackql_darwin_amd64_robot_tmp
+        name: stackql_darwin_${{ matrix.arch }}_robot_tmp
         path: test/robot/functional/tmp
     
     - name: Run robot integration tests
@@ -1563,156 +1547,14 @@ jobs:
         pgrep -f flask | xargs kill -9 || true
         echo "## End ##"
         python cicd/python/build.py --robot-test-integration
-    
-    - name: Prepare Test DB
-      if: success()
-      run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
-        
-    - name: Test Script
-      if: success()
-      run: python3 "${TESTSCRIPT}"
-      env:
-        TESTSCRIPT: ${{env.TESTSCRIPT}}
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7.0.1
       if: success()
       with:
-        name: stackql_darwin_amd64
+        name: stackql_darwin_${{ matrix.arch }}
         path: build/stackql
 
-  macosarmbuild:
-    name: MacOS ARM Build
-    runs-on: macos-15
-    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
-    steps:
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v7.0.1
-
-    - name: Setup Python
-      uses: actions/setup-python@v7.0.0
-      with:
-        cache: pip
-        python-version: '3.12'
-
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v7.0.0
-      with:
-        go-version: '1.25.3'
-        check-latest: true
-        cache: true
-      id: go
-
-    # Mirrors macosbuild, except that the libpq location is resolved rather
-    # than hardcoded: homebrew's prefix differs on Apple Silicon.
-    - name: Install Various dependencies
-      run: |
-        brew unlink libpq || true
-        brew install libpq@16
-
-        # Use overwrite to force the links for version 16
-        brew link --force --overwrite libpq@16
-
-        # Update PATH so the CI finds the brew version of psql
-        echo "$(brew --prefix libpq@16)/bin" >> "$GITHUB_PATH"
-
-        pip3 install -r cicd/requirements.txt
-
-        "$(brew --prefix libpq@16)/bin/psql" --version
-
-    - name: Generate rewritten registry for simulations
-      run: |
-        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
-
-    - name: Get dependencies
-      run: |
-        git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
-        go get -v -t -d ./...
-      env:
-        CGO_ENABLED: 0
-        GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
-        GOPRIVATE: ${{env.GOPRIVATE}}
-
-    - name: Generate Build Flags and Build
-      env:
-        BUILDCOMMITSHA: ${{github.sha}}
-        BUILDBRANCH: ${{github.ref}}
-        BUILDPLATFORM: "darwin_arm64"
-        BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 0
-      run: |
-        source cicd/version.txt
-        export BUILDMAJORVERSION="$MajorVersion"
-        export BUILDMINORVERSION="$MinorVersion"
-        if [[ ! "$BUILDBRANCH" == "*develop" ]]
-          then
-          # shellcheck disable=2269
-          export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
-        fi
-        BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
-        export BUILDSHORTCOMMITSHA
-        BUILDDATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        export BUILDDATE
-        echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
-        echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
-        echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
-        echo "BUILDBRANCH: ${BUILDBRANCH}"
-        echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
-        echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
-        echo "BUILDDATE: ${BUILDDATE}"
-        echo "BUILDPLATFORM: ${BUILDPLATFORM}"
-
-        {
-          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
-          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
-          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
-        } >> "${GITHUB_ENV}"
-
-        export GOOS="darwin"
-        export GOARCH="arm64"
-        python cicd/python/build.py --verbose --build 
-        python cicd/python/build.py --verbose --build-mcp-client
-
-    - name: Create certificates for robot tests
-      run: |
-        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
-
-    - name: Run robot mocked functional tests
-      env:
-        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
-      if: success()
-      run: |
-        python cicd/python/build.py --robot-test
-
-    - name: Output from mocked functional tests
-      if: always()
-      run: |
-        cat ./test/robot/reports/output.xml
-
-    - name: Upload Robot Reports Artifact
-      uses: actions/upload-artifact@v7.0.1
-      if: always() && github.repository == 'stackql/stackql-devel'
-      with:
-        name: stackql_darwin_arm64_robot_reports
-        path: test/robot/reports
-
-    - name: Upload Robot Tmp Artifact
-      uses: actions/upload-artifact@v7.0.1
-      if: always() && github.repository == 'stackql/stackql-devel'
-      with:
-        name: stackql_darwin_arm64_robot_tmp
-        path: test/robot/functional/tmp
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v7.0.1
-      if: success()
-      with:
-        name: stackql_darwin_arm64
-        path: build/stackql
-  
   ## Docker Build and Push Jobs
   ## based loosely on patterns described in:
   ##    - https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
@@ -2104,7 +1946,7 @@ jobs:
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
-      if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'sqlite'
+      if: success() && env.CI_IS_EXPRESS != 'true' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'sqlite'
       timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
       run: |
         sudo rm -rf test/tmp || true
@@ -2139,7 +1981,7 @@ jobs:
           --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
-      if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' 
+      if: always() && env.CI_IS_EXPRESS != 'true' && env.BUILD_IMAGE_REQUIRED == 'true' 
       run: |
         cat ./test/robot/reports/output.xml
 
@@ -2147,7 +1989,7 @@ jobs:
     # (platform, db backend) group together ran every functional test.
     # Unsharded legs upload as shard 1 of 1.
     - name: Upload robot output for shard verification
-      if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
+      if: always() && env.CI_IS_EXPRESS != 'true' && env.BUILD_IMAGE_REQUIRED == 'true'
       uses: actions/upload-artifact@v7.0.1
       with:
         name: robot-output-${{ env.PLATFORM_PAIR }}-${{ matrix.db_backend }}-shard-${{ matrix.robot_shard_index || 1 }}-of-${{ matrix.robot_shard_count || 1 }}
@@ -2229,7 +2071,8 @@ jobs:
           --source test/robot/functional \
           --reports-dir "${{ runner.temp }}/robot-outputs" \
           --expected-group linux-amd64-sqlite \
-          --expected-group linux-amd64-postgres_tcp
+          --expected-group linux-amd64-postgres_tcp \
+          --expected-group linux-arm64-sqlite
 
   dockermerge:
     runs-on: ubuntu-latest

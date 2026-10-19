@@ -3,12 +3,7 @@
 
 ## Contrived local integration testing
 
-Offline invocations of `stackql` are assessed against expected responses, through:
-
-1. the functionality of [/test/deprecated/python/main.py](/test/deprecated/python/main.py).
-2. robot tests, [per this document](/test/robot/README.md).  
-
-(1) is deprecated and will be entirely migrated to (2).
+Offline invocations of `stackql` are assessed against expected responses, through robot tests, [per this document](/test/robot/README.md).
 
 These tests are run during the build process:
   - locally as per [/README.md#build](/README.md#build)

@@ -257,6 +257,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     rv = [ f"--namespaces='{b[13:]}'" if type(b) == str and b.startswith('--namespaces=') else b for b in list(args) ]
     rv = [ f"--sqlBackend='{b[13:]}'" if type(b) == str and b.startswith('--sqlBackend=') else b for b in list(rv) ]
     rv = [ f"--export.alias='{b[15:]}'" if type(b) == str and b.startswith('--export.alias=') else b for b in list(rv) ]
+    # the docker command is a bash -c string, so a bare ';' delimiter would end it
+    rv = [ f"--delimiter='{b[12:]}'" if type(b) == str and b.startswith('--delimiter=') else b for b in list(rv) ]
     rv = [ f"--http.log.enabled='{b[19:]}'" if type(b) == str and b.startswith('--http.log.enabled=') else b for b in list(rv) ]
     rv = [ f"--approot='{b[10:]}'" if type(b) == str and b.startswith('--approot=') else b for b in list(rv) ]
     rv = [ f"--preview='{b[10:]}'" if type(b) == str and b.startswith('--preview=') else b for b in list(rv) ]
@@ -305,6 +307,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if query_var_list:
       for q_var in query_var_list:
         supplied_args.append(f'--var={q_var}')
+    supplied_args += self._docker_transform_args(*self._output_format_args(cfg))
     registry_cfg_str = registry_cfg.get_config_str('docker')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry='{registry_cfg_str}'")
@@ -362,6 +365,19 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         'GOOGLE_APPLICATION_CREDENTIALS'
     ]
 
+
+  def _output_format_args(self, cfg :dict) -> list:
+    rv = []
+    output_format = cfg.pop('stackql_output', False)
+    if output_format:
+      rv.append(f'--output={output_format}')
+    delimiter = cfg.pop('stackql_delimiter', False)
+    if delimiter:
+      rv.append(f'--delimiter={delimiter}')
+    outfile = cfg.pop('stackql_outfile', False)
+    if outfile:
+      rv.append(f'--outfile={outfile}')
+    return rv
 
   def _get_default_env(self) -> dict:
     existing = dict(os.environ)
@@ -523,6 +539,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if query_var_list:
       for q_var in query_var_list:
         supplied_args.append(f'--var={q_var}')
+    supplied_args += self._output_format_args(cfg)
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry={registry_cfg_str}")
@@ -1305,6 +1322,41 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     )
     return self.should_contain(result.stdout, expected_output)
   
+  @keyword
+  def should_stackql_exec_inline_outfile_contain(
+    self,
+    stackql_exe :str,
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg,
+    auth_cfg_str :str,
+    sql_backend_cfg_str :str,
+    query :str,
+    outfile :str,
+    expected_output :str,
+    *args,
+    **cfg
+  ):
+    # under docker the outfile is a container path; host_outfile is where the mount lands it
+    host_outfile = cfg.pop('host_outfile', outfile)
+    cfg['stackql_outfile'] = outfile
+    self._run_stackql_exec_command(
+      stackql_exe,
+      okta_secret_str,
+      github_secret_str,
+      k8s_secret_str,
+      registry_cfg,
+      auth_cfg_str,
+      sql_backend_cfg_str,
+      query,
+      *args,
+      **cfg
+    )
+    with open(host_outfile, 'rt', encoding='utf-8') as f:
+      contents = f.read()
+    return self.should_contain(contents, expected_output)
+
   @keyword
   def should_stackql_exec_inline_contain_both_streams(
     self, 

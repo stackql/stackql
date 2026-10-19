@@ -722,6 +722,14 @@ func textValue(value any) any {
 		return typed
 	case bool:
 		return strconv.FormatBool(typed)
+	case float64:
+		return strconv.FormatFloat(typed, 'f', -1, 64)
+	case map[string]any, []any:
+		encoded, err := json.Marshal(typed)
+		if err != nil {
+			return fmt.Sprintf("%v", typed)
+		}
+		return string(encoded)
 	default:
 		return fmt.Sprintf("%v", typed)
 	}
