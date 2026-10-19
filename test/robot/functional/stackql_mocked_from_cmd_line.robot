@@ -11896,7 +11896,7 @@ Preview Show Services Includes Dynamic Graph And Iac
     ...    id,name,title
     ...    audit:internal,audit,omnisdk audited resources
     ...    dynamic_graph:internal,dynamic_graph,queries wired across several document-declared exchanges
-    ...    iac:internal,iac,"idempotent converge runs, and the blueprints that render one"
+    ...    iac:internal,iac,"idempotent converge runs and destroys, and the blueprints that render a run"
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -11937,6 +11937,7 @@ Preview Iac Show Resources Lists Run And Blueprint Handles
     ${expected} =    Catenate    SEPARATOR=\n
     ...    name,id
     ...    run,stackql_preview.iac.run
+    ...    destroy,stackql_preview.iac.destroy
     ...    aws_vpc_subnet,stackql_preview.iac.aws_vpc_subnet
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
@@ -12024,9 +12025,9 @@ Preview Iac Converge Needs Exactly One Of Blueprint Or Resources
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select * from stackql_preview.iac.run where collection = 'scratch';
     ${expected} =    Catenate    SEPARATOR=${SPACE}
-    ...    relation 'stackql_preview.iac.run' needs exactly one of 'blueprint'
-    ...    or 'resources'; a blueprint renders the resources, a specification
-    ...    states them
+    ...    relation 'stackql_preview.iac.run' needs exactly one of 'blueprint',
+    ...    'resources' or 'resources_file'; a blueprint renders the resources,
+    ...    a specification or a file states them
     Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -12133,3 +12134,50 @@ Preview Iac Resource Without Provider Is Refused By Omnisdk
     ...    --preview\=${preview}
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Resource-No-Provider.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Resource-No-Provider-stderr.tmp
+
+Preview Iac Resources File Without Provider Is Refused By Omnisdk
+    [Documentation]    The 'resources_file' predicate is read by omnisdk's LoadResources,
+    ...                which also takes an object whose 'resources' is the list; a
+    ...                malformed entry is caught before any effect is attempted.
+    ${preview} =    Set Variable    {"unstable":true}
+    ${nativeResourcesFile} =    Replace String
+    ...    ${REPOSITORY_ROOT}${/}test${/}assets${/}input${/}iac${/}resource-without-provider.json    \\    /
+    ${resourcesFile} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"
+    ...    /opt/stackql/input/iac/resource-without-provider.json
+    ...    ${nativeResourcesFile}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select * from stackql_preview.iac.run where collection = 'scratch'
+    ...    and resources_file = '${resourcesFile}';
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    omnisdk: resource "a/b/c" names no provider or address
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Resources-File-No-Provider.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Resources-File-No-Provider-stderr.tmp
+
+Preview Iac Destroy Without Collection Is Refused
+    ${preview} =    Set Variable    {"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=${SPACE}
+    ...    relation 'stackql_preview.iac.destroy' needs a 'collection' predicate;
+    ...    it is the ledger key prefix, the lease scope and the correlation
+    ...    stamp, and it is how a later run addresses the same resources
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from stackql_preview.iac.destroy;
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Destroy-No-Collection.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Destroy-No-Collection-stderr.tmp

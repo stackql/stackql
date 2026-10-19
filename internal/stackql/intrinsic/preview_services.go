@@ -33,20 +33,22 @@ const (
 const (
 	graphRelation    = "query"
 	convergeRelation = "run"
+	destroyRelation  = "destroy"
 )
 
 const (
 	dynamicGraphTitle = "queries wired across several document-declared exchanges"
-	iacTitle          = "idempotent converge runs, and the blueprints that render one"
+	iacTitle          = "idempotent converge runs and destroys, and the blueprints that render a run"
 )
 
 const (
-	specPredicate       = "spec"
-	collectionPredicate = "collection"
-	blueprintPredicate  = "blueprint"
-	resourcesPredicate  = "resources"
-	statePredicate      = "state"
-	runIDPredicate      = "run_id"
+	specPredicate          = "spec"
+	collectionPredicate    = "collection"
+	blueprintPredicate     = "blueprint"
+	resourcesPredicate     = "resources"
+	resourcesFilePredicate = "resources_file"
+	statePredicate         = "state"
+	runIDPredicate         = "run_id"
 )
 
 // previewService canonicalises one of the extended stackql_preview services, or
@@ -261,8 +263,8 @@ func showPreviewMethods(ctx queryContext, extended bool) internaldto.ExecutorOut
 }
 
 // previewTables presents an extended service's relations. The iac service holds
-// the converge relation alongside the blueprints, because a blueprint is a way
-// of building a run's resources rather than a thing of its own.
+// the converge and destroy relations alongside the blueprints, because a blueprint
+// is a way of building a run's resources rather than a thing of its own.
 func previewTables(service string) []table {
 	if service == dynamicGraphService {
 		return []table{{
@@ -277,6 +279,11 @@ func previewTables(service string) []table {
 		name:        convergeRelation,
 		isData:      true,
 		description: "an idempotent converge run over a named collection",
+	}, {
+		service:     iacService,
+		name:        destroyRelation,
+		isData:      true,
+		description: "every resource a named collection holds, deleted",
 	}}
 	return append(out, blueprintTables()...)
 }
@@ -297,7 +304,8 @@ func describePreviewTableFunc(
 	}
 	resource := node.Table.Name.GetRawVal()
 	extended := isExtended(node.Extended)
-	if service == iacService && !strings.EqualFold(resource, convergeRelation) {
+	if service == iacService && !strings.EqualFold(resource, convergeRelation) &&
+		!strings.EqualFold(resource, destroyRelation) {
 		blueprint, ok := blueprintFor(resource)
 		if !ok {
 			return refuse(fmt.Errorf(
