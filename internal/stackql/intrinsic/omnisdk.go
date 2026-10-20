@@ -724,6 +724,8 @@ func textValue(value any) any {
 		return strconv.FormatBool(typed)
 	case float64:
 		return strconv.FormatFloat(typed, 'f', -1, 64)
+	case json.Number:
+		return typed.String()
 	case map[string]any, []any:
 		encoded, err := json.Marshal(typed)
 		if err != nil {

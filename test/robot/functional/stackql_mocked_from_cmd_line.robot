@@ -11460,6 +11460,46 @@ Unstable Github Org Members Filtered By Like Jsonl Row Set Matches Expectation
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-Like.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Filtered-By-Like-stderr.tmp
 
+Unstable Github Org Audit Log Security Events Stream Ahead Of Paging
+    [Documentation]    The org audit log is the shape omni exists for: one large,
+    ...                Link-paginated listing filtered to the actions a security
+    ...                team cares about. The mock serves five pages with a delay
+    ...                on each, so a client that streams writes rows while later
+    ...                pages are still being fetched, whereas one that buffers
+    ...                writes everything in a single burst after the last page.
+    ...                Half the mocked events match the IN list, applied by
+    ...                omnisdk per row.
+    [Teardown]    Remove Preview Mock Environment
+    ${preview} =    Catenate    SEPARATOR=
+    ...    {"batchSize":10,"flushInterval":"50ms",
+    ...    "endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
+    ...    "insecureSkipTLSVerify":true,"unstable":true}
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select created_at, actor, action, repo
+    ...    from stackql_unstable_github.orgs.audit_log_events
+    ...    where org = 'dummyorg' and phrase = 'created:>=2023-11-01'
+    ...    and action in (
+    ...    'repo.destroy', 'repo.access', 'repo.transfer',
+    ...    'protected_branch.destroy', 'protected_branch.policy_override',
+    ...    'org.remove_member', 'org.disable_two_factor_requirement',
+    ...    'oauth_application.create', 'personal_access_token.access_granted'
+    ...    );
+    Should StackQL Exec Stream Incrementally
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    50
+    ...    0.8
+    ...    \-o\=jsonl
+    ...    --preview\=${preview}
+    ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Audit-Log-Streams.tmp
+    ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Audit-Log-Streams-stderr.tmp
+
 Unstable Github Org Members Filtered By Between And Is Not Null Jsonl Row Set Matches Expectation
     [Documentation]    BETWEEN orders text as text, and IS NOT NULL holds for every member with a type.
     [Teardown]    Remove Preview Mock Environment

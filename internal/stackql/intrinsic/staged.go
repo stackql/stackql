@@ -9,6 +9,7 @@ package intrinsic
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -444,6 +445,15 @@ func stagedValue(value any) any {
 		return typed
 	case float32:
 		return float64(typed)
+	case json.Number:
+		// omnisdk decodes with UseNumber; bound as a string it would sort as text
+		if i, err := typed.Int64(); err == nil {
+			return i
+		}
+		if f, err := typed.Float64(); err == nil {
+			return f
+		}
+		return typed.String()
 	default:
 		return textValue(value)
 	}
