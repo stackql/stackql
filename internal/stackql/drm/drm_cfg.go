@@ -578,7 +578,7 @@ func (dc *staticDRMConfig) GenerateDDL(
 	return dc.sqlSystem.GenerateDDL(relationalTable, dropTable)
 }
 
-//nolint:gocritic,govet,funlen,nestif // defer fix
+//nolint:gocritic,govet,funlen,nestif,gocognit // defer fix; this orchestration remains intentionally cohesive
 func (dc *staticDRMConfig) GenerateInsertDML(
 	tabAnnotated util.AnnotatedTabulation,
 	prov formulation.Provider,

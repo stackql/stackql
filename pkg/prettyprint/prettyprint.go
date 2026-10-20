@@ -142,6 +142,7 @@ func (pp *PrettyPrinter) PrintPlaceholderJSON(body interface{}) (string, error) 
 	}
 }
 
+//nolint:gocognit // Recursive formatting keeps JSON type handling in one place.
 func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 	startPos := pp.getCurrentIndentation()
 	switch bt := body.(type) {

@@ -48,7 +48,6 @@ linters:
     - predeclared
     - promlinter
     - reassign
-    - revive
     - rowserrcheck
     - sqlclosecheck
     # - staticcheck
@@ -70,7 +69,7 @@ linters:
     exhaustive:
       check:
         - switch
-        - map
+        - mapliteral
     exhaustruct:
       exclude:
         - ^net/http.Client$

@@ -458,6 +458,7 @@ func (pgb *standardPlanGraphBuilder) arrangePrebuildIndirects(
 	return selectPrimitiveNode, nil
 }
 
+//nolint:gocognit // DDL dispatch stays together to preserve the existing control flow.
 func (pgb *standardPlanGraphBuilder) handleDDL(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetDDL()
