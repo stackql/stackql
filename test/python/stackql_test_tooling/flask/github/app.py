@@ -5,6 +5,7 @@ from datetime import datetime
 import re
 import json
 import os
+import time
 
 app = Flask(__name__)
 
@@ -243,6 +244,51 @@ def get_members():
 def get_trailing_members():
     """Retrieve organization members dynamically from template."""
     return get_members()
+
+
+_AUDIT_LOG_ACTIONS = [
+    "repo.create",
+    "repo.destroy",
+    "git.push",
+    "repo.access",
+    "team.add_member",
+    "protected_branch.policy_override",
+    "org.remove_member",
+    "issue_comment.update",
+    "oauth_application.create",
+    "workflows.completed_workflow_run",
+]
+
+
+@app.route('/orgs/dummyorg/audit-log', methods=['GET'])
+def get_audit_log():
+    """Paginated org audit log; each page is delayed so a streaming client visibly
+    outruns the paging, whereas a buffering one shows nothing until the last page."""
+    page = int(request.args.get('page', 1))
+    per_page = 20
+    total_pages = 5
+    time.sleep(0.4)
+    events = []
+    for i in range((page - 1) * per_page + 1, page * per_page + 1):
+        action = _AUDIT_LOG_ACTIONS[i % len(_AUDIT_LOG_ACTIONS)]
+        events.append({
+            "@timestamp": 1700000000000 + i * 60000,
+            "_document_id": f"doc-{i:04d}",
+            "action": action,
+            "actor": f"some-jimbo-{(i % 7) + 1}",
+            "actor_id": 1000 + (i % 7),
+            "actor_location": {"country_code": "AU"},
+            "created_at": 1700000000000 + i * 60000,
+            "org": "dummyorg",
+            "org_id": 1,
+            "repo": f"dummyorg/repo-{(i % 4) + 1}",
+            "user": f"some-jimbo-{(i % 5) + 1}",
+        })
+    headers = {
+        "Content-Type": "application/json",
+        "Link": generate_pagination_links(page, total_pages, 'get_audit_log')
+    }
+    return jsonify(events), 200, headers
 
 
 @app.route('/repos/dummyorg/dummyapp.io/tags', methods=['GET'])

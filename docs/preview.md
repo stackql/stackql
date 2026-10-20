@@ -219,3 +219,29 @@ sqlite3 /tmp/stackql-staging.db "select name from sqlite_master where name like 
 ```
 
 An empty result means every staged table was released.
+
+
+## Nice one off audit queries
+
+
+```bash
+
+source cicd/vol/vendor-secrets/secrets.sh
+
+./build/stackql exec \
+  --registry '{"url":"file://'"$PWD"'/test/registry","localDocRoot":"'"$PWD"'/test/registry","verifyConfig":{"nopVerify":true}}' \
+  --auth '{ "github": { "credentialsenvvar": "STACKQL_GITHUB_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }' \
+  --preview '{"unstable":true,"staging":true,"omni":"all"}' \
+  -o jsonl \
+  "select created_at, actor, action, repo, actor_location
+   from github.orgs.audit_log_events
+   where org = 'stackql'
+     and phrase = 'created:>=2026-09-01'
+     and action in (
+       'repo.destroy', 'repo.access', 'repo.transfer',
+       'protected_branch.destroy', 'protected_branch.policy_override',
+       'org.remove_member', 'org.disable_two_factor_requirement',
+       'oauth_application.create', 'personal_access_token.access_granted'
+     );" | perl -MTime::HiRes=time -pe 'printf "%.3f ", time'
+
+```
