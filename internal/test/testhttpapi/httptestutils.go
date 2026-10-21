@@ -190,7 +190,7 @@ func NewHTTPRequestExpectations(body io.ReadCloser, header http.Header, method s
 }
 
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "hello %s\n", path.Base(r.URL.Path))
+	fmt.Fprintf(w, "hello %s\n", path.Base(r.URL.Path)) //nolint:gosec // Test response is plain text, not HTML.
 }
 
 func getBodyMap(bodyBytes []byte, contentTypeHeader []string) (map[string]interface{}, error) {

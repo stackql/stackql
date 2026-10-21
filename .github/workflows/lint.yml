@@ -12,7 +12,7 @@ on:
 
 
 env:
-  GOLANGCI_LINT_VERSION: ${{ vars.GOLANGCI_LINT_VERSION == '' && 'v2.5.0' || vars.GOLANGCI_LINT_VERSION }}
+  GOLANGCI_LINT_VERSION: ${{ vars.GOLANGCI_LINT_VERSION == '' && 'v2.15.0' || vars.GOLANGCI_LINT_VERSION }}
   DEFAULT_STEP_TIMEOUT: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && '20' || vars.DEFAULT_STEP_TIMEOUT_MIN }}
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
       - name: Setup Go environment
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.25.3'
+          go-version: '1.26.10'
           cache: false
 
       - name: Check workflow files

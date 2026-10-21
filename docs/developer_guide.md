@@ -33,7 +33,7 @@ Having installed all dependencies, the `robot` tests should be run from the repo
 
 Running linting locally is also a nice-to-have, and can be done:
 
-- Install `golangci-lint` `v1.59.1` (the current version used in CI) per [the `golangci-lint` doco](https://golangci-lint.run/welcome/install/).
+- Install `golangci-lint` `v2.15.0` (the current version used in CI) per [the `golangci-lint` doco](https://golangci-lint.run/welcome/install/).
 - From the root directory of the repository: `golangci-lint run`.
 
 
@@ -69,7 +69,7 @@ env CGO_ENABLED=0 PLANCACHEENABLED=false go build \
 
 At this time, we are not dogmatic about how to implement unit tests.  Aspirationally, unit tests can be implemented in similar fashion to the none-too opinionated [official testing package documentation](https://pkg.go.dev/testing), and in particular [the overview section](https://pkg.go.dev/testing#pkg-overview).
 
-We have upgraded to golang `>= 1.25.3` in order to take advantage of [time simultion and other capabilites in `testing/synctest`](https://go.dev/blog/testing-time).
+We have upgraded to golang `>= 1.26.10` in order to take advantage of [time simultion and other capabilites in `testing/synctest`](https://go.dev/blog/testing-time).
 
 To run all unit tests:
 

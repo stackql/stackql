@@ -65,7 +65,7 @@ func unwrap(v any) any {
 		return nil
 	}
 	rv := reflect.ValueOf(v)
-	if rv.Kind() == reflect.Ptr {
+	if rv.Kind() == reflect.Ptr { //nolint:govet // Keep the explicit kind check for readability.
 		if rv.IsNil() {
 			return nil
 		}

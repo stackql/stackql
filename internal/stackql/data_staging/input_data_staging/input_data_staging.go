@@ -142,6 +142,7 @@ func (np *naiveNativeResultSetPreparator) nativeProtect(
 		table := sqldata.NewSQLTable(0, "meta_table")
 		rCols := make([]sqldata.ISQLColumn, len(columns))
 		for f := range rCols {
+			//nolint:gosec // Both slices are allocated from len(columns).
 			rCols[f] = np.typCfg.GetPlaceholderColumn(table, columns[f], np.typCfg.GetDefaultOID())
 		}
 		rv.SetSQLResultFn(func() sqldata.ISQLResultStream {
