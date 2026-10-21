@@ -1,6 +1,7 @@
 *** Settings ***
 Resource          ${CURDIR}/stackql.resource
 Test Teardown     Stackql Per Test Teardown
+Test Timeout      130 seconds
 Documentation     any-sdk page_number REST pagination (issue 684) via the no-auth
 ...               stackql_native_test.paged service. The mock serves three pages of
 ...               two items; each row carries wire_page so traversal is asserted
@@ -22,6 +23,8 @@ Page Number Pagination Traverses All Pages
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name, idx from stackql_native_test.paged.items order by idx;
     ...    paged-item-6
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Page Number Pagination Requests Successive Pages On The Wire
     [Documentation]    The mock stamps each row with the page it served it on; rows
@@ -36,6 +39,8 @@ Page Number Pagination Requests Successive Pages On The Wire
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name from stackql_native_test.paged.items where wire_page \= 3 order by idx;
     ...    paged-item-5
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Page Number Pagination Missing Terminator Stops After One Page
     [Documentation]    Negative case: no total_pages terminator, so exactly one page
@@ -69,6 +74,8 @@ Link Header Pagination Response Token Only Traverses All Pages
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name, wire_page from stackql_native_test.linked.items order by name;
     ...    | DB6${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}3 |
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Link Header Pagination With Query Request Token Follows Link Verbatim
     [Documentation]    A declared query requestToken (fromName) is ignored for the Link
@@ -85,6 +92,8 @@ Link Header Pagination With Query Request Token Follows Link Verbatim
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name, wire_page, wire_query from stackql_native_test.linked.items_query_token order by name;
     ...    | DB4${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2 | fromName\=DB3 |
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Link Header Pagination Algorithm On Differently Named Header Traverses
     [Documentation]    algorithm link_header_next reads the next URL from X-Next-Page.
@@ -99,6 +108,8 @@ Link Header Pagination Algorithm On Differently Named Header Traverses
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name, wire_page from stackql_native_test.linked.items_xnext order by name;
     ...    | DB6${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}3 |
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Link Header Pagination Stops When Final Page Has No Link
     [Documentation]    Negative: page 3 carries no Link, so exactly 6 rows and the run
@@ -114,6 +125,8 @@ Link Header Pagination Stops When Final Page Has No Link
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select count(*) as linked_row_tally from stackql_native_test.linked.items;
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}6 |
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Link Header Pagination Ignores Prev Only Link
     [Documentation]    Negative: a Link header carrying only rel="prev" yields one page.
@@ -128,6 +141,8 @@ Link Header Pagination Ignores Prev Only Link
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select count(*) as prev_only_row_tally from stackql_native_test.linked.items_prev_only;
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2 |
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Cursor Request Token Encoding None Sends Cursor Verbatim
     [Documentation]    any-sdk #121: requestToken.encoding none appends the base64-padded
@@ -143,6 +158,8 @@ Cursor Request Token Encoding None Sends Cursor Verbatim
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name, wire_query from stackql_native_test.cursor.items order by name;
     ...    | C6${SPACE}${SPACE}${SPACE}| page\=page_BBBB\=\= |
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Cursor Request Token Default Encoding Unchanged
     [Documentation]    Negative (default byte-identical): without encoding the cursor is
@@ -160,6 +177,8 @@ Cursor Request Token Default Encoding Unchanged
     ...    select count(*) as default_encoding_row_tally from stackql_native_test.cursor.items_default_encoding;
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2 |
     ...    The page token is invalid
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Cursor Request Token Encoding None Keeps Other Parameters Escaped
     [Documentation]    Only the cursor is verbatim: a second query parameter containing a
@@ -175,3 +194,5 @@ Cursor Request Token Encoding None Keeps Other Parameters Escaped
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name, wire_query from stackql_native_test.cursor.items where group_by \= 'project id' order by name;
     ...    group_by\=project+id&page\=page_AAAA\=\=
+    ...    timeout=120s
+    ...    on_timeout=terminate
