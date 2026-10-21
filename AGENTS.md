@@ -4,7 +4,7 @@ These guidelines help contributors, human and otherwise, understand and work eff
 
 We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) for further useful information.  For deeper understanding of the "brains" of `stackql`, it is worthwhile to consult [the `AGENTS.md` file of `any-sdk`](https://github.com/stackql/any-sdk/blob/main/AGENTS.md) and linked documents from there.
 
-We have upgraded to golang `>= 1.26.10` in order to take advantage of [time simulation and other capabilities in `testing/synctest`](https://go.dev/blog/testing-time).
+We have upgraded to golang `>= 1.27.3` in order to take advantage of [time simulation and other capabilities in `testing/synctest`](https://go.dev/blog/testing-time).
 
 
 ## Project Structure & Module Organization
