@@ -22,9 +22,9 @@ require (
 	github.com/spf13/viper v1.10.1
 	github.com/stackql-labs/omnisdk v0.1.5-beta06
 	github.com/stackql/any-sdk v0.6.1-beta01
-	github.com/stackql/go-suffix-map v0.0.1-alpha01
-	github.com/stackql/psql-wire v0.1.3-beta01
-	github.com/stackql/stackql-parser v0.0.16-alpha02
+	github.com/stackql/go-suffix-map v0.0.1-alpha02
+	github.com/stackql/psql-wire v0.1.2-beta02
+	github.com/stackql/stackql-parser v0.0.16-beta01
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.38.0
 	golang.org/x/sync v0.22.0
