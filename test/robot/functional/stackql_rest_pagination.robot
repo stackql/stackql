@@ -40,6 +40,7 @@ Page Number Pagination Requests Successive Pages On The Wire
 Page Number Pagination Missing Terminator Stops After One Page
     [Documentation]    Negative case: no total_pages terminator, so exactly one page
     ...                (2 rows) is fetched - never an infinite loop.
+    [Timeout]    130 seconds
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -50,6 +51,8 @@ Page Number Pagination Missing Terminator Stops After One Page
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select count(*) as unterminated_row_tally from stackql_native_test.paged.items_unterminated;
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2${SPACE}|
+    ...    timeout=120s
+    ...    on_timeout=terminate
 
 Link Header Pagination Response Token Only Traverses All Pages
     [Documentation]    any-sdk #123: responseToken {key: link, location: header} alone
