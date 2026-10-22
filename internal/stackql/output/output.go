@@ -347,6 +347,12 @@ func decodeRow(colz []sqldata.ISQLColumn, row sqldata.ISQLRow, ci *pgtype.ConnIn
 		return nil, fmt.Errorf("row length != column count (%d != %d)", len(rawRow), len(colz))
 	}
 	for i, col := range colz {
+		// Text formats use the same null spelling as backend-prepared results.
+		// Keep the actual value nil for JSON and wire-protocol consumers.
+		if rawRow[i] == nil {
+			retVal = append(retVal, []byte("null"))
+			continue
+		}
 		b, err := psqlwire.ExtractRowElement(col, rawRow[i], ci)
 		if err != nil {
 			return nil, err

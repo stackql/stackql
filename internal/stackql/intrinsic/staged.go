@@ -90,7 +90,7 @@ func needsStaging(node *sqlparser.Select) bool {
 	hasAggregate := false
 	//nolint:errcheck // the visitor returns no error
 	_ = sqlparser.Walk(func(n sqlparser.SQLNode) (bool, error) {
-		if fn, isFunc := n.(*sqlparser.FuncExpr); isFunc && fn.IsAggregate() {
+		if fn, isFunc := n.(*sqlparser.FuncExpr); isFunc && (fn.IsAggregate() || fn.Over != nil) {
 			hasAggregate = true
 			return false, nil
 		}
@@ -149,10 +149,8 @@ func renderStagedTemplate(statement, tableName string) string {
 	return strings.ReplaceAll(statement, stagedRelationPlaceholder, tableName)
 }
 
-func stagedSelectFunc(
-	ctx queryContext,
-	node *sqlparser.Select,
-	currentProvider string,
+func stagedSelectWithRelations(
+	ctx queryContext, node *sqlparser.Select, currentProvider string, relations map[string]omnisdk.Relation,
 ) func() internaldto.ExecutorOutput {
 	dialect, err := backendDialect(ctx)
 	if err != nil {
@@ -162,6 +160,7 @@ func stagedSelectFunc(
 	if err != nil {
 		return refuse(err)
 	}
+	staged = withStagedRelations(staged, relations)
 	return func() internaldto.ExecutorOutput { return runStagedSelect(ctx, staged) }
 }
 
@@ -375,17 +374,20 @@ func rowCount(expr sqlparser.Expr) (int, error) {
 // it and releases the table. There is no result cache, so the table is
 // released as soon as the outer result has been read.
 func runStagedSelect(ctx queryContext, staged stagedSelect) internaldto.ExecutorOutput {
+	return runStagedSelectIn(ctx, staged, context.Background())
+}
+
+func runStagedSelectIn(ctx queryContext, staged stagedSelect, runCtx context.Context) internaldto.ExecutorOutput {
 	manager, err := getStagingManager(ctx)
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(fmt.Errorf("omnisdk staging unavailable: %w", err))
 	}
-	bg := context.Background()
-	id, err := manager.Begin(bg)
+	id, err := manager.Begin(runCtx)
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
-	output, runErr := stageAndQuery(ctx, manager, id, staged)
-	if releaseErr := manager.Release(bg, id); releaseErr != nil && runErr == nil {
+	output, runErr := stageAndQueryIn(ctx, manager, id, staged, runCtx)
+	if releaseErr := manager.Release(context.Background(), id); releaseErr != nil && runErr == nil {
 		runErr = releaseErr
 	}
 	if runErr != nil {
@@ -394,14 +396,37 @@ func runStagedSelect(ctx queryContext, staged stagedSelect) internaldto.Executor
 	return output
 }
 
-func stageAndQuery(
-	ctx queryContext,
-	manager omnistaging.Manager,
-	id omnistaging.QueryID,
-	staged stagedSelect,
+//nolint:rowserrcheck // readStagedResult consumes the cursor and checks result.Err before returning.
+func stageAndQueryIn(
+	ctx queryContext, manager omnistaging.Manager, id omnistaging.QueryID,
+	staged stagedSelect, bg context.Context,
 ) (internaldto.ExecutorOutput, error) {
-	bg := context.Background()
-	rows, _, err := openDocQuery(ctx, staged.getSource())
+	read, err := stageRead(ctx, manager, id, staged, bg)
+	if err != nil {
+		return nil, err
+	}
+	result := read.Rows()
+	defer result.Close()
+	output, err := readStagedResult(ctx, result, staged.getOutputNames())
+	if err != nil {
+		return nil, err
+	}
+	if terminalErr := read.TerminalError(); terminalErr != nil {
+		stream := &terminalErrorStream{ISQLResultStream: output.GetSQLResult(), terminalErr: terminalErr}
+		return internaldto.NewExecutorOutput(stream, nil, nil, nil, nil), nil
+	}
+	return output, nil
+}
+
+// stageRead preserves SQL values for relation consumers. Presentation conversion
+// belongs only at the outermost client result boundary.
+//
+//nolint:sqlclosecheck // Ownership of successful SQL rows transfers to the returned read and its consumer.
+func stageRead(
+	ctx queryContext, manager omnistaging.Manager, id omnistaging.QueryID,
+	staged stagedSelect, bg context.Context,
+) (stagedRead, error) {
+	rows, _, err := openDocQueryIn(ctx, staged.getSource(), bg)
 	if err != nil {
 		return nil, err
 	}
@@ -430,16 +455,7 @@ func stageAndQuery(
 	if err != nil {
 		return nil, fmt.Errorf("staged query failed: %w", err)
 	}
-	defer result.Close()
-	output, err := readStagedResult(ctx, result, staged.getOutputNames())
-	if err != nil {
-		return nil, err
-	}
-	if source.terminalErr != nil {
-		stream := &terminalErrorStream{ISQLResultStream: output.GetSQLResult(), terminalErr: source.terminalErr}
-		return internaldto.NewExecutorOutput(stream, nil, nil, nil, nil), nil
-	}
-	return output, nil
+	return newStagedRead(result, source.terminalErr), nil
 }
 
 // stagedColumns types each column by its first non-null value. Numbers are
@@ -622,3 +638,18 @@ func (s *terminalErrorStream) Read() (sqldata.ISQLResult, error) {
 	}
 	return result, err
 }
+
+type stagedRead interface {
+	Rows() *sql.Rows
+	TerminalError() error
+}
+type standardStagedRead struct {
+	rows        *sql.Rows
+	terminalErr error
+}
+
+func newStagedRead(rows *sql.Rows, terminalErr error) stagedRead {
+	return standardStagedRead{rows: rows, terminalErr: terminalErr}
+}
+func (r standardStagedRead) Rows() *sql.Rows      { return r.rows }
+func (r standardStagedRead) TerminalError() error { return r.terminalErr }
