@@ -315,6 +315,10 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 				table.Render()
 				return nil
 			}
+			if table != nil && isHeaderRead {
+				tw.configureTable(table)
+				table.Render()
+			}
 			return err
 		}
 		if !isHeaderRead {

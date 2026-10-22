@@ -11768,7 +11768,7 @@ Unstable Show Methods Reports Each Method Sql Verb
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    show methods in stackql_unstable_github.orgs.orgs;
-    ...    MethodName,RequiredParams,SQLVerb\nget,,SELECT\nlist,,SELECT\nlist_for_authenticated_user,,EXEC\nlist_for_user,,SELECT\nupdate,,UPDATE
+    ...    MethodName,RequiredParams,SQLVerb\nget,org,SELECT\nlist,,SELECT\nlist_for_authenticated_user,,EXEC\nlist_for_user,username,SELECT\nupdate,org,UPDATE
     ...    \-o\=csv
     ...    --preview\={"unstable":true}
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Show-Methods-Reports-Each-Method-Sql-Verb.tmp

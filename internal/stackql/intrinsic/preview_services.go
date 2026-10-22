@@ -23,6 +23,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -101,7 +102,13 @@ func appendPreviewServices(rows map[string]map[string]interface{}, extended bool
 // against. It is the directory holding "<provider>/<version>/provider.yaml",
 // which is where stackql's own document root keeps them.
 func registryRoot(ctx queryContext) string {
-	return filepath.Join(localDocRoot(ctx.GetRuntimeContext()), "src")
+	runtime := ctx.GetRuntimeContext()
+	prefix := "src"
+	var cfg formulation.RegistryConfig
+	if err := yaml.Unmarshal([]byte(runtime.RegistryRaw), &cfg); err == nil && cfg.SrcPrefix != nil {
+		prefix = *cfg.SrcPrefix
+	}
+	return filepath.Join(localDocRoot(runtime), prefix)
 }
 
 // popPredicate takes a predicate out of the parameter map. What remains after
@@ -155,7 +162,8 @@ func previewArgs(ctx queryContext, cloud string, params map[string]string) (omni
 		Params:                params,
 		AuthByProvider:        providerAuthByProvider(ctx, cloud),
 		Endpoint:              input.getEndpoint(),
-		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify(),
+		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify() || ctx.GetRuntimeContext().AllowInsecure,
+		Tuning:                omnisdk.Tuning{RequestTimeout: apiRequestTimeout(ctx)},
 		Dialect:               dialect.catalogue(),
 	}, nil
 }

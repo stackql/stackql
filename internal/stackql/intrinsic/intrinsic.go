@@ -151,7 +151,7 @@ func showFunc(
 	case "SERVICES":
 		provider := resolveProvider(node.OnTable.Name.GetRawVal(), currentProvider)
 		if bundle, isDoc := docProvider(provider); isDoc {
-			return func() internaldto.ExecutorOutput { return showDocServices(ctx, bundle, extended) }, true
+			return func() internaldto.ExecutorOutput { return showDocServices(ctx, bundle, extended, node) }, true
 		}
 		if !IsProvider(provider) {
 			return nil, false
@@ -161,7 +161,7 @@ func showFunc(
 		serviceStr := node.OnTable.Name.GetRawVal()
 		if bundle, isDoc := docProvider(resolveProvider(node.OnTable.Qualifier.GetRawVal(), currentProvider)); isDoc {
 			return func() internaldto.ExecutorOutput {
-				return showDocResources(ctx, bundle, serviceStr, extended)
+				return showDocResources(ctx, bundle, serviceStr, extended, node)
 			}, true
 		}
 		if !isService(node.OnTable.Qualifier.GetRawVal(), serviceStr, currentProvider) {
@@ -174,7 +174,11 @@ func showFunc(
 			service := node.OnTable.Qualifier.GetRawVal()
 			resource := node.OnTable.Name.GetRawVal()
 			return func() internaldto.ExecutorOutput {
-				return showDocMethods(ctx, bundle, service, resource, extended)
+				isUnstable := strings.HasPrefix(
+					resolveProvider(node.OnTable.QualifierSecond.GetRawVal(), currentProvider),
+					UnstablePrefix,
+				)
+				return showDocMethods(ctx, bundle, service, resource, extended, isUnstable)
 			}, true
 		}
 		tbl, ok := lookupTable(

@@ -223,6 +223,10 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 			want: "type,n\nUser,3\n",
 		},
 		{
+			sql:  "select upper(login) as loud" + from + " and loud = 'A' order by loud",
+			want: "loud\nA\n",
+		},
+		{
 			sql:  "select count(*)" + from,
 			want: "count(*)\n4\n",
 		},

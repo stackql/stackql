@@ -1,8 +1,12 @@
 package responsehandler
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -45,7 +49,14 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 			handleEmptyWriter(outputWriter, err)
 			return err
 		}
-		outputWriter.Write(sqlResult) //nolint:errcheck // outstream write
+		if writeErr := outputWriter.Write(sqlResult); writeErr != nil {
+			//nolint:errcheck // Preserve the original stream failure.
+			outputWriter.WriteError(
+				presentationError(writeErr),
+				handlerCtx.GetErrorPresentation(),
+			)
+			return writeErr
+		}
 	} else if sqlErr != nil {
 		outputWriter, err = output.GetOutputWriter(
 			handlerCtx.GetOutfile(),
@@ -61,8 +72,29 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 			handleEmptyWriter(outputWriter, err)
 			return sqlErr
 		}
-		outputWriter.WriteError(sqlErr, handlerCtx.GetErrorPresentation()) //nolint:errcheck // outstream write
+		//nolint:errcheck // Preserve the original query error.
+		outputWriter.WriteError(
+			presentationError(sqlErr),
+			handlerCtx.GetErrorPresentation(),
+		)
 		return sqlErr
 	}
 	return err
+}
+
+// Keep the established CLI diagnostic while retaining typed SDK errors for
+// programmatic consumers and transport/effect classification.
+func presentationError(err error) error {
+	var response omnisdk.HTTPStatusError
+	if !errors.As(err, &response) {
+		return err
+	}
+	diagnostic := fmt.Sprintf(
+		"http response status code: %d, response body: %s",
+		response.StatusCode(), response.ResponseBody(),
+	)
+	if response.ResponseBody() == "" {
+		diagnostic = fmt.Sprintf("http response status code: %d, response body is nil", response.StatusCode())
+	}
+	return errors.New(strings.Replace(err.Error(), response.Error(), diagnostic, 1))
 }

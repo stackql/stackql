@@ -178,9 +178,9 @@ def rewrite_provider(args :ProviderArgs):
                 if args.isServerRewriteRequired():
                   for srv in operation_servers:
                     srv['url'] = _replace_server_url(srv['url'], args.replacement_host, args.port) 
-          graphql_url = d.get('paths', {}).get('/graphql', {}).get('post', {}).get('x-stackQL-graphQL', {}).get('url')
-          if graphql_url:
-            d['paths']['/graphql']['post']['x-stackQL-graphQL']['url'] = f'{_replace_server_url(graphql_url, args.replacement_host, args.port)}/graphql'
+                  graphql = operation.get('x-stackQL-graphQL', {})
+                  if graphql.get('url'):
+                    graphql['url'] = _replace_server_url(graphql['url'], args.replacement_host, args.port)
           with open(os.path.join(os.path.abspath(args.destdir), r, f), 'w') as fw:
             yaml.dump(d, fw)
         else:

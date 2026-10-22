@@ -20,6 +20,7 @@ import (
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql-labs/omnisdk/pkg/query"
 	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/omnistaging"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -112,11 +113,21 @@ type standardStagedSelect struct {
 	columns       []string
 	outputNames   []string
 	outerTemplate string
+	offset        int
 }
 
-func newStagedSelect(source docQuery, columns, outputNames []string, outerTemplate string) stagedSelect {
+func newStagedSelect(
+	source docQuery,
+	columns, outputNames []string,
+	outerTemplate string,
+	offsets ...int,
+) stagedSelect {
+	offset := 0
+	if len(offsets) > 0 {
+		offset = offsets[0]
+	}
 	return &standardStagedSelect{
-		source: source, columns: columns, outputNames: outputNames, outerTemplate: outerTemplate,
+		source: source, columns: columns, outputNames: outputNames, outerTemplate: outerTemplate, offset: offset,
 	}
 }
 
@@ -128,11 +139,14 @@ func (s *standardStagedSelect) getColumns() []string { return s.columns }
 func (s *standardStagedSelect) getOutputNames() []string { return s.outputNames }
 
 func (s *standardStagedSelect) renderOuter(tableName string) string {
+	return renderStagedTemplate(s.outerTemplate, tableName)
+}
+func renderStagedTemplate(statement, tableName string) string {
 	quoted := `"` + stagedRelationPlaceholder + `"`
-	if strings.Contains(s.outerTemplate, quoted) {
-		return strings.ReplaceAll(s.outerTemplate, quoted, tableName)
+	if strings.Contains(statement, quoted) {
+		return strings.ReplaceAll(statement, quoted, tableName)
 	}
-	return strings.ReplaceAll(s.outerTemplate, stagedRelationPlaceholder, tableName)
+	return strings.ReplaceAll(statement, stagedRelationPlaceholder, tableName)
 }
 
 func stagedSelectFunc(
@@ -287,7 +301,12 @@ func planStagedSelect(
 		refs.outputs = append(refs.outputs, query.NewOutput("", query.NewStar("")))
 		refs.names = append(refs.names, stagedColumnPrefix+"0")
 	}
-	q, err := query.New(src.joins(), src.where(), refs.outputs)
+	aliasOutputs, err := whereAliasOutputs(node)
+	if err != nil {
+		return nil, err
+	}
+	outputs := append(append([]query.Output(nil), refs.outputs...), aliasOutputs...)
+	q, err := query.New(src.joins(), src.where(), outputs)
 	if err != nil {
 		return nil, err
 	}
@@ -307,8 +326,14 @@ func planStagedSelect(
 	}
 	buf := sqlparser.NewTrackedBuffer(refs.formatter(formatter))
 	outer.Format(buf)
+	offset := 0
+	if node.Limit != nil && node.Limit.Offset != nil {
+		offset, _ = rowCount(node.Limit.Offset)
+	}
 	return newStagedSelect(
-		newDocQuery(q, refs.names, 0, src.bundles()), refs.names, outputNames, buf.String()+limit), nil
+		newDocQuery(q, refs.names, 0, src.bundles(), readHints(node)),
+		refs.names, outputNames, buf.String()+limit, offset,
+	), nil
 }
 
 // stagedLimit renders LIMIT and OFFSET in the form both backends accept.
@@ -395,12 +420,26 @@ func stageAndQuery(
 	if err != nil {
 		return nil, err
 	}
-	result, err := db.QueryContext(bg, staged.renderOuter(manager.TableName(id)))
+	statement := staged.renderOuter(manager.TableName(id))
+	if effects, ok := rows.(omnisdk.ReadEffects); ok && effects.AppliedOffset() > 0 {
+		if adjusted, hasOffsetRenderer := staged.(interface{ renderAfterOffset(string, int) string }); hasOffsetRenderer {
+			statement = adjusted.renderAfterOffset(manager.TableName(id), effects.AppliedOffset())
+		}
+	}
+	result, err := db.QueryContext(bg, statement)
 	if err != nil {
 		return nil, fmt.Errorf("staged query failed: %w", err)
 	}
 	defer result.Close()
-	return readStagedResult(ctx, result, staged.getOutputNames())
+	output, err := readStagedResult(ctx, result, staged.getOutputNames())
+	if err != nil {
+		return nil, err
+	}
+	if source.terminalErr != nil {
+		stream := &terminalErrorStream{ISQLResultStream: output.GetSQLResult(), terminalErr: source.terminalErr}
+		return internaldto.NewExecutorOutput(stream, nil, nil, nil, nil), nil
+	}
+	return output, nil
 }
 
 // stagedColumns types each column by its first non-null value. Numbers are
@@ -462,10 +501,12 @@ func stagedValue(value any) any {
 // omniBatchSource reads the omnisdk cursor a batch at a time, only when the
 // stager asks for one.
 type omniBatchSource struct {
-	rows    omnisdk.Rows
-	columns []string
-	size    int
-	pending [][]any
+	rows        omnisdk.Rows
+	columns     []string
+	size        int
+	pending     [][]any
+	readRows    int
+	terminalErr error
 }
 
 func newOmniBatchSource(rows omnisdk.Rows, columns []string, size int) *omniBatchSource {
@@ -489,12 +530,18 @@ func (s *omniBatchSource) Next(context.Context) ([][]any, error) {
 			values = append(values, stagedValue(row[name]))
 		}
 		batch = append(batch, values)
+		s.readRows++
 	}
 	if len(batch) > 0 {
 		return batch, nil
 	}
 	if err := s.rows.Err(); err != nil {
-		return nil, err
+		if s.readRows == 0 {
+			return nil, err
+		}
+		// Preserve completed pages, then surface the failed continuation to the
+		// client after the partial result. The upstream failure remains an error.
+		s.terminalErr = err
 	}
 	return nil, io.EOF
 }
@@ -534,4 +581,44 @@ func outputValue(value any) any {
 		return string(raw)
 	}
 	return textValue(value)
+}
+
+func (s *standardStagedSelect) renderAfterOffset(tableName string, applied int) string {
+	statement := s.outerTemplate
+	suffix := " OFFSET " + strconv.Itoa(s.offset)
+	if s.offset > 0 && strings.HasSuffix(statement, suffix) {
+		statement = strings.TrimSuffix(statement, suffix)
+		if remaining := s.offset - applied; remaining > 0 {
+			statement += " OFFSET " + strconv.Itoa(remaining)
+		}
+	}
+	return renderStagedTemplate(statement, tableName)
+}
+
+// terminalErrorStream returns completed SQL batches before reporting the source
+// failure. Embedding the stream preserves its columns and close behaviour.
+type terminalErrorStream struct {
+	sqldata.ISQLResultStream
+	terminalErr error
+	pending     bool
+}
+
+func (s *terminalErrorStream) Read() (sqldata.ISQLResult, error) {
+	if s.pending {
+		s.pending = false
+		err := s.terminalErr
+		s.terminalErr = nil
+		return nil, err
+	}
+	result, err := s.ISQLResultStream.Read()
+	if errors.Is(err, io.EOF) && s.terminalErr != nil {
+		if result != nil {
+			s.pending = true
+			return result, nil
+		}
+		terminal := s.terminalErr
+		s.terminalErr = nil
+		return result, terminal
+	}
+	return result, err
 }

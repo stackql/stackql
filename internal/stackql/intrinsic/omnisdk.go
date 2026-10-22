@@ -149,6 +149,15 @@ func lastSegment(path string) string {
 	return path
 }
 
+// apiRequestTimeout preserves the CLI zero value as an explicit disable.
+func apiRequestTimeout(ctx queryContext) time.Duration {
+	seconds := ctx.GetRuntimeContext().APIRequestTimeout
+	if seconds == 0 {
+		return -1
+	}
+	return time.Duration(seconds) * time.Second
+}
+
 func openStream(
 	ctx queryContext, resourcePath string, params map[string]string,
 	exprs sqlparser.SelectExprs) (*rowStream, error) {
@@ -161,7 +170,8 @@ func openStream(
 		Params:                params,
 		AuthByProvider:        providerAuthByProvider(ctx, resourcePath),
 		Endpoint:              input.getEndpoint(),
-		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify(),
+		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify() || ctx.GetRuntimeContext().AllowInsecure,
+		Tuning:                omnisdk.Tuning{RequestTimeout: apiRequestTimeout(ctx)},
 	}
 	plan, err := omnisdk.Default().New(method.Path, args)
 	if err != nil {
@@ -603,6 +613,21 @@ func omnisdkAuth(authCtx *dto.AuthCtx) *omnisdk.Auth {
 		return nil
 	}
 	auth := &omnisdk.Auth{
+		TenancyOCID:          authCtx.OciTenancyOCID,
+		TenancyOCIDEnvVar:    authCtx.OciTenancyOCIDEnvVar,
+		UserOCID:             authCtx.OciUserOCID,
+		UserOCIDEnvVar:       authCtx.OciUserOCIDEnvVar,
+		Fingerprint:          authCtx.OciFingerprint,
+		FingerprintEnvVar:    authCtx.OciFingerprintEnvVar,
+		PrivateKey:           authCtx.OciPrivateKey,
+		PrivateKeyEnvVar:     authCtx.OciPrivateKeyEnvVar,
+		PrivateKeyPath:       authCtx.OciPrivateKeyFilePath,
+		PrivateKeyPathEnvVar: authCtx.OciPrivateKeyFilePathEnvVar,
+		Passphrase:           authCtx.OciPassphrase,
+		PassphraseEnvVar:     authCtx.OciPassphraseEnvVar,
+		ConfigFilePath:       authCtx.OciConfigFilePath,
+		Profile:              authCtx.OciProfile,
+
 		Type:           authCtx.Type,
 		ValuePrefix:    authCtx.ValuePrefix,
 		Name:           authCtx.Name,
@@ -613,9 +638,13 @@ func omnisdkAuth(authCtx *dto.AuthCtx) *omnisdk.Auth {
 		UsernameEnvVar: authCtx.EnvVarUsername,
 		PasswordEnvVar: authCtx.EnvVarPassword,
 	}
-	if strings.EqualFold(authCtx.Type, "api_key") && auth.Name == "" {
+	if strings.EqualFold(authCtx.Type, "basic") && auth.ValuePrefix == "" {
+		// Preserve the CLI's established Basic scheme spelling.
+		auth.ValuePrefix = "BASIC "
+	}
+	if (strings.EqualFold(authCtx.Type, "api_key") || strings.EqualFold(authCtx.Type, "custom")) && auth.Name == "" {
 		auth.Name = "Authorization"
-		if auth.ValuePrefix == "" {
+		if auth.ValuePrefix == "" && strings.EqualFold(authCtx.Type, "api_key") {
 			auth.ValuePrefix = "Bearer "
 		}
 	}
