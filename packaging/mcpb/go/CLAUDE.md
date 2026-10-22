@@ -1,6 +1,6 @@
 # CLAUDE.md - packaging/mcpb/go (module `github.com/stackql/stackql-mcp-go`)
 
-The Go member of the StackQL embedded-MCP family: package `embed` runs the `stackql` MCP server either from a `go:embed`-carried binary (`cmd/stackql-mcp-fetch` downloads and pin-verifies it at `go generate` time) or via the sidecar path (shared cache, then a pin-verified download) when `Options.Binary` is unset, and returns a connected `modelcontextprotocol/go-sdk` client. Go 1.25. The module path stays `github.com/stackql/stackql-mcp-go`: the source of truth is here, `scripts/publish-mirror.sh` pushes the rendered tree to that mirror repo and tags `v<version>` (Go modules cannot be consumed cleanly from a monorepo subdirectory).
+The Go member of the StackQL embedded-MCP family: package `embed` runs the `stackql` MCP server either from a `go:embed`-carried binary (`cmd/stackql-mcp-fetch` downloads and pin-verifies it at `go generate` time) or via the sidecar path (shared cache, then a pin-verified download) when `Options.Binary` is unset, and returns a connected `modelcontextprotocol/go-sdk` client. Go 1.27.3. The module path stays `github.com/stackql/stackql-mcp-go`: the source of truth is here, `scripts/publish-mirror.sh` pushes the rendered tree to that mirror repo and tags `v<version>` (Go modules cannot be consumed cleanly from a monorepo subdirectory).
 
 ## The contract (do not deviate)
 

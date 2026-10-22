@@ -1,6 +1,6 @@
 module github.com/stackql/stackql-mcp-go
 
-go 1.25.0
+go 1.27.3
 
 require github.com/modelcontextprotocol/go-sdk v1.6.1
 
