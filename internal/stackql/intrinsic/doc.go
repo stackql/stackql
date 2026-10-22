@@ -167,9 +167,12 @@ func docSelectFunc(
 	if expandErr != nil {
 		return refuse(expandErr), true
 	}
-	node = expanded
+	node, relations, relationErr := resolveDerivedRelations(ctx, expanded, currentProvider, 0)
+	if relationErr != nil {
+		return refuse(relationErr), true
+	}
 	if previewCfg.getStagingEnabled() && needsStaging(node) {
-		return stagedSelectFunc(ctx, node, currentProvider), true
+		return stagedSelectWithRelations(ctx, node, currentProvider, relations), true
 	}
 	dialect, err := backendDialect(ctx)
 	if err != nil {
@@ -179,6 +182,7 @@ func docSelectFunc(
 	if err != nil {
 		return refuse(err), true
 	}
+	translated = withRelations(translated, relations)
 	return func() internaldto.ExecutorOutput { return runDocQuery(ctx, translated) }, true
 }
 
@@ -215,11 +219,22 @@ const mutationSuccessMessage = "The operation was despatched successfully"
 // openDocQuery describes each relation, resolves the query and opens its
 // cursor, returning it with the alias of the relation it reports.
 func openDocQuery(ctx queryContext, translated docQuery) (omnisdk.Rows, string, error) {
+	return openDocQueryIn(ctx, translated, context.Background())
+}
+
+func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Context) (omnisdk.Rows, string, error) {
 	registry := registryRoot(ctx)
 	q := translated.getQuery()
+	relations := queryRelations(translated)
 	tables := make(map[string]omnisdk.Table, len(q.From())+1)
 	for _, join := range q.From() {
-		tbl, describeErr := omnisdk.DescribeTable(registry, join.Resource().Handle())
+		var tbl omnisdk.Table
+		var describeErr error
+		if relation, ok := relations[join.Resource().Handle()]; ok {
+			tbl = relation
+		} else {
+			tbl, describeErr = omnisdk.DescribeTable(registry, join.Resource().Handle())
+		}
 		if describeErr != nil {
 			return nil, "", describeErr
 		}
@@ -252,6 +267,7 @@ func openDocQuery(ctx queryContext, translated docQuery) (omnisdk.Rows, string, 
 	if argsErr != nil {
 		return nil, "", argsErr
 	}
+	args.Relations = relations
 	args.Tuning.Limit = translated.getLimit()
 	if hinted, ok := translated.(interface {
 		getReadHints() map[string]omnisdk.ReadHints
@@ -262,7 +278,7 @@ func openDocQuery(ctx queryContext, translated docQuery) (omnisdk.Rows, string, 
 	if planErr != nil {
 		return nil, "", planErr
 	}
-	rows, openErr := plan.Open(context.Background())
+	rows, openErr := plan.Open(runCtx)
 	if openErr != nil {
 		return nil, "", openErr
 	}

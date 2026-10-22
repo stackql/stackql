@@ -12256,3 +12256,37 @@ Preview Iac Destroy Without Collection Is Refused
     ...    --preview\=${preview}
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Destroy-No-Collection.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Destroy-No-Collection-stderr.tmp
+
+Omni Derived Relation Preserves Inner Order And Limit
+    [Documentation]    Derived relations execute through analyzer-owned Omni read handles.
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select count(*) as n from (select login, contributions from github.repos.contributors where owner = 'dummyorg' and repo = 'dummyapp.io' order by contributions desc limit 2) contributors;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    n\n2
+    ...    \-o\=csv
+    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
+
+Omni Nested Derived Relation Preserves Aggregate Boundary
+    [Documentation]    Derived relations execute through analyzer-owned Omni read handles.
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    select max(n) as n from (select count(*) as n from (select login from github.repos.contributors where owner = 'dummyorg' and repo = 'dummyapp.io' limit 2) limited) counted;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    n\n2
+    ...    \-o\=csv
+    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}

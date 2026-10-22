@@ -323,3 +323,39 @@ func TestOmnisdkAuthAPIKeyDefaultsMatchCanonicalProviders(t *testing.T) {
 		}
 	}
 }
+
+func TestNullValuesRenderLikeBackendResults(t *testing.T) {
+	stream, _ := newTestStream([]omnisdk.Row{{"name": "explicit", "value": nil}, {"name": "absent"}}, nil)
+	stream.columns = []column{{name: "name", dataType: "string"}, {name: "value", dataType: "string"}}
+	var buf, errBuf bytes.Buffer
+	writer, err := output.GetOutputWriter(&buf, &errBuf, internaldto.OutputContext{
+		RuntimeContext: dto.RuntimeCtx{OutputFormat: "csv", Delimiter: ","}, Result: stream,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = writer.Write(stream); err != nil {
+		t.Fatal(err)
+	}
+	if want := "name,value\nexplicit,null\nabsent,null\n"; buf.String() != want {
+		t.Fatalf("got %q, want %q", buf.String(), want)
+	}
+}
+
+func TestNullValuesRemainJSONNull(t *testing.T) {
+	stream, _ := newTestStream([]omnisdk.Row{{"name": "explicit", "value": nil}}, nil)
+	stream.columns = []column{{name: "name", dataType: "string"}, {name: "value", dataType: "string"}}
+	var buf, errBuf bytes.Buffer
+	writer, err := output.GetOutputWriter(&buf, &errBuf, internaldto.OutputContext{
+		RuntimeContext: dto.RuntimeCtx{OutputFormat: "jsonl"}, Result: stream,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = writer.Write(stream); err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"name":"explicit","value":null}` + "\n"; buf.String() != want {
+		t.Fatalf("got %q, want %q", buf.String(), want)
+	}
+}

@@ -213,6 +213,43 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 		sql  string
 		want string
 	}{
+
+		{
+			sql:  "select s.login from (select login, id" + from + ") s where s.id > 2 order by s.id desc",
+			want: "login\nb\nd\n",
+		},
+		{
+			sql:  "select s.login from (select login, id" + from + " order by id desc limit 2) s order by s.login",
+			want: "login\nb\nd\n",
+		},
+		{
+			sql:  "select s.type, s.n from (select type, count(*) as n" + from + " group by type) s where s.n > 1 order by s.n",
+			want: "type,n\nUser,3\n",
+		},
+		{
+			sql:  "select outer_rows.login from (select inner_rows.login from (select login, id" + from + ") inner_rows where inner_rows.id = 2) outer_rows",
+			want: "login\nc\n",
+		},
+
+		{
+			sql: "select m.login, s.login as selected from stackql_unstable_fixture.orgs.members m left join (select login, id" + from + " order by id desc limit 2) s on m.id = s.id where m.org = 'dummyorg' order by m.login",
+			// CSV presentation spells SQL NULL as null.
+			want: "login,selected\na,null\nb,b\nc,null\nd,d\n",
+		},
+
+		{
+			sql:  "select s.login from (select *" + from + " order by id desc limit 2) s order by s.login",
+			want: "login\nb\nd\n",
+		},
+
+		{
+			sql:  "select m.login, x.label from (select 'b' as login, 'constant' as label) x join (select login" + from + ") m on x.login = m.login",
+			want: "login,label\nb,constant\n",
+		},
+		{
+			sql:  "select s.login from (select login, lag(id) over (order by id) as previous_id" + from + ") s where s.previous_id is null",
+			want: "login\na\n",
+		},
 		{
 			// Numeric ordering: as text, 10 would sort before 2.
 			sql:  "select login, id" + from + " order by id desc limit 2 offset 1",

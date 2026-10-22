@@ -63,13 +63,27 @@ func (d *standardDocQuery) getBundles() []string { return d.bundles }
 // fromDocProviders reports whether a FROM clause reads the document-driven
 // providers, and refuses one mixing them with anything else: omnisdk runs the
 // whole query, so every relation in it has to be one it can resolve.
+//
+//nolint:gocognit // Classify each FROM relation, including nested SELECTs, in one traversal.
 func fromDocProviders(from sqlparser.TableExprs, currentProvider string) (bool, error) {
 	var docs, others []string
 	var walk func(expr sqlparser.TableExpr)
 	walk = func(expr sqlparser.TableExpr) {
 		switch node := expr.(type) {
 		case *sqlparser.AliasedTableExpr:
+			if sub, ok := node.Expr.(*sqlparser.Subquery); ok {
+				if inner, isSelect := sub.Select.(*sqlparser.Select); isSelect {
+					for _, child := range inner.From {
+						walk(child)
+					}
+					return
+				}
+			}
 			tableName, isName := node.Expr.(sqlparser.TableName)
+			if isName && tableName.Name.GetRawVal() == "dual" &&
+				tableName.Qualifier.IsEmpty() && tableName.QualifierSecond.IsEmpty() {
+				return
+			}
 			if !isName {
 				others = append(others, sqlparser.String(node))
 				return
