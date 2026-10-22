@@ -12,7 +12,7 @@
 # tools annotated readOnlyHint, and each stdio case restarts the server.
 # Every mode uses a fixed seed, so a failure replays with the reproducer file
 # in the uploaded report artifact:
-#   npx @stackql/mcp-wringer replay <file.repro.json>
+#   npx @stackql/mcp-wringer@0.1.1 replay <file.repro.json>
 #
 # cicd/mcp-wringer/mcp-server.mjs owns the server invocation.
 
@@ -120,7 +120,7 @@ jobs:
 
       - name: Fuzz stdio (2025-11-25)
         id: stdio-2025
-        uses: stackql/mcp-wringer@v0
+        uses: stackql/mcp-wringer@v0.1.1
         env:
           MCP_WRINGER_SPEC_REVISION: "2025-11-25"
         with:
@@ -131,7 +131,7 @@ jobs:
       - name: Fuzz stdio (2026-07-28)
         id: stdio-2026
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        uses: stackql/mcp-wringer@v0
+        uses: stackql/mcp-wringer@v0.1.1
         env:
           MCP_WRINGER_SPEC_REVISION: "2026-07-28"
         with:
@@ -150,7 +150,7 @@ jobs:
       - name: Fuzz Streamable HTTP stateful (2025-11-25)
         id: http-stateful
         if: ${{ !cancelled() && steps.http-stateful-server.outcome == 'success' }}
-        uses: stackql/mcp-wringer@v0
+        uses: stackql/mcp-wringer@v0.1.1
         env:
           MCP_WRINGER_SPEC_REVISION: "2025-11-25"
         with:
@@ -173,7 +173,7 @@ jobs:
       - name: Fuzz Streamable HTTP stateless (2026-07-28)
         id: http-stateless
         if: ${{ !cancelled() && steps.http-stateless-server.outcome == 'success' }}
-        uses: stackql/mcp-wringer@v0
+        uses: stackql/mcp-wringer@v0.1.1
         env:
           MCP_WRINGER_SPEC_REVISION: "2026-07-28"
         with:

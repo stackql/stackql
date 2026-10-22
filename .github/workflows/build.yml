@@ -176,6 +176,34 @@ jobs:
       with:
         args: "install --force postgresql13 sqlite"
 
+    # community.chocolatey.org intermittently answers package metadata with a
+    # 504; choco then skips that package yet still exits 0 ("installed 1/1
+    # packages"), and the miss only surfaces ~15 minutes later as a
+    # FileNotFoundError in the export robot tests. Probe for each binary the
+    # tests need, re-install anything missing with backoff, and fail here if
+    # the feed stays down.
+    - name: Verify chocolatey packages (retry on feed timeout)
+      shell: pwsh
+      timeout-minutes: 20
+      run: |
+        $PSNativeCommandUseErrorActionPreference = $false
+        $probes = @(
+          @{ pkg = 'sqlite';       dir = 'C:\ProgramData\chocolatey\lib\SQLite\tools'; exe = 'sqlite3.exe' },
+          @{ pkg = 'postgresql13'; dir = 'C:\Program Files\PostgreSQL\13\bin';          exe = 'psql.exe' }
+        )
+        foreach ($p in $probes) {
+          $hit = $null
+          for ($attempt = 1; $attempt -le 4; $attempt++) {
+            $hit = Get-ChildItem -LiteralPath $p.dir -Filter $p.exe -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($hit) { break }
+            Write-Host "$($p.pkg): $($p.exe) not found under $($p.dir) (attempt $attempt of 4); re-installing"
+            Start-Sleep -Seconds (20 * $attempt)
+            choco install --force --yes $p.pkg
+          }
+          if (-not $hit) { throw "$($p.pkg): $($p.exe) still missing after 4 attempts - chocolatey feed unavailable" }
+          Write-Host "$($p.pkg): OK -> $($hit.FullName)"
+        }
+
     - name: Install Python dependencies
       run: |
         pip3 install -r cicd/requirements.txt
@@ -1690,7 +1718,7 @@ jobs:
     - name: Pull Docker base images for cache purposes
       if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
-        docker pull --platform ${{ matrix.platform }} golang:1.23-bullseye || echo 'could not pull image for cache purposes'
+        docker pull --platform ${{ matrix.platform }} golang:1.27.3-bookworm || echo 'could not pull image for cache purposes'
         docker pull --platform ${{ matrix.platform }} ubuntu:22.04 || echo 'could not pull image for cache purposes'
 
     - name: Pull Docker image for cache purposes
