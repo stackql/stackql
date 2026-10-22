@@ -10,7 +10,7 @@ verifies its SHA-256, and starts `stackql mcp --mcp.server.type=stdio`.
 
 ## Install from this repository
 
-Node.js 18 or later is required.
+Node.js 24.22.1 or later is required (22.23.4 or 26.12.1 on those release lines). These are the [October 2026 Node.js security releases](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases); earlier builds have unpatched TLS hostname verification bypasses and still trust the compromised eMudhra intermediate CA.
 
 ```shell
 codex plugin marketplace add stackql/stackql --sparse .agents/plugins --sparse packaging/openai-plugin

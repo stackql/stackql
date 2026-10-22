@@ -46,7 +46,9 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          # October 2026 security release: TLS hostname CVEs, Brotli RCE, eMudhra CA removal
+          node-version: '24.22.1'
+          check-latest: true
       - uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
@@ -149,7 +151,9 @@ jobs:
           architecture: ${{ matrix.arch }}
       - uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          # October 2026 security release: TLS hostname CVEs, Brotli RCE, eMudhra CA removal
+          node-version: '24.22.1'
+          check-latest: true
           architecture: ${{ matrix.arch }}
       - name: Download bundle artifact
         uses: actions/download-artifact@v8

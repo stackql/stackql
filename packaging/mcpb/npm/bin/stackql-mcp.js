@@ -27,6 +27,36 @@ const path = require("path");
 
 const manifest = require("../platforms.json");
 
+// Node.js floor: the October 2026 security releases fix TLS hostname
+// verification bypasses in the fetch() path this launcher downloads through,
+// a Brotli decoder RCE, and drop the compromised eMudhra intermediate CA from
+// the bundled trust store. Earlier builds of 22/24/26 and every other line
+// (18, 20, 23, 25 are End-of-Life) stay unpatched. package.json "engines"
+// only warns at install time, so repeat the warning at run time - on stderr,
+// because stdout belongs to the MCP protocol.
+const PATCHED_NODE = { 22: [22, 23, 4], 24: [24, 22, 1], 26: [26, 12, 1] };
+const NODE_ADVISORY =
+  "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases";
+
+function compareVersions(a, b) {
+  for (let i = 0; i < 3; i++) {
+    if (a[i] !== b[i]) return a[i] - b[i];
+  }
+  return 0;
+}
+
+function warnIfUnpatchedNode() {
+  const current = process.versions.node.split(".").map(Number);
+  if (current[0] > 26) return; // newer lines ship the fixes
+  const floor = PATCHED_NODE[current[0]];
+  if (floor && compareVersions(current, floor) >= 0) return;
+  console.error(
+    `stackql-mcp: WARNING Node.js ${process.versions.node} predates the ` +
+    "October 2026 security releases (22.23.4 / 24.22.1 / 26.12.1); " +
+    `upgrade Node.js - see ${NODE_ADVISORY}`
+  );
+}
+
 function platformKey() {
   const { platform, arch } = process;
   if (platform === "linux" && arch === "x64") return "linux-x64";
@@ -104,6 +134,7 @@ async function ensureBinary() {
 }
 
 async function main() {
+  warnIfUnpatchedNode();
   const bin = await ensureBinary();
   // approot and the audit sink must not depend on the cwd: MCP clients may
   // launch this with cwd '/' (read-only on macOS). Later duplicate flags win,

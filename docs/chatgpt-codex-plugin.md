@@ -23,7 +23,7 @@ are available, start a Codex thread instead.
 
 ## Install
 
-Install Node.js 18 or later, then run:
+Install Node.js 24.22.1 or later (22.23.4 or 26.12.1 on those release lines; these are the [October 2026 security releases](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases)), then run:
 
 ```shell
 codex plugin marketplace add stackql/stackql --sparse .agents/plugins --sparse packaging/openai-plugin

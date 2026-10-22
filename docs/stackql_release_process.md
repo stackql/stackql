@@ -15,9 +15,19 @@ git push origin v0.12.778
 
 Create a release from the tag (set to latest)
 
-### 2. Download Artifacts from Latest Build
+### 2. Attach the Linux build artifacts to the release
 
-Download the following artifacts from the latest build on the `main` branch including:
+From this repo's root, with the `gh` CLI authenticated, run:
+
+```bash
+python cicd/python/attach_build_artifacts.py 0.12.778
+```
+
+The script finds build `778` of the `Build` workflow on `main` and checks that the tag points at the commit it built. It then downloads the `stackql_linux_amd64`, `stackql_linux_arm64`, `amd64-artifact-deb` and `arm64-artifact-deb` artifact zips exactly as GitHub stores them, writes a `<asset>.sha256` sidecar for each (sha256sum format, the same as the `.mcpb.sha256` sidecars), uploads the assets and sidecars that are not already on the release, and verifies the digest GitHub recorded for every attached asset against the local bytes. Attached assets are never overwritten: if one is already there with different bytes the script fails and names it. It also downloads the unsigned `stackql_windows_amd64` and `stackql_windows_arm64` zips for step 4 into `dist/release-assets/v0.12.778/` without uploading them. Pass `--dry-run` to see the plan without uploading, and `--skip-deb` to leave the Debian packages out.
+
+### 3. Manual fallback for step 2
+
+Download the following artifacts from build `{build_number}` of the `Build` workflow on `main`:
 
 - `amd64-artifact-deb`
 - `arm64-artifact-deb`
@@ -26,12 +36,7 @@ Download the following artifacts from the latest build on the `main` branch incl
 - `stackql_windows_amd64` (used in step 4)
 - `stackql_windows_arm64` (used in step 4)
 
-### 3. Add the following assets to the release:
-
-- `amd64-artifact-deb` (downloaded in step 2)
-- `arm64-artifact-deb` (downloaded in step 2)
-- `stackql_linux_amd64.zip` (downloaded in step 2)
-- `stackql_linux_arm64.zip` (downloaded in step 2)
+Add the first four to the release as `amd64-artifact-deb.zip`, `arm64-artifact-deb.zip`, `stackql_linux_amd64.zip` and `stackql_linux_arm64.zip`, each with a `<asset>.sha256` sidecar computed from the file as uploaded, for example `sha256sum stackql_linux_amd64.zip > stackql_linux_amd64.zip.sha256`.
 
 ### 4. Package, Sign and Upload Windows x64 and ARM64 Versions
 
@@ -42,7 +47,7 @@ Using the [stackql/stackql-windows-installer](https://github.com/stackql/stackql
 - `stackql_windows_arm64.msi`
 - `stackql_windows_arm64.zip`
 
-Native Windows ARM64 MSI and ZIP assets are available from `v0.12.778`. Save both unsigned ZIPs from the same build in step 2 as `downloaded\stackql_windows_amd64.zip` and `downloaded\stackql_windows_arm64.zip` in the installer repo. From that repo's root, run:
+Native Windows ARM64 MSI and ZIP assets are available from `v0.12.778`. Copy both unsigned ZIPs downloaded in step 2 (`dist/release-assets/v{version}/stackql_windows_amd64.zip` and `stackql_windows_arm64.zip`) to `downloaded\stackql_windows_amd64.zip` and `downloaded\stackql_windows_arm64.zip` in the installer repo. From that repo's root, run:
 
 ```powershell
 .\build.ps1 true
@@ -54,7 +59,7 @@ This builds both architectures, signs both executables and both MSIs, and create
 .\release.ps1
 ```
 
-The upload script checks that all package versions match and the MSI and EXE signatures are valid. Existing assets are skipped. The Windows MCPB packages in step 6 consume these signed ZIPs. The `get-stackql.io` PowerShell installer downloads `stackql_windows_arm64.zip` on ARM64 machines, so every release needs it.
+The upload script checks that all package versions match and the MSI and EXE signatures are valid, writes a `<asset>.sha256` sidecar for each signed package, uploads the assets and sidecars, and verifies the digest GitHub recorded for each attached asset against the local package. Existing assets are skipped, and a sidecar is only uploaded when the attached asset is byte-identical to the local one. The Windows MCPB packages in step 6 consume these signed ZIPs. The `get-stackql.io` PowerShell installer downloads `stackql_windows_arm64.zip` on ARM64 machines, so every release needs it.
 
 ### 5. Package, Sign, Notarize and Upload the Multi Arch Darwin Version
 
@@ -66,7 +71,7 @@ sh create-installer.sh {build_number}
 sh create-installer.sh 778
 ```
 
-this will create a signed, notarized package file `stackql_darwin_multiarch.pkg` and add it to the relase assets.
+This creates a signed, notarized package file `stackql_darwin_multiarch.pkg`, computes its `stackql_darwin_multiarch.pkg.sha256` sidecar from the stapled package, adds both to the release assets, and verifies the digest GitHub recorded for the attached package. If the package already exists on the release it is skipped, and the sidecar is only uploaded when the attached package is byte-identical to the local one.
 
 ### 6. Build and push MCPB assets to the release
 
