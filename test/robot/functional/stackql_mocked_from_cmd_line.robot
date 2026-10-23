@@ -6826,6 +6826,7 @@ Multi Dependency Multi Dependent Multiple List And Detail Dataflow Works As Exem
     ...    stdout=${CURDIR}/tmp/Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details.tmp
     ...    stderr=${CURDIR}/tmp/Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
     ...    stackql_dataflow_permissive=True
+    ...    omni_expected_stderr_output=${EMPTY}
 
 Error GTE 400 Response Code Does Not Stop The World As Exemplified By AWS Subnet Route Associations List And Detail Pattern
     ${sqliteInputStr} =    Catenate
@@ -6902,6 +6903,7 @@ Error GTE 400 Response Code Does Not Stop The World As Exemplified By AWS Subnet
     ...    stdout=${CURDIR}/tmp/Error-GTE-400-Response-Code-Does-Not-Stop-The-World-As-Exemplified-By-AWS-Subnet-Route-Associations-List-And-Detail-Pattern.tmp
     ...    stderr=${CURDIR}/tmp/Error-GTE-400-Response-Code-Does-Not-Stop-The-World-As-Exemplified-By-AWS-Subnet-Route-Associations-List-And-Detail-Pattern-stderr.tmp
     ...    stackql_dataflow_permissive=True
+    ...    unordered_http_diagnostics=True
 
 View Not Found Does Not Cause Crash and View Param Indeterminate Scenario
     ${inputStr} =    Catenate
@@ -7084,6 +7086,7 @@ Static Input Read Many Multi Dependency Multi Dependent Multiple List And Detail
     ...    ${outputErrStr}
     ...    stdout=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details.tmp
     ...    stderr=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
+    ...    omni_expected_stderr_output=${EMPTY}
 
 Self Join Polymorphic Works As Exemplified By Azure VPN List and Details
     ${sqliteInputStr} =    Catenate
@@ -12288,5 +12291,65 @@ Omni Nested Derived Relation Preserves Aggregate Boundary
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
     ...    n\n2
+    ...    \-o\=csv
+    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
+
+Omni Stored View Joins Provider Through Read Handles
+    ${query} =    Catenate    SEPARATOR=${SPACE}
+    ...    create or replace view omni_members as select login,contributions from github.repos.contributors where owner='dummyorg' and repo='dummyapp.io';
+    ...    select count(*) as n from (select login from omni_members order by contributions desc limit 2) v
+    ...    join github.repos.contributors c on v.login=c.login where c.owner='dummyorg' and c.repo='dummyapp.io';
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    n\n2
+    ...    \-o\=csv
+    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
+
+
+Omni CTEs Preserve Ordered Boundaries And Column Names
+    ${inputStr} =    Catenate
+    ...    with picked as (select login,contributions from github.repos.contributors
+    ...    where owner='dummyorg' and repo='dummyapp.io' order by contributions desc limit 2),
+    ...    tallied(member_count) as (select count(*) from picked)
+    ...    select member_count from tallied;
+    ${expectedStr} =    Catenate    SEPARATOR=\n
+    ...    member_count
+    ...    2
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${expectedStr}
+    ...    \-o\=csv
+    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
+
+
+Omni CASE Join Skips Unselected Error Branches
+    ${query} =    Catenate
+    ...    select count(*) as n from (select login from github.repos.contributors
+    ...    where owner='dummyorg' and repo='dummyapp.io' order by login limit 1) c
+    ...    join (select 1 as join_key) one on one.join_key=case when c.login is not null then 1 else json('invalid-json') end;
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}
+    ...    n\n1
     ...    \-o\=csv
     ...    --preview\={"unstable":true,"staging":true,"omni":"all"}

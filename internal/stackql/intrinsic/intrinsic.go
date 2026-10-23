@@ -82,6 +82,9 @@ func GenerateStreamFunc(
 	if node, isSelect := stmt.(*sqlparser.Select); isSelect {
 		return selectFunc(ctx, node, ctx.GetCurrentProvider())
 	}
+	if action, handled := storedInsertSelectFunc(ctx, stmt); handled {
+		return action, true
+	}
 	return docMutationFunc(ctx, stmt, ctx.GetCurrentProvider())
 }
 

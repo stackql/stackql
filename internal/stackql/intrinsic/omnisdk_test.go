@@ -2,6 +2,7 @@ package intrinsic //nolint:testpackage // tests unexported rowStream and pickMet
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -357,5 +358,40 @@ func TestNullValuesRemainJSONNull(t *testing.T) {
 	}
 	if want := `{"name":"explicit","value":null}` + "\n"; buf.String() != want {
 		t.Fatalf("got %q, want %q", buf.String(), want)
+	}
+}
+
+func TestPrimedStreamPreservesRowsAndHeadersBeforeTerminalError(t *testing.T) {
+	original := errors.New("upstream failed")
+	for _, rows := range [][]omnisdk.Row{nil, {{"name": "kept"}}} {
+		stream, cursor := newTestStream(rows, []string{"name"})
+		cursor.err = original
+		primed, err := newPrimedStream(stream)
+		if err != nil {
+			t.Fatal(err)
+		}
+		first, err := primed.Read()
+		if err != nil || len(first.GetRows()) != len(rows) || len(first.GetColumns()) != 1 {
+			t.Fatalf("rows=%v result=%v error=%v", rows, first, err)
+		}
+		_, err = primed.Read()
+		if !errors.Is(err, original) {
+			t.Fatalf("lost original error: %v", err)
+		}
+		if err = primed.Close(); err != nil {
+			t.Fatal(err)
+		}
+		if !cursor.closed {
+			t.Fatal("cursor not closed")
+		}
+	}
+}
+
+func TestEmptyStagedSourceRetainsTerminalErrorForPresentation(t *testing.T) {
+	original := errors.New("first page failed")
+	source := newOmniBatchSource(&fakeRows{err: original}, []string{"name"}, 10)
+	batch, err := source.Next(context.Background())
+	if len(batch) != 0 || !errors.Is(err, io.EOF) || !errors.Is(source.terminalErr, original) {
+		t.Fatalf("batch=%v error=%v terminal=%v", batch, err, source.terminalErr)
 	}
 }

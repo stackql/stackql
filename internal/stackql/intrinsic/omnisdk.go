@@ -194,17 +194,19 @@ func openStream(
 }
 
 type rowStream struct {
-	rows          omnisdk.Rows
-	batchSize     int
-	flushInterval time.Duration
-	produced      chan omnisdk.Row
-	producerOnce  sync.Once
-	columns       []column
-	table         sqldata.ISQLTable
-	projection    sqlparser.SelectExprs
-	outputs       []string
-	typCfg        columnFactory
-	done          bool
+	suppressFailedHeaders bool
+	rows                  omnisdk.Rows
+	batchSize             int
+	flushInterval         time.Duration
+	produced              chan omnisdk.Row
+	producerOnce          sync.Once
+	columns               []column
+	table                 sqldata.ISQLTable
+	projection            sqlparser.SelectExprs
+	outputs               []string
+	emptyColumns          func() []column
+	typCfg                columnFactory
+	done                  bool
 }
 
 type columnFactory interface {
@@ -213,6 +215,9 @@ type columnFactory interface {
 
 func (rs *rowStream) Read() (sqldata.ISQLResult, error) {
 	if rs.done {
+		if err := rs.rows.Err(); err != nil {
+			return rs.errorResult(), err
+		}
 		return rs.result(nil), io.EOF
 	}
 	rs.startProducer()
@@ -228,7 +233,7 @@ func (rs *rowStream) Read() (sqldata.ISQLResult, error) {
 	if !ok {
 		rs.done = true
 		if err := rs.rows.Err(); err != nil {
-			return rs.result(nil), err
+			return rs.errorResult(), err
 		}
 		return rs.result(nil), io.EOF
 	}
@@ -240,7 +245,8 @@ func (rs *rowStream) Read() (sqldata.ISQLResult, error) {
 			if !more {
 				rs.done = true
 				if err := rs.rows.Err(); err != nil {
-					return rs.result(batch), err
+					//nolint:nilerr // Deliver the buffered rows before reporting this error on the next read.
+					return rs.result(batch), nil
 				}
 				return rs.result(batch), io.EOF
 			}
@@ -250,6 +256,13 @@ func (rs *rowStream) Read() (sqldata.ISQLResult, error) {
 		}
 	}
 	return rs.result(batch), nil
+}
+
+func (rs *rowStream) errorResult() sqldata.ISQLResult {
+	if rs.suppressFailedHeaders {
+		return nil
+	}
+	return rs.result(nil)
 }
 
 func (rs *rowStream) flushIntervalOrDefault() time.Duration {
@@ -273,19 +286,32 @@ func (rs *rowStream) startProducer() {
 	})
 }
 
-func (rs *rowStream) result(batch []omnisdk.Row) sqldata.ISQLResult {
-	if len(rs.columns) == 0 && len(rs.outputs) > 0 {
+func (rs *rowStream) resolveColumns(batch []omnisdk.Row) {
+	if len(rs.columns) > 0 {
+		return
+	}
+	if len(rs.outputs) > 0 {
 		rs.columns = outputColumns(rs.outputs, batch)
-	} else if len(rs.columns) == 0 && len(batch) > 0 {
-		for _, name := range sortedKeys(batch[0]) {
-			rs.columns = append(rs.columns, column{name: name})
+		if len(batch) == 0 && len(rs.columns) == 0 && rs.emptyColumns != nil {
+			rs.columns = rs.emptyColumns()
 		}
-		if len(rs.projection) > 0 {
-			if selected, err := projection(rs.projection, rs.columns); err == nil {
-				rs.columns = selected
-			}
+		return
+	}
+	if len(batch) == 0 {
+		return
+	}
+	for _, name := range sortedKeys(batch[0]) {
+		rs.columns = append(rs.columns, column{name: name})
+	}
+	if len(rs.projection) > 0 {
+		if selected, err := projection(rs.projection, rs.columns); err == nil {
+			rs.columns = selected
 		}
 	}
+}
+
+func (rs *rowStream) result(batch []omnisdk.Row) sqldata.ISQLResult {
+	rs.resolveColumns(batch)
 	columns := rs.GetColumns()
 	rows := make([]sqldata.ISQLRow, 0, len(batch))
 	for _, row := range batch {
@@ -359,6 +385,9 @@ func selectFunc(
 	node *sqlparser.Select,
 	currentProvider string,
 ) (func() internaldto.ExecutorOutput, bool) {
+	if execute, handled := storedSelectFunc(ctx, node, currentProvider); handled {
+		return execute, true
+	}
 	if isDoc, err := fromDocProviders(node.From, currentProvider); isDoc {
 		if err != nil {
 			return refuse(err), true
@@ -676,7 +705,7 @@ type primedStream struct {
 
 func newPrimedStream(inner *rowStream) (sqldata.ISQLResultStream, error) {
 	first, err := inner.Read()
-	if err != nil && !errors.Is(err, io.EOF) {
+	if err != nil && !errors.Is(err, io.EOF) && (first == nil || len(first.GetColumns()) == 0) {
 		inner.Close() //nolint:errcheck // the read error is the one worth reporting
 		return nil, err
 	}
@@ -686,7 +715,13 @@ func newPrimedStream(inner *rowStream) (sqldata.ISQLResultStream, error) {
 func (ps *primedStream) Read() (sqldata.ISQLResult, error) {
 	if !ps.replayed {
 		ps.replayed = true
+		if ps.firstErr != nil && !errors.Is(ps.firstErr, io.EOF) {
+			return ps.first, nil
+		}
 		return ps.first, ps.firstErr
+	}
+	if ps.firstErr != nil && !errors.Is(ps.firstErr, io.EOF) {
+		return ps.inner.result(nil), ps.firstErr
 	}
 	return ps.inner.Read()
 }

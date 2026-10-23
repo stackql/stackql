@@ -34,6 +34,13 @@ class _Collector(ResultVisitor):
             self.failed_by_suite[test.parent.name] += 1
 
 
+def _collect(result_path):
+    result = ExecutionResult(result_path)
+    collector = _Collector()
+    result.visit(collector)
+    return collector
+
+
 def _light(rate):
     if rate >= 100.0:
         return '🟢'
@@ -46,11 +53,8 @@ def _escape(text):
     return text.replace('|', '\\|').replace('\n', ' ')
 
 
-def render(result_path, title, context):
-    result = ExecutionResult(result_path)
-    collector = _Collector()
-    result.visit(collector)
-    total = collector.passed + collector.failed
+def _render(collector, title, context):
+    total = collector.passed + collector.failed + collector.skipped
     rate = (100.0 * collector.passed / total) if total else 0.0
     light = _light(rate)
     lines = [
@@ -92,13 +96,26 @@ def render(result_path, title, context):
     return '\n'.join(lines)
 
 
+def render(result_path, title, context):
+    return _render(_collect(result_path), title, context)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', required=True, help='robot output.xml path')
     parser.add_argument('--title', default='Robot results')
     parser.add_argument('--context', default='', help='one line shown under the title')
+    parser.add_argument(
+        '--require-100-percent', action='store_true',
+        help='exit nonzero unless every test passed and none were skipped',
+    )
     args = parser.parse_args(argv)
-    sys.stdout.write(render(args.output, args.title, args.context))
+    collector = _collect(args.output)
+    sys.stdout.write(_render(collector, args.title, args.context))
+    if args.require_100_percent and (
+        collector.passed == 0 or collector.failed > 0 or collector.skipped > 0
+    ):
+        return 1
     return 0
 
 

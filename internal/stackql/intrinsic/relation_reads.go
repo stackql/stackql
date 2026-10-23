@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"maps"
 	"sort"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
@@ -48,6 +49,7 @@ const derivedRelationMaxDepth = 32
 // Planning performs no reads; each child retains its own relational boundary.
 func resolveDerivedRelations(
 	ctx queryContext, original *sqlparser.Select, current string, depth int,
+	inherited ...map[string]omnisdk.Relation,
 ) (*sqlparser.Select, map[string]omnisdk.Relation, error) {
 	if depth >= derivedRelationMaxDepth {
 		return nil, nil, fmt.Errorf("derived relations exceed nesting bound")
@@ -55,6 +57,11 @@ func resolveDerivedRelations(
 	clone := *original
 	clone.From = cloneRelationTables(original.From)
 	relations := map[string]omnisdk.Relation{}
+	if len(inherited) > 0 {
+		for handle, relation := range inherited[0] {
+			relations[handle] = relation
+		}
+	}
 	var walk func(sqlparser.TableExpr) error
 	walk = func(expr sqlparser.TableExpr) error {
 		switch table := expr.(type) {
@@ -101,7 +108,7 @@ func resolveDerivedTable(
 	if err != nil {
 		return err
 	}
-	prepared, children, err := resolveDerivedRelations(ctx, expanded, current, depth+1)
+	prepared, children, err := resolveDerivedRelations(ctx, expanded, current, depth+1, maps.Clone(relations))
 	if err != nil {
 		return err
 	}
@@ -338,6 +345,10 @@ func expandDerivedStars(
 	if err != nil {
 		return err
 	}
+	aliases, err := whereAliasOutputs(node)
+	if err != nil {
+		return err
+	}
 	var expressions sqlparser.SelectExprs
 	for _, expr := range node.SelectExprs {
 		star, isStar := expr.(*sqlparser.StarExpr)
@@ -345,7 +356,7 @@ func expandDerivedStars(
 			expressions = append(expressions, expr)
 			continue
 		}
-		expanded, expandErr := derivedStarColumns(ctx, source, star, relations)
+		expanded, expandErr := resolvedStarColumns(ctx, source, star, relations, aliases...)
 		if expandErr != nil {
 			return expandErr
 		}
@@ -353,32 +364,6 @@ func expandDerivedStars(
 	}
 	node.SelectExprs = expressions
 	return nil
-}
-
-func derivedStarColumns(
-	ctx queryContext, source translatedSource, star *sqlparser.StarExpr, relations map[string]omnisdk.Relation,
-) (sqlparser.SelectExprs, error) {
-	var expressions sqlparser.SelectExprs
-	for _, join := range source.joins() {
-		resource := join.Resource()
-		if qualifier := star.TableName.Name.GetRawVal(); qualifier != "" && qualifier != resource.Alias() {
-			continue
-		}
-		names, err := declaredRelationColumns(ctx, resource.Handle(), relations)
-		if err != nil {
-			return nil, err
-		}
-		for _, name := range names {
-			expressions = append(expressions, &sqlparser.AliasedExpr{Expr: &sqlparser.ColName{
-				Name:      sqlparser.NewColIdent(name),
-				Qualifier: sqlparser.TableName{Name: sqlparser.NewTableIdent(resource.Alias())},
-			}})
-		}
-	}
-	if len(expressions) == 0 {
-		return nil, fmt.Errorf("unknown derived star qualifier %s", star.TableName.Name.GetRawVal())
-	}
-	return expressions, nil
 }
 
 func declaredRelationColumns(

@@ -13,10 +13,14 @@ package intrinsic
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -77,7 +81,7 @@ func previewService(providerName, serviceStr, currentProvider string) (string, b
 // It is a no-op without the opt-in, which keeps the catalogue exactly as it was
 // for anyone who has not asked for them.
 func appendPreviewServices(rows map[string]map[string]interface{}, extended bool) {
-	if !IsUnstableEnabled() {
+	if !IsExtendedCatalogEnabled() {
 		return
 	}
 	for i, svc := range []struct{ name, title string }{
@@ -162,14 +166,29 @@ func previewArgs(ctx queryContext, cloud string, params map[string]string) (omni
 		return omnisdk.Args{}, err
 	}
 	input := previewCfg
+	upstream, err := dto.GetUpstreamErrorCfg(ctx.GetRuntimeContext().UpstreamErrorCfgRaw)
+	if err != nil {
+		return omnisdk.Args{}, err
+	}
+	policy := newReadErrorPolicy(ctx, upstream.HTTP)
 	return omnisdk.Args{
-		DocumentVerifier:      verifier,
-		Params:                params,
-		AuthByProvider:        providerAuthByProvider(ctx, cloud),
-		Endpoint:              input.getEndpoint(),
-		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify() || ctx.GetRuntimeContext().AllowInsecure,
-		Tuning:                omnisdk.Tuning{RequestTimeout: apiRequestTimeout(ctx)},
-		Dialect:               dialect.catalogue(),
+		DocumentVerifier:         verifier,
+		Params:                   params,
+		AuthByProvider:           providerAuthByProvider(ctx, cloud),
+		Endpoint:                 input.getEndpoint(),
+		InsecureSkipTLSVerify:    input.getInsecureSkipTLSVerify() || ctx.GetRuntimeContext().AllowInsecure,
+		Dialect:                  dialect.catalogue(),
+		ResponseSelectionErrors:  policy,
+		HTTPObserver:             newHTTPDiagnostics(policy.writer, ctx.GetRuntimeContext().HTTPLogEnabled),
+		LegacyPagination:         true,
+		LegacyXMLValues:          true,
+		LegacyResponseTransforms: true,
+		HTTPReadErrors:           policy,
+		StrictResponseSelection:  true,
+		Tuning: omnisdk.Tuning{
+			RequestTimeout: apiRequestTimeout(ctx),
+			PageLimit:      ctx.GetRuntimeContext().HTTPPageLimit,
+		},
 	}, nil
 }
 
@@ -333,4 +352,49 @@ func describePreviewTableFunc(
 		"relation '%s' takes a specification rather than columns; "+
 			"run SHOW RESOURCES IN %s.%s for what it accepts",
 		relationAddress(service, resource), ProviderName, service)), true
+}
+
+// The host owns diagnostic wording and its output stream.
+type readErrorPolicy struct {
+	dto.HTTPUpstreamErrorCfg
+	writer io.Writer
+	mu     sync.Mutex
+}
+
+func newReadErrorPolicy(ctx queryContext, config dto.HTTPUpstreamErrorCfg) *readErrorPolicy {
+	var writer io.Writer = io.Discard
+	if output, ok := ctx.(interface{ GetOutErrFile() io.Writer }); ok {
+		writer = output.GetOutErrFile()
+	}
+	return &readErrorPolicy{HTTPUpstreamErrorCfg: config, writer: writer}
+}
+
+// StackQL presents absent provider resources as empty tables. This host policy
+// applies only to resource reads; SDK mutation and auth exchanges remain strict.
+func (p *readErrorPolicy) IsIgnored(status int) bool {
+	return status >= http.StatusBadRequest && status <= 599 || p.HTTPUpstreamErrorCfg.IsIgnored(status)
+}
+func (p *readErrorPolicy) IgnoredStatus(status int, body string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	diagnostic := fmt.Sprintf("http response status code: %d, response body: %s", status, body)
+	if body == "" {
+		diagnostic = fmt.Sprintf("http response status code: %d, response body is nil", status)
+	}
+	if !p.HTTPUpstreamErrorCfg.IsIgnored(status) {
+		// Absence ends only this read, retaining the host's established diagnostic.
+		fmt.Fprintln(p.writer, diagnostic) //nolint:errcheck // Diagnostics do not change the read result.
+		return
+	}
+	//nolint:errcheck // Diagnostics do not change the read result.
+	fmt.Fprintf(p.writer, "%s\nignoring upstream response: %d %s\n",
+		diagnostic, status, strings.ToUpper(http.StatusText(status)))
+}
+
+func (p *readErrorPolicy) IgnoreMissingKey(key string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	//nolint:errcheck // Diagnostics do not change the read result.
+	fmt.Fprintf(p.writer, "error processing response: unknown key %s\n", key)
+	return true
 }
