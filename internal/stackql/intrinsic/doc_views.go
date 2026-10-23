@@ -43,7 +43,11 @@ func expandDocumentViews(
 		if err != nil {
 			return nil, err
 		}
-		view, exists, err := omnisdk.DocView(root, bundle, service, resource)
+		opts, err := documentOptions(ctx)
+		if err != nil {
+			return nil, err
+		}
+		view, exists, err := omnisdk.DocView(root, bundle, service, resource, opts...)
 		if err != nil {
 			return nil, err
 		}

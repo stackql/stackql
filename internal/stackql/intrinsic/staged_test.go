@@ -161,7 +161,7 @@ func newStagingTestCtx(t *testing.T, endpoint string) *stagingTestCtx {
 	return &stagingTestCtx{
 		engine: engine,
 		runtime: dto.RuntimeCtx{
-			RegistryRaw:      `{"url":"file:` + filepath.ToSlash(filepath.Join(dir, "registry")) + `"}`,
+			RegistryRaw:      `{"url":"file:` + filepath.ToSlash(filepath.Join(dir, "registry")) + `","verifyConfig":{"nopVerify":true}}`,
 			SQLBackendCfgRaw: sqlBackendRaw,
 		},
 		typCfg: typCfg,
