@@ -1,4 +1,4 @@
-package intrinsic
+package intrinsic //nolint:testpackage // tests the unexported verification configuration
 
 import (
 	"crypto/mldsa"

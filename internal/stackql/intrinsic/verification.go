@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+//nolint:nilnil // A nil verifier is the explicit, successful opt-out state.
 func documentVerifier(runtime dto.RuntimeCtx) (pqsig.Verifier, error) {
 	var cfg formulation.RegistryConfig
 	if err := yaml.Unmarshal([]byte(runtime.RegistryRaw), &cfg); err != nil {
