@@ -6,6 +6,7 @@ on:
       - main
       - develop
       - version*
+      - 'stable/**'
     tags:
       - build*
     paths-ignore:
@@ -32,6 +33,7 @@ on:
       - main
       - develop
       - version*
+      - 'stable/**'
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -52,6 +54,8 @@ on:
       - '.github/workflows/mcp-registry-publish.yml'
       - '.github/workflows/contributors.yml'
 env:
+  # Override this repository variable when the stable trunk changes.
+  STABLE_BRANCH: ${{ vars.STABLE_BRANCH || 'stable/v0.13' }}
   GOTESTCMD: "go test -timeout 1200s -v ./..."
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
@@ -2160,6 +2164,7 @@ jobs:
                   [ "${{ github.ref_type }}" = "branch" ] \
                   &&  ( \
                     [ "${{ github.ref_name }}" = "main" ] \
+                    || [ "${{ github.ref_name }}" = "$STABLE_BRANCH" ] \
                     || [[ "${{ github.ref_name }}" =~ ^version.* ]] \
                   ) \
                   && [ "${{ github.event_name }}" = "push" ] \
@@ -2213,7 +2218,7 @@ jobs:
           fi
           if \
             [ "${{ github.ref_type }}" = "branch" ] \
-            && [ "${{ github.ref_name }}" = "main" ] \
+            && [ "${{ github.ref_name }}" = "$STABLE_BRANCH" ] \
           ; then
             SHORTHAND_DOCKER_TAG="latest"
           else
