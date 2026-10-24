@@ -94,6 +94,9 @@ func fromDocProviders(from sqlparser.TableExprs, currentProvider string) (bool, 
 				return
 			}
 			others = append(others, qualifiedName(tableName))
+		case *sqlparser.TableValuedFuncTableExpr:
+			// Function signatures and lateral inputs are resolved by Omni.
+			return
 		case *sqlparser.JoinTableExpr:
 			walk(node.LeftExpr)
 			walk(node.RightExpr)
@@ -161,14 +164,78 @@ func (d docTranslation) translateSource(node *sqlparser.Select) (*translator, []
 			return nil, nil, err
 		}
 	}
+	deferred := t.deferForwardInnerConditions()
 	if node.Where == nil {
-		return t, nil, nil
+		return t, deferred, nil
 	}
 	where, err := t.conjuncts(node.Where.Expr)
 	if err != nil {
 		return nil, nil, err
 	}
-	return t, where, nil
+	return t, append(deferred, where...), nil
+}
+
+// SQLite accepts INNER JOIN conditions referring to a later comma relation.
+// Move only those predicates to WHERE; outer-join conditions retain their boundary.
+func (t *translator) deferForwardInnerConditions() []query.Predicate {
+	scope := map[string]bool{}
+	var deferred []query.Predicate
+	for i, join := range t.joins {
+		scope[join.Resource().Alias()] = true
+		if join.Form() != query.Inner {
+			continue
+		}
+		var retained []query.Predicate
+		for _, predicate := range join.On() {
+			if joinPredicateInScope(predicate, scope) {
+				retained = append(retained, predicate)
+			} else {
+				deferred = append(deferred, predicate)
+			}
+		}
+		t.joins[i] = query.NewJoin(join.Resource(), join.Form(), retained...)
+	}
+	return deferred
+}
+
+func joinPredicateInScope(predicate query.Predicate, scope map[string]bool) bool {
+	switch p := predicate.(type) {
+	case query.Compare:
+		return joinExpressionInScope(p.Left(), scope) && joinExpressionInScope(p.Right(), scope)
+	case query.In:
+		return joinExpressionInScope(p.Expr(), scope) && joinExpressionInScope(p.Set(), scope)
+	case query.Test:
+		return joinExpressionInScope(p.Cond(), scope)
+	case query.Or:
+		for _, child := range p.Any() {
+			if !joinPredicateInScope(child, scope) {
+				return false
+			}
+		}
+	case query.Not:
+		return joinPredicateInScope(p.Negated(), scope)
+	}
+	return true
+}
+
+func joinExpressionInScope(expression query.Expr, scope map[string]bool) bool {
+	switch e := expression.(type) {
+	case query.Column:
+		return e.Qualifier() == "" || scope[e.Qualifier()]
+	case query.Call:
+		for _, child := range e.Args() {
+			if !joinExpressionInScope(child, scope) {
+				return false
+			}
+		}
+	case query.Collection:
+		for _, child := range e.Items() {
+			if !joinExpressionInScope(child, scope) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // unsupportedDocClauses names what omnisdk returns unapplied: its row stream is
@@ -269,6 +336,8 @@ type translator struct {
 // the join's form and ON; everything on its left keeps its own.
 func (t *translator) from(expr sqlparser.TableExpr, form query.JoinForm, on []query.Predicate) error {
 	switch node := expr.(type) {
+	case *sqlparser.TableValuedFuncTableExpr:
+		return t.tableFunction(node, form, on)
 	case *sqlparser.AliasedTableExpr:
 		tableName, isName := node.Expr.(sqlparser.TableName)
 		if !isName {
@@ -311,6 +380,25 @@ func (t *translator) from(expr sqlparser.TableExpr, form query.JoinForm, on []qu
 	default:
 		return fmt.Errorf("'%s' cannot be read from %s relations", sqlparser.String(node), UnstablePrefix+"*")
 	}
+}
+
+func (t *translator) tableFunction(
+	node *sqlparser.TableValuedFuncTableExpr, form query.JoinForm, on []query.Predicate,
+) error {
+	call, err := expression(node.FuncExpr)
+	if err != nil {
+		return err
+	}
+	function, ok := call.(query.Call)
+	if !ok {
+		return fmt.Errorf("table function requires a function call")
+	}
+	alias := node.As.GetRawVal()
+	if alias == "" {
+		alias = function.Func()
+	}
+	t.joins = append(t.joins, query.NewJoin(query.NewTableFunction(alias, function), form, on...))
+	return nil
 }
 
 // resource addresses a relation by its registry handle, aliased as written or
@@ -523,6 +611,21 @@ func expression(expr sqlparser.Expr) (query.Expr, error) {
 	switch node := expr.(type) {
 	case *sqlparser.ColName:
 		return query.NewColumn(node.Qualifier.Name.GetRawVal(), node.Name.GetRawVal()), nil
+	case *sqlparser.OrExpr:
+		// This parser formats the node as ||. In value position, retain that
+		// backend expression; predicate() handles logical OR separately.
+		return binaryExpression("||", node.Left, node.Right)
+	case *sqlparser.BinaryExpr:
+		if node.Operator != "||" && node.Operator != "+" && node.Operator != "-" &&
+			node.Operator != "*" && node.Operator != "/" && node.Operator != "%" {
+			return nil, fmt.Errorf("unsupported scalar operator %s", node.Operator)
+		}
+		return binaryExpression(node.Operator, node.Left, node.Right)
+	case *sqlparser.ComparisonExpr:
+		if _, known := compareOps[node.Operator]; !known {
+			return nil, fmt.Errorf("unsupported scalar comparison %s", node.Operator)
+		}
+		return binaryExpression(node.Operator, node.Left, node.Right)
 	case *sqlparser.SQLVal:
 		return literal(node)
 	case sqlparser.BoolVal:
@@ -539,35 +642,127 @@ func expression(expr sqlparser.Expr) (query.Expr, error) {
 			items = append(items, translated)
 		}
 		return query.NewCollection(items...), nil
+	case *sqlparser.CaseExpr:
+		return caseExpression(node)
 	case *sqlparser.FuncExpr:
-		if node.IsAggregate() || node.Distinct || node.Over != nil {
-			return nil, fmt.Errorf("'%s' cannot be applied to %s relations",
-				sqlparser.String(node), UnstablePrefix+"*")
-		}
-		args := make([]query.Expr, 0, len(node.Exprs))
-		for _, arg := range node.Exprs {
-			aliased, isAliased := arg.(*sqlparser.AliasedExpr)
-			if !isAliased {
-				return nil, fmt.Errorf("argument '%s' cannot be applied to %s relations",
-					sqlparser.String(arg), UnstablePrefix+"*")
-			}
-			translated, err := expression(aliased.Expr)
-			if err != nil {
-				return nil, err
-			}
-			args = append(args, translated)
-		}
-		return query.NewCall(node.Name.Lowered(), args...), nil
+		return functionExpression(node)
 	default:
 		return nil, fmt.Errorf("'%s' cannot be applied to %s relations",
 			sqlparser.String(expr), UnstablePrefix+"*")
 	}
 }
 
+func conditionExpression(node sqlparser.Expr) (query.Expr, error) {
+	switch condition := node.(type) {
+	case *sqlparser.AndExpr:
+		return logicalExpression("and", condition.Left, condition.Right)
+	case *sqlparser.OrExpr:
+		return logicalExpression("or", condition.Left, condition.Right)
+	case *sqlparser.NotExpr:
+		test, err := conditionExpression(condition.Expr)
+		return query.NewCall("not", test), err
+	case *sqlparser.IsExpr:
+		value, err := expression(condition.Expr)
+		if err != nil {
+			return nil, err
+		}
+		test := query.NewCall("is_null", value)
+		if condition.Operator == sqlparser.IsNullStr {
+			return test, nil
+		}
+		if condition.Operator == sqlparser.IsNotNullStr {
+			return query.NewCall("not", test), nil
+		}
+		return nil, fmt.Errorf("unsupported CASE test %s", condition.Operator)
+	default:
+		return expression(node)
+	}
+}
+
+func logicalExpression(operator string, left, right sqlparser.Expr) (query.Expr, error) {
+	lhs, err := conditionExpression(left)
+	if err != nil {
+		return nil, err
+	}
+	rhs, err := conditionExpression(right)
+	return query.NewCall(operator, lhs, rhs), err
+}
+
+func caseExpression(node *sqlparser.CaseExpr) (query.Expr, error) {
+	args := []query.Expr{}
+	name := "case_when"
+	if node.Expr != nil {
+		base, err := expression(node.Expr)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, base)
+		name = "case_value"
+	}
+	for _, branch := range node.Whens {
+		condition := branch.Cond
+		translate := conditionExpression
+		if node.Expr != nil {
+			translate = expression
+		}
+		test, err := translate(condition)
+		if err != nil {
+			return nil, err
+		}
+		value, err := expression(branch.Val)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, test, value)
+	}
+	var otherwise query.Expr = query.NewLiteral(nil)
+	if node.Else != nil {
+		var err error
+		otherwise, err = expression(node.Else)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return query.NewCall(name, append(args, otherwise)...), nil
+}
+
+func functionExpression(node *sqlparser.FuncExpr) (query.Expr, error) {
+	if node.IsAggregate() || node.Distinct || node.Over != nil {
+		return nil, fmt.Errorf("'%s' cannot be applied to %s relations",
+			sqlparser.String(node), UnstablePrefix+"*")
+	}
+	args := make([]query.Expr, 0, len(node.Exprs))
+	for _, arg := range node.Exprs {
+		aliased, isAliased := arg.(*sqlparser.AliasedExpr)
+		if !isAliased {
+			return nil, fmt.Errorf("argument '%s' cannot be applied to %s relations",
+				sqlparser.String(arg), UnstablePrefix+"*")
+		}
+		translated, err := expression(aliased.Expr)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, translated)
+	}
+	return query.NewCall(node.Name.Lowered(), args...), nil
+}
+
+func binaryExpression(operator string, left, right sqlparser.Expr) (query.Expr, error) {
+	lhs, err := expression(left)
+	if err != nil {
+		return nil, err
+	}
+	rhs, err := expression(right)
+	if err != nil {
+		return nil, err
+	}
+	return query.NewCall(operator, lhs, rhs), nil
+}
+
 func literal(val *sqlparser.SQLVal) (query.Expr, error) {
 	switch val.Type { //nolint:exhaustive // hex, bit and bind values have no omnisdk literal
 	case sqlparser.StrVal:
-		return query.NewLiteral(string(val.Val)), nil
+		return query.NewLiteral(strings.ReplaceAll(string(val.Val), `\"`, `"`)), nil
 	case sqlparser.IntVal:
 		n, err := strconv.ParseInt(string(val.Val), 10, 64)
 		if err != nil {
@@ -587,10 +782,11 @@ func literal(val *sqlparser.SQLVal) (query.Expr, error) {
 }
 
 // selectOutputs names every output: an alias, else a bare column's own name,
-// else the expression as written. A star is left unnamed for omnisdk to expand.
+// else the host's legacy expression label. A star is left unnamed for omnisdk to expand.
 func selectOutputs(exprs sqlparser.SelectExprs) ([]query.Output, []string, error) {
 	outputs := make([]query.Output, 0, len(exprs))
 	names := make([]string, 0, len(exprs))
+	anonymous := 0
 	for _, expr := range exprs {
 		switch node := expr.(type) {
 		case *sqlparser.StarExpr:
@@ -601,13 +797,13 @@ func selectOutputs(exprs sqlparser.SelectExprs) ([]query.Output, []string, error
 			if err != nil {
 				return nil, nil, err
 			}
-			name := node.As.GetRawVal()
+			name, err := projectionName(node)
+			if err != nil {
+				return nil, nil, err
+			}
 			if name == "" {
-				if col, isCol := node.Expr.(*sqlparser.ColName); isCol {
-					name = col.Name.GetRawVal()
-				} else {
-					name = sqlparser.String(node.Expr)
-				}
+				anonymous++
+				name = fmt.Sprintf("col_%d", anonymous)
 			}
 			outputs = append(outputs, query.NewOutput(name, translated))
 			names = append(names, name)

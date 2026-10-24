@@ -107,7 +107,7 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	// An omnisdk data relation streams its rows straight to the output writer,
 	// so it is not backed by a view and analysis would try, and fail, to resolve
 	// it as a registry-backed relation. Plan it here, ahead of that analysis.
-	if executor, isStream := intrinsic.GenerateStreamFunc(handlerCtx, statement); isStream {
+	if executor, inverse, isStream := intrinsic.GenerateTransactionStreamFunc(handlerCtx, statement); isStream {
 		stmtType := sqlparser.ASTToStatementType(statement)
 		qPlan.SetType(stmtType)
 		qPlan.SetReadOnly(stmtType == sqlparser.StmtSelect)
@@ -120,6 +120,11 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 				},
 			),
 		)
+		if inverse != nil {
+			pGBuilder.getPlanGraphHolder().CreateInversePrimitiveNode(primitive.NewLocalPrimitive(
+				func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput { return inverse() },
+			))
+		}
 		qPlan.SetInstructions(pGBuilder.getPlanGraphHolder())
 		if optimiseErr := qPlan.GetInstructions().GetPrimitiveGraph().Optimise(); optimiseErr != nil {
 			return createErroneousPlan(handlerCtx, qPlan, rowSort, optimiseErr)

@@ -1,6 +1,7 @@
 package sql_datasource //nolint:revive,stylecheck // package name is helpful
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -86,3 +87,7 @@ func (ds *genericSQLDataSource) GetTableMetadata(args ...string) (sqltable.SQLTa
 // 	`
 // 	return nil, fmt.Errorf("could not obtain sql data source table metadata for table = '%s'", tableName)
 // }
+
+func (ds *genericSQLDataSource) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	return ds.db.QueryContext(ctx, query, args...)
+}

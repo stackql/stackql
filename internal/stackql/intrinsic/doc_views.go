@@ -38,6 +38,10 @@ func expandDocumentViews(
 		if !isDoc {
 			return node, nil
 		}
+		// Analyzer-owned handles have no provider document or resource view.
+		if bundle == "omni_relations" {
+			return node, nil
+		}
 		service, resource := name.Qualifier.GetRawVal(), name.Name.GetRawVal()
 		root, err := docRoot(ctx, bundle)
 		if err != nil {
@@ -63,7 +67,7 @@ func expandDocumentViews(
 		if err != nil {
 			return nil, err
 		}
-		ddl, err := viewSQL(view, dialect.catalogue())
+		ddl, err := viewSQL(view, dialect.catalogue(), viewLiteralBindings(node.Where, table.As.GetRawVal(), resource))
 		if err != nil {
 			return nil, fmt.Errorf("view %s: %w", key, err)
 		}
@@ -97,19 +101,15 @@ func expandDocumentViews(
 	return nil, fmt.Errorf("document views exceed the expansion depth bound")
 }
 
-func viewSQL(view aot.View, dialect sqlfn.Dialect) (string, error) {
+func viewSQL(view aot.View, dialect sqlfn.Dialect, bindings map[string]*sqlparser.ComparisonExpr) (string, error) {
 	target := "sqlite3"
 	if dialect == sqlfn.Postgres {
 		target = "postgres"
 	}
 	for depth := 0; depth < 16; depth++ {
-		condition := strings.Join(strings.Fields(view.Predicate()), "")
-		matches := condition == "" || condition == "true"
-		if strings.HasPrefix(condition, "sqlDialect==") {
-			value := strings.Trim(strings.TrimPrefix(condition, "sqlDialect=="), "\"'")
-			matches = value == target
-		} else if condition != "" && condition != "true" && condition != "false" {
-			return "", fmt.Errorf("unsupported view predicate %q", view.Predicate())
+		matches, err := matchViewPredicate(view.Predicate(), target, bindings)
+		if err != nil {
+			return "", err
 		}
 		if matches {
 			return view.DDL(), nil
@@ -183,36 +183,26 @@ func inlineDocumentView(node, view *sqlparser.Select, alias string) (*sqlparser.
 	node.SelectExprs = selections
 	// Explicit scope/body bindings on the outer query override the view's
 	// declared defaults; business predicates remain conjunctive.
-	bindings := map[string]bool{}
+	bindings := viewLiteralBindings(node.Where, alias, alias)
 	if node.Where != nil {
-		_ = sqlparser.Walk(func(n sqlparser.SQLNode) (bool, error) {
-			if compare, ok := n.(*sqlparser.ComparisonExpr); ok && compare.Operator == sqlparser.EqualStr {
-				if col, ok := compare.Left.(*sqlparser.ColName); ok {
-					name := col.Name.GetRawVal()
-					if name == "region" || strings.HasPrefix(name, "data__") {
-						bindings[name] = true
-					}
-				}
-			}
-			return true, nil
-		}, node.Where.Expr)
 		node.Where.Expr = rewrite(node.Where.Expr).(sqlparser.Expr)
 	}
 	var strip func(sqlparser.Expr) sqlparser.Expr
 	strip = func(expr sqlparser.Expr) sqlparser.Expr {
 		if and, ok := expr.(*sqlparser.AndExpr); ok {
 			lhs, rhs := strip(and.Left), strip(and.Right)
-			if lhs == nil {
-				return rhs
-			}
-			if rhs == nil {
-				return lhs
-			}
 			return &sqlparser.AndExpr{Left: lhs, Right: rhs}
 		}
-		if compare, ok := expr.(*sqlparser.ComparisonExpr); ok && compare.Operator == sqlparser.EqualStr {
-			if col, ok := compare.Left.(*sqlparser.ColName); ok && bindings[col.Name.GetRawVal()] {
-				return nil
+		if compare, ok := expr.(*sqlparser.ComparisonExpr); ok && literalViewBinding(compare) {
+			if col, ok := compare.Left.(*sqlparser.ColName); ok {
+				name := col.Name.GetRawVal()
+				if replacement := bindings[name]; replacement != nil && (name == "region" || strings.HasPrefix(name, "data__")) {
+					// Replace only literal inbox bindings. Column-to-column beta
+					// dependencies and business predicates retain their meaning.
+					bound := *replacement
+					bound.Left = col
+					return &bound
+				}
 			}
 		}
 		return expr

@@ -1,6 +1,7 @@
 package sql_datasource //nolint:stylecheck,revive // package name is helpful
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -8,6 +9,12 @@ import (
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
 )
+
+// ContextQuerier is the optional cancellation-capable query handle used by read adapters.
+// Existing SQLDataSource implementations remain source compatible.
+type ContextQuerier interface {
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+}
 
 type SQLDataSource interface {
 	Begin() (*sql.Tx, error)

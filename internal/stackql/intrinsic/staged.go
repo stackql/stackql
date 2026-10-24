@@ -156,7 +156,11 @@ func stagedSelectWithRelations(
 	if err != nil {
 		return refuse(err)
 	}
-	staged, err := planStagedSelect(node, newDocTranslator(currentProvider, dialect), ctx.GetASTFormatter())
+	translator := newDocTranslator(currentProvider, dialect)
+	if err = expandDerivedStars(ctx, node, translator, relations); err != nil {
+		return refuse(err)
+	}
+	staged, err := planStagedSelect(node, translator, ctx.GetASTFormatter())
 	if err != nil {
 		return refuse(err)
 	}
@@ -208,6 +212,12 @@ func (r *stagedRefs) collect(expr sqlparser.SQLNode, aliases map[string]bool) er
 // reference as its staged column.
 func (r *stagedRefs) formatter(inner sqlparser.NodeFormatter) sqlparser.NodeFormatter {
 	return func(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
+		if literal, ok := node.(*sqlparser.SQLVal); ok && literal.Type == sqlparser.StrVal {
+			formatted := sqlparser.NewTrackedBuffer(inner)
+			formatted.Myprintf("%v", node)
+			buf.Myprintf("%s", strings.ReplaceAll(formatted.String(), `\"`, `"`))
+			return
+		}
 		if col, isCol := node.(*sqlparser.ColName); isCol {
 			if staged, isRenamed := r.renamed[col]; isRenamed {
 				node = &sqlparser.ColName{Name: sqlparser.NewColIdent(staged)}
@@ -230,6 +240,7 @@ func (r *stagedRefs) collectSelectExprs(
 	aliases := make(map[string]bool, len(exprs))
 	outputNames := make([]string, 0, len(exprs))
 	selectExprs := make(sqlparser.SelectExprs, 0, len(exprs))
+	anonymous := 0
 	for i, expr := range exprs {
 		aliased, isAliased := expr.(*sqlparser.AliasedExpr)
 		if !isAliased {
@@ -237,23 +248,28 @@ func (r *stagedRefs) collectSelectExprs(
 				sqlparser.String(expr), UnstablePrefix+"*")
 		}
 		// Output names match the streamed path: an alias, else a bare
-		// column's own name, else the expression as written. The last is
+		// column's own name, else its legacy expression label. The last is
 		// reported by position, so the outer statement aliases it safely.
 		outerExpr := &sqlparser.AliasedExpr{Expr: aliased.Expr, As: aliased.As}
-		name := aliased.As.GetRawVal()
+		name, err := projectionName(aliased)
+		if err != nil {
+			return nil, nil, nil, err
+		}
 		if name == "" {
-			if col, isCol := aliased.Expr.(*sqlparser.ColName); isCol {
-				name = col.Name.GetRawVal()
+			anonymous++
+			name = fmt.Sprintf("col_%d", anonymous)
+		}
+		if aliased.As.IsEmpty() {
+			if _, isColumn := aliased.Expr.(*sqlparser.ColName); isColumn {
 				outerExpr.As = sqlparser.NewColIdent(name)
 			} else {
-				name = sqlparser.String(aliased.Expr)
 				outerExpr.As = sqlparser.NewColIdent(stagedColumnPrefix + "out_" + strconv.Itoa(i))
 			}
 		}
 		outputNames = append(outputNames, name)
 		selectExprs = append(selectExprs, outerExpr)
 		aliases[strings.ToLower(outerExpr.As.GetRawVal())] = true
-		if err := r.collect(aliased.Expr, nil); err != nil {
+		if err = r.collect(aliased.Expr, nil); err != nil {
 			return nil, nil, nil, err
 		}
 	}
@@ -294,10 +310,10 @@ func planStagedSelect(
 		}
 	}
 	// A statement referencing no column, such as count(*), still needs one
-	// staged row per source row. omnisdk outputs only columns, so the rows
-	// are taken whole and staged as a single null placeholder column.
+	// staged row per source row. Read only the first source so joined sources
+	// with duplicate column names do not cause ambiguous wildcard expansion.
 	if len(refs.outputs) == 0 {
-		refs.outputs = append(refs.outputs, query.NewOutput("", query.NewStar("")))
+		refs.outputs = append(refs.outputs, query.NewOutput("", query.NewStar(src.joins()[0].Resource().Alias())))
 		refs.names = append(refs.names, stagedColumnPrefix+"0")
 	}
 	aliasOutputs, err := whereAliasOutputs(node)
@@ -552,9 +568,6 @@ func (s *omniBatchSource) Next(context.Context) ([][]any, error) {
 		return batch, nil
 	}
 	if err := s.rows.Err(); err != nil {
-		if s.readRows == 0 {
-			return nil, err
-		}
 		// Preserve completed pages, then surface the failed continuation to the
 		// client after the partial result. The upstream failure remains an error.
 		s.terminalErr = err

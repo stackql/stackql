@@ -10,10 +10,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/output"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/astformat"
 
@@ -24,7 +26,10 @@ type stagingTestCtx struct {
 	engine  sqlengine.SQLEngine
 	runtime dto.RuntimeCtx
 	typCfg  typing.Config
+	system  sql_system.SQLSystem
 }
+
+func (c *stagingTestCtx) GetSQLSystem() sql_system.SQLSystem { return c.system }
 
 func (c *stagingTestCtx) GetCurrentProvider() string        { return "" }
 func (c *stagingTestCtx) SetCurrentProvider(string)         {}
@@ -162,6 +167,7 @@ func newStagingTestCtx(t *testing.T, endpoint string) *stagingTestCtx {
 		engine: engine,
 		runtime: dto.RuntimeCtx{
 			RegistryRaw:      `{"url":"file:` + filepath.ToSlash(filepath.Join(dir, "registry")) + `","verifyConfig":{"nopVerify":true}}`,
+			IndirectDepthMax: 5,
 			SQLBackendCfgRaw: sqlBackendRaw,
 		},
 		typCfg: typCfg,
@@ -208,11 +214,110 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 	ctx := newStagingTestCtx(t, srv.URL)
 	t.Setenv("FIXTURE_TOKEN", "test-token")
 
+	sqlCfg, sysErr := dto.GetSQLBackendCfg(ctx.runtime.SQLBackendCfgRaw)
+	if sysErr != nil {
+		t.Fatal(sysErr)
+	}
+	ctx.system, sysErr = sql_system.NewSQLSystem(ctx.engine, "", sqlcontrol.GetControlAttributes("standard"), sqlCfg, nil, ctx.typCfg, "")
+	if sysErr != nil {
+		t.Fatal(sysErr)
+	}
+	if sysErr = ctx.system.CreateView("scoped_members", "select login,id from stackql_unstable_fixture.orgs.members where org = 'dummyorg'", false, nil); sysErr != nil {
+		t.Fatal(sysErr)
+	}
+	columns := []typing.RelationalColumn{typing.NewRelationalColumn("id", "integer"), typing.NewRelationalColumn("note", "text")}
+	if sysErr = ctx.system.CreatePhysicalTable("local_people", columns, `CREATE TABLE "local_people" (id INTEGER,note TEXT)`, false); sysErr != nil {
+		t.Fatal(sysErr)
+	}
+	if _, sysErr = ctx.engine.Exec(`INSERT INTO "local_people" (id,note) VALUES (10,'chosen')`); sysErr != nil {
+		t.Fatal(sysErr)
+	}
+	if sysErr = ctx.system.CreateMaterializedView("local_cache", []typing.RelationalColumn{typing.NewRelationalColumn("id", "integer")}, "select 10 as id", false, "select 10 as id"); sysErr != nil {
+		t.Fatal(sysErr)
+	}
+
+	if sysErr = ctx.system.CreateView("stored_people", "select id,note from local_people", false, nil); sysErr != nil {
+		t.Fatal(sysErr)
+	}
+
 	const from = " from stackql_unstable_fixture.orgs.members where org = 'dummyorg'"
 	for _, tc := range []struct {
 		sql  string
 		want string
 	}{
+
+		{
+			sql: "select m.login from stackql_unstable_fixture.orgs.members m join local_people p " +
+				"on p.id=e.value, json_each('[10]') e where m.org='dummyorg' and m.id=p.id",
+			want: "login\nb\n",
+		},
+
+		{
+			sql:  "select login, case when id=10 then 'chosen' else json('invalid-json') end as choice" + from + " and id=10",
+			want: "login,choice\nb,chosen\n",
+		},
+		{
+			sql: "select login from stackql_unstable_fixture.orgs.members m join local_people p " +
+				"on p.id=case m.id when 10 then m.id else -1 end where m.org='dummyorg'",
+			want: "login\nb\n",
+		},
+		{
+			sql:  "select substr(login,1,instr(login,'b')-1) as prefix" + from + " and id=10",
+			want: "prefix\n\n",
+		},
+
+		{
+			sql:  "select 'member:' || login as label" + from + " and id=10",
+			want: "label\nmember:b\n",
+		},
+
+		{
+			sql: "with local_people as (select 2 as id) " +
+				"select m.login, v.note from stackql_unstable_fixture.orgs.members m " +
+				"join stored_people v on m.id=v.id where m.org='dummyorg'",
+			want: "login,note\nb,chosen\n",
+		},
+
+		{
+			sql: "with picked as (select login,id" + from + " order by id desc limit 2) " +
+				"select login from picked order by login",
+			want: "login\nb\nd\n",
+		},
+		{
+			sql: "with picked as (select login,id" + from + "), " +
+				"tallied(user_count) as (select count(*) from picked) select user_count from tallied",
+			want: "user_count\n4\n",
+		},
+		{
+			sql: "with picked as (select login" + from + " and id=10), " +
+				"nested as (with picked as (select login" + from + " and id=2) select login from picked) " +
+				"select p.login, n.login as nested from picked p cross join nested n",
+			want: "login,nested\nb,c\n",
+		},
+		{
+			sql: "with local_people as (select id" + from + " and id=2) " +
+				"select m.login, p.id from stackql_unstable_fixture.orgs.members m " +
+				"join local_people p on m.id=p.id where m.org='dummyorg'",
+			want: "login,id\nc,2\n",
+		},
+
+		{
+			sql: "select count(*) as n from stackql_unstable_fixture.orgs.members m " +
+				"join stackql_unstable_fixture.orgs.members n on m.org=n.org and m.id=n.id " +
+				"where m.org='dummyorg' and n.org='dummyorg'",
+			want: "n\n4\n",
+		},
+
+		{
+			sql: "select m.login, e.value from stackql_unstable_fixture.orgs.members m, json_each('[1,2]') e " +
+				"where m.org='dummyorg' and m.id=10 order by e.value",
+			want: "login,value\nb,1\nb,2\n",
+		},
+		{
+			sql: "select count(*) as n from stackql_unstable_fixture.orgs.members m " +
+				"join stackql_unstable_fixture.orgs.members n on m.id=n.id where m.org='dummyorg' and n.org='dummyorg'",
+			want: "n\n4\n",
+		},
 
 		{
 			sql:  "select s.login from (select login, id" + from + ") s where s.id > 2 order by s.id desc",
@@ -249,6 +354,19 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 		{
 			sql:  "select s.login from (select login, lag(id) over (order by id) as previous_id" + from + ") s where s.previous_id is null",
 			want: "login\na\n",
+		},
+
+		{
+			sql:  "select v.login,p.note from scoped_members v join local_people p on v.id=p.id order by v.login",
+			want: "login,note\nb,chosen\n",
+		},
+		{
+			sql:  "select v.login from local_cache m join scoped_members v on m.id=v.id",
+			want: "login\nb\n",
+		},
+		{
+			sql:  "select v.login from (select * from scoped_members order by id desc limit 2) v join local_people p on v.id=p.id",
+			want: "login\nb\n",
 		},
 		{
 			// Numeric ordering: as text, 10 would sort before 2.
@@ -298,5 +416,15 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 	}
 	if remaining != 0 {
 		t.Fatalf("staging tables left behind: %d", remaining)
+	}
+}
+
+func TestExpandedCTEDepthHonorsHostLimit(t *testing.T) {
+	query := parseSelect(t, "select x.id from (select y.id from (select 1 as id) y) x")
+	if err := validateRelationDepth(query.From, 1, 0); err == nil {
+		t.Fatal("nested relations exceeded the configured depth without an error")
+	}
+	if err := validateRelationDepth(query.From, 2, 0); err != nil {
+		t.Fatal(err)
 	}
 }

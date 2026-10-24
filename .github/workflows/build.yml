@@ -572,8 +572,6 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
-    # sdk omni runs the mocked suite with omnisdk's document-driven paths opted in, best effort.
-    continue-on-error: ${{ matrix.sdk == 'omni' }}
     strategy:
       matrix:
         registry:
@@ -917,30 +915,41 @@ jobs:
       run: |
         cat ./test/robot/reports/output.xml
 
-    # Omni cutover readiness, best effort: the same suite with every stackql run opted in to the
-    # document-driven (omnisdk) paths. Reports a traffic light; never fails the job.
+    # Omni cutover readiness: report the full suite result, then fail CI if it fails.
     - name: Omni cutover readiness traffic light
       if: matrix.sdk == 'omni'
-      continue-on-error: true
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         # "omni":"all" routes unprefixed providers through omnisdk; "unstable" alone only exposes stackql_unstable_*.
         STACKQL_ROBOT_DEFAULT_PREVIEW: '{"unstable":true,"staging":true,"omni":"all"}'
       run: |
         pgrep -f flask | xargs kill -9 || true
-        python cicd/python/build.py --robot-test --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true" } }' || true
+        if python cicd/python/build.py --robot-test --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true" } }'; then
+          robot_status=0
+        else
+          robot_status=$?
+        fi
         if [ -f test/robot/reports/output.xml ]; then
-          python test/python/stackql_test_tooling/robot_summary.py \
+          if python test/python/stackql_test_tooling/robot_summary.py \
             --output test/robot/reports/output.xml \
             --title "Omni cutover readiness" \
+            --require-100-percent \
             --context "Mocked functional suite, every run opted in with STACKQL_ROBOT_DEFAULT_PREVIEW=${STACKQL_ROBOT_DEFAULT_PREVIEW}" \
-            >> "${GITHUB_STEP_SUMMARY}"
+            >> "${GITHUB_STEP_SUMMARY}"; then
+            summary_status=0
+          else
+            summary_status=$?
+          fi
         else
           {
             echo "# 🔴 Omni cutover readiness"
             echo ""
             echo "No robot output was produced; the suite did not run."
           } >> "${GITHUB_STEP_SUMMARY}"
+          summary_status=1
+        fi
+        if [ "$robot_status" -ne 0 ] || [ "$summary_status" -ne 0 ]; then
+          exit 1
         fi
 
     - name: Output from omni functional tests

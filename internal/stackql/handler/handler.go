@@ -336,7 +336,7 @@ func (hc *standardHandlerContext) GetSupportedProviders(extended bool) (map[stri
 		}
 		// Every locally available bundle is also addressable document-first,
 		// once that has been opted into.
-		if intrinsic.IsUnstableEnabled() {
+		if intrinsic.IsExtendedCatalogEnabled() {
 			unstable := intrinsic.UnstablePrefix + pn
 			retVal[unstable] = map[string]interface{}{
 				"name":    unstable,

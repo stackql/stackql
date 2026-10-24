@@ -85,6 +85,14 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 // Keep the established CLI diagnostic while retaining typed SDK errors for
 // programmatic consumers and transport/effect classification.
 func presentationError(err error) error {
+	var program omnisdk.UnsupportedProgramError
+	if errors.As(err, &program) {
+		return fmt.Errorf("unsupported template type: %s", program.ProgramType())
+	}
+	var authentication omnisdk.AuthenticationError
+	if errors.As(err, &authentication) {
+		return err
+	}
 	var response omnisdk.HTTPStatusError
 	if !errors.As(err, &response) {
 		return err

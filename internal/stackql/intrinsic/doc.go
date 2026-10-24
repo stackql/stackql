@@ -9,9 +9,11 @@ import (
 
 	"github.com/stackql-labs/omnisdk/pkg/docparse/aot"
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
+	"github.com/stackql-labs/omnisdk/pkg/query"
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/psql-wire/pkg/sqldata"
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -29,6 +31,12 @@ const UnstablePrefix = aot.DefaultProviderPrefix
 // curation behind them, so nothing exposes them until a caller asks.
 func IsUnstableEnabled() bool {
 	return previewCfg.getUnstableEnabled() || previewCfg.getOmniAll()
+}
+
+// IsExtendedCatalogEnabled keeps the compatibility catalogue stable when
+// Omni replaces the execution backend. Explicit unstable mode adds SDK services.
+func IsExtendedCatalogEnabled() bool {
+	return previewCfg.getUnstableEnabled() && !previewCfg.getOmniAll()
 }
 
 // docProvider is the bundle behind an unstable provider name, or false. Once
@@ -144,7 +152,7 @@ func docMethods(ctx queryContext, bundle, service, resource string) ([]relationM
 	out := make([]relationMethod, 0, len(methods))
 	for _, method := range methods {
 		out = append(out, relationMethod{
-			requiredParams: method.RequiredParams,
+			requiredParams: unresolvedServerParams(method),
 			name:           method.Name,
 			description:    method.OperationID,
 			sqlVerb:        docSQLVerb(method.SQLVerb),
@@ -170,12 +178,13 @@ func docSelectFunc(
 	ctx queryContext,
 	node *sqlparser.Select,
 	currentProvider string,
+	initial ...map[string]omnisdk.Relation,
 ) (func() internaldto.ExecutorOutput, bool) {
 	expanded, expandErr := expandDocumentViews(ctx, node, currentProvider)
 	if expandErr != nil {
 		return refuse(expandErr), true
 	}
-	node, relations, relationErr := resolveDerivedRelations(ctx, expanded, currentProvider, 0)
+	node, relations, relationErr := resolveDerivedRelations(ctx, expanded, currentProvider, 0, initial...)
 	if relationErr != nil {
 		return refuse(relationErr), true
 	}
@@ -186,7 +195,11 @@ func docSelectFunc(
 	if err != nil {
 		return refuse(err), true
 	}
-	translated, err := newDocTranslator(currentProvider, dialect).selectQuery(node)
+	translator := newDocTranslator(currentProvider, dialect)
+	if err = expandDerivedStars(ctx, node, translator, relations); err != nil {
+		return refuse(err), true
+	}
+	translated, err := translator.selectQuery(node)
 	if err != nil {
 		return refuse(err), true
 	}
@@ -215,9 +228,17 @@ func docMutationFunc(
 	if err != nil {
 		return refuse(err), true
 	}
+	stmt, relations, err := prepareMutationRelations(ctx, stmt, currentProvider)
+	if err != nil {
+		return refuse(err), true
+	}
 	translated, err := newDocTranslator(currentProvider, dialect).mutation(stmt)
 	if err != nil {
 		return refuse(err), true
+	}
+	translated = withRelations(translated, relations)
+	if mutationAwait(stmt) {
+		translated = awaitedDocQuery{docQuery: translated}
 	}
 	return func() internaldto.ExecutorOutput { return runDocQuery(ctx, translated) }, true
 }
@@ -230,6 +251,7 @@ func openDocQuery(ctx queryContext, translated docQuery) (omnisdk.Rows, string, 
 	return openDocQueryIn(ctx, translated, context.Background())
 }
 
+//nolint:gocognit,funlen // The cognitive complexity of this function is high but acceptable for now
 func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Context) (omnisdk.Rows, string, error) {
 	opts, err := documentOptions(ctx)
 	if err != nil {
@@ -240,6 +262,9 @@ func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Contex
 	relations := queryRelations(translated)
 	tables := make(map[string]omnisdk.Table, len(q.From())+1)
 	for _, join := range q.From() {
+		if _, function := join.Resource().(query.TableFunction); function {
+			continue
+		}
 		var tbl omnisdk.Table
 		var describeErr error
 		if relation, ok := relations[join.Resource().Handle()]; ok {
@@ -254,8 +279,7 @@ func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Contex
 	}
 	var relation string
 	if target := q.Target(); target != nil {
-		tbl, describeErr := omnisdk.DescribeMutation(
-			registry, target.Resource().Handle(), target.Verb().String(), opts...)
+		tbl, describeErr := describeMutationTable(registry, target, queryAwaitsMutation(translated), opts...)
 		if describeErr != nil {
 			return nil, "", describeErr
 		}
@@ -268,24 +292,32 @@ func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Contex
 	if dialectErr != nil {
 		return nil, "", dialectErr
 	}
+	q, environmentErr := bindServerEnvironment(q, tables)
+	if environmentErr != nil {
+		return nil, "", environmentErr
+	}
 	res, resolveErr := omnisdk.ResolveIn(q, tables, dialect.catalogue())
 	if resolveErr != nil {
 		return nil, "", resolveErr
 	}
-	// omnisdk takes one credential per run: the first relation's cloud - a
-	// mutation's target - leaving the rest to the canonical environment
-	// variables.
+	// Preserve the host's configured credential for every provider, including
+	// providers following an opaque derived relation in the FROM order.
 	args, argsErr := previewArgs(ctx, translated.getBundles()[0], res.Params())
 	if argsErr != nil {
 		return nil, "", argsErr
 	}
+	args.AuthByProvider, argsErr = queryProviderAuth(ctx, translated.getBundles())
+	if argsErr != nil {
+		return nil, "", argsErr
+	}
+	if completionErr := configureMutationCompletion(ctx, translated, &args); completionErr != nil {
+		return nil, "", completionErr
+	}
+	configureMutationObserver(ctx, q.Target() != nil, &args)
 	args.Relations = relations
 	args.Tuning.Limit = translated.getLimit()
-	if hinted, ok := translated.(interface {
-		getReadHints() map[string]omnisdk.ReadHints
-	}); ok {
-		args.ReadHintsByAlias = hinted.getReadHints()
-	}
+	configureReadHints(translated, &args)
+	configureLegacyReadCache(ctx, q, &args)
 	plan, planErr := omnisdk.NewGraphQuery(registry, res.Graph(), args)
 	if planErr != nil {
 		return nil, "", planErr
@@ -297,6 +329,23 @@ func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Contex
 	return rows, relation, nil
 }
 
+// queryProviderAuth preserves configured credentials independently for every provider.
+func queryProviderAuth(ctx queryContext, bundles []string) (map[string]*omnisdk.Auth, error) {
+	credentials := map[string]*omnisdk.Auth{}
+	for _, bundle := range bundles {
+		auth := providerAuthContext(ctx, bundle)
+		if auth != nil && (auth.KeyFilePath != "" || auth.KeyFilePathEnvVar != "" || auth.KeyEnvVar != "") {
+			if _, err := auth.GetCredentialsBytes(); err != nil {
+				return nil, fmt.Errorf("service account credentials error: %w", err)
+			}
+		}
+		for provider, credential := range providerAuthByProvider(ctx, bundle) {
+			credentials[provider] = credential
+		}
+	}
+	return credentials, nil
+}
+
 // runDocQuery runs the query and streams its rows back.
 func runDocQuery(ctx queryContext, translated docQuery) internaldto.ExecutorOutput {
 	rows, relation, err := openDocQuery(ctx, translated)
@@ -305,22 +354,64 @@ func runDocQuery(ctx queryContext, translated docQuery) internaldto.ExecutorOutp
 	}
 	q := translated.getQuery()
 	if q.Target() != nil && len(translated.getOutputs()) == 0 {
-		return drainMutation(rows)
+		result := drainMutation(rows)
+		if mutationErr := result.GetError(); mutationErr != nil {
+			return internaldto.NewErroneousExecutorOutput(mutationHTTPFailure(ctx, q.Target().Verb().String(), mutationErr))
+		}
+		address := strings.TrimPrefix(q.Target().Resource().Handle(), UnstablePrefix)
+		message := "Undo the " + q.Target().Verb().String() + " on " + address
+		result.SetUndoLog(binlog.NewSimpleLogEntry(nil, []string{message}))
+		if queryAwaitsMutation(translated) && result.GetError() == nil {
+			return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
+		}
+		if result.GetError() == nil && inlineMutation(ctx, q.Target().Resource().Handle(), q.Target().Verb().String()) {
+			return internaldto.NewExecutorOutput(nil, nil, nil, internaldto.NewBackendMessages([]string{"OK"}), nil)
+		}
+		return result
 	}
 	input := previewCfg
 	stream := &rowStream{
-		rows:          rows,
-		batchSize:     input.getBatchSize(),
-		flushInterval: input.getFlushInterval(),
-		table:         sqldata.NewSQLTable(0, relation),
-		typCfg:        ctx.GetTypingConfig(),
-		outputs:       translated.getOutputs(),
+		suppressFailedHeaders: true,
+		rows:                  rows,
+		batchSize:             input.getBatchSize(),
+		flushInterval:         input.getFlushInterval(),
+		table:                 sqldata.NewSQLTable(0, relation),
+		typCfg:                ctx.GetTypingConfig(),
+		outputs:               translated.getOutputs(),
+		emptyColumns:          func() []column { return declaredEmptyColumns(ctx, translated) },
 	}
 	primed, readErr := newPrimedStream(stream)
 	if readErr != nil {
 		return internaldto.NewErroneousExecutorOutput(readErr)
 	}
 	return internaldto.NewExecutorOutput(primed, nil, nil, nil, nil)
+}
+
+// Empty star results still have the schema declared by their read relations.
+// Actual rows continue to determine nonempty star results, including ragged fields.
+func declaredEmptyColumns(ctx queryContext, translated docQuery) []column {
+	q := translated.getQuery()
+	resources := q.From()
+	if target := q.Target(); target != nil {
+		resources = []query.Join{query.NewJoin(target.Resource(), query.Base)}
+	}
+	fields := omnisdk.Row{}
+	for _, join := range resources {
+		if _, function := join.Resource().(query.TableFunction); function {
+			continue
+		}
+		names, err := declaredRelationColumns(ctx, join.Resource().Handle(), queryRelations(translated))
+		if err != nil {
+			continue
+		}
+		for _, name := range names {
+			fields[name] = nil
+		}
+	}
+	if len(fields) == 0 {
+		return nil
+	}
+	return outputColumns(translated.getOutputs(), []omnisdk.Row{fields})
 }
 
 // drainMutation pulls a mutation's cursor to the end, which is what sends its
@@ -379,11 +470,19 @@ func showDocResources(
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
+	names, nameErr := registryResourceNames(ctx, bundle, service, extended)
+	if nameErr != nil {
+		return internaldto.NewErroneousExecutorOutput(nameErr)
+	}
 	rows := make(map[string]map[string]interface{}, len(tables))
 	for i, tbl := range tables {
+		displayName := tbl.name
+		if declared, present := names[tbl.name]; present {
+			displayName = declared
+		}
 		row := map[string]interface{}{
 			"id":   fmt.Sprintf("%s.%s.%s", metadataProviderName(bundle, filters), service, tbl.name),
-			"name": tbl.name,
+			"name": displayName,
 		}
 		if extended {
 			row["description"] = tbl.description
@@ -421,4 +520,25 @@ func showDocMethods(
 		rows[fmt.Sprintf("%02d_%s_%06d", rank, method.name, i)] = row
 	}
 	return prepare(ctx, columnOrder, rows, util.DefaultRowSort)
+}
+
+func inlineMutation(ctx queryContext, address, verb string) bool {
+	table, err := omnisdk.DescribeMutation(registryRoot(ctx), address, verb)
+	if err != nil {
+		return false
+	}
+	for _, method := range table.Methods() {
+		if local, ok := method.(omnisdk.InlineCommand); ok && len(local.InlineCommand()) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func configureReadHints(translated docQuery, args *omnisdk.Args) {
+	if hinted, ok := translated.(interface {
+		getReadHints() map[string]omnisdk.ReadHints
+	}); ok {
+		args.ReadHintsByAlias = hinted.getReadHints()
+	}
 }
