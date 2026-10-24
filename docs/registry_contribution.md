@@ -40,6 +40,26 @@ Iterate upon steps 2 and 3 until API coverage and functionality fulfill your req
 
 As per [the Provider Registry Contributor Guide](https://github.com/stackql/stackql-provider-registry/blob/main/.github/CONTRIBUTING.md).  The team will review as rapidly as possible and work with you to complete the integration.  Once this is done, your functionality with be available via `registry pull...`
 
+## Quantum-safe signature verification
+
+StackQL continues to disable verification by default. Explicitly set
+`"verifyConfig":{"nopVerify":false}` in `--registry` to require embedded
+ML-DSA-65 signatures on provider and service document reads, including
+omnisdk's preview/document-backed paths. This uses FIPS 204 `crypto/mldsa`
+from Go 1.27; certificate options and `.sig` sidecars are no longer used.
+
+For private registries, `verifyConfig.publicKeys` is a JSON object mapping
+key IDs to hex ML-DSA-65 public keys. It replaces the embedded production
+roots; an explicit empty keyset is an error.
+
+The registry signs exact YAML payload bytes using its shared `signing/pqsig`
+module. Edits, including formatting or newline changes, invalidate signatures.
+Use the registry's `pqsig sign-doc` tool to re-sign a document.
+Unsigned local development documents must keep `nopVerify: true`.
+Old sidecar-only archives require republishing before verified use.
+Archive download/extraction authentication and rollback protection are separate
+work; this option authenticates documents when they are read.
+
 ## Example integration
 
 In this walkthrough, we demonstrate the bare bones of integrating a simple Provider,

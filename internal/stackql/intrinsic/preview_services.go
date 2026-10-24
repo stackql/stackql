@@ -153,12 +153,17 @@ func streamPlan(
 // over after the control predicates, the credential for the cloud in play, the
 // backend tuning, and the backend's SQL dialect.
 func previewArgs(ctx queryContext, cloud string, params map[string]string) (omnisdk.Args, error) {
+	verifier, err := documentVerifier(ctx.GetRuntimeContext())
+	if err != nil {
+		return omnisdk.Args{}, err
+	}
 	dialect, err := backendDialect(ctx)
 	if err != nil {
 		return omnisdk.Args{}, err
 	}
 	input := previewCfg
 	return omnisdk.Args{
+		DocumentVerifier:      verifier,
 		Params:                params,
 		AuthByProvider:        providerAuthByProvider(ctx, cloud),
 		Endpoint:              input.getEndpoint(),

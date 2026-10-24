@@ -20,11 +20,12 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.10.1
-	github.com/stackql-labs/omnisdk v0.1.6-alpha05
-	github.com/stackql/any-sdk v0.6.1-beta01
+	github.com/stackql-labs/omnisdk v0.1.7-alpha01
+	github.com/stackql/any-sdk v0.6.1-beta02
 	github.com/stackql/go-suffix-map v0.0.1-alpha02
 	github.com/stackql/psql-wire v0.1.2-beta02
 	github.com/stackql/stackql-parser v0.0.16-beta01
+	github.com/stackql/stackql-provider-registry/signing v0.1.0-alpha01
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.38.0
 	golang.org/x/sync v0.22.0

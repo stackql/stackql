@@ -111,7 +111,11 @@ func docResourceTables(ctx queryContext, bundle, service string) ([]table, error
 	if err != nil {
 		return nil, err
 	}
-	resources, err := omnisdk.DocResources(dir, bundle, service)
+	opts, err := documentOptions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resources, err := omnisdk.DocResources(dir, bundle, service, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +133,11 @@ func docMethods(ctx queryContext, bundle, service, resource string) ([]relationM
 	if err != nil {
 		return nil, err
 	}
-	methods, err := omnisdk.DocMethods(dir, bundle, service, resource)
+	opts, err := documentOptions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	methods, err := omnisdk.DocMethods(dir, bundle, service, resource, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -223,6 +231,10 @@ func openDocQuery(ctx queryContext, translated docQuery) (omnisdk.Rows, string, 
 }
 
 func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Context) (omnisdk.Rows, string, error) {
+	opts, err := documentOptions(ctx)
+	if err != nil {
+		return nil, "", err
+	}
 	registry := registryRoot(ctx)
 	q := translated.getQuery()
 	relations := queryRelations(translated)
@@ -233,7 +245,7 @@ func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Contex
 		if relation, ok := relations[join.Resource().Handle()]; ok {
 			tbl = relation
 		} else {
-			tbl, describeErr = omnisdk.DescribeTable(registry, join.Resource().Handle())
+			tbl, describeErr = omnisdk.DescribeTable(registry, join.Resource().Handle(), opts...)
 		}
 		if describeErr != nil {
 			return nil, "", describeErr
@@ -243,7 +255,7 @@ func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Contex
 	var relation string
 	if target := q.Target(); target != nil {
 		tbl, describeErr := omnisdk.DescribeMutation(
-			registry, target.Resource().Handle(), target.Verb().String())
+			registry, target.Resource().Handle(), target.Verb().String(), opts...)
 		if describeErr != nil {
 			return nil, "", describeErr
 		}
@@ -340,7 +352,11 @@ func showDocServices(
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
-	services, err := omnisdk.DocServices(dir, bundle)
+	opts, err := documentOptions(ctx)
+	if err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	services, err := omnisdk.DocServices(dir, bundle, opts...)
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}

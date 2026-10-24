@@ -388,8 +388,11 @@ func declaredRelationColumns(
 	if relation, present := relations[handle]; present {
 		table = relation
 	} else {
-		var err error
-		table, err = omnisdk.DescribeTable(registryRoot(ctx), handle)
+		opts, err := documentOptions(ctx)
+		if err != nil {
+			return nil, err
+		}
+		table, err = omnisdk.DescribeTable(registryRoot(ctx), handle, opts...)
 		if err != nil {
 			return nil, err
 		}
