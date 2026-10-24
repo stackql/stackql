@@ -6,6 +6,7 @@ on:
       - main
       - develop
       - version*
+      - 'stable/**'
     tags:
       - build*
     paths-ignore:
@@ -32,6 +33,7 @@ on:
       - main
       - develop
       - version*
+      - 'stable/**'
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -52,6 +54,9 @@ on:
       - '.github/workflows/mcp-registry-publish.yml'
       - '.github/workflows/contributors.yml'
 env:
+  # Override this repository variable when the stable trunk changes.
+  STABLE_BRANCH: ${{ vars.STABLE_BRANCH || 'stable/v0.13' }}
+  MAIN_DOCKER_TAG_SUFFIX: ${{ vars.MAIN_DOCKER_TAG_SUFFIX || '-rc' }}
   GOTESTCMD: "go test -timeout 1200s -v ./..."
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
@@ -2160,6 +2165,7 @@ jobs:
                   [ "${{ github.ref_type }}" = "branch" ] \
                   &&  ( \
                     [ "${{ github.ref_name }}" = "main" ] \
+                    || [ "${{ github.ref_name }}" = "$STABLE_BRANCH" ] \
                     || [[ "${{ github.ref_name }}" =~ ^version.* ]] \
                   ) \
                   && [ "${{ github.event_name }}" = "push" ] \
@@ -2213,7 +2219,7 @@ jobs:
           fi
           if \
             [ "${{ github.ref_type }}" = "branch" ] \
-            && [ "${{ github.ref_name }}" = "main" ] \
+            && [ "${{ github.ref_name }}" = "$STABLE_BRANCH" ] \
           ; then
             SHORTHAND_DOCKER_TAG="latest"
           else
@@ -2246,6 +2252,10 @@ jobs:
         with:
           images: |
             ${{ env.STACKQL_IMAGE_NAME }}   
+          # Apply the testing suffix to every main tag in one place.
+          flavor: |
+            latest=false
+            suffix=${{ github.ref_type == 'branch' && github.ref_name == 'main' && env.MAIN_DOCKER_TAG_SUFFIX || '' }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
