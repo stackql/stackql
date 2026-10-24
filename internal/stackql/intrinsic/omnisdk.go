@@ -776,6 +776,7 @@ type backendInput interface {
 	getUnstableEnabled() bool
 	getStagingEnabled() bool
 	getOmniAll() bool
+	getIaCStateRoot() string
 }
 
 type standardBackendInput struct {
@@ -786,6 +787,7 @@ type standardBackendInput struct {
 	unstableEnabled       bool
 	stagingEnabled        bool
 	omniAll               bool
+	iacStateRoot          string
 }
 
 // previewCfg is the parsed --preview argument. Cobra binds the raw string in
@@ -811,6 +813,12 @@ type previewCfgDTO struct {
 	Staging bool `json:"staging"`
 	// Omni "all" routes every provider through omnisdk, never any-sdk.
 	Omni string `json:"omni"`
+	// IaCStateRoot is the directory every stackql_preview.iac ledger lives
+	// under. A query's 'state' predicate names a directory inside it, never
+	// one outside, so where state is written stays the operator's choice.
+	// Collections naming the same directory share its ledger, each under its
+	// own collection key.
+	IaCStateRoot string `json:"iacStateRoot"`
 }
 
 func (c previewCfgDTO) endpoint() string {
@@ -844,6 +852,7 @@ func newBackendInput(cfg previewCfgDTO) backendInput {
 		unstableEnabled:       cfg.Unstable,
 		stagingEnabled:        cfg.Staging,
 		omniAll:               strings.EqualFold(cfg.Omni, omniAll),
+		iacStateRoot:          strings.TrimSpace(cfg.IaCStateRoot),
 	}
 	if cfg.BatchSize > 0 {
 		rv.batchSize = cfg.BatchSize
@@ -867,6 +876,8 @@ func (b *standardBackendInput) getUnstableEnabled() bool { return b.unstableEnab
 func (b *standardBackendInput) getStagingEnabled() bool { return b.stagingEnabled }
 
 func (b *standardBackendInput) getOmniAll() bool { return b.omniAll }
+
+func (b *standardBackendInput) getIaCStateRoot() string { return b.iacStateRoot }
 
 // sourceKey is the row key a column reads from: its own name, unless an alias
 // renamed it.

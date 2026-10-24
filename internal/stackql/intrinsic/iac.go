@@ -7,7 +7,9 @@ package intrinsic
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"strings"
 	"time"
@@ -18,10 +20,14 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-// stateDirName is where the ledger and run journals live when a query names no
-// state directory. It sits under the application root, which is already local
+// stateDirName is where the ledger and run journals live when the operator sets
+// no iacStateRoot. It sits under the application root, which is already local
 // disk: O_EXCL and link are unreliable on a network share.
 const stateDirName = "iac"
+
+// errStateEscapesRoot refuses a 'state' predicate that would put the ledger
+// outside the state root.
+var errStateEscapesRoot = errors.New("must name a directory inside the iac state root")
 
 // runIDLayout stamps a run that names no run id, as omnisdk's Converge always has.
 const runIDLayout = "20060102T150405Z"
@@ -123,8 +129,9 @@ func destroySelectFunc(ctx queryContext, node *sqlparser.Select) (func() interna
 }
 
 // ledgerPredicates reads the predicates every ledger backed relation takes: the collection it
-// addresses, and the state directory and run id, each defaulted when absent. The predicates left
-// over are returned for the caller.
+// addresses, and the state directory and run id, each defaulted when absent. The state directory
+// is a name under the operator's state root, never a path of the caller's choosing, and it is
+// checked before anything touches disk. The predicates left over are returned for the caller.
 func ledgerPredicates(
 	ctx queryContext,
 	node *sqlparser.Select,
@@ -141,15 +148,70 @@ func ledgerPredicates(
 				"and the correlation stamp, and it is how a later run addresses the same resources",
 			relation, collectionPredicate))
 	}
-	state := popPredicate(params, statePredicate)
-	runID := popPredicate(params, runIDPredicate)
-	if state == "" {
-		state = filepath.Join(ctx.GetRuntimeContext().ApplicationFilesRootPath, stateDirName)
+	root := previewCfg.getIaCStateRoot()
+	if root == "" {
+		root = filepath.Join(ctx.GetRuntimeContext().ApplicationFilesRootPath, stateDirName)
 	}
+	state, stateErr := resolveStateDir(root, popPredicate(params, statePredicate))
+	if stateErr != nil {
+		return nil, nil, refuse(fmt.Errorf("relation '%s': '%s' %w", relation, statePredicate, stateErr))
+	}
+	runID := popPredicate(params, runIDPredicate)
 	if runID == "" {
 		runID = time.Now().UTC().Format(runIDLayout)
 	}
 	return params, omnisdk.NewLedger(collection, state, runID), nil
+}
+
+// resolveStateDir places the named state directory under root, or returns root when no name is
+// given. The name must be relative and stay inside root, lexically and once symlinks (and, on
+// Windows, junctions) in its existing part are followed, so a link cannot carry it out either.
+func resolveStateDir(root, name string) (string, error) {
+	if name == "" {
+		return root, nil
+	}
+	if !filepath.IsLocal(name) {
+		return "", errStateEscapesRoot
+	}
+	resolvedRoot, err := resolveExisting(root)
+	if err != nil {
+		return "", err
+	}
+	dir := filepath.Join(root, name)
+	resolvedDir, err := resolveExisting(dir)
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(resolvedRoot, resolvedDir)
+	if err != nil || !filepath.IsLocal(rel) {
+		return "", errStateEscapesRoot
+	}
+	return dir, nil
+}
+
+// resolveExisting follows the links in the longest prefix of path that exists and appends the
+// rest unchanged; a part that does not exist yet cannot be a link.
+func resolveExisting(path string) (string, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	var rest []string
+	for {
+		resolved, evalErr := filepath.EvalSymlinks(abs)
+		if evalErr == nil {
+			return filepath.Join(append([]string{resolved}, rest...)...), nil
+		}
+		if !errors.Is(evalErr, fs.ErrNotExist) {
+			return "", evalErr
+		}
+		parent := filepath.Dir(abs)
+		if parent == abs {
+			return filepath.Join(append([]string{abs}, rest...)...), nil
+		}
+		rest = append([]string{filepath.Base(abs)}, rest...)
+		abs = parent
+	}
 }
 
 // countSupplied counts the non-empty values.
