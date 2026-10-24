@@ -1,0 +1,306 @@
+{
+  "function": "split_part",
+  "vectors": [
+    {
+      "id": "sef_1_01",
+      "source": "sqlite-ext-functions test/split_part.sql 1_01",
+      "args": [
+        null,
+        "/",
+        1
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_1_02",
+      "source": "sqlite-ext-functions test/split_part.sql 1_02",
+      "args": [
+        "a/b/c",
+        null,
+        1
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_1_03",
+      "source": "sqlite-ext-functions test/split_part.sql 1_03",
+      "args": [
+        "a/b/c",
+        "/",
+        null
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_2_01",
+      "source": "sqlite-ext-functions test/split_part.sql 2_01",
+      "args": [
+        "a/b/c",
+        "/",
+        1
+      ],
+      "result": "a"
+    },
+    {
+      "id": "sef_2_02",
+      "source": "sqlite-ext-functions test/split_part.sql 2_02",
+      "args": [
+        "a/b/c",
+        "/",
+        2
+      ],
+      "result": "b"
+    },
+    {
+      "id": "sef_2_03",
+      "source": "sqlite-ext-functions test/split_part.sql 2_03",
+      "args": [
+        "a/b/c",
+        "/",
+        3
+      ],
+      "result": "c"
+    },
+    {
+      "id": "sef_3_01",
+      "source": "sqlite-ext-functions test/split_part.sql 3_01",
+      "args": [
+        "/a/b/c/",
+        "/",
+        1
+      ],
+      "result": ""
+    },
+    {
+      "id": "sef_3_02",
+      "source": "sqlite-ext-functions test/split_part.sql 3_02",
+      "args": [
+        "/a/b/c/",
+        "/",
+        2
+      ],
+      "result": "a"
+    },
+    {
+      "id": "sef_3_03",
+      "source": "sqlite-ext-functions test/split_part.sql 3_03",
+      "args": [
+        "/a/b/c/",
+        "/",
+        4
+      ],
+      "result": "c"
+    },
+    {
+      "id": "sef_3_04",
+      "source": "sqlite-ext-functions test/split_part.sql 3_04",
+      "args": [
+        "/a/b/c/",
+        "/",
+        5
+      ],
+      "result": ""
+    },
+    {
+      "id": "sef_4_01",
+      "source": "sqlite-ext-functions test/split_part.sql 4_01",
+      "args": [
+        "a/b/c",
+        "/",
+        -1
+      ],
+      "result": "c"
+    },
+    {
+      "id": "sef_4_02",
+      "source": "sqlite-ext-functions test/split_part.sql 4_02",
+      "args": [
+        "a/b/c",
+        "/",
+        -2
+      ],
+      "result": "b"
+    },
+    {
+      "id": "sef_4_03",
+      "source": "sqlite-ext-functions test/split_part.sql 4_03",
+      "args": [
+        "a/b/c",
+        "/",
+        -3
+      ],
+      "result": "a"
+    },
+    {
+      "id": "sef_5_01",
+      "source": "sqlite-ext-functions test/split_part.sql 5_01",
+      "args": [
+        "a//b/c",
+        "/",
+        1
+      ],
+      "result": "a"
+    },
+    {
+      "id": "sef_5_02",
+      "source": "sqlite-ext-functions test/split_part.sql 5_02",
+      "args": [
+        "a//b/c",
+        "/",
+        2
+      ],
+      "result": ""
+    },
+    {
+      "id": "sef_5_03",
+      "source": "sqlite-ext-functions test/split_part.sql 5_03",
+      "args": [
+        "a//b/c",
+        "/",
+        3
+      ],
+      "result": "b"
+    },
+    {
+      "id": "sef_6_01",
+      "source": "sqlite-ext-functions test/split_part.sql 6_01",
+      "args": [
+        "a/b/c",
+        "/",
+        4
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_6_02",
+      "source": "sqlite-ext-functions test/split_part.sql 6_02",
+      "args": [
+        "a/b/c",
+        "/",
+        -4
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_7_01",
+      "source": "sqlite-ext-functions test/split_part.sql 7_01",
+      "args": [
+        "a-b-c",
+        "-",
+        2
+      ],
+      "result": "b"
+    },
+    {
+      "id": "sef_7_02",
+      "source": "sqlite-ext-functions test/split_part.sql 7_02",
+      "args": [
+        "a#b#c",
+        "#",
+        3
+      ],
+      "result": "c"
+    },
+    {
+      "id": "sef_8_01",
+      "source": "sqlite-ext-functions test/split_part.sql 8_01",
+      "args": [
+        "a$b$c",
+        "$",
+        2
+      ],
+      "result": "b"
+    },
+    {
+      "id": "sef_8_02",
+      "source": "sqlite-ext-functions test/split_part.sql 8_02",
+      "args": [
+        "a.b.c",
+        ".",
+        3
+      ],
+      "result": "c"
+    },
+    {
+      "id": "sef_9_01",
+      "source": "sqlite-ext-functions test/split_part.sql 9_01",
+      "args": [
+        "",
+        "/",
+        1
+      ],
+      "result": ""
+    },
+    {
+      "id": "sef_9_02",
+      "source": "sqlite-ext-functions test/split_part.sql 9_02",
+      "args": [
+        "",
+        "/",
+        -1
+      ],
+      "result": ""
+    },
+    {
+      "id": "sef_10_01",
+      "source": "sqlite-ext-functions test/split_part.sql 10_01",
+      "args": [
+        "a",
+        "/",
+        1
+      ],
+      "result": "a"
+    },
+    {
+      "id": "sef_10_02",
+      "source": "sqlite-ext-functions test/split_part.sql 10_02",
+      "args": [
+        "a",
+        "/",
+        2
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_10_03",
+      "source": "sqlite-ext-functions test/split_part.sql 10_03",
+      "args": [
+        "a",
+        "/",
+        -1
+      ],
+      "result": "a"
+    },
+    {
+      "id": "pr783_01",
+      "source": "stackql PR #783 cgo golden sample",
+      "args": [
+        "a,b,c",
+        ",",
+        2
+      ],
+      "result": "b"
+    },
+    {
+      "id": "pr783_02",
+      "source": "stackql PR #783 cgo golden sample",
+      "args": [
+        "a,b,c",
+        ",",
+        -1
+      ],
+      "result": "c"
+    },
+    {
+      "id": "cref_empty_sep",
+      "source": "C reference implementation behavior (split_part.c)",
+      "args": [
+        "a/b/c",
+        "",
+        1
+      ],
+      "result": null,
+      "note": "empty separator yields NULL per the C guard (*sep == '\\0')"
+    }
+  ]
+}

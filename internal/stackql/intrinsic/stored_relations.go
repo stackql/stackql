@@ -22,7 +22,49 @@ type storedResolver struct {
 	system    sql_system.SQLSystem
 	relations map[string]omnisdk.Relation
 	active    map[string]bool
-	ctes      map[string]*sqlparser.Select
+	ctes      map[string]sqlparser.SelectStatement
+}
+
+func describeStoredFunc(
+	ctx queryContext, node *sqlparser.DescribeTable, current string,
+) (func() internaldto.ExecutorOutput, bool) {
+	host, ok := ctx.(interface{ GetSQLSystem() sql_system.SQLSystem })
+	if !ok || host.GetSQLSystem() == nil {
+		return nil, false
+	}
+	system := host.GetSQLSystem()
+	name := qualifiedName(node.Table)
+	_, view := system.GetViewByName(name)
+	materialized, mv := system.GetMaterializedViewByName(name)
+	physical, tableExists := system.GetPhysicalTableByName(name)
+	if !view && !mv && !tableExists {
+		return nil, false
+	}
+	return func() internaldto.ExecutorOutput {
+		var columns []column
+		if view {
+			selectNode := &sqlparser.Select{
+				SelectExprs: sqlparser.SelectExprs{&sqlparser.StarExpr{}},
+				From:        sqlparser.TableExprs{&sqlparser.AliasedTableExpr{Expr: node.Table}},
+			}
+			names, _, err := planStatementRead(ctx, selectNode, current, 0, nil)
+			if err != nil {
+				return internaldto.NewErroneousExecutorOutput(err)
+			}
+			for _, name := range names {
+				columns = append(columns, column{name: name})
+			}
+		} else {
+			metadata := physical
+			if mv {
+				metadata = materialized
+			}
+			for _, declared := range metadata.GetColumns() {
+				columns = append(columns, column{name: declared.GetName(), dataType: declared.GetType()})
+			}
+		}
+		return describeTable(ctx, table{columns: columns}, isExtended(node.Extended))
+	}, true
 }
 
 func newStoredResolver(ctx queryContext, system sql_system.SQLSystem) storedRelationResolver {
@@ -31,9 +73,6 @@ func newStoredResolver(ctx queryContext, system sql_system.SQLSystem) storedRela
 func prepareStoredRelations(
 	ctx queryContext, node *sqlparser.Select,
 ) (*sqlparser.Select, map[string]omnisdk.Relation, error) {
-	if !IsUnstableEnabled() {
-		return node, nil, nil
-	}
 	var system sql_system.SQLSystem
 	if host, ok := ctx.(interface{ GetSQLSystem() sql_system.SQLSystem }); ok {
 		system = host.GetSQLSystem()
@@ -95,12 +134,16 @@ func (r *storedResolver) selectNode(node *sqlparser.Select, depth int) (*sqlpars
 	parent := r.ctes
 	r.ctes = maps.Clone(parent)
 	if r.ctes == nil {
-		r.ctes = map[string]*sqlparser.Select{}
+		r.ctes = map[string]sqlparser.SelectStatement{}
 	}
 	defer func() { r.ctes = parent }()
 	if err := r.with(node.With, depth); err != nil {
 		return nil, err
 	}
+	if expanded, handled, err := r.inlineView(node, depth); handled || err != nil {
+		return expanded, err
+	}
+
 	clone := *node
 	clone.With = nil
 	clone.From = cloneRelationTables(node.From)
@@ -122,15 +165,11 @@ func (r *storedResolver) with(clause *sqlparser.With, depth int) error {
 		return fmt.Errorf("recursive provider CTEs require an iterative execution boundary")
 	}
 	for _, definition := range clause.CTEs {
-		query, isSelect := definition.Select.(*sqlparser.Select)
-		if !isSelect {
-			return fmt.Errorf("CTE %s requires a SELECT boundary", definition.Name.GetRawVal())
-		}
-		prepared, err := r.selectNode(query, depth+1)
+		prepared, err := r.selectStatement(definition.Select, depth+1)
 		if err != nil {
 			return err
 		}
-		if err = renameCTEColumns(prepared, definition.Columns); err != nil {
+		if err = renameCTEColumns(firstSelect(prepared), definition.Columns); err != nil {
 			return err
 		}
 		r.ctes[strings.ToLower(definition.Name.GetRawVal())] = prepared
@@ -141,6 +180,9 @@ func (r *storedResolver) with(clause *sqlparser.With, depth int) error {
 func renameCTEColumns(node *sqlparser.Select, columns sqlparser.Columns) error {
 	if len(columns) == 0 {
 		return nil
+	}
+	if node == nil {
+		return fmt.Errorf("CTE requires a SELECT projection")
 	}
 	if len(columns) != len(node.SelectExprs) {
 		return fmt.Errorf("CTE column count does not match its projection")
@@ -174,13 +216,11 @@ func (r *storedResolver) table(expr sqlparser.TableExpr, depth int) error {
 		}
 	case *sqlparser.AliasedTableExpr:
 		if sub, isSub := table.Expr.(*sqlparser.Subquery); isSub {
-			if inner, isSelect := sub.Select.(*sqlparser.Select); isSelect {
-				prepared, err := r.selectNode(inner, depth+1)
-				if err != nil {
-					return err
-				}
-				table.Expr = &sqlparser.Subquery{Select: prepared}
+			prepared, err := r.selectStatement(sub.Select, depth+1)
+			if err != nil {
+				return err
 			}
+			table.Expr = &sqlparser.Subquery{Select: prepared}
 			return nil
 		}
 		name, isName := table.Expr.(sqlparser.TableName)
@@ -245,10 +285,7 @@ func (r *storedResolver) register(
 	if len(names) == 0 {
 		return fmt.Errorf("stored relation %s has no declared columns", metadata.GetName())
 	}
-	actualName, err := r.system.GetFullyQualifiedTableName(metadata.GetName())
-	if err != nil {
-		return err
-	}
+	actualName := r.system.DelimitFullyQualifiedRelationName(metadata.GetName())
 	// Identifiers come from registered metadata and are quoted; data is never interpolated.
 	//nolint:gosec // G202: metadata identifiers only.
 	statement := "SELECT " + strings.Join(quoted, ",") + " FROM " + actualName
@@ -267,7 +304,7 @@ func (r *storedResolver) register(
 	if err != nil {
 		return err
 	}
-	r.relations[handle] = relation
+	r.relations[handle] = newOrderedRelation(relation, names)
 	table.Expr = sqlparser.TableName{
 		QualifierSecond: sqlparser.NewTableIdent(UnstablePrefix + "omni_relations"),
 		Qualifier:       sqlparser.NewTableIdent("sources"), Name: sqlparser.NewTableIdent(handleName),
@@ -335,11 +372,11 @@ func (r *storedResolver) expandView(
 	if err != nil {
 		return err
 	}
-	query, isSelect := statement.(*sqlparser.Select)
+	query, isSelect := statement.(sqlparser.SelectStatement)
 	if !isSelect {
 		return fmt.Errorf("stored view %s requires SELECT", address)
 	}
-	prepared, err := r.selectNode(query, depth+1)
+	prepared, err := r.selectStatement(query, depth+1)
 	if err != nil {
 		return err
 	}
@@ -354,15 +391,10 @@ func storedSelectFunc(
 	ctx queryContext, node *sqlparser.Select, currentProvider string,
 ) (func() internaldto.ExecutorOutput, bool) {
 	prepared, stored, err := prepareStoredRelations(ctx, node)
-	// Preserve established view expansion for queries without a direct provider
-	// or stored-table read. Those paths also resolve parameterized views and unions.
-	if !containsProviderRead(node, currentProvider, nil) && len(stored) == 0 {
-		return nil, false
-	}
 	if err != nil {
 		return refuse(err), true
 	}
-	if !containsProviderRead(prepared, currentProvider, stored) && !hasExternalRelations(stored) {
+	if !containsProviderRead(prepared, currentProvider, stored) && len(stored) == 0 {
 		return nil, false
 	}
 	isDoc, err := fromDocProviders(prepared.From, currentProvider)
@@ -373,4 +405,211 @@ func storedSelectFunc(
 		return refuse(err), true
 	}
 	return docSelectFunc(ctx, prepared, currentProvider, stored)
+}
+
+func firstSelect(stmt sqlparser.SelectStatement) *sqlparser.Select {
+	switch node := stmt.(type) {
+	case *sqlparser.Select:
+		return node
+	case *sqlparser.ParenSelect:
+		return firstSelect(node.Select)
+	case *sqlparser.Union:
+		return firstSelect(node.FirstStatement)
+	}
+	return nil
+}
+
+func (r *storedResolver) selectStatement(stmt sqlparser.SelectStatement, depth int) (sqlparser.SelectStatement, error) {
+	if depth >= derivedRelationMaxDepth {
+		return nil, fmt.Errorf("stored relation expansion exceeds nesting bound")
+	}
+	switch node := stmt.(type) {
+	case *sqlparser.Select:
+		return r.selectNode(node, depth)
+	case *sqlparser.ParenSelect:
+		clone := *node
+		var err error
+		clone.Select, err = r.selectStatement(node.Select, depth+1)
+		return &clone, err
+	case *sqlparser.Union:
+		parent := r.ctes
+		r.ctes = maps.Clone(parent)
+		if r.ctes == nil {
+			r.ctes = map[string]sqlparser.SelectStatement{}
+		}
+		defer func() { r.ctes = parent }()
+		clone := *node
+		if first := firstSelect(node.FirstStatement); first != nil {
+			if err := r.with(first.With, depth+1); err != nil {
+				return nil, err
+			}
+		}
+		var err error
+		clone.FirstStatement, err = r.selectStatement(node.FirstStatement, depth+1)
+		if err != nil {
+			return nil, err
+		}
+		clone.UnionSelects = make([]*sqlparser.UnionSelect, len(node.UnionSelects))
+		for i, branch := range node.UnionSelects {
+			child := *branch
+			child.Statement, err = r.selectStatement(branch.Statement, depth+1)
+			if err != nil {
+				return nil, err
+			}
+			clone.UnionSelects[i] = &child
+		}
+		return &clone, nil
+	}
+	return nil, fmt.Errorf("unsupported stored read %T", stmt)
+}
+
+// Only SDK-declared request inputs can replace a stored view's default bindings.
+func bindStoredViewInputs(ctx queryContext, view *sqlparser.Select, where *sqlparser.Where, alias string) error {
+	if len(view.From) != 1 || view.Where == nil {
+		return nil
+	}
+	table, ok := view.From[0].(*sqlparser.AliasedTableExpr)
+	if !ok {
+		return nil
+	}
+	name, ok := table.Expr.(sqlparser.TableName)
+	if !ok || name.Qualifier.IsEmpty() {
+		return nil
+	}
+	bundle, ok := docProvider(resolveProvider(name.QualifierSecond.GetRawVal(), ctx.GetCurrentProvider()))
+	if !ok {
+		return nil
+	}
+	options, err := documentOptions(ctx)
+	if err != nil {
+		return err
+	}
+	address := UnstablePrefix + bundle + "." + name.Qualifier.GetRawVal() + "." + name.Name.GetRawVal()
+	declared, err := omnisdk.DescribeTable(registryRoot(ctx), address, options...)
+	if err != nil {
+		return err
+	}
+	inputs := map[string]bool{}
+	for _, method := range declared.Methods() {
+		for _, param := range method.Params() {
+			inputs[param.Name()] = true
+		}
+	}
+	bindings := viewLiteralBindings(where, alias, alias)
+	rewritten := sqlparser.Rewrite(view.Where.Expr, func(cursor *sqlparser.Cursor) bool {
+		compare, isComparison := cursor.Node().(*sqlparser.ComparisonExpr)
+		if !isComparison || !literalViewBinding(compare) {
+			return true
+		}
+		col, isColumn := compare.Left.(*sqlparser.ColName)
+		if !isColumn || !inputs[col.Name.GetRawVal()] {
+			return true
+		}
+		if replacement := bindings[col.Name.GetRawVal()]; replacement != nil {
+			clone := *replacement
+			clone.Left = col
+			cursor.Replace(&clone)
+			return false
+		}
+		return true
+	}, nil)
+	view.Where.Expr, ok = rewritten.(sqlparser.Expr)
+	if !ok {
+		return fmt.Errorf("view binding rewrite requires an expression")
+	}
+	return nil
+}
+
+type orderedRelation interface {
+	omnisdk.Relation
+	columnOrder() []string
+}
+type declaredOrderedRelation struct {
+	omnisdk.Relation
+	names []string
+}
+
+func newOrderedRelation(relation omnisdk.Relation, names []string) orderedRelation {
+	return &declaredOrderedRelation{Relation: relation, names: append([]string(nil), names...)}
+}
+func (r *declaredOrderedRelation) columnOrder() []string { return append([]string(nil), r.names...) }
+
+func (r *declaredOrderedRelation) Methods() []omnisdk.MethodSignature {
+	methods := r.Relation.Methods()
+	result := make([]omnisdk.MethodSignature, len(methods))
+	for i, method := range methods {
+		result[i] = orderedSignature{MethodSignature: method, relation: r}
+	}
+	return result
+}
+
+type orderedSignature struct {
+	omnisdk.MethodSignature
+	relation orderedRelation
+}
+
+func (s orderedSignature) Columns() []string { return s.relation.columnOrder() }
+
+// Simple views share the caller's request bindings; aggregations keep their boundary.
+func (r *storedResolver) inlineView(node *sqlparser.Select, depth int) (*sqlparser.Select, bool, error) {
+	if len(node.From) != 1 || r.system == nil {
+		return nil, false, nil
+	}
+	table, isTable := node.From[0].(*sqlparser.AliasedTableExpr)
+	if !isTable {
+		return nil, false, nil
+	}
+	name, isName := table.Expr.(sqlparser.TableName)
+	if !isName {
+		return nil, false, nil
+	}
+	address := qualifiedName(name)
+	view, exists := r.system.GetViewByName(address)
+	if !exists {
+		return nil, false, nil
+	}
+	if r.active[address] {
+		return nil, true, fmt.Errorf("stored view cycle at %s", address)
+	}
+	parsed, err := sqlparser.Parse(view.GetRawQuery())
+	if err != nil {
+		return nil, true, err
+	}
+	projection, isSelect := parsed.(*sqlparser.Select)
+	if !isSelect || projection.With != nil || needsStaging(projection) {
+		return nil, false, nil
+	}
+	for _, selection := range projection.SelectExprs {
+		if _, named := selection.(*sqlparser.AliasedExpr); !named {
+			return nil, false, nil
+		}
+	}
+	maximum := r.ctx.GetRuntimeContext().IndirectDepthMax
+	if depth+1 > maximum {
+		return nil, true, fmt.Errorf(
+			"indirection chain length %d > %d; please do not cite views at too deep a level", depth+1, maximum)
+	}
+	cloned, err := sqlparser.Parse(statementSQL(node))
+	if err != nil {
+		return nil, true, err
+	}
+	caller, isCaller := cloned.(*sqlparser.Select)
+	if !isCaller {
+		return nil, true, fmt.Errorf("view caller must be SELECT")
+	}
+	alias := table.As.GetRawVal()
+	if alias == "" {
+		alias = name.Name.GetRawVal()
+	}
+	if err = bindStoredViewInputs(r.ctx, projection, node.Where, alias); err != nil {
+		return nil, true, err
+	}
+	expanded, err := inlineDocumentView(caller, projection, alias)
+	if err != nil {
+		return nil, true, err
+	}
+	r.active[address] = true
+	result, err := r.selectNode(expanded, depth+1)
+	delete(r.active, address)
+	return result, true, err
 }

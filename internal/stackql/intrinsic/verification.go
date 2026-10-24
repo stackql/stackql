@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	"github.com/stackql-labs/omnisdk/pkg/docparse/stackqldoc"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/formulation"
+	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql/stackql-provider-registry/signing/pqsig"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"gopkg.in/yaml.v2"
 )
 
 //nolint:nilnil // A nil verifier is the explicit, successful opt-out state.
 func documentVerifier(runtime dto.RuntimeCtx) (pqsig.Verifier, error) {
-	var cfg formulation.RegistryConfig
+	var cfg omnisdk.RegistryConfig
 	if err := yaml.Unmarshal([]byte(runtime.RegistryRaw), &cfg); err != nil {
 		return nil, fmt.Errorf("document verification config: %w", err)
 	}

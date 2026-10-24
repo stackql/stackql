@@ -100,7 +100,7 @@ Exec Json Payload Fractional Value For Integer Property Rejected
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    exec stackql_native_test.coerce.settings.update @serviceId \= 'svc-3' @@json \= '{"retryCount": 3.5}';
-    ...    key 'retryCount' expected to contain element of type
+    ...    request body key 'retryCount': value '3.5' cannot be coerced to schema type 'integer'
 
 Update Unparseable String For Number Property Fails Before Request
     [Documentation]    Negative: the coercion error names the wire key and schema type;

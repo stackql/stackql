@@ -3,10 +3,10 @@ package tsm_physio //nolint:stylecheck,revive // prefer this nomenclature
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )

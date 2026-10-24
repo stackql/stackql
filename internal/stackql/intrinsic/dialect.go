@@ -5,8 +5,8 @@ import (
 
 	"github.com/stackql-labs/omnisdk/pkg/query"
 	"github.com/stackql-labs/omnisdk/pkg/sqlfn"
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/stackql/internal/stackql/constants"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 // sqlDialect is the SQL of the session's backend as the translator writes it: the omnisdk function

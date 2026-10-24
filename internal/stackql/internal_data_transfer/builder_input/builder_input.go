@@ -1,8 +1,6 @@
 package builder_input //nolint:revive,stylecheck // permissable deviation from norm
 
 import (
-	"github.com/stackql/any-sdk/pkg/streaming"
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -10,6 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
+	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
@@ -29,8 +28,6 @@ type BuilderInput interface {
 	GetParserNode() (sqlparser.SQLNode, bool)
 	GetProvider() (provider.IProvider, bool)
 	SetProvider(provider.IProvider)
-	GetOperationStore() (formulation.OperationStore, bool)
-	SetOperationStore(op formulation.OperationStore)
 	IsAwait() bool
 	IsReturning() bool
 	SetIsReturning(bool)
@@ -43,8 +40,6 @@ type BuilderInput interface {
 	SetIsUndo(isUndo bool)
 	SetRequiredDataRequestKey(key string)
 	GetRequiredDataRequestKey() (string, bool)
-	SetPushdownLimit(limit int)
-	GetPushdownLimit() (int, bool)
 	SetDependencyNode(dependencyNode primitivegraph.PrimitiveNode)
 	SetParserNode(node sqlparser.SQLNode)
 	SetParamMap(paramMap map[int]map[string]interface{})
@@ -53,8 +48,6 @@ type BuilderInput interface {
 	SetParamMapStream(streaming.MapStream)
 	SetVerb(verb string)
 	Clone() BuilderInput
-	GetHTTPPreparatorStream() (formulation.HttpPreparatorStream, bool)
-	SetHTTPPreparatorStream(prepStream formulation.HttpPreparatorStream)
 	IsTargetPhysicalTable() bool
 	SetIsTargetPhysicalTable(isPhysical bool)
 	SetTxnCtrlCtrs(internaldto.TxnControlCounters)
@@ -79,8 +72,6 @@ type builderInput struct {
 	isUndo                  bool
 	node                    sqlparser.SQLNode
 	paramMapStream          streaming.MapStream
-	httpPrepStream          formulation.HttpPreparatorStream
-	op                      formulation.OperationStore
 	prov                    provider.IProvider
 	annotatedAst            annotatedast.AnnotatedAst
 	isTargetPhysical        bool
@@ -88,8 +79,6 @@ type builderInput struct {
 	tableInsertionContainer tableinsertioncontainer.TableInsertionContainer
 	insertCtx               drm.PreparedStatementCtx
 	requiredDataRequestKey  string
-	pushdownLimit           int
-	pushdownLimitSet        bool
 }
 
 func NewBuilderInput(
@@ -108,17 +97,6 @@ func NewBuilderInput(
 
 func (bi *builderInput) GetRequiredDataRequestKey() (string, bool) {
 	return bi.requiredDataRequestKey, bi.requiredDataRequestKey != ""
-}
-
-// SetPushdownLimit records the LIMIT the analysis phase resolved as pushable (used by the
-// GraphQL acquire path to bound the page size); the acquire only carries it out.
-func (bi *builderInput) SetPushdownLimit(limit int) {
-	bi.pushdownLimit = limit
-	bi.pushdownLimitSet = true
-}
-
-func (bi *builderInput) GetPushdownLimit() (int, bool) {
-	return bi.pushdownLimit, bi.pushdownLimitSet
 }
 
 func (bi *builderInput) SetRequiredDataRequestKey(key string) {
@@ -184,24 +162,8 @@ func (bi *builderInput) SetProvider(prov provider.IProvider) {
 	bi.prov = prov
 }
 
-func (bi *builderInput) GetOperationStore() (formulation.OperationStore, bool) {
-	return bi.op, bi.op != nil
-}
-
-func (bi *builderInput) SetOperationStore(op formulation.OperationStore) {
-	bi.op = op
-}
-
 func (bi *builderInput) GetParamMapStream() (streaming.MapStream, bool) {
 	return bi.paramMapStream, bi.paramMapStream != nil
-}
-
-func (bi *builderInput) GetHTTPPreparatorStream() (formulation.HttpPreparatorStream, bool) {
-	return bi.httpPrepStream, bi.httpPrepStream != nil
-}
-
-func (bi *builderInput) SetHTTPPreparatorStream(prepStream formulation.HttpPreparatorStream) {
-	bi.httpPrepStream = prepStream
 }
 
 func (bi *builderInput) SetParamMapStream(s streaming.MapStream) {
@@ -315,7 +277,5 @@ func (bi *builderInput) Clone() BuilderInput {
 		isReturning:            bi.isReturning,
 		insertCtx:              bi.insertCtx,
 		requiredDataRequestKey: bi.requiredDataRequestKey,
-		pushdownLimit:          bi.pushdownLimit,
-		pushdownLimitSet:       bi.pushdownLimitSet,
 	}
 }

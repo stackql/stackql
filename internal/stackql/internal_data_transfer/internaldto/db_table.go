@@ -1,7 +1,7 @@
 package internaldto
 
 import (
-	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/stackql/internal/stackql/constants"
 )
 
 var (

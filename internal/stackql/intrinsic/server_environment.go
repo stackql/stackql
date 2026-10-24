@@ -84,3 +84,27 @@ func unresolvedServerParams(method omnisdk.DocMethod) []string {
 	}
 	return required
 }
+
+// bindReadPageSize retains the CLI's request size independently of a SQL LIMIT.
+// Only declared query parameters are supplied, and explicit SQL bindings win.
+func bindReadPageSize(q query.Unresolved, tables map[string]omnisdk.Table, size int) (query.Unresolved, error) {
+	if size <= 0 {
+		return q, nil
+	}
+	where := slices.Clone(q.Where())
+	for _, alias := range slices.Sorted(maps.Keys(tables)) {
+		if q.Target() != nil && q.Target().Resource().Alias() == alias {
+			continue
+		}
+		for _, method := range tables[alias].Methods() {
+			for _, parameter := range method.Params() {
+				if parameter.In() == "query" && parameter.Name() == "maxResults" && !explicitServerBinding(q, alias, "maxResults") {
+					where = append(where, query.NewEq(query.NewColumn(alias, "maxResults"), query.NewLiteral(size)))
+					break
+				}
+			}
+			break
+		}
+	}
+	return queryWithWhere(q, where)
+}

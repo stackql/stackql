@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/any-sdk/public/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 )
 
 // queryOnlyEngine satisfies sqlengine.SQLEngine for the one method the cache

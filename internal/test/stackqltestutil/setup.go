@@ -4,11 +4,11 @@ package stackqltestutil
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"net/url"
 	"testing"
 
-	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -214,18 +214,19 @@ func getNetworkInsertSuccessExpectations() map[string]testhttpapi.HTTPRequestExp
 		nil,
 		"GET",
 		networkInsertOpPollURL,
-		testobjects.GoogleApisHost,
+		testobjects.GoogleComputeHost,
 		testobjects.GetSimplePollOperationGoogleNetworkInsertResponse(),
 		nil,
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		testobjects.GoogleComputeHost + testobjects.NetworkInsertPath:             networkInsertExpectation,
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.NetworkInsertPath:                networkInsertExpectation,
+		testobjects.GoogleComputeHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
 func getDiskInsertSuccessExpectations(expectedRequestBody string) map[string]testhttpapi.HTTPRequestExpectations {
+	operationPath := strings.ReplaceAll(testobjects.GoogleComputeInsertOperationPath, "stackql-demo", "testing-project")
 	diskInsertURL := &url.URL{
 		Path: testobjects.DiskInsertPath,
 	}
@@ -235,26 +236,26 @@ func getDiskInsertSuccessExpectations(expectedRequestBody string) map[string]tes
 		"POST",
 		diskInsertURL,
 		testobjects.GoogleComputeHost,
-		testobjects.GetSimpleGoogleNetworkInsertResponse(),
+		strings.ReplaceAll(testobjects.GetSimpleGoogleNetworkInsertResponse(), "stackql-demo", "testing-project"),
 		nil,
 	)
 
 	diskInsertOpPollURL := &url.URL{
-		Path: testobjects.GoogleComputeInsertOperationPath,
+		Path: operationPath,
 	}
 	networkInsertOpPollExpectation := testhttpapi.NewHTTPRequestExpectations(
 		nil,
 		nil,
 		"GET",
 		diskInsertOpPollURL,
-		testobjects.GoogleApisHost,
-		testobjects.GetSimplePollOperationGoogleNetworkInsertResponse(),
+		testobjects.GoogleComputeHost,
+		strings.ReplaceAll(testobjects.GetSimplePollOperationGoogleNetworkInsertResponse(), "stackql-demo", "testing-project"),
 		nil,
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		testobjects.GoogleComputeHost + testobjects.DiskInsertPath:                diskInsertExpectation,
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.DiskInsertPath: diskInsertExpectation,
+		testobjects.GoogleComputeHost + operationPath:              networkInsertOpPollExpectation,
 	}
 }
 
@@ -299,14 +300,14 @@ func getSubnetworkInsertSuccessExpectations() map[string]testhttpapi.HTTPRequest
 		nil,
 		"GET",
 		networkInsertOpPollURL,
-		testobjects.GoogleApisHost,
+		testobjects.GoogleComputeHost,
 		testobjects.GetSimplePollOperationGoogleSubnetworkInsertResponse(),
 		nil,
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		testobjects.GoogleComputeHost + testobjects.SubnetworkInsertPath:          networkInsertExpectation,
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.SubnetworkInsertPath:             networkInsertExpectation,
+		testobjects.GoogleComputeHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -332,14 +333,14 @@ func getIPInsertSuccessExpectations() map[string]testhttpapi.HTTPRequestExpectat
 		nil,
 		"GET",
 		networkInsertOpPollURL,
-		testobjects.GoogleApisHost,
+		testobjects.GoogleComputeHost,
 		testobjects.GetSimplePollOperationGoogleIPInsertResponse(),
 		nil,
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		testobjects.GoogleComputeHost + testobjects.IPInsertPath:                  networkInsertExpectation,
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.IPInsertPath:                     networkInsertExpectation,
+		testobjects.GoogleComputeHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -365,14 +366,14 @@ func getInternalFirewallInsertSuccessExpectations() map[string]testhttpapi.HTTPR
 		nil,
 		"GET",
 		networkInsertOpPollURL,
-		testobjects.GoogleApisHost,
+		testobjects.GoogleComputeHost,
 		testobjects.GetSimplePollOperationGoogleFirewallInsertResponse(),
 		nil,
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		testobjects.GoogleComputeHost + testobjects.FirewallInsertPath:            networkInsertExpectation,
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.FirewallInsertPath:               networkInsertExpectation,
+		testobjects.GoogleComputeHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -398,14 +399,14 @@ func getExternalFirewallInsertSuccessExpectations() map[string]testhttpapi.HTTPR
 		nil,
 		"GET",
 		networkInsertOpPollURL,
-		testobjects.GoogleApisHost,
+		testobjects.GoogleComputeHost,
 		testobjects.GetSimplePollOperationGoogleFirewallInsertResponse(),
 		nil,
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		testobjects.GoogleComputeHost + testobjects.FirewallInsertPath:            networkInsertExpectation,
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.FirewallInsertPath:               networkInsertExpectation,
+		testobjects.GoogleComputeHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -431,14 +432,14 @@ func getComputeInstanceInsertSuccessExpectations(name string, secondaryTag strin
 		nil,
 		"GET",
 		networkInsertOpPollURL,
-		testobjects.GoogleApisHost,
+		testobjects.GoogleComputeHost,
 		testobjects.GetSimplePollOperationGoogleComputeInstanceInsertResponse(),
 		nil,
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		testobjects.GoogleComputeHost + testobjects.ComputeInstanceInsertPath:     networkInsertExpectation,
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.ComputeInstanceInsertPath:        networkInsertExpectation,
+		testobjects.GoogleComputeHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -465,14 +466,14 @@ func getNetworkDeleteSuccessExpectations() map[string]testhttpapi.HTTPRequestExp
 		nil,
 		"GET",
 		networkInsertOpPollURL,
-		testobjects.GoogleApisHost,
+		testobjects.GoogleComputeHost,
 		testobjects.GetSimplePollOperationGoogleNetworkDeleteResponse(),
 		nil,
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		testobjects.GoogleComputeHost + path:                                      networkDeleteExpectation,
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + path:                                         networkDeleteExpectation,
+		testobjects.GoogleComputeHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -483,7 +484,6 @@ func SetupSimpleInsertGoogleComputeNetworks(t *testing.T) {
 	}
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
-	execution.MonitorPollIntervalSeconds = 2
 }
 
 func SetupDependentInsertGoogleComputeDisks(t *testing.T) {
@@ -492,14 +492,13 @@ func SetupDependentInsertGoogleComputeDisks(t *testing.T) {
 		expectations.Put(k, v)
 	}
 	for k, v := range getDiskInsertSuccessExpectations(testobjects.CreateGoogleComputeDiskRequestPayload01) {
-		expectations.Put(k, v)
+		expectations.PutUnordered(t, k, v)
 	}
 	for k, v := range getDiskInsertSuccessExpectations(testobjects.CreateGoogleComputeDiskRequestPayload02) {
-		expectations.Put(k, v)
+		expectations.PutUnordered(t, k, v)
 	}
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
-	execution.MonitorPollIntervalSeconds = 2
 }
 
 func SetupExecGoogleOrganizationsGetIamPolicy(t *testing.T) {
@@ -513,18 +512,17 @@ func SetupExecGoogleOrganizationsGetIamPolicy(t *testing.T) {
 
 func SetupDependentInsertGoogleComputeDisksReversed(t *testing.T) {
 	expectations := testhttpapi.NewExpectationStore(5) //nolint:mnd // TODO: tech debt sweep mnd hacks
-	for k, v := range getCloudResourceManagerProjectSelectExpectations(t) {
+	for k, v := range getDisksSelectExpectations(t) {
 		expectations.Put(k, v)
 	}
 	for k, v := range getDiskInsertSuccessExpectations(testobjects.CreateGoogleComputeDiskRequestPayload03) {
-		expectations.Put(k, v)
+		expectations.PutUnordered(t, k, v)
 	}
 	for k, v := range getDiskInsertSuccessExpectations(testobjects.CreateGoogleComputeDiskRequestPayload04) {
-		expectations.Put(k, v)
+		expectations.PutUnordered(t, k, v)
 	}
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
-	execution.MonitorPollIntervalSeconds = 2
 }
 
 func SetupDependentInsertGoogleBQDatasets(t *testing.T) {
@@ -556,7 +554,6 @@ func SetupDependentInsertGoogleBQDatasets(t *testing.T) {
 	}
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
-	execution.MonitorPollIntervalSeconds = 2
 }
 
 func SetupSimpleDeleteGoogleComputeNetworks(t *testing.T) {
@@ -566,7 +563,6 @@ func SetupSimpleDeleteGoogleComputeNetworks(t *testing.T) {
 	}
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
-	execution.MonitorPollIntervalSeconds = 2
 }
 
 func SetupK8sTheHardWayE2eSuccess(t *testing.T) {
@@ -603,7 +599,6 @@ func SetupK8sTheHardWayE2eSuccess(t *testing.T) {
 	}
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
-	execution.MonitorPollIntervalSeconds = 2
 }
 
 //nolint:mnd // TODO: tech debt sweep mnd hacks
@@ -639,5 +634,4 @@ func SetupInsertDependentComputeDiskSuccess(t *testing.T) {
 	}
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
-	execution.MonitorPollIntervalSeconds = 2
 }

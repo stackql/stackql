@@ -5,8 +5,8 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/stackql/internal/stackql/logging"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 const defaultConfigCacheDir = ".stackql"

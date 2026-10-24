@@ -412,6 +412,11 @@ def projects_testing_project_global_firewalls():
 # Initialize a counter to track the number of calls
 call_counter = {"firewalls": 0}
 
+@app.route('/reset/changing-firewalls', methods=['POST'])
+def reset_changing_firewalls():
+    call_counter["firewalls"] = 0
+    return '', 204
+
 @app.route('/compute/v1/projects/changing-project/global/firewalls', methods=['GET'])
 def firewalls():
     # Increment the call counter

@@ -1,10 +1,6 @@
 package primitivecomposer
 
 import (
-	"fmt"
-
-	"github.com/stackql/any-sdk/public/formulation"
-	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -13,7 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
-	"github.com/stackql/stackql/internal/stackql/suffix"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
@@ -27,9 +23,9 @@ import (
 type PrimitiveComposer interface {
 	AddChild(val PrimitiveComposer)
 	AddIndirect(val PrimitiveComposer)
-	AssignParameters() (internaldto.TableParameterCollection, error)
+
 	ContainsSQLDataSource() bool
-	GetAssignedParameters() (internaldto.TableParameterCollection, bool)
+
 	GetAst() sqlparser.SQLNode
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetBuilder() primitivebuilder.Builder
@@ -53,7 +49,7 @@ type PrimitiveComposer interface {
 	GetSymbol(k interface{}) (symtab.Entry, error)
 	GetSymTab() symtab.SymTab
 	GetTable(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error)
-	GetTableFilter() func(formulation.ITable) (formulation.ITable, error)
+
 	GetTables() taxonomy.TblMap
 	GetTxnCounterManager() txncounter.Manager
 	GetTxnCtrlCtrs() internaldto.TxnControlCounters
@@ -84,7 +80,7 @@ type PrimitiveComposer interface {
 	SetSymTab(symtab.SymTab)
 	MergeSymTab(symtab.SymTab, string) error
 	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
-	SetTableFilter(tableFilter func(formulation.ITable) (formulation.ITable, error))
+
 	SetTxnCtrlCtrs(tc internaldto.TxnControlCounters)
 	SetUnionSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetValOnlyCols(m map[int]map[string]interface{})
@@ -115,7 +111,6 @@ type standardPrimitiveComposer struct {
 
 	// needed globally for non-heirarchy queries, such as "SHOW SERVICES FROM google;"
 	prov            provider.IProvider
-	tableFilter     func(formulation.ITable) (formulation.ITable, error)
 	colsVisited     map[string]bool
 	likeAbleColumns []string
 
@@ -151,8 +146,6 @@ type standardPrimitiveComposer struct {
 	unionNonControlColumns []typing.ColumnMetadata
 
 	tccSetAheadOfTime bool
-
-	paramCollection internaldto.TableParameterCollection
 
 	isIndirect bool
 
@@ -201,10 +194,6 @@ func (pb *standardPrimitiveComposer) IsIndirect() bool {
 
 func (pb *standardPrimitiveComposer) SetIsIndirect(isIndirect bool) {
 	pb.isIndirect = isIndirect
-}
-
-func (pb *standardPrimitiveComposer) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
-	return pb.paramCollection, pb.paramCollection != nil
 }
 
 func (pb *standardPrimitiveComposer) SetSymTab(symTab symtab.SymTab) {
@@ -256,97 +245,6 @@ func (pb *standardPrimitiveComposer) GetParent() PrimitiveComposer {
 
 func (pb *standardPrimitiveComposer) GetChildren() []PrimitiveComposer {
 	return pb.children
-}
-
-// withNativeCasingAliases adds each native-casing (snake_case) parameter alias to the same
-// required/optional map as its wire parameter, so snake_case SQL keys resolve to the wire
-// parameter. The alias and its wire key share an Addressable whose GetName is the wire name.
-// any-sdk owns the casing translation; for methods without request native casing the
-// supplied allWithCasing map equals the wire param set and this is a no-op.
-func withNativeCasingAliases(
-	reqParams, optParams, allWithCasing map[string]formulation.Addressable,
-) (map[string]formulation.Addressable, map[string]formulation.Addressable) {
-	for aliasKey, addr := range allWithCasing {
-		if _, isWire := reqParams[aliasKey]; isWire {
-			continue
-		}
-		if _, isWire := optParams[aliasKey]; isWire {
-			continue
-		}
-		if _, req := reqParams[addr.GetName()]; req {
-			reqParams[aliasKey] = addr
-		} else if _, opt := optParams[addr.GetName()]; opt {
-			optParams[aliasKey] = addr
-		}
-	}
-	return reqParams, optParams
-}
-
-//nolint:gocognit // acceptable for now
-func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParameterCollection, error) {
-	requiredParameters := suffix.NewParameterSuffixMap()
-	remainingRequiredParameters := suffix.NewParameterSuffixMap()
-	optionalParameters := suffix.NewParameterSuffixMap()
-	tbVisited := map[tablemetadata.ExtendedTableMetadata]struct{}{}
-	for _, tb := range pb.GetTables() {
-		if _, ok := tbVisited[tb]; ok {
-			continue
-		}
-		tbVisited[tb] = struct{}{}
-		tbID := tb.GetUniqueID()
-		var reqParams, tblOptParams, remainingReqParams map[string]formulation.Addressable
-		if view, isView := tb.GetIndirect(); isView {
-			// TODO: fill this out
-			assignedParams, ok := view.GetAssignedParameters()
-			if !ok {
-				continue
-			}
-			reqParams = assignedParams.GetRequiredParams().GetAll()
-			tblOptParams = assignedParams.GetOptionalParams().GetAll()
-			remainingReqParams = assignedParams.GetRemainingRequiredParams().GetAll()
-		} else {
-			// These methods need to incorporate request body parameters.
-			// Register native-casing (snake_case) aliases so snake_case WHERE / INSERT keys
-			// resolve to their wire parameter (any-sdk owns the casing translation).
-			reqParams, tblOptParams = withNativeCasingAliases(
-				tb.GetRequiredParameters(),
-				tb.GetOptionalParameters(),
-				tb.GetParametersIncludingNativeCasing(),
-			)
-		}
-		// This method needs to incorporate request body parameters
-
-		for k, v := range reqParams {
-			key := fmt.Sprintf("%s.%s", tbID, k)
-			_, keyExists := requiredParameters.Get(key)
-			if keyExists {
-				return nil, fmt.Errorf("key already is required: %s", k)
-			}
-			requiredParameters.Put(key, v)
-		}
-		for k, vOpt := range tblOptParams {
-			key := fmt.Sprintf("%s.%s", tbID, k)
-			_, keyExists := optionalParameters.Get(key)
-			if keyExists {
-				return nil, fmt.Errorf("key already is optional: %s", k)
-			}
-			optionalParameters.Put(key, vOpt)
-		}
-		for k, vRem := range remainingReqParams {
-			key := fmt.Sprintf("%s.%s", tbID, k)
-			if vRem == nil {
-				return nil, fmt.Errorf("remaining required parameter is nil: %s", k)
-			}
-			_, keyExists := remainingRequiredParameters.Get(key)
-			if !keyExists {
-				return nil, fmt.Errorf("key already is optional: %s", k)
-			}
-			remainingRequiredParameters.Delete(key)
-		}
-	}
-	rv := internaldto.NewTableParameterCollection(requiredParameters, optionalParameters, remainingRequiredParameters)
-	pb.paramCollection = rv
-	return rv, nil
 }
 
 func (pb *standardPrimitiveComposer) AddChild(val PrimitiveComposer) {
@@ -467,15 +365,6 @@ func (pb *standardPrimitiveComposer) SetValOnlyCols(m map[int]map[string]interfa
 
 func (pb *standardPrimitiveComposer) SetColVisited(colname string, isVisited bool) {
 	pb.colsVisited[colname] = isVisited
-}
-
-func (pb *standardPrimitiveComposer) GetTableFilter() func(formulation.ITable) (formulation.ITable, error) {
-	return pb.tableFilter
-}
-
-func (pb *standardPrimitiveComposer) SetTableFilter(
-	tableFilter func(formulation.ITable) (formulation.ITable, error)) {
-	pb.tableFilter = tableFilter
 }
 
 func (pb *standardPrimitiveComposer) SetInsertPreparedStatementCtx(ctx drm.PreparedStatementCtx) {

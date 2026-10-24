@@ -89,6 +89,26 @@ components:
         requestId:
           type: string
   x-stackQL-resources:
+    access_keys:
+      id: stackql_native_test.casing.access_keys
+      name: access_keys
+      methods:
+        select:
+          operation: {$ref: '#/paths/~1casing~1access_keys/get'}
+          request: {nativeCasing: pascal}
+          response: {mediaType: application/json, objectKey: $.items}
+      sqlVerbs:
+        select: [{$ref: '#/components/x-stackQL-resources/access_keys/methods/select'}]
+    access_key_last_useds:
+      id: stackql_native_test.casing.access_key_last_useds
+      name: access_key_last_useds
+      methods:
+        select:
+          operation: {$ref: '#/paths/~1casing~1access_key_last_used/get'}
+          request: {nativeCasing: pascal}
+          response: {mediaType: application/json, objectKey: $}
+      sqlVerbs:
+        select: [{$ref: '#/components/x-stackQL-resources/access_key_last_useds/methods/select'}]
     echo:
       id: stackql_native_test.casing.echo
       name: echo
@@ -422,3 +442,38 @@ paths:
       servers:
         - url: http://localhost:1070
       summary: Lifecycle action whose response omits the id
+  /casing/access_keys:
+    get:
+      parameters:
+        - {in: query, name: region, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        UserName: {type: string}
+                        AccessKeyId: {type: string}
+                        Status: {type: string}
+  /casing/access_key_last_used:
+    get:
+      parameters:
+        - {in: query, name: region, required: true, schema: {type: string}}
+        - {in: query, name: AccessKeyId, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  LastUsedDate: {type: string, nullable: true}
+                  Region: {type: string}

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/dto"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 func TestReadFailuresRemainLocalAndPreserveDiagnostics(t *testing.T) {

@@ -8,16 +8,20 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"     //nolint:revive,nolintlint // this is a DB driver pattern
 	_ "github.com/snowflakedb/gosnowflake" //nolint:revive,nolintlint // this is a DB driver pattern
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/db/db_util"
-	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
+	db_util "github.com/stackql/stackql/internal/stackql/sqlengine/connect"
 )
 
 var (
 	_         SQLDataSource = &genericSQLDataSource{}
-	getDBFunc               = db_util.GetDB //nolint:gochecknoglobals // patching variable
+	getDBFunc               = openDB //nolint:gochecknoglobals // patching variable
 )
+
+func openDB(driverName, dbName string, cfg dto.SQLBackendCfg) (*sql.DB, error) {
+	return db_util.Open(driverName, dbName, cfg.GetDSN(), cfg.InitMaxRetries, cfg.InitRetryInitialDelay)
+}
 
 func NewGenericSQLDataSource(authCtx *dto.AuthCtx, driverName string, dbName string) (SQLDataSource, error) {
 	sqlCfg, hasSQLCfg := authCtx.GetSQLCfg()

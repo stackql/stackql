@@ -16,11 +16,11 @@ import (
 // follows the same Omni planning and staging path as an ordinary SELECT.
 func storedInsertSelectFunc(ctx queryContext, stmt sqlparser.Statement) (func() internaldto.ExecutorOutput, bool) {
 	insert, ok := stmt.(*sqlparser.Insert)
-	if !ok || !previewCfg.getOmniAll() {
+	if !ok {
 		return nil, false
 	}
 	source, ok := insert.Rows.(*sqlparser.Select)
-	if !ok || !containsProviderRead(source, ctx.GetCurrentProvider(), nil) {
+	if !ok || literalSource(source.From) {
 		return nil, false
 	}
 	host, ok := ctx.(interface{ GetSQLSystem() sql_system.SQLSystem })
@@ -36,10 +36,7 @@ func storedInsertSelectFunc(ctx queryContext, stmt sqlparser.Statement) (func() 
 	if insert.Ignore != "" || len(insert.OnDup) > 0 {
 		return refuse(fmt.Errorf("host table INSERT source does not support conflict clauses")), true
 	}
-	target, err := system.GetFullyQualifiedTableName(table.GetName())
-	if err != nil {
-		return refuse(err), true
-	}
+	target := system.DelimitFullyQualifiedRelationName(table.GetName())
 	prepared, relations, err := prepareMutationRelations(ctx, insert, ctx.GetCurrentProvider())
 	if err != nil {
 		return refuse(err), true

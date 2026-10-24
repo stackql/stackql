@@ -1,0 +1,142 @@
+{
+  "function": "regexp",
+  "group_note": "regexp(pattern, source) backs the SQL REGEXP operator and is regexp_like(source, pattern) with swapped arguments; vectors are derived from the regexp_like golden suite plus the stackql.io REGEXP doc examples.",
+  "vectors": [
+    {
+      "id": "derived_1_01",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 1_01 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "pattern",
+        null
+      ],
+      "result": null
+    },
+    {
+      "id": "derived_1_02",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 1_02 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        null,
+        "source"
+      ],
+      "result": null
+    },
+    {
+      "id": "derived_2_01",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 2_01 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "hello",
+        "hello world"
+      ],
+      "result": 1
+    },
+    {
+      "id": "derived_2_02",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 2_02 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "^world",
+        "hello world"
+      ],
+      "result": 0
+    },
+    {
+      "id": "derived_2_03",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 2_03 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "world$",
+        "hello world"
+      ],
+      "result": 1
+    },
+    {
+      "id": "derived_3_01",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 3_01 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "hello\\.world",
+        "hello.world"
+      ],
+      "result": 1
+    },
+    {
+      "id": "derived_3_02",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 3_02 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "[0-9]+",
+        "abc123"
+      ],
+      "result": 1
+    },
+    {
+      "id": "derived_3_03",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 3_03 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "[0-9]+",
+        "abc"
+      ],
+      "result": 0
+    },
+    {
+      "id": "derived_10_01",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 10_01 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "abra(cad)?abra",
+        "abracadabra"
+      ],
+      "result": 1,
+      "note": "tiny-regex-c (the retired C engine) did not support groups: '(' and ')' were literal characters, so this pattern could not match and the C suite recorded the opposite outcome (see retiredCResult). Go RE2 supports groups; expectation deliberately updated per DIVERGENCES.md."
+    },
+    {
+      "id": "derived_11_01",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 11_01 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "",
+        "hello"
+      ],
+      "result": 1
+    },
+    {
+      "id": "derived_12_01",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 12_01 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "h.llo",
+        "hello"
+      ],
+      "result": 1
+    },
+    {
+      "id": "derived_12_02",
+      "source": "arg-swapped from sqlite-ext-functions test/regexp.sql 12_02 (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "\\d+\\w+",
+        "123abc"
+      ],
+      "result": 1
+    },
+    {
+      "id": "pr783_01",
+      "source": "arg-swapped from stackql PR #783 cgo golden sample (SQLite REGEXP operator contract: X REGEXP Y == regexp(Y, X))",
+      "args": [
+        "\\d+",
+        "abc123"
+      ],
+      "result": 1
+    },
+    {
+      "id": "stackqlio_regexp_md_01",
+      "source": "stackql.io docs/language-spec/functions/re/regexp.md example 1",
+      "args": [
+        "[0-9]+",
+        "the year is 2021"
+      ],
+      "result": 1
+    },
+    {
+      "id": "stackqlio_regexp_md_02",
+      "source": "stackql.io docs/language-spec/functions/re/regexp.md example 2",
+      "args": [
+        "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+        "user@example.com"
+      ],
+      "result": 1
+    }
+  ]
+}

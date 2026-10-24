@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -65,7 +66,7 @@ func TestNewDataSource(t *testing.T) {
 	})
 
 	t.Run("authCtx is not supported", func(t *testing.T) {
-		authCtx := &dto.AuthCtx{Type: "not_supported"}
+		authCtx := &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: "not_supported"}}
 		ds, err := NewDataSource(authCtx, nil)
 		assert.Error(t, err)
 		assert.Nil(t, ds)
@@ -73,24 +74,24 @@ func TestNewDataSource(t *testing.T) {
 	})
 
 	t.Run("authCtx.Type is snowflake", func(t *testing.T) {
-		authCtx := &dto.AuthCtx{Type: fmt.Sprintf(
+		authCtx := &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: fmt.Sprintf(
 			"%s%s%s",
 			constants.AuthTypeSQLDataSourcePrefix,
 			constants.AuthTypeDelimiter,
 			"snowflake",
-		)}
+		)}}
 		ds, err := NewDataSource(authCtx, genericSQLDataSourceFuncMock)
 		assert.NotNil(t, ds)
 		assert.Nil(t, err)
 	})
 
 	t.Run("authCtx.Type is postgres", func(t *testing.T) {
-		authCtx := &dto.AuthCtx{Type: fmt.Sprintf(
+		authCtx := &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: fmt.Sprintf(
 			"%s%s%s",
 			constants.AuthTypeSQLDataSourcePrefix,
 			constants.AuthTypeDelimiter,
 			"postgres",
-		)}
+		)}}
 		ds, err := NewDataSource(authCtx, genericSQLDataSourceFuncMock)
 		assert.NotNil(t, ds)
 		assert.Nil(t, err)

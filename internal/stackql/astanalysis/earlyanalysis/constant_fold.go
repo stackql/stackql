@@ -3,8 +3,8 @@ package earlyanalysis
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
 // Constant folding for WHERE-clause function expressions (issue #686).

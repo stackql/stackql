@@ -3,18 +3,16 @@ package bundle
 import (
 	"io"
 
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/formulation"
-	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/garbagecollector"
 	"github.com/stackql/stackql/internal/stackql/kstore"
-	"github.com/stackql/stackql/internal/stackql/persistence"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/txncounter"
@@ -28,7 +26,6 @@ type Bundle interface {
 	GetDBMSInternalRouter() dbmsinternal.Router
 	GetSQLDataSources() map[string]sql_datasource.SQLDataSource
 	GetSQLSystem() sql_system.SQLSystem
-	GetPersistenceSystem() formulation.PersistenceSystem
 	GetSQLEngine() sqlengine.SQLEngine
 	GetTxnCounterManager() txncounter.Manager
 	GetTxnStore() kstore.KStore
@@ -61,7 +58,6 @@ func NewBundle(
 		namespaces:             namespaces,
 		sqlEngine:              sqlEngine,
 		sqlSystem:              sqlSystem,
-		persistenceSystem:      persistence.NewSQLPersistenceSystem(sqlSystem),
 		controlAttributes:      controlAttributes,
 		txnStore:               txnStore,
 		txnCtrMgr:              txnCtrMgr,
@@ -81,7 +77,6 @@ type simpleBundle struct {
 	namespaces             tablenamespace.Collection
 	sqlEngine              sqlengine.SQLEngine
 	sqlSystem              sql_system.SQLSystem
-	persistenceSystem      formulation.PersistenceSystem
 	txnStore               kstore.KStore
 	txnCtrMgr              txncounter.Manager
 	typCfg                 typing.Config
@@ -123,10 +118,6 @@ func (sb *simpleBundle) GetTxnCoordinatorContext() txn_context.ITransactionCoord
 
 func (sb *simpleBundle) GetSQLDataSources() map[string]sql_datasource.SQLDataSource {
 	return sb.sqlDataSources
-}
-
-func (sb *simpleBundle) GetPersistenceSystem() formulation.PersistenceSystem {
-	return sb.persistenceSystem
 }
 
 func (sb *simpleBundle) GetAuthContexts() map[string]*dto.AuthCtx {

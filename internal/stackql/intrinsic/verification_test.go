@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql-provider-registry/signing/pqsig"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 func TestDocumentVerificationConfig(t *testing.T) {

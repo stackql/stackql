@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
@@ -212,10 +212,6 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	}
 	indirect.SetUnderlyingSymTab(underlyingSymTab)
 	indirect.SetSelectContext(indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx())
-	assignedParams, ok := indirectPrimitiveGenerator.GetPrimitiveComposer().GetAssignedParameters()
-	if ok {
-		indirect.SetAssignedParameters(assignedParams)
-	}
 	createBuilder, createBuilderExists := indirectPrimitiveGenerator.GetIndirectCreateTailBuilder()
 	if createBuilderExists {
 		v.createBuilder = append(v.createBuilder, createBuilder...)
@@ -915,8 +911,6 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			}
 		}
 		providerName := node.QualifierSecond.GetRawVal()
-		serviceName := node.Qualifier.GetRawVal()
-		resourceName := node.Name.GetRawVal()
 		sqlDataSource, hasSQLDataSource := v.handlerCtx.GetSQLDataSource(providerName)
 		if hasSQLDataSource {
 			// Persist data source for later retrieval
@@ -928,17 +922,10 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		//nolint:nestif // deferring cosmetics on visitors
 		if err != nil {
 			logging.GetLogger().Debugf("optimistic doc error: %s", err.Error())
-		} else {
-			if hasSQLDataSource {
-				err = prov.PersistStaticExternalSQLDataSource(v.handlerCtx.GetRuntimeContext())
-				if err != nil {
-					return err
-				}
-			} else {
-				_, err = prov.GetServiceShard(serviceName, resourceName, v.handlerCtx.GetRuntimeContext())
-				if err != nil {
-					logging.GetLogger().Debugf("optimistic doc error: %s", err.Error())
-				}
+		} else if hasSQLDataSource {
+			err = prov.PersistStaticExternalSQLDataSource(v.handlerCtx.GetRuntimeContext())
+			if err != nil {
+				return err
 			}
 		}
 		// END OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION

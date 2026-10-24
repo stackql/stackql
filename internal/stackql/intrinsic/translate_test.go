@@ -123,17 +123,17 @@ func TestTranslateSelectRefusals(t *testing.T) {
 func TestFromDocProvidersRefusesMixing(t *testing.T) {
 	withUnstable(t, true)
 	sel := parseSelect(t, "select a.login from stackql_unstable_github.orgs.members a "+
-		"inner join github.orgs.members b on a.login = b.login")
+		"inner join stackql_preview.audit.aws_iam_principals b on a.login = b.login")
 	isDoc, err := fromDocProviders(sel.From, "")
 	if !isDoc {
 		t.Fatalf("expected the query to be claimed")
 	}
-	want := "stackql_unstable_* relations cannot be combined with github.orgs.members in one query"
+	want := "stackql_unstable_* relations cannot be combined with stackql_preview.audit.aws_iam_principals in one query"
 	if err == nil || err.Error() != want {
 		t.Fatalf("got %v, want %s", err, want)
 	}
-	if isDoc, _ := fromDocProviders(parseSelect(t, "select 1 from github.orgs.members").From, ""); isDoc {
-		t.Fatalf("a registry-only query must not be claimed")
+	if isDoc, _ := fromDocProviders(parseSelect(t, "select 1 from github.orgs.members").From, ""); !isDoc {
+		t.Fatalf("a provider query must be claimed by omnisdk")
 	}
 }
 
@@ -295,7 +295,7 @@ func TestMutationTablesIgnoresImplicitDual(t *testing.T) {
 	}
 }
 
-func TestDocProviderUnderOmniAll(t *testing.T) {
+func TestDocProviderDefaultsToOmni(t *testing.T) {
 	previous := previewCfg
 	t.Cleanup(func() { previewCfg = previous })
 	for _, tc := range []struct {
@@ -304,13 +304,13 @@ func TestDocProviderUnderOmniAll(t *testing.T) {
 		wantBundle string
 		wantDoc    bool
 	}{
-		{cfg: previewCfgDTO{}, name: "aws", wantDoc: false},
-		{cfg: previewCfgDTO{Unstable: true}, name: "aws", wantDoc: false},
+		{cfg: previewCfgDTO{}, name: "aws", wantBundle: "aws", wantDoc: true},
+		{cfg: previewCfgDTO{Unstable: true}, name: "aws", wantBundle: "aws", wantDoc: true},
 		{cfg: previewCfgDTO{Unstable: true}, name: "stackql_unstable_aws", wantBundle: "aws", wantDoc: true},
-		{cfg: previewCfgDTO{Omni: "all"}, name: "aws", wantBundle: "aws", wantDoc: true},
-		{cfg: previewCfgDTO{Omni: "all"}, name: "stackql_unstable_aws", wantBundle: "aws", wantDoc: true},
-		{cfg: previewCfgDTO{Omni: "all"}, name: ProviderName, wantDoc: false},
-		{cfg: previewCfgDTO{Omni: "all"}, name: "", wantDoc: false},
+		{cfg: previewCfgDTO{}, name: "aws", wantBundle: "aws", wantDoc: true},
+		{cfg: previewCfgDTO{}, name: "stackql_unstable_aws", wantBundle: "aws", wantDoc: true},
+		{cfg: previewCfgDTO{}, name: ProviderName, wantDoc: false},
+		{cfg: previewCfgDTO{}, name: "", wantDoc: false},
 	} {
 		previewCfg = newBackendInput(tc.cfg)
 		bundle, isDoc := docProvider(tc.name)

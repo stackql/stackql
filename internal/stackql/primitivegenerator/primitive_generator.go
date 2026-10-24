@@ -2,27 +2,18 @@ package primitivegenerator
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/logging"
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/iqlutil"
-	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivecomposer"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
-	"github.com/stackql/stackql/internal/stackql/relational"
 	"github.com/stackql/stackql/internal/stackql/symtab"
-	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 
-	"github.com/stackql/stackql/pkg/sqltypeutil"
-
-	"github.com/stackql/stackql-parser/go/sqltypes"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
@@ -40,12 +31,6 @@ type PrimitiveGenerator interface {
 	AnalyzeRegistry(pbi planbuilderinput.PlanBuilderInput) error
 	AnalyzeSelectStatement(pbi planbuilderinput.PlanBuilderInput) error
 	AnalyzeStatement(pbi planbuilderinput.PlanBuilderInput) error
-	AnalyzeUnaryExec(
-		pbi planbuilderinput.PlanBuilderInput,
-		handlerCtx handler.HandlerContext,
-		node *sqlparser.Exec,
-		selectNode *sqlparser.Select,
-		cols []parserutil.ColumnHandle) (tablemetadata.ExtendedTableMetadata, error)
 	CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator
 	GetPrimitiveComposer() primitivecomposer.PrimitiveComposer
 	SetIsIndirect(isIndirect bool)
@@ -177,73 +162,6 @@ func (pb *standardPrimitiveGenerator) AddChildPrimitiveGenerator(
 	pb.Children = append(pb.Children, retVal)
 	pb.PrimitiveComposer.AddChild(retVal.PrimitiveComposer)
 	return retVal
-}
-
-//nolint:unparam,revive // acceptable
-func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(
-	table formulation.ITable,
-	parentNode *sqlparser.Show,
-	expr *sqlparser.ComparisonExpr,
-) (func(formulation.ITable) (formulation.ITable, error), error) {
-	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
-	if !ok {
-		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
-	}
-	if !qualifiedName.Qualifier.IsEmpty() {
-		return nil, fmt.Errorf("unsupported qualifier for column: %v", sqlparser.String(qualifiedName))
-	}
-	colName := qualifiedName.Name.GetRawVal()
-	tableContainsKey := table.KeyExists(colName)
-	if !tableContainsKey {
-		return nil, fmt.Errorf("col name = '%s' not found in table name = '%s'", colName, table.GetName())
-	}
-	_, lhsValErr := table.GetKeyAsSqlVal(colName)
-	if lhsValErr != nil {
-		return nil, lhsValErr
-	}
-	var resolved sqltypes.Value
-	var rhsStr string
-	switch right := expr.Right.(type) {
-	case *sqlparser.SQLVal:
-		if right.Type != sqlparser.IntVal && right.Type != sqlparser.StrVal {
-			return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
-		}
-		pv, err := sqlparser.NewPlanValue(right)
-		if err != nil {
-			return nil, err
-		}
-		rhsStr = string(right.Val)
-		resolved, err = pv.ResolveValue(nil)
-		if err != nil {
-			return nil, err
-		}
-	case sqlparser.BoolVal:
-		var resErr error
-		resolved, resErr = sqltypeutil.InterfaceToSQLType(right == true) //nolint:gosimple // test later
-		if resErr != nil {
-			return nil, resErr
-		}
-	default:
-		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(right))
-	}
-	var retVal func(formulation.ITable) (formulation.ITable, error)
-	if expr.Operator == sqlparser.LikeStr || expr.Operator == sqlparser.NotLikeStr {
-		likeRegexp, err := regexp.Compile(iqlutil.TranslateLikeToRegexPattern(rhsStr))
-		if err != nil {
-			return nil, err
-		}
-		retVal = relational.ConstructLikePredicateFilter(colName, likeRegexp, expr.Operator == sqlparser.NotLikeStr)
-		pb.PrimitiveComposer.SetColVisited(colName, true)
-		return retVal, nil
-	}
-	operatorPredicate, preErr := relational.GetOperatorPredicate(expr.Operator)
-
-	if preErr != nil {
-		return nil, preErr
-	}
-
-	pb.PrimitiveComposer.SetColVisited(colName, true)
-	return relational.ConstructTablePredicateFilter(colName, resolved, operatorPredicate), nil
 }
 
 func (pb *standardPrimitiveGenerator) inferProviderForShow(

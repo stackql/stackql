@@ -96,11 +96,6 @@ func TestAnnotatedAst_GettersAndSetters(t *testing.T) {
 	_, ok = aa.GetWhereParamMapsEntry(where)
 	assert.True(t, ok)
 
-	// Select metadata
-	aa.SetSelectMetadata(sel, nil)
-	_, ok = aa.GetSelectMetadata(sel)
-	assert.True(t, ok)
-
 	// Read only
 	assert.False(t, aa.IsReadOnly())
 }

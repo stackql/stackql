@@ -136,6 +136,22 @@ def create_app() -> Flask:
     def casing_echo_filter_get():
         return jsonify({"echoed_query": request.query_string.decode("utf-8")})
 
+    @app.get("/casing/access_keys")
+    def casing_access_keys():
+        return jsonify(items=[
+            {"UserName": "alice", "AccessKeyId": "key-recent", "Status": "Active"},
+            {"UserName": "alice", "AccessKeyId": "key-never", "Status": "Active"},
+            {"UserName": "alice", "AccessKeyId": "key-inactive", "Status": "Inactive"},
+        ])
+
+    @app.get("/casing/access_key_last_used")
+    def casing_access_key_last_used():
+        from datetime import datetime, timezone
+        used = None
+        if request.args.get("AccessKeyId") == "key-recent":
+            used = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        return jsonify(LastUsedDate=used, Region="eu-west-1")
+
     # ---- OCI request signing (oci_signing_v1) target -----------------------
 
     @app.get("/oci/buckets")

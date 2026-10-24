@@ -3,8 +3,8 @@ package kstore_test
 import (
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/kstore"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 func TestGetKStore_ReturnsNonNil(t *testing.T) {

@@ -24,9 +24,7 @@
    data__description:    << data__description >>,
    data__friendlyName:    << data__friendlyName >>,
    data__isCaseInsensitive:    << data__isCaseInsensitive >>,
-   data__labels:    {
-   << data__labels[0].key >>: << data__labels[0].val >>
-   },
+   data__labels:    << data__labels >>,
    data__location:    << data__location >>
 }
 >>>
@@ -45,7 +43,7 @@ INSERT INTO google.bigquery.datasets(
 )
 SELECT
   '{{ .values.projectId }}',
-  '[ { "dataset": "{{ .values.data__access[0].dataset }}", "domain": "{{ .values.data__access[0].domain }}", "groupByEmail": "{{ .values.data__access[0].groupByEmail }}", "iamMember": "{{ .values.data__access[0].iamMember }}", "role": "{{ .values.data__access[0].role }}", "routine": "{{ .values.data__access[0].routine }}", "specialGroup": "{{ .values.data__access[0].specialGroup }}", "userByEmail": "{{ .values.data__access[0].userByEmail }}", "view": "{{ .values.data__access[0].view }}" } ]',
+  '[ { "dataset": {{ .values.data__access[0].dataset }}, "domain": "{{ .values.data__access[0].domain }}", "groupByEmail": "{{ .values.data__access[0].groupByEmail }}", "iamMember": "{{ .values.data__access[0].iamMember }}", "role": "{{ .values.data__access[0].role }}", "routine": {{ .values.data__access[0].routine }}, "specialGroup": "{{ .values.data__access[0].specialGroup }}", "userByEmail": "{{ .values.data__access[0].userByEmail }}", "view": {{ .values.data__access[0].view }} } ]',
   '{ "datasetId": "{{ .values.data__datasetReference.datasetId }}", "projectId": "{{ .values.data__datasetReference.projectId }}" }',
   '{ "kmsKeyName": "{{ .values.data__defaultEncryptionConfiguration.kmsKeyName }}" }',
   '{{ .values.data__defaultPartitionExpirationMs }}',
@@ -53,6 +51,6 @@ SELECT
   '{{ .values.data__description }}',
   '{{ .values.data__friendlyName }}',
    {{ .values.data__isCaseInsensitive }},
-  '{ "{{ .values.data__labels[0].key }}": "{{ .values.data__labels[0].val }}" }',
+   {{ .values.data__labels }},
   '{{ .values.data__location }}'
 ;

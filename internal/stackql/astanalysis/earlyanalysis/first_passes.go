@@ -3,15 +3,13 @@ package earlyanalysis //nolint:cyclop // analysers are inherently complex, for n
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
-	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/intrinsic"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
@@ -26,10 +24,6 @@ const (
 	InternallyRoutableInstruction
 	DummiedPGInstruction
 	NopInstruction
-)
-
-var (
-	errPgOnly error = fmt.Errorf("cannot accomodate PG-only statement when backend is not matched to PG")
 )
 
 type Analyzer interface {
@@ -414,34 +408,7 @@ func (sp *standardInitialPasses) initialPasses(
 			return fmt.Errorf("expected DDL statement in analysing 'create materialized view' statement")
 		}
 	}
-	switch node := astToAnalyse.(type) {
-	case *sqlparser.Select:
-		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi, whereParams)
-		err = routeAnalyzer.RoutePass()
-		if err != nil {
-			return err
-		}
-		if routeAnalyzer.IsPGInternalOnly() {
-			if sp.primitiveGenerator.GetPrimitiveComposer().GetSQLSystem().GetName() != constants.SQLDialectPostgres {
-				return errPgOnly
-			}
-			sp.instructionType = InternallyRoutableInstruction
-		}
-		pbi = routeAnalyzer.GetPlanBuilderInput()
-	case *sqlparser.ParenSelect:
-		routeAnalyzer := routeanalysis.NewSelectRoutePass(node.Select, pbi, whereParams)
-		err = routeAnalyzer.RoutePass()
-		if err != nil {
-			return err
-		}
-		if routeAnalyzer.IsPGInternalOnly() {
-			if sp.primitiveGenerator.GetPrimitiveComposer().GetSQLSystem().GetName() != constants.SQLDialectPostgres {
-				return errPgOnly
-			}
-			sp.instructionType = InternallyRoutableInstruction
-		}
-		pbi = routeAnalyzer.GetPlanBuilderInput()
-	case *sqlparser.Union:
+	if node, isUnion := astToAnalyse.(*sqlparser.Union); isUnion {
 		lhsThreeToFiveAgg, passErr := thirdToFifthPasses(node.FirstStatement, annotatedAST)
 		if passErr != nil {
 			return passErr
@@ -484,18 +451,7 @@ func (sp *standardInitialPasses) initialPasses(
 			rhsPbi.WithNext(nextPbi)
 			rhsPbi = nextPbi
 		}
-		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, lhsPbi, whereParams)
-		err = routeAnalyzer.RoutePass()
-		if err != nil {
-			return err
-		}
-		if routeAnalyzer.IsPGInternalOnly() {
-			if sp.primitiveGenerator.GetPrimitiveComposer().GetSQLSystem().GetName() != constants.SQLDialectPostgres {
-				return errPgOnly
-			}
-			sp.instructionType = InternallyRoutableInstruction
-		}
-		pbi = routeAnalyzer.GetPlanBuilderInput()
+		pbi = lhsPbi
 	}
 	pbi.SetCreateMaterializedView(isCreateMAterializedView)
 

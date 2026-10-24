@@ -4,19 +4,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
-	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/typing"
-	"github.com/stackql/stackql/internal/stackql/util"
 )
 
 var (
@@ -30,19 +28,15 @@ type InternallyRoutableTypingAstVisitor interface {
 }
 
 type standardInternallyRoutableTypingAstVisitor struct {
-	handlerCtx           handler.HandlerContext
-	rawQuery             string
-	dc                   drm.Config
-	tables               taxonomy.TblMap
-	annotations          taxonomy.AnnotationCtxMap
-	discoGenIDs          map[sqlparser.SQLNode]int
-	annotatedTabulations taxonomy.AnnotatedTabulationMap
-	columnNames          []parserutil.ColumnHandle
-	columnDescriptors    []formulation.ColumnDescriptor
-	relationalColumns    []typing.RelationalColumn
-	namespaceCollection  tablenamespace.Collection
-	formatter            sqlparser.NodeFormatter
-	annotatedAST         annotatedast.AnnotatedAst
+	handlerCtx          handler.HandlerContext
+	rawQuery            string
+	dc                  drm.Config
+	tables              taxonomy.TblMap
+	columnNames         []parserutil.ColumnHandle
+	relationalColumns   []typing.RelationalColumn
+	namespaceCollection tablenamespace.Collection
+	formatter           sqlparser.NodeFormatter
+	annotatedAST        annotatedast.AnnotatedAst
 	//
 	// single threaded, so no mutex protection
 	anonColCounter int
@@ -58,13 +52,12 @@ func NewInternallyRoutableTypingAstVisitor(
 	namespaceCollection tablenamespace.Collection,
 ) InternallyRoutableTypingAstVisitor {
 	rv := &standardInternallyRoutableTypingAstVisitor{
-		rawQuery:             rawQuery,
-		annotatedAST:         annotatedAST,
-		handlerCtx:           handlerCtx,
-		tables:               tables,
-		annotatedTabulations: make(taxonomy.AnnotatedTabulationMap),
-		dc:                   dc,
-		namespaceCollection:  namespaceCollection,
+		rawQuery:            rawQuery,
+		annotatedAST:        annotatedAST,
+		handlerCtx:          handlerCtx,
+		tables:              tables,
+		dc:                  dc,
+		namespaceCollection: namespaceCollection,
 	}
 	return rv
 }
@@ -102,41 +95,15 @@ func (v *standardInternallyRoutableTypingAstVisitor) getStarColumns(
 		rv = v.dc.ColumnsToRelationalColumns(indirect.GetColumns())
 		return rv, nil
 	}
-	schema, _, err := tbl.GetResponseSchemaAndMediaType()
-	if err != nil {
-		return nil, err
+	ids := tbl.GetHeirarchyObjects().GetHeirarchyIDs()
+	system := v.handlerCtx.GetSQLSystem()
+	if metadata, exists := system.GetPhysicalTableByName(ids.GetTableName()); exists {
+		return metadata.GetColumns(), nil
 	}
-	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
-	tbl.SetSelectItemsKey(selectItemsKey)
-	unsuitableSchemaMsg := "standardInternallyRoutableTypingAstVisitor.getStarColumns(): schema unsuitable for select query"
-	if err != nil {
-		return nil, fmt.Errorf("%s", unsuitableSchemaMsg)
+	if metadata, exists := system.GetMaterializedViewByName(ids.GetTableName()); exists {
+		return metadata.GetColumns(), nil
 	}
-	if itemObjS == nil {
-		return nil, fmt.Errorf("%s", unsuitableSchemaMsg)
-	}
-	var cols []parserutil.ColumnHandle
-	colNames := itemObjS.GetAllColumns(util.TrimSelectItemsKey(selectItemsKey))
-	for _, v := range colNames {
-		cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
-	}
-	var columnDescriptors []formulation.ColumnDescriptor
-	for _, col := range cols {
-		columnDescriptors = append(
-			columnDescriptors,
-			formulation.NewColumnDescriptor(
-				col.Alias,
-				col.Name,
-				col.Qualifier,
-				col.DecoratedColumn,
-				nil,
-				schema,
-				col.Val,
-			),
-		)
-	}
-	relationalColumns := v.dc.OpenapiColumnsToRelationalColumns(columnDescriptors)
-	return relationalColumns, nil
+	return system.ObtainRelationalColumnsFromExternalSQLtable(ids)
 }
 
 func (v *standardInternallyRoutableTypingAstVisitor) WithFormatter(
@@ -370,18 +337,6 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 
 	case *sqlparser.AutoIncSpec:
 
-	case *sqlparser.ExecSubquery:
-		t, ok := v.annotations[node]
-		if !ok {
-			return fmt.Errorf("exec: could not infer annotated table")
-		}
-		dID, ok := v.discoGenIDs[node]
-		if !ok {
-			return fmt.Errorf("exec: could not infer discovery generation ID")
-		}
-		replacementExpr := v.dc.GetParserTableName(t.GetHIDs(), dID)
-		node.Exec.MethodName = replacementExpr
-
 	case *sqlparser.VindexSpec:
 
 		numParams := len(node.Params)
@@ -538,9 +493,6 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 			// 	broadcastType = v.getTypeFromParserType(expr.Type)
 			// default:
 			// }
-			// cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
-			// v.columnDescriptors = append(v.columnDescriptors, cd)
-			// relCol := v.dc.OpenapiColumnsToRelationalColumn(cd)
 			rv := typing.NewRelationalColumn(
 				col.Name,
 				v.getTypeFromParserType(col.Type),
@@ -602,21 +554,23 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 			logging.GetLogger().Debugf("sqlDataSource = '%v'\n", sqlDataSource)
 			return nil
 		}
-		schema, err := tbl.GetSelectableObjectSchema()
-		if err != nil {
-			return err
-		}
 		col, err := parserutil.InferColNameFromExpr(node, v.formatter)
 		if err != nil {
 			return err
 		}
 		v.columnNames = append(v.columnNames, col)
-		ss, _ := schema.GetProperty(col.Name)
-		cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
-		v.columnDescriptors = append(v.columnDescriptors, cd)
-		v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
-		if !node.As.IsEmpty() {
+		columns, err := v.getStarColumns(tbl)
+		if err != nil {
+			return err
 		}
+		for _, declared := range columns {
+			if declared.GetName() == col.Name || declared.GetIdentifier() == col.Name {
+				v.relationalColumns = append(v.relationalColumns,
+					declared.WithAlias(col.Alias).WithQualifier(col.Qualifier).WithDecorated(col.DecoratedColumn))
+				return nil
+			}
+		}
+		return fmt.Errorf("cannot resolve local column %q", col.Name)
 
 	case sqlparser.Nextval:
 
@@ -642,27 +596,6 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 		}
 
 	case *sqlparser.AliasedTableExpr:
-		if node.Expr != nil && !parserutil.IsNullTable(node) {
-			switch node.Expr.(type) {
-			case sqlparser.TableName:
-				t, ok := v.annotations[node]
-				if !ok {
-					return fmt.Errorf("could not infer annotated table")
-				}
-				_, isIndirect := t.GetTableMeta().GetIndirect()
-				_, isSQLDataSource := t.GetTableMeta().GetSQLDataSource()
-				if isIndirect || isSQLDataSource {
-					// do nothing
-				} else {
-					dID, ok := v.discoGenIDs[node]
-					if !ok {
-						return fmt.Errorf("could not infer discovery generation ID")
-					}
-					replacementExpr := v.dc.GetParserTableName(t.GetHIDs(), dID)
-					node.Expr = replacementExpr
-				}
-			}
-		}
 		if node.Partitions != nil {
 			node.Partitions.Accept(v)
 		}

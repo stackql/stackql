@@ -6,8 +6,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 func TestNewBasicPrimitiveContext(t *testing.T) {

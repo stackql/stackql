@@ -3,6 +3,7 @@ package testhttpapi
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,7 +16,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/test/testobjects"
 	"github.com/stackql/stackql/internal/test/testutil"
 )
@@ -115,6 +116,7 @@ func newSimpleTransportHandler(ex ExpectationStore) func(*http.Request) (*http.R
 		if req.URL.RawQuery != "" {
 			keyStr = keyStr + "?" + req.URL.RawQuery
 		}
+		keyStr = bodyExpectationKey(req, ex, keyStr)
 		expectations, ok := ex.Get(keyStr)
 		err := compareHTTPRequestToExpected(req, &expectations)
 		if err != nil {
@@ -151,11 +153,16 @@ func (srt SimulatedRoundTripper) RoundTrip(req *http.Request) (*http.Response, e
 	if req.URL.RawQuery != "" {
 		reqKey = reqKey + "?" + req.URL.RawQuery
 	}
+	reqKey = bodyExpectationKey(req, srt.Expectations, reqKey)
 	ok := srt.Expectations.HasKey(reqKey)
 	if !ok && srt.Strict {
 		srt.T.Fatalf("FAIL: no expectations found for key '%s' in strict mode, existing keys  = %s", reqKey, strings.Join(srt.Expectations.Keys(), ", "))
 	}
-	return srt.RoundTripper(req)
+	response, err := srt.RoundTripper(req)
+	if err != nil {
+		srt.T.Logf("%s %s: %v", req.Method, reqKey, err)
+	}
+	return response, err
 }
 
 func NewURL(scheme, host, path string) *url.URL {
@@ -471,4 +478,39 @@ func StartServer(t testing.TB, expectations ExpectationStore) {
 	transport := newSimpleTransportHandler(expectations) //nolint:bodyclose // TODO: fix
 	var roundTripper http.RoundTripper = NewSimulatedRoundTripper(t, expectations, transport, true)
 	SetupHTTPCallHeavyweight(t, expectations, DefaultHandler, roundTripper)
+}
+
+// PutUnordered retains exact payload and count checks for independent mutation rows.
+func (ex ExpectationStore) PutUnordered(t testing.TB, key string, value HTTPRequestExpectations) {
+	t.Helper()
+	if value.Body == nil {
+		ex.Put(key, value)
+		return
+	}
+	body, err := io.ReadAll(value.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	value.Body = io.NopCloser(bytes.NewReader(body))
+	ex[key+"#body"] = &ExpectationList{}
+	ex.Put(key+bodyFingerprint(body), value)
+}
+
+func bodyFingerprint(body []byte) string {
+	var value any
+	if json.Unmarshal(body, &value) == nil {
+		body, _ = json.Marshal(value)
+	}
+	return fmt.Sprintf("#%x", sha256.Sum256(body))
+}
+func bodyExpectationKey(req *http.Request, ex ExpectationStore, key string) string {
+	if _, matched := ex[key+"#body"]; !matched || req.Body == nil {
+		return key
+	}
+	body, err := io.ReadAll(req.Body)
+	req.Body = io.NopCloser(bytes.NewReader(body))
+	if err != nil || len(body) == 0 {
+		return key
+	}
+	return key + bodyFingerprint(body)
 }

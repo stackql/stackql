@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/jsonpath"
+	"github.com/stackql/stackql/internal/stackql/jsonpath"
 )
 
 type simpleSystemPathSearcher struct {

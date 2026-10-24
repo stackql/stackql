@@ -41,7 +41,7 @@ parser.add_argument(
 parser.add_argument(
     '--replacement-host',
     type=str,
-    default='localhost',
+    default='127.0.0.1',
     help='host name to overwrite in docs'
 )
 parser.add_argument(
@@ -125,7 +125,7 @@ parser.add_argument(
 
 class ProviderArgs:
 
-  def __init__(self, name :str, srcdir :str, destdir :str, port :int, replacement_host :str='localhost'):
+  def __init__(self, name :str, srcdir :str, destdir :str, port :int, replacement_host :str='127.0.0.1'):
     self.name            = name
     self.srcdir          = srcdir
     self.destdir         = destdir

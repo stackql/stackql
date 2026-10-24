@@ -2,7 +2,6 @@ package annotatedast
 
 import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
-	"github.com/stackql/stackql/internal/stackql/astanalysis/selectmetadata"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -15,7 +14,6 @@ func NewAnnotatedAst(parent AnnotatedAst, ast sqlparser.Statement) (AnnotatedAst
 		tableIndirects:       make(map[string]astindirect.Indirect),
 		materializedViewRefs: make(map[string]astindirect.Indirect),
 		tableSQLDataSources:  make(map[string]sql_datasource.SQLDataSource),
-		selectMetadataMap:    make(map[*sqlparser.Select]selectmetadata.SelectMetadata),
 		whereParamMaps:       make(map[*sqlparser.Where]parserutil.ParameterMap),
 		insertRowsIndirect:   make(map[*sqlparser.Insert]astindirect.Indirect),
 		selectIndirectCache:  make(map[*sqlparser.Select]astindirect.Indirect),
@@ -32,12 +30,10 @@ type AnnotatedAst interface {
 	GetIndirects() map[string]astindirect.Indirect
 	GetMaterializedView(sqlparser.SQLNode) (astindirect.Indirect, bool)
 	GetPhysicalTable(sqlparser.SQLNode) (astindirect.Indirect, bool)
-	GetSelectMetadata(*sqlparser.Select) (selectmetadata.SelectMetadata, bool)
 	GetSQLDataSource(node sqlparser.SQLNode) (sql_datasource.SQLDataSource, bool)
 	SetIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect)
 	SetMaterializedView(node sqlparser.SQLNode, indirect astindirect.Indirect)
 	SetPhysicalTable(node sqlparser.SQLNode, indirect astindirect.Indirect)
-	SetSelectMetadata(*sqlparser.Select, selectmetadata.SelectMetadata)
 	SetSQLDataSource(node sqlparser.SQLNode, sqlDataSource sql_datasource.SQLDataSource)
 	SetWhereParamMapsEntry(*sqlparser.Where, parserutil.ParameterMap)
 	GetWhereParamMapsEntry(*sqlparser.Where) (parserutil.ParameterMap, bool)
@@ -59,7 +55,6 @@ type standardAnnotatedAst struct {
 	physicalTableRefs    map[string]astindirect.Indirect
 	insertRowsIndirect   map[*sqlparser.Insert]astindirect.Indirect
 	tableSQLDataSources  map[string]sql_datasource.SQLDataSource
-	selectMetadataMap    map[*sqlparser.Select]selectmetadata.SelectMetadata
 	whereParamMaps       map[*sqlparser.Where]parserutil.ParameterMap
 	selectIndirectCache  map[*sqlparser.Select]astindirect.Indirect
 	unionIndirectCache   map[*sqlparser.Union]astindirect.Indirect
@@ -158,15 +153,6 @@ func (aa *standardAnnotatedAst) GetAST() sqlparser.Statement {
 
 func (aa *standardAnnotatedAst) IsReadOnly() bool {
 	return false
-}
-
-func (aa *standardAnnotatedAst) GetSelectMetadata(selNode *sqlparser.Select) (selectmetadata.SelectMetadata, bool) {
-	sm, ok := aa.selectMetadataMap[selNode]
-	return sm, ok
-}
-
-func (aa *standardAnnotatedAst) SetSelectMetadata(selNode *sqlparser.Select, meta selectmetadata.SelectMetadata) {
-	aa.selectMetadataMap[selNode] = meta
 }
 
 func (aa *standardAnnotatedAst) GetIndirect(node sqlparser.SQLNode) (astindirect.Indirect, bool) {

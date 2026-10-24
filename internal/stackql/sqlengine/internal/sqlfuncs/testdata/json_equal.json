@@ -1,0 +1,225 @@
+{
+  "function": "json_equal",
+  "vectors": [
+    {
+      "id": "sef_2_01",
+      "source": "sqlite-ext-functions test/json_equal.sql 2_01",
+      "args": [
+        "{\"key\": \"value\"}",
+        "{\"key\": \"value\"}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_2_02",
+      "source": "sqlite-ext-functions test/json_equal.sql 2_02",
+      "args": [
+        "{\"key1\": \"value1\", \"key2\": \"value2\"}",
+        "{\"key1\": \"value1\", \"key2\": \"value2\"}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_3_01",
+      "source": "sqlite-ext-functions test/json_equal.sql 3_01",
+      "args": [
+        "{\"key1\": \"value1\", \"key2\": \"value2\"}",
+        "{\"key2\": \"value2\", \"key1\": \"value1\"}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_4_01",
+      "source": "sqlite-ext-functions test/json_equal.sql 4_01",
+      "args": [
+        "{\"key\": \"value\"}",
+        "{\"key\": \"different\"}"
+      ],
+      "result": 0
+    },
+    {
+      "id": "sef_4_02",
+      "source": "sqlite-ext-functions test/json_equal.sql 4_02",
+      "args": [
+        "{\"key1\": \"value1\"}",
+        "{\"key2\": \"value2\"}"
+      ],
+      "result": 0
+    },
+    {
+      "id": "sef_5_01",
+      "source": "sqlite-ext-functions test/json_equal.sql 5_01",
+      "args": [
+        "[1, 2, 3]",
+        "[1, 2, 3]"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_5_02",
+      "source": "sqlite-ext-functions test/json_equal.sql 5_02",
+      "args": [
+        "[{\"key\": \"value\"}]",
+        "[{\"key\": \"value\"}]"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_6_01",
+      "source": "sqlite-ext-functions test/json_equal.sql 6_01",
+      "args": [
+        "[1, 2, 3]",
+        "[3, 2, 1]"
+      ],
+      "result": 0
+    },
+    {
+      "id": "sef_6_02",
+      "source": "sqlite-ext-functions test/json_equal.sql 6_02",
+      "args": [
+        "[{\"key\": \"value\"}]",
+        "[{\"key\": \"different\"}]"
+      ],
+      "result": 0
+    },
+    {
+      "id": "sef_7_01",
+      "source": "sqlite-ext-functions test/json_equal.sql 7_01",
+      "args": [
+        "{\"key\": [1, 2, {\"subkey\": \"subvalue\"}]}",
+        "{\"key\": [1, 2, {\"subkey\": \"subvalue\"}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_7_02",
+      "source": "sqlite-ext-functions test/json_equal.sql 7_02",
+      "args": [
+        "{\"key\": [1, 2, {\"subkey\": \"subvalue1\"}]}",
+        "{\"key\": [1, 2, {\"subkey\": \"subvalue2\"}]}"
+      ],
+      "result": 0
+    },
+    {
+      "id": "sef_8_01",
+      "source": "sqlite-ext-functions test/json_equal.sql 8_01",
+      "args": [
+        "{\"key\": \"value\"}",
+        " { \"key\" : \"value\" } "
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_8_02",
+      "source": "sqlite-ext-functions test/json_equal.sql 8_02",
+      "args": [
+        "[1, 2, 3]",
+        "[ 1, 2, 3 ]"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_9_01",
+      "source": "sqlite-ext-functions test/json_equal.sql 9_01",
+      "args": [
+        "{\"key\": \"value with space\"}",
+        "{\"key\": \"value with space\"}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_9_02",
+      "source": "sqlite-ext-functions test/json_equal.sql 9_02",
+      "args": [
+        "{\"key\": \"value\\nwith\\nnewlines\"}",
+        "{\"key\": \"value\\nwith\\nnewlines\"}"
+      ],
+      "result": 1,
+      "note": "the SQL literal carries a two-character backslash-n JSON escape; both documents parse to real newlines"
+    },
+    {
+      "id": "pr783_01",
+      "source": "stackql PR #783 cgo golden sample",
+      "args": [
+        "{\"a\":1}",
+        "{ \"a\" : 1.0 }"
+      ],
+      "result": 1
+    },
+    {
+      "id": "cref_null_lhs",
+      "source": "C reference implementation behavior (json_equal.c)",
+      "args": [
+        null,
+        "{}"
+      ],
+      "error": true,
+      "note": "NULL arguments raise an error in the C implementation, not NULL"
+    },
+    {
+      "id": "cref_null_rhs",
+      "source": "C reference implementation behavior (json_equal.c)",
+      "args": [
+        "{}",
+        null
+      ],
+      "error": true
+    },
+    {
+      "id": "cref_invalid_json",
+      "source": "C reference implementation behavior (json_equal.c)",
+      "args": [
+        "not json",
+        "{}"
+      ],
+      "error": true,
+      "note": "unparseable documents raise an error in the C implementation"
+    },
+    {
+      "id": "cref_scalar_equal",
+      "source": "C reference implementation behavior (json_equal.c)",
+      "args": [
+        "1",
+        "1"
+      ],
+      "result": 1
+    },
+    {
+      "id": "cref_scalar_unequal",
+      "source": "C reference implementation behavior (json_equal.c)",
+      "args": [
+        "1",
+        "2"
+      ],
+      "result": 0
+    },
+    {
+      "id": "cref_number_epsilon",
+      "source": "C reference implementation behavior (json_equal.c compare_double)",
+      "args": [
+        "{\"a\": 1}",
+        "{\"a\": 1.0000000000000002}"
+      ],
+      "result": 1,
+      "note": "one ULP at 1.0 is within the cJSON DBL_EPSILON comparison"
+    },
+    {
+      "id": "cref_bool_null",
+      "source": "C reference implementation behavior (json_equal.c)",
+      "args": [
+        "{\"a\": true, \"b\": null}",
+        "{\"b\": null, \"a\": true}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "cref_type_mismatch",
+      "source": "C reference implementation behavior (json_equal.c)",
+      "args": [
+        "{\"a\": 1}",
+        "{\"a\": \"1\"}"
+      ],
+      "result": 0
+    }
+  ]
+}

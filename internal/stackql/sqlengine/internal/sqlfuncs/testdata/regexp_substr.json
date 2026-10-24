@@ -1,0 +1,105 @@
+{
+  "function": "regexp_substr",
+  "vectors": [
+    {
+      "id": "sef_4_01",
+      "source": "sqlite-ext-functions test/regexp.sql 4_01",
+      "args": [
+        null,
+        "pattern"
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_4_02",
+      "source": "sqlite-ext-functions test/regexp.sql 4_02",
+      "args": [
+        "source",
+        null
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_5_01",
+      "source": "sqlite-ext-functions test/regexp.sql 5_01",
+      "args": [
+        "hello world",
+        "w.*d"
+      ],
+      "result": "world"
+    },
+    {
+      "id": "sef_5_02",
+      "source": "sqlite-ext-functions test/regexp.sql 5_02",
+      "args": [
+        "123-456-7890",
+        "[0-9]+-[0-9]+-[0-9]+"
+      ],
+      "result": "123-456-7890"
+    },
+    {
+      "id": "sef_6_01",
+      "source": "sqlite-ext-functions test/regexp.sql 6_01",
+      "args": [
+        "file.txt",
+        "\\.\\w+$"
+      ],
+      "result": ".txt"
+    },
+    {
+      "id": "sef_6_02",
+      "source": "sqlite-ext-functions test/regexp.sql 6_02",
+      "args": [
+        "abc123xyz",
+        "[0-9]+"
+      ],
+      "result": "123"
+    },
+    {
+      "id": "sef_11_02",
+      "source": "sqlite-ext-functions test/regexp.sql 11_02",
+      "args": [
+        "hello",
+        ""
+      ],
+      "result": ""
+    },
+    {
+      "id": "sef_12_03",
+      "source": "sqlite-ext-functions test/regexp.sql 12_03",
+      "args": [
+        "hello world",
+        "^hello"
+      ],
+      "result": "hello"
+    },
+    {
+      "id": "sef_12_04",
+      "source": "sqlite-ext-functions test/regexp.sql 12_04",
+      "args": [
+        "end of line",
+        "line$"
+      ],
+      "result": "line"
+    },
+    {
+      "id": "pr783_01",
+      "source": "stackql PR #783 cgo golden sample",
+      "args": [
+        "abc123def",
+        "\\d+"
+      ],
+      "result": "123"
+    },
+    {
+      "id": "cref_no_match",
+      "source": "C reference implementation behavior (regexp.c)",
+      "args": [
+        "abc",
+        "[0-9]"
+      ],
+      "result": null,
+      "note": "no match yields NULL per the C implementation"
+    }
+  ]
+}

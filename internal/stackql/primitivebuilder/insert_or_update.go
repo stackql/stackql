@@ -76,9 +76,7 @@ func (ss *insertOrUpdate) Build() error {
 			return fmt.Errorf("mutation executor: cannot accomodate verb '%s'", mutableInput.GetVerb())
 		}
 	} else {
-		genericBldr, genericBldrSetupErr = newGenericHTTPStreamInput(
-			mutableInput,
-		)
+		return fmt.Errorf("provider mutations must be planned through omnisdk")
 	}
 
 	if genericBldrSetupErr != nil {

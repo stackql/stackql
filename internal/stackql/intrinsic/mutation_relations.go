@@ -25,14 +25,11 @@ func prepareMutationRelations(
 	if !ok || literalSource(source.From) {
 		return stmt, nil, nil
 	}
-	expanded, err := expandDocumentViews(ctx, source, current)
+	prepared, relations, err := prepareMutationSource(ctx, source, current)
 	if err != nil {
 		return nil, nil, err
 	}
-	prepared, relations, err := resolveDerivedRelations(ctx, expanded, current, 0)
-	if err != nil {
-		return nil, nil, err
-	}
+
 	dialect, err := backendDialect(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -41,6 +38,7 @@ func prepareMutationRelations(
 	if err = expandDerivedStars(ctx, prepared, translator, relations); err != nil {
 		return nil, nil, err
 	}
+	local := fmt.Sprintf("r%d", len(relations))
 	sourcePlan := *prepared
 	sourcePlan.SelectExprs = make(sqlparser.SelectExprs, len(prepared.SelectExprs))
 	projected := make(sqlparser.SelectExprs, len(prepared.SelectExprs))
@@ -56,7 +54,10 @@ func prepareMutationRelations(
 		cloned := *expression
 		cloned.As = sqlparser.NewColIdent(field)
 		sourcePlan.SelectExprs[i] = &cloned
-		projected[i] = &sqlparser.AliasedExpr{Expr: &sqlparser.ColName{Name: sqlparser.NewColIdent(field)}}
+		projected[i] = &sqlparser.AliasedExpr{Expr: &sqlparser.ColName{
+			Name:      sqlparser.NewColIdent(field),
+			Qualifier: sqlparser.TableName{Name: sqlparser.NewTableIdent(local)},
+		}}
 	}
 	names, open, err := planDerivedRead(ctx, &sourcePlan, translator, relations)
 	if err != nil {
@@ -66,7 +67,6 @@ func prepareMutationRelations(
 	if err != nil {
 		return nil, nil, err
 	}
-	local := fmt.Sprintf("r%d", len(relations))
 	handle := UnstablePrefix + "omni_relations.sources." + local
 	relation, err := omnisdk.NewRelation(handle, nil, columns, open)
 	if err != nil {
@@ -80,4 +80,18 @@ func prepareMutationRelations(
 			Qualifier:       sqlparser.NewTableIdent("sources"), Name: sqlparser.NewTableIdent(local),
 		}}}}
 	return &clone, relations, nil
+}
+
+func prepareMutationSource(ctx queryContext, source *sqlparser.Select, current string) (
+	*sqlparser.Select, map[string]omnisdk.Relation, error,
+) {
+	storedSource, stored, err := prepareStoredRelations(ctx, source)
+	if err != nil {
+		return nil, nil, err
+	}
+	expanded, err := expandDocumentViews(ctx, storedSource, current)
+	if err != nil {
+		return nil, nil, err
+	}
+	return resolveDerivedRelations(ctx, expanded, current, 0, stored)
 }

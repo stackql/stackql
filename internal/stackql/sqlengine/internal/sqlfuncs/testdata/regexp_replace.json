@@ -1,0 +1,119 @@
+{
+  "function": "regexp_replace",
+  "vectors": [
+    {
+      "id": "sef_7_01",
+      "source": "sqlite-ext-functions test/regexp.sql 7_01",
+      "args": [
+        null,
+        "pattern",
+        "replacement"
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_7_02",
+      "source": "sqlite-ext-functions test/regexp.sql 7_02",
+      "args": [
+        "source",
+        null,
+        "replacement"
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_7_03",
+      "source": "sqlite-ext-functions test/regexp.sql 7_03",
+      "args": [
+        "source",
+        "pattern",
+        null
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_8_01",
+      "source": "sqlite-ext-functions test/regexp.sql 8_01",
+      "args": [
+        "hello world",
+        "world",
+        "SQLite"
+      ],
+      "result": "hello SQLite"
+    },
+    {
+      "id": "sef_8_02",
+      "source": "sqlite-ext-functions test/regexp.sql 8_02",
+      "args": [
+        "123-456-7890",
+        "[0-9]",
+        "X"
+      ],
+      "result": "XXX-XXX-XXXX"
+    },
+    {
+      "id": "sef_9_01",
+      "source": "sqlite-ext-functions test/regexp.sql 9_01",
+      "args": [
+        "file.txt",
+        "\\.txt$",
+        ".bak"
+      ],
+      "result": "file.bak"
+    },
+    {
+      "id": "sef_9_02",
+      "source": "sqlite-ext-functions test/regexp.sql 9_02",
+      "args": [
+        "abc123xyz",
+        "[0-9]+",
+        "456"
+      ],
+      "result": "abc456xyz"
+    },
+    {
+      "id": "sef_10_02",
+      "source": "sqlite-ext-functions test/regexp.sql 10_02",
+      "args": [
+        "abracadabra",
+        "abra(cad)?abra",
+        "magic"
+      ],
+      "result": "magic",
+      "retiredCResult": "abracadabra",
+      "note": "tiny-regex-c (the retired C engine) did not support groups: '(' and ')' were literal characters, so this pattern could not match and the C suite recorded the opposite outcome (see retiredCResult). Go RE2 supports groups; expectation deliberately updated per DIVERGENCES.md."
+    },
+    {
+      "id": "pr783_01",
+      "source": "stackql PR #783 cgo golden sample",
+      "args": [
+        "abc123",
+        "\\d",
+        "X"
+      ],
+      "result": "abcXXX"
+    },
+    {
+      "id": "cref_no_match",
+      "source": "C reference implementation behavior (regexp.c)",
+      "args": [
+        "hello",
+        "xyz",
+        "Q"
+      ],
+      "result": "hello",
+      "note": "no match returns the source unchanged per the C implementation"
+    },
+    {
+      "id": "cref_literal_replacement",
+      "source": "C reference implementation behavior (regexp.c)",
+      "args": [
+        "ab12cd",
+        "([a-z]+)",
+        "<$1>"
+      ],
+      "result": "<$1>12<$1>",
+      "note": "the C implementation copied the replacement text verbatim; $1 is not a capture token"
+    }
+  ]
+}

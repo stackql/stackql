@@ -1,2 +1,2 @@
-compute#operation: delete in progress, 2 seconds elapsed
+compute#operation: delete in progress, 10 seconds elapsed
 compute#operation: delete complete

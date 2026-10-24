@@ -643,8 +643,6 @@ def get_variables(
   SELECT_CONTAINER_SUBNET_AGG_DESC = "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
   SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange asc;"
   SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name, maximumCardsPerInstance  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
-  SELECT_ACCELERATOR_TYPES_DESC_FROM_INTEL_VIEWS = "select  kind, name  from  stackql_intel.\"google.compute.acceleratorTypes\" where project = 'testing-project' and zone like '%%australia-southeast1-a' order by name desc;"
-  SELECT_ACCELERATOR_TYPES_DESC_FROM_INTEL_VIEWS_SUBQUERY = "SELECT name AS name, count(kind) AS \"COUNT(kind)\" FROM (SELECT *    from stackql_intel.\"google.compute.acceleratorTypes\"    limit 80) AS virtual_table GROUP BY name ORDER BY \"COUNT(kind)\" DESC LIMIT 1000;"
   SELECT_MACHINE_TYPES_DESC = "select name from google.compute.machineTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
   SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
 
@@ -894,8 +892,13 @@ def get_variables(
   print(f'sundry_config: "{sundry_config}"')
   _sundry_config = json.loads(sundry_config) if sundry_config else {}
   must_use_stackql_preinstalled :bool = use_stackql_preinstalled.lower() == 'true'
-  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_1', sql_backend_str)
-  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_3', sql_backend_str)
+  # Query-owned Omni staging must be released before the next statement.
+  if sql_backend_str == 'postgres_tcp':
+    staging_count_sql = "SELECT COUNT(*) as object_count FROM information_schema.tables WHERE table_schema = 'stackql_queries'"
+  else:
+    staging_count_sql = "SELECT COUNT(*) as object_count FROM sqlite_master WHERE type = 'table' AND name GLOB '__iql__.queries.[0-9]*'"
+  NATIVEQUERY_OMNI_STAGING_TABLE_COUNT = "NATIVEQUERY '" + staging_count_sql.replace("'", "''") + "';"
+
   rv = {
     ## general config
     'AUTH_AZURE_FAULTY':                              '{ "azure": { "type": "service_account", "credentialsenvar": "SOME_RUBBISH_ENV_VAR" } }',
@@ -1008,7 +1011,6 @@ def get_variables(
     'REGISTRY_LIST_EXPECTED':                                                 REGISTRY_LIST_EXPECTED,
     'SELECT_ACCELERATOR_TYPES_DESC':                                          SELECT_ACCELERATOR_TYPES_DESC,
     'SELECT_ACCELERATOR_TYPES_DESC_EXPECTED':                                 SELECT_ACCELERATOR_TYPES_DESC_EXPECTED,
-    'SELECT_ACCELERATOR_TYPES_DESC_SEQUENCE':                                 [ SELECT_ACCELERATOR_TYPES_DESC, SELECT_ACCELERATOR_TYPES_DESC_FROM_INTEL_VIEWS, SELECT_ACCELERATOR_TYPES_DESC_FROM_INTEL_VIEWS_SUBQUERY ],
     'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED':      SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED,
     'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SIMPLE':        SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SIMPLE,
     'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_TRANSPARENT':   SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_TRANSPARENT,
@@ -1113,9 +1115,9 @@ def get_variables(
     'SHELL_COMMANDS_DISKS_VIEW_ALIASED_SEQUENCE_JSON_EXPECTED':               SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON,
     'SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE':                         [ CREATE_DISKS_VIEW_NO_PRIMARY_ALIAS, "select * from cross_cloud_disks_not_aliased order by name desc;", "drop view cross_cloud_disks_not_aliased;" ],
     'SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE_JSON_EXPECTED':           SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON,
-    'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL':                                   [ SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE, PURGE_CONSERVATIVE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE, PURGE_CONSERVATIVE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE ],
-    'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL_JSON_EXPECTED':                     SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(5)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(10)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [get_object_count_dict(0) ],
-    'SHELL_COMMANDS_GC_SEQUENCE_EAGER':                                       [ SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE ],
+    'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL':                                   [ SELECT_OKTA_APPS, NATIVEQUERY_OMNI_STAGING_TABLE_COUNT, PURGE_CONSERVATIVE, NATIVEQUERY_OMNI_STAGING_TABLE_COUNT, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OMNI_STAGING_TABLE_COUNT, PURGE_CONSERVATIVE, NATIVEQUERY_OMNI_STAGING_TABLE_COUNT ],
+    'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL_JSON_EXPECTED':                     SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [get_object_count_dict(0) ],
+    'SHELL_COMMANDS_GC_SEQUENCE_EAGER':                                       [ SELECT_OKTA_APPS, NATIVEQUERY_OMNI_STAGING_TABLE_COUNT, NATIVEQUERY_OMNI_STAGING_TABLE_COUNT, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OMNI_STAGING_TABLE_COUNT, NATIVEQUERY_OMNI_STAGING_TABLE_COUNT ],
     'SHELL_COMMANDS_GC_SEQUENCE_EAGER_JSON_EXPECTED':                         SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + [get_object_count_dict(0) ],
     'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED':                             [ SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE, SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE ],
     'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED_JSON_EXPECTED':               SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED + SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED,
@@ -1200,7 +1202,7 @@ def get_variables(
   else:
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR
     rv['AUTH_CFG_DEFECTIVE_STR']                        = AUTH_CFG_DEFECTIVE_STR
-    rv['LOCAL_HOST_ALIAS']                              = 'localhost'
+    rv['LOCAL_HOST_ALIAS']                              = '127.0.0.1'
     rv['AUTH_GOOGLE_SA_KEY_PATH']                       = _AUTH_GOOGLE_SA_KEY_PATH
     rv['NON_EXISTENT_AUTH_GOOGLE_SA_KEY_PATH']          = _NON_EXISTENT_AUTH_GOOGLE_SA_KEY_PATH
     rv['AUTH_PLUS_EXTERNAL_POSTGRES']                   = AUTH_PLUS_EXTERNAL_POSTGRES

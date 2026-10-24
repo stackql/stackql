@@ -10,9 +10,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/constants"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
 
 	. "github.com/stackql/stackql/internal/stackql/omnistaging" //nolint:revive // test reads as package
 )
@@ -122,10 +121,9 @@ func TestDialectStatements(t *testing.T) {
 
 func openSQLite(t *testing.T, path string) *sql.DB {
 	t.Helper()
-	eng, err := sqlengine.NewSQLEngine(dto.SQLBackendCfg{
-		DBEngine:  constants.DBEngineSQLite3Embedded,
-		SQLSystem: constants.SQLDialectSQLite3,
-		DSN:       "file:" + path,
+	eng, err := sqlengine.NewSQLEngine(sqlengine.Config{
+		DBEngine: constants.DBEngineSQLite3Embedded,
+		DSN:      "file:" + path,
 	}, nil)
 	if err != nil {
 		t.Fatalf("cannot open sqlite engine: %v", err)

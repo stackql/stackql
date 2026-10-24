@@ -52,7 +52,8 @@ func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 	}
 
 	stackqltestutil.SetupDependentInsertGoogleComputeDisks(t)
-	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedComputeDisksDependentInsertAsyncFile})
+	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedComputeDisksDependentInsertAsyncFile,
+		"test/assets/expected/simple-insert/compute-disk/insert-dependent-compute-disk-parallel.txt"})
 }
 
 //nolint:govet,lll // legacy test
@@ -89,8 +90,9 @@ func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
-	stackqltestutil.SetupDependentInsertGoogleComputeDisks(t)
-	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedComputeDisksDependentInsertAsyncFile})
+	stackqltestutil.SetupDependentInsertGoogleComputeDisksReversed(t)
+	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedComputeDisksDependentInsertAsyncFile,
+		"test/assets/expected/simple-insert/compute-disk/insert-dependent-compute-disk-parallel.txt"})
 }
 
 //nolint:govet,lll // legacy test

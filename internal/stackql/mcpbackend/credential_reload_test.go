@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 func TestCredentialSource(t *testing.T) {
@@ -15,11 +16,11 @@ func TestCredentialSource(t *testing.T) {
 		ac   *dto.AuthCtx
 		want string
 	}{
-		{"env var key", &dto.AuthCtx{KeyEnvVar: "MY_SECRET"}, "env:MY_SECRET"},
-		{"file path", &dto.AuthCtx{KeyFilePath: "/path/key.json"}, "file:/path/key.json"},
-		{"file path env var", &dto.AuthCtx{KeyFilePathEnvVar: "KEY_PATH"}, "env:KEY_PATH"},
-		{"basic env pair", &dto.AuthCtx{EnvVarUsername: "U", EnvVarPassword: "P"}, "env:U,env:P"},
-		{"inline basic", &dto.AuthCtx{Username: "u", Password: "p"}, "inline"},
+		{"env var key", &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{KeyEnvVar: "MY_SECRET"}}, "env:MY_SECRET"},
+		{"file path", &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{KeyFilePath: "/path/key.json"}}, "file:/path/key.json"},
+		{"file path env var", &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{KeyFilePathEnvVar: "KEY_PATH"}}, "env:KEY_PATH"},
+		{"basic env pair", &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{EnvVarUsername: "U", EnvVarPassword: "P"}}, "env:U,env:P"},
+		{"inline basic", &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Username: "u", Password: "p"}}, "inline"},
 		{"nothing", &dto.AuthCtx{}, "none"},
 	}
 	for _, tc := range cases {
@@ -35,7 +36,7 @@ func TestProviderCredentialStatus(t *testing.T) {
 	const varName = "STACKQL_TEST_STATUS_VAR"
 	t.Run("unresolved env var", func(t *testing.T) {
 		os.Unsetenv(varName) //nolint:errcheck // test hygiene
-		got := providerCredentialStatus("okta", &dto.AuthCtx{Type: dto.AuthAPIKeyStr, KeyEnvVar: varName})
+		got := providerCredentialStatus("okta", &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: dto.AuthAPIKeyStr, KeyEnvVar: varName}})
 		if got.Status != credentialStatusUnresolved {
 			t.Errorf("expected unresolved, got %q (detail %q)", got.Status, got.Detail)
 		}
@@ -45,7 +46,7 @@ func TestProviderCredentialStatus(t *testing.T) {
 	})
 	t.Run("resolved env var", func(t *testing.T) {
 		t.Setenv(varName, "some-secret")
-		got := providerCredentialStatus("okta", &dto.AuthCtx{Type: dto.AuthAPIKeyStr, KeyEnvVar: varName})
+		got := providerCredentialStatus("okta", &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: dto.AuthAPIKeyStr, KeyEnvVar: varName}})
 		if got.Status != credentialStatusOK {
 			t.Errorf("expected ok, got %q (detail %q)", got.Status, got.Detail)
 		}
@@ -54,7 +55,7 @@ func TestProviderCredentialStatus(t *testing.T) {
 		}
 	})
 	t.Run("uncheckable auth type", func(t *testing.T) {
-		got := providerCredentialStatus("azure", &dto.AuthCtx{Type: dto.AuthAzureDefaultStr})
+		got := providerCredentialStatus("azure", &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: dto.AuthAzureDefaultStr}})
 		if got.Status != credentialStatusNotChecked {
 			t.Errorf("expected not_checked, got %q", got.Status)
 		}
@@ -91,7 +92,7 @@ func TestQueryProviderName(t *testing.T) {
 
 func TestCredentialFingerprint(t *testing.T) {
 	const varName = "STACKQL_TEST_FINGERPRINT_VAR"
-	ac := &dto.AuthCtx{Type: dto.AuthAPIKeyStr, KeyEnvVar: varName}
+	ac := &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: dto.AuthAPIKeyStr, KeyEnvVar: varName}}
 	t.Setenv(varName, "key-a")
 	before := credentialFingerprint(ac)
 	if before != credentialFingerprint(ac) {
@@ -107,7 +108,7 @@ func TestCredentialFingerprint(t *testing.T) {
 			t.Errorf("fingerprint must not embed the value: %q", fp)
 		}
 	}
-	successor := &dto.AuthCtx{Type: dto.AuthCustomStr, KeyEnvVar: varName, Successor: &dto.AuthCtx{KeyEnvVar: varName + "_2"}}
+	successor := &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: dto.AuthCustomStr, KeyEnvVar: varName}, Successor: &dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{KeyEnvVar: varName + "_2"}}}
 	t.Setenv(varName+"_2", "s-a")
 	chained := credentialFingerprint(successor)
 	t.Setenv(varName+"_2", "s-b")

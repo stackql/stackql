@@ -3,11 +3,9 @@ package tablemetadata
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
 var (
@@ -16,46 +14,36 @@ var (
 
 type ExtendedTableMetadata interface {
 	GetAlias() string
-	GetGraphQL() (formulation.GraphQL, bool)
+
 	GetHeirarchyObjects() HeirarchyObjects
-	GetHTTPArmoury() (formulation.HTTPArmoury, error)
 	GetInputTableName() (string, error)
-	GetMethod() (formulation.StandardOperationStore, error)
+
 	GetMethodStr() (string, error)
-	GetProvider() (provider.IProvider, error)
+
 	GetProviderStr() (string, error)
-	GetProviderObject() (formulation.Provider, error)
+
 	GetQueryUniqueID() string
-	GetRequestSchema() (formulation.Schema, error)
-	GetOptionalParameters() map[string]formulation.Addressable
-	GetRequiredParameters() map[string]formulation.Addressable
-	GetParametersIncludingNativeCasing() map[string]formulation.Addressable
-	GetResource() (formulation.Resource, error)
+
 	GetResourceStr() (string, error)
 	GetResponseSchemaStr() (string, error)
-	GetResponseSchemaAndMediaType() (formulation.Schema, string, error)
-	GetSelectableObjectSchema() (formulation.Schema, error)
+
 	GetSelectItemsKey() string
-	GetSelectSchemaAndObjectPath() (formulation.Schema, string, error)
-	GetService() (formulation.Service, error)
+
 	GetServiceStr() (string, error)
 	GetSQLDataSource() (sql_datasource.SQLDataSource, bool)
 	GetStackQLTableName() (string, error)
-	GetTableFilter() func(formulation.ITable) (formulation.ITable, error)
+
 	GetTableName() (string, error)
 	GetUniqueID() string
 	IsLocallyExecutable() bool
-	IsSimple() bool
+
 	GetIndirect() (astindirect.Indirect, bool)
 	GetView() (internaldto.RelationDTO, bool)
 	GetSubquery() (internaldto.SubqueryDTO, bool)
-	LookupSelectItemsKey() string
+
 	SetSelectItemsKey(string)
 	SetSQLDataSource(sql_datasource.SQLDataSource)
-	SetTableFilter(f func(formulation.ITable) (formulation.ITable, error))
-	SetPushdownIntent(intent formulation.PushdownIntent)
-	GetPushdownIntent() (formulation.PushdownIntent, bool)
-	WithGetHTTPArmoury(f func() (formulation.HTTPArmoury, error)) ExtendedTableMetadata
+
 	WithIndirect(astindirect.Indirect) ExtendedTableMetadata
 	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
 	IsPGInternalObject() bool
@@ -68,34 +56,28 @@ type ExtendedTableMetadata interface {
 }
 
 type standardExtendedTableMetadata struct {
-	tableFilter         func(formulation.ITable) (formulation.ITable, error)
 	colsVisited         map[string]bool
 	heirarchyObjects    HeirarchyObjects
 	isLocallyExecutable bool
-	getHTTPArmoury      func() (formulation.HTTPArmoury, error)
 	selectItemsKey      string
 	alias               string
 	inputTableName      string
 	indirect            astindirect.Indirect
 	sqlDataSource       sql_datasource.SQLDataSource
 	isOnClauseHoistable bool
-	pushdownIntent      formulation.PushdownIntent
 }
 
 func (ex *standardExtendedTableMetadata) Clone() ExtendedTableMetadata {
 	return &standardExtendedTableMetadata{
-		tableFilter:         ex.tableFilter,
 		colsVisited:         ex.colsVisited,
 		heirarchyObjects:    ex.heirarchyObjects,
 		isLocallyExecutable: ex.isLocallyExecutable,
-		getHTTPArmoury:      ex.getHTTPArmoury,
 		selectItemsKey:      ex.selectItemsKey,
 		alias:               ex.alias,
 		inputTableName:      ex.inputTableName,
 		indirect:            ex.indirect,
 		sqlDataSource:       ex.sqlDataSource,
 		isOnClauseHoistable: ex.isOnClauseHoistable,
-		pushdownIntent:      ex.pushdownIntent,
 	}
 }
 
@@ -145,18 +127,6 @@ func (ex *standardExtendedTableMetadata) IsMaterializedView() bool {
 	return ex.heirarchyObjects.GetHeirarchyIDs().IsMaterializedView()
 }
 
-// SetPushdownIntent records the neutral query-option push-down intent the analysis phase
-// resolved for this acquire. It is handed to the HTTP preparator (HTTPPreparator.
-// WithPushdownIntent) when the request is prepared, so any-sdk owns the dialect translation
-// and request application and the executor stays protocol-agnostic.
-func (ex *standardExtendedTableMetadata) SetPushdownIntent(intent formulation.PushdownIntent) {
-	ex.pushdownIntent = intent
-}
-
-func (ex *standardExtendedTableMetadata) GetPushdownIntent() (formulation.PushdownIntent, bool) {
-	return ex.pushdownIntent, ex.pushdownIntent != nil
-}
-
 func (ex *standardExtendedTableMetadata) SetIsOnClauseHoistable(isOnClauseHoistable bool) {
 	ex.isOnClauseHoistable = isOnClauseHoistable
 }
@@ -202,86 +172,8 @@ func (ex *standardExtendedTableMetadata) SetSelectItemsKey(k string) {
 	ex.selectItemsKey = k
 }
 
-func (ex *standardExtendedTableMetadata) SetTableFilter(f func(formulation.ITable) (formulation.ITable, error)) {
-	ex.tableFilter = f
-}
-
-func (ex *standardExtendedTableMetadata) GetTableFilter() func(formulation.ITable) (formulation.ITable, error) {
-	return ex.tableFilter
-}
-
-func (ex *standardExtendedTableMetadata) GetGraphQL() (formulation.GraphQL, bool) {
-	//nolint:lll // defer fix
-	if ex.heirarchyObjects.GetMethod() != nil && ex.heirarchyObjects.GetMethod().GetGraphQL() != nil && !ex.heirarchyObjects.GetMethod().GetGraphQL().IsEmpty() {
-		return ex.heirarchyObjects.GetMethod().GetGraphQL(), true
-	}
-	return nil, false
-}
-
-func (ex *standardExtendedTableMetadata) GetRequiredParameters() map[string]formulation.Addressable {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
-		return nil
-	}
-	rv := map[string]formulation.Addressable{}
-	for k, v := range ex.heirarchyObjects.GetMethod().GetRequiredParameters() {
-		rv[k] = v
-	}
-	return rv
-}
-
-func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]formulation.Addressable {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
-		return nil
-	}
-	rv := map[string]formulation.Addressable{}
-	for k, v := range ex.heirarchyObjects.GetMethod().GetOptionalParameters() {
-		rv[k] = v
-	}
-	return rv
-}
-
-// GetParametersIncludingNativeCasing returns the method parameters keyed by their wire name
-// and, when the method declares request native casing, also by their snake_case alias (the
-// same Addressable; its GetName is the wire name). any-sdk owns the casing translation;
-// stackql uses this to resolve snake_case WHERE / INSERT keys to their wire parameter.
-func (ex *standardExtendedTableMetadata) GetParametersIncludingNativeCasing() map[string]formulation.Addressable {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
-		return nil
-	}
-	rv := map[string]formulation.Addressable{}
-	for k, v := range ex.heirarchyObjects.GetMethod().GetParametersIncludingNativeCasing() {
-		rv[k] = v
-	}
-	return rv
-}
-
-func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (formulation.HTTPArmoury, error) {
-	if ex.getHTTPArmoury == nil {
-		return nil, fmt.Errorf("nil getHttpAroury() function in ExtendedTableMetadata object")
-	}
-	return ex.getHTTPArmoury()
-}
-
-func (ex *standardExtendedTableMetadata) WithGetHTTPArmoury(
-	f func() (formulation.HTTPArmoury, error),
-) ExtendedTableMetadata {
-	ex.getHTTPArmoury = f
-	return ex
-}
-
-func (ex *standardExtendedTableMetadata) LookupSelectItemsKey() string {
-	if ex.heirarchyObjects == nil {
-		return defaultSelectItemsKey
-	}
-	return ex.heirarchyObjects.LookupSelectItemsKey()
-}
-
 func (ex *standardExtendedTableMetadata) GetAlias() string {
 	return ex.alias
-}
-
-func (ex *standardExtendedTableMetadata) IsSimple() bool {
-	return ex.isSimple()
 }
 
 func (ex *standardExtendedTableMetadata) GetSubquery() (internaldto.SubqueryDTO, bool) {
@@ -290,11 +182,6 @@ func (ex *standardExtendedTableMetadata) GetSubquery() (internaldto.SubqueryDTO,
 
 func (ex *standardExtendedTableMetadata) GetView() (internaldto.RelationDTO, bool) {
 	return ex.heirarchyObjects.GetView()
-}
-
-func (ex *standardExtendedTableMetadata) isSimple() bool {
-	//nolint:lll // complex boolean
-	return ex.heirarchyObjects != nil && ((ex.heirarchyObjects.GetMethodSet() != nil && ex.heirarchyObjects.GetMethodSet().Size() > 0) || ex.heirarchyObjects.GetMethod() != nil)
 }
 
 func (ex *standardExtendedTableMetadata) GetUniqueID() string {
@@ -309,60 +196,6 @@ func (ex *standardExtendedTableMetadata) GetQueryUniqueID() string {
 		return ex.alias
 	}
 	return ex.heirarchyObjects.GetTableName()
-}
-
-func (ex *standardExtendedTableMetadata) GetProvider() (provider.IProvider, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetProvider() == nil {
-		return nil, fmt.Errorf("cannot resolve Provider")
-	}
-	return ex.heirarchyObjects.GetProvider(), nil
-}
-
-func (ex *standardExtendedTableMetadata) GetProviderObject() (formulation.Provider, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetProvider() == nil {
-		return nil, fmt.Errorf("cannot resolve Provider object")
-	}
-	return ex.heirarchyObjects.GetProvider().GetProvider()
-}
-
-func (ex *standardExtendedTableMetadata) GetService() (formulation.Service, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetServiceHdl() == nil {
-		return nil, fmt.Errorf("cannot resolve ServiceHandle")
-	}
-	return ex.heirarchyObjects.GetServiceHdl(), nil
-}
-
-func (ex *standardExtendedTableMetadata) GetResource() (formulation.Resource, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetResource() == nil {
-		return nil, fmt.Errorf("cannot resolve Resource")
-	}
-	return ex.heirarchyObjects.GetResource(), nil
-}
-
-func (ex *standardExtendedTableMetadata) GetMethod() (formulation.StandardOperationStore, error) {
-	return ex.getMethod()
-}
-
-func (ex *standardExtendedTableMetadata) getMethod() (formulation.StandardOperationStore, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
-		return nil, fmt.Errorf("cannot resolve Method")
-	}
-	return ex.heirarchyObjects.GetMethod(), nil
-}
-
-func (ex *standardExtendedTableMetadata) GetSelectSchemaAndObjectPath() (formulation.Schema, string, error) {
-	return ex.heirarchyObjects.GetSelectSchemaAndObjectPath()
-}
-
-func (ex *standardExtendedTableMetadata) GetResponseSchemaAndMediaType() (formulation.Schema, string, error) {
-	if ex.isSimple() {
-		return ex.heirarchyObjects.GetResponseSchemaAndMediaType()
-	}
-	return nil, "", fmt.Errorf("error extracting response schema and media type: views not yet supported")
-}
-
-func (ex *standardExtendedTableMetadata) GetRequestSchema() (formulation.Schema, error) {
-	return ex.heirarchyObjects.GetRequestSchema()
 }
 
 func (ex *standardExtendedTableMetadata) GetServiceStr() (string, error) {
@@ -424,10 +257,6 @@ func (ex *standardExtendedTableMetadata) GetStackQLTableName() (string, error) {
 
 func (ex *standardExtendedTableMetadata) GetInputTableName() (string, error) {
 	return ex.inputTableName, nil
-}
-
-func (ex *standardExtendedTableMetadata) GetSelectableObjectSchema() (formulation.Schema, error) {
-	return ex.heirarchyObjects.GetSelectableObjectSchema()
 }
 
 func NewExtendedTableMetadata(heirarchyObjects HeirarchyObjects, tableName string, alias string) ExtendedTableMetadata {

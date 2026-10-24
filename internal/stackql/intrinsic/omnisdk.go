@@ -14,9 +14,9 @@ import (
 
 	"github.com/lib/pq/oid"
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -26,8 +26,6 @@ const methodPredicate = "method"
 const defaultBatchSize = 100
 
 const defaultFlushInterval = 50 * time.Millisecond
-
-const omniAll = "all"
 
 func relationName(path string) string {
 	return strings.ReplaceAll(path, ".", "_")
@@ -385,6 +383,13 @@ func selectFunc(
 	node *sqlparser.Select,
 	currentProvider string,
 ) (func() internaldto.ExecutorOutput, bool) {
+	prepared, relations, execErr := prepareExecRelations(ctx, node)
+	if execErr != nil {
+		return refuse(execErr), true
+	}
+	if len(relations) > 0 {
+		return docSelectFunc(ctx, prepared, currentProvider, relations)
+	}
 	if execute, handled := storedSelectFunc(ctx, node, currentProvider); handled {
 		return execute, true
 	}
@@ -637,64 +642,7 @@ func providerAuthByProvider(ctx queryContext, cloud string) map[string]*omnisdk.
 	return map[string]*omnisdk.Auth{authProviderName(cloud): omnisdkAuth(authCtx)}
 }
 
-func omnisdkAuth(authCtx *dto.AuthCtx) *omnisdk.Auth {
-	if authCtx == nil {
-		return nil
-	}
-	auth := &omnisdk.Auth{
-		TenancyOCID:          authCtx.OciTenancyOCID,
-		TenancyOCIDEnvVar:    authCtx.OciTenancyOCIDEnvVar,
-		UserOCID:             authCtx.OciUserOCID,
-		UserOCIDEnvVar:       authCtx.OciUserOCIDEnvVar,
-		Fingerprint:          authCtx.OciFingerprint,
-		FingerprintEnvVar:    authCtx.OciFingerprintEnvVar,
-		PrivateKey:           authCtx.OciPrivateKey,
-		PrivateKeyEnvVar:     authCtx.OciPrivateKeyEnvVar,
-		PrivateKeyPath:       authCtx.OciPrivateKeyFilePath,
-		PrivateKeyPathEnvVar: authCtx.OciPrivateKeyFilePathEnvVar,
-		Passphrase:           authCtx.OciPassphrase,
-		PassphraseEnvVar:     authCtx.OciPassphraseEnvVar,
-		ConfigFilePath:       authCtx.OciConfigFilePath,
-		Profile:              authCtx.OciProfile,
-
-		Type:           authCtx.Type,
-		ValuePrefix:    authCtx.ValuePrefix,
-		Name:           authCtx.Name,
-		Scopes:         authCtx.Scopes,
-		TokenURL:       authCtx.GetTokenURL(),
-		Username:       authCtx.Username,
-		Password:       authCtx.Password,
-		UsernameEnvVar: authCtx.EnvVarUsername,
-		PasswordEnvVar: authCtx.EnvVarPassword,
-	}
-	if strings.EqualFold(authCtx.Type, "basic") && auth.ValuePrefix == "" {
-		// Preserve the CLI's established Basic scheme spelling.
-		auth.ValuePrefix = "BASIC "
-	}
-	if (strings.EqualFold(authCtx.Type, "api_key") || strings.EqualFold(authCtx.Type, "custom")) && auth.Name == "" {
-		auth.Name = "Authorization"
-		if auth.ValuePrefix == "" && strings.EqualFold(authCtx.Type, "api_key") {
-			auth.ValuePrefix = "Bearer "
-		}
-	}
-	if credentials, credErr := authCtx.GetCredentialsBytes(); credErr == nil {
-		auth.SecretAccessKey = string(credentials)
-		auth.Credentials = string(credentials)
-	}
-	if keyID, keyErr := authCtx.GetKeyIDString(); keyErr == nil {
-		auth.AccessKeyID = keyID
-	}
-	if sessionToken, tokErr := authCtx.GetAwsSessionTokenString(); tokErr == nil {
-		auth.SessionToken = sessionToken
-	}
-	if clientID, idErr := authCtx.GetClientID(); idErr == nil {
-		auth.ClientID = clientID
-	}
-	if clientSecret, secErr := authCtx.GetClientSecret(); secErr == nil {
-		auth.ClientSecret = clientSecret
-	}
-	return auth
-}
+func omnisdkAuth(authCtx *dto.AuthCtx) *omnisdk.Auth { return dto.OmniAuth(authCtx) }
 
 type primedStream struct {
 	inner    *rowStream
@@ -747,6 +695,8 @@ func (c column) reportedType() string {
 		return columnType
 	case "boolean":
 		return "bool"
+	case "unknown":
+		return ""
 	default:
 		return c.dataType
 	}
@@ -809,8 +759,6 @@ type backendInput interface {
 	getFlushInterval() time.Duration
 	getInsecureSkipTLSVerify() bool
 	getUnstableEnabled() bool
-	getStagingEnabled() bool
-	getOmniAll() bool
 	getIaCStateRoot() string
 }
 
@@ -820,8 +768,6 @@ type standardBackendInput struct {
 	flushInterval         time.Duration
 	insecureSkipTLSVerify bool
 	unstableEnabled       bool
-	stagingEnabled        bool
-	omniAll               bool
 	iacStateRoot          string
 }
 
@@ -843,11 +789,6 @@ type previewCfgDTO struct {
 	Endpoint              json.RawMessage `json:"endpoint"`
 	InsecureSkipTLSVerify bool            `json:"insecureSkipTLSVerify"`
 	Unstable              bool            `json:"unstable"`
-	// Staging opts SELECTs over document-driven relations into RDBMS staging
-	// for the SQL omnisdk leaves unapplied, instead of refusing them.
-	Staging bool `json:"staging"`
-	// Omni "all" routes every provider through omnisdk, never any-sdk.
-	Omni string `json:"omni"`
 	// IaCStateRoot is the directory every stackql_preview.iac ledger lives
 	// under. A query's 'state' predicate names a directory inside it, never
 	// one outside, so where state is written stays the operator's choice.
@@ -885,8 +826,6 @@ func newBackendInput(cfg previewCfgDTO) backendInput {
 		flushInterval:         defaultFlushInterval,
 		insecureSkipTLSVerify: cfg.InsecureSkipTLSVerify,
 		unstableEnabled:       cfg.Unstable,
-		stagingEnabled:        cfg.Staging,
-		omniAll:               strings.EqualFold(cfg.Omni, omniAll),
 		iacStateRoot:          strings.TrimSpace(cfg.IaCStateRoot),
 	}
 	if cfg.BatchSize > 0 {
@@ -907,10 +846,6 @@ func (b *standardBackendInput) getFlushInterval() time.Duration { return b.flush
 func (b *standardBackendInput) getInsecureSkipTLSVerify() bool { return b.insecureSkipTLSVerify }
 
 func (b *standardBackendInput) getUnstableEnabled() bool { return b.unstableEnabled }
-
-func (b *standardBackendInput) getStagingEnabled() bool { return b.stagingEnabled }
-
-func (b *standardBackendInput) getOmniAll() bool { return b.omniAll }
 
 func (b *standardBackendInput) getIaCStateRoot() string { return b.iacStateRoot }
 

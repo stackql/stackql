@@ -68,16 +68,13 @@ func (d *standardDocQuery) getBundles() []string { return d.bundles }
 func fromDocProviders(from sqlparser.TableExprs, currentProvider string) (bool, error) {
 	var docs, others []string
 	var walk func(expr sqlparser.TableExpr)
+	var walkStatement func(sqlparser.SelectStatement)
 	walk = func(expr sqlparser.TableExpr) {
 		switch node := expr.(type) {
 		case *sqlparser.AliasedTableExpr:
 			if sub, ok := node.Expr.(*sqlparser.Subquery); ok {
-				if inner, isSelect := sub.Select.(*sqlparser.Select); isSelect {
-					for _, child := range inner.From {
-						walk(child)
-					}
-					return
-				}
+				walkStatement(sub.Select)
+				return
 			}
 			tableName, isName := node.Expr.(sqlparser.TableName)
 			if isName && tableName.Name.GetRawVal() == "dual" &&
@@ -106,6 +103,21 @@ func fromDocProviders(from sqlparser.TableExprs, currentProvider string) (bool, 
 			}
 		default:
 			others = append(others, sqlparser.String(node))
+		}
+	}
+	walkStatement = func(stmt sqlparser.SelectStatement) {
+		switch node := stmt.(type) {
+		case *sqlparser.Select:
+			for _, child := range node.From {
+				walk(child)
+			}
+		case *sqlparser.ParenSelect:
+			walkStatement(node.Select)
+		case *sqlparser.Union:
+			walkStatement(node.FirstStatement)
+			for _, branch := range node.UnionSelects {
+				walkStatement(branch.Statement)
+			}
 		}
 	}
 	for _, expr := range from {

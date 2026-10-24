@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 // ContextQuerier is the optional cancellation-capable query handle used by read adapters.

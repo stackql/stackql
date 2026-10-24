@@ -5,13 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/stackql/internal/stackql/constants"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/pkg/astformat"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
-
-	"github.com/stackql/any-sdk/public/formulation"
 )
 
 const (
@@ -477,20 +475,6 @@ func ExtractSleepDuration(statement *sqlparser.Sleep) (int, error) {
 	return retVal, fmt.Errorf("sleep definition inadequate")
 }
 
-func CheckColUsagesAgainstTable(colUsages []ColumnUsageMetadata, table formulation.OperationStore) error {
-	for _, colUsage := range colUsages {
-		param, ok := table.GetParameter(colUsage.ColName.Name.GetRawVal())
-		if ok {
-			usageErr := CheckSQLParserTypeVsColumn(colUsage, param.ConditionIsValid)
-			if usageErr != nil {
-				return usageErr
-			}
-		}
-		logging.GetLogger().Debugln(fmt.Sprintf("colname = %v", colUsage.ColName))
-	}
-	return nil
-}
-
 //nolint:gocritic // TODO: review
 func GetColumnUsageTypes(statement sqlparser.Expr) ([]ColumnUsageMetadata, error) {
 	var colMetaSlice []ColumnUsageMetadata
@@ -814,16 +798,6 @@ func getDecoratedColRendition(baseDecoratedColumn, alias string) string {
 		return fmt.Sprintf(`%s AS "%s"`, baseDecoratedColumn, alias)
 	}
 	return baseDecoratedColumn
-}
-
-func CheckSQLParserTypeVsServiceColumn(
-	colUsage ColumnUsageMetadata) error {
-	return CheckSQLParserTypeVsColumn(colUsage, formulation.ServiceConditionIsValid)
-}
-
-func CheckSQLParserTypeVsResourceColumn(
-	colUsage ColumnUsageMetadata) error {
-	return CheckSQLParserTypeVsColumn(colUsage, formulation.ResourceConditionIsValid)
 }
 
 //nolint:mnd // TODO: remove this
