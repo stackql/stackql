@@ -15,6 +15,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	runtimedto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/pkg/mcp_server"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
 
@@ -329,10 +330,10 @@ func (b *stackqlMCPService) runPreprocessedQueryJSON(_ context.Context, query st
 	return results, nil
 }
 
-// upstreamStatusCodeRegex matches the status code fragments any-sdk embeds in
+// upstreamStatusCodeRegex matches the status code fragments Omni embeds in
 // upstream response error strings, eg "HTTP response error.  Status code 403.",
 // "Response error.  Status code 429." and "http response status code: 503".
-var upstreamStatusCodeRegex = regexp.MustCompile(`(?i)status code:?\s*(\d{3})`) //nolint:gochecknoglobals // compiled once
+var upstreamStatusCodeRegex = regexp.MustCompile(`(?i)status(?: code)?:?\s*(\d{3})`) //nolint:gochecknoglobals // compiled once
 
 // isRetryableHTTPStatus classifies upstream statuses for MCP clients:
 // 408 / 429 / 5xx are worth retrying, other 4xx are not (issue #670).
@@ -342,12 +343,12 @@ func isRetryableHTTPStatus(status int) bool {
 		status >= http.StatusInternalServerError
 }
 
-// isCredentialResolutionError matches any-sdk's credential-resolution error
-// shapes; these fail before any HTTP request so carry no upstream status.
+// Credential resolution fails before any HTTP request and carries no upstream status.
 func isCredentialResolutionError(err error) bool {
 	msg := err.Error()
 	return strings.Contains(msg, "credentials error") ||
-		strings.Contains(msg, "references empty string")
+		strings.Contains(msg, "references empty string") ||
+		strings.Contains(msg, "custom credentials cannot be used")
 }
 
 // queryProviderName extracts the provider of the first provider-qualified
@@ -440,10 +441,22 @@ func (b *stackqlMCPService) execQuery(query string) (map[string]any, error) {
 	return rv, nil
 }
 
+// MCP needs upstream failures as structured tool errors.
+type strictHandlerContext struct{ handler.HandlerContext }
+
+func (h strictHandlerContext) GetRuntimeContext() runtimedto.RuntimeCtx {
+	runtime := h.HandlerContext.GetRuntimeContext()
+	runtime.StrictUpstreamErrors = true
+	return runtime
+}
+func (h strictHandlerContext) Clone() handler.HandlerContext {
+	return strictHandlerContext{h.HandlerContext.Clone()}
+}
+
 func (b *stackqlMCPService) getUpdatedHandlerCtx(query string) (handler.HandlerContext, error) {
 	clonedCtx := b.handlerCtx.Clone()
 	clonedCtx.SetRawQuery(query)
-	return clonedCtx, nil
+	return strictHandlerContext{clonedCtx}, nil
 }
 
 func (b *stackqlMCPService) applyQuery(query string) ([]internaldto.ExecutorOutput, bool) {

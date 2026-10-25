@@ -3,7 +3,6 @@ package astindirect
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/symtab"
@@ -101,19 +100,18 @@ func NewSubqueryIndirect(subQueryDTO internaldto.SubqueryDTO) (Indirect, error) 
 
 type Indirect interface {
 	Parse() error
-	GetAssignedParameters() (internaldto.TableParameterCollection, bool)
+
 	GetColumnByName(name string) (typing.ColumnMetadata, bool)
 	GetRelationalColumnByIdentifier(name string) (typing.RelationalColumn, bool)
 	GetColumns() []typing.ColumnMetadata
 	GetRelationalColumns() []typing.RelationalColumn
 	GetName() string
-	GetOptionalParameters() map[string]formulation.Addressable
-	GetRequiredParameters() map[string]formulation.Addressable
+
 	GetSelectAST() sqlparser.SelectStatement
 	GetSelectContext() drm.PreparedStatementCtx
 	GetType() IndirectType
 	GetUnderlyingSymTab() symtab.SymTab
-	SetAssignedParameters(internaldto.TableParameterCollection)
+
 	SetSelectContext(drm.PreparedStatementCtx)
 	SetUnderlyingSymTab(symtab.SymTab)
 	GetTranslatedDDL() (string, bool)

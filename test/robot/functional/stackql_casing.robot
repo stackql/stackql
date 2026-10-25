@@ -400,8 +400,8 @@ Wire Spelled Order By Sorts Snake Display Column
 
 Unknown Snake Projection Still Rejected
     [Documentation]    Negative: a column absent from the schema is not conjured by the
-    ...    display-name re-keying; the backend rejects it in its own dialect.
-    ${expected} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"    column "vpc_idz" does not exist    no such column: vpc_idz
+    ...    display-name re-keying; Omni rejects the unknown column before backend execution.
+    ${expected} =    Set Variable    no such column: vpc_idz
     Should Stackql Exec Inline Contain Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -450,3 +450,47 @@ Backward Compat Wire Exec Argument
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select binary_id, echoed_query from (exec stackql_native_test.casing.echo_bodyless.exec_by_id @BinaryId \= 'bw', @VpcId \= 'vw');
     ...    VpcId\=vw
+
+Access Key Audit Join Keeps Request Region Separate From Response Region
+    ${query} =    Catenate
+    ...    SELECT strftime('%Y-%m-%dT%H:%M:%SZ', 'now') AS observed_at, 'aws_access_key_unused' AS check_id,
+    ...    'aws' AS provider, '111111111111' AS tenant, 'global' AS region,
+    ...    k.user_name || '/' || k.access_key_id AS asset, 'access key last used' AS attribute,
+    ...    COALESCE(l.last_used_date, 'never') AS observed,
+    ...    CASE WHEN l.last_used_date >= datetime('now', '-90 days') THEN 'pass' ELSE 'fail' END AS result
+    ...    FROM stackql_native_test.casing.access_keys k
+    ...    INNER JOIN stackql_native_test.casing.access_key_last_useds l
+    ...    ON l.AccessKeyId = k.AccessKeyId AND l.region = 'us-east-1'
+    ...    WHERE k.region = 'us-east-1' AND k.status = 'Active';
+    IF    "${SQL_BACKEND}" == "postgres_tcp"
+        ${query} =    Replace String    ${query}
+        ...    strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+        ...    to_char(now(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        ${query} =    Replace String    ${query}
+        ...    datetime('now', '-90 days')
+        ...    to_char(to_timestamp(date_part('epoch', now()) - 7776000), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        # Evaluate PostgreSQL date arithmetic in the host SQL stage.
+        ${query} =    Replace String    ${query}    ;    ${SPACE}ORDER BY asset;
+    END
+    ${output} =    Run Stackql Exec Command No Errors
+    ...    ${STACKQL_EXE}    ${OKTA_SECRET_STR}    ${GITHUB_SECRET_STR}    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    ${AUTH_CFG_STR}    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}    stackql_output=csv
+    ${stderr} =    Application Stderr    ${output.stderr}
+    Should Be Empty    ${stderr}
+    ${rows} =    Evaluate    list(csv.DictReader(io.StringIO($output.stdout)))    modules=csv,io
+    Length Should Be    ${rows}    2
+    ${results} =    Evaluate    {row['asset']: row['result'] for row in $rows}
+    ${expected} =    Evaluate    {'alice/key-recent': 'pass', 'alice/key-never': 'fail'}
+    Should Be Equal    ${results}    ${expected}
+    ${unused} =    Evaluate    next(row for row in $rows if row['asset'] == 'alice/key-never')
+    Should Be Equal    ${unused}[observed]    never
+    FOR    ${row}    IN    @{rows}
+        Should Be Equal    ${row}[region]    global
+        Should Match Regexp    ${row}[observed_at]    ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$
+    END
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}    ${OKTA_SECRET_STR}    ${GITHUB_SECRET_STR}    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    ${AUTH_CFG_STR}    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select Region, region from stackql_native_test.casing.access_key_last_useds where region \= 'us-east-1' and AccessKeyId \= 'key-recent';
+    ...    eu-west-1

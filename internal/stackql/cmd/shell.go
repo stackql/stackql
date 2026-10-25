@@ -23,8 +23,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/config"
@@ -32,8 +30,10 @@ import (
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/presentation"
 	"github.com/stackql/stackql/internal/stackql/provider"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/writer"
 
 	"github.com/spf13/cobra"

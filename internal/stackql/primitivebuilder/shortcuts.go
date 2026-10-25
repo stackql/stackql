@@ -6,9 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/logging"
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
@@ -16,13 +13,10 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dependencies"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
+	"github.com/stackql/stackql/internal/stackql/intrinsic"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/provider"
-	"github.com/stackql/stackql/internal/stackql/tablemetadata"
-	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
-	"github.com/stackql/stackql/pkg/prettyprint"
 )
 
 func NewUpdateableValsPrimitive(
@@ -99,170 +93,6 @@ func NewInsertableValsPrimitive(
 		}), nil
 }
 
-//nolint:funlen,gocognit // permissable
-func NewShowInstructionExecutor(
-	node *sqlparser.Show,
-	prov provider.IProvider,
-	tbl tablemetadata.ExtendedTableMetadata,
-	handlerCtx handler.HandlerContext,
-	commentDirectives sqlparser.CommentDirectives,
-	tableFilter func(formulation.ITable,
-	) (formulation.ITable, error),
-) internaldto.ExecutorOutput {
-	extended := strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
-	nodeTypeUpperCase := strings.ToUpper(node.Type)
-	var keys map[string]map[string]interface{}
-	var columnOrder []string
-	var err error
-	var filter func(interface{}) (formulation.ITable, error)
-	logging.GetLogger().Infoln(fmt.Sprintf("filter type = %T", filter))
-	switch nodeTypeUpperCase {
-	case "AUTH":
-		logging.GetLogger().Infoln(fmt.Sprintf("Show For node.Type = '%s'", node.Type))
-		authCtx, authErr := handlerCtx.GetAuthContext(prov.GetProviderString())
-		if authErr == nil {
-			var authMeta *formulation.AuthMetadata
-			authMeta, err = prov.ShowAuth(authCtx)
-			if err == nil {
-				keys = map[string]map[string]interface{}{
-					"1": authMeta.ToMap(),
-				}
-				columnOrder = authMeta.GetHeaders()
-			}
-		}
-	case "INSERT":
-		stmtKeys, errOut, ok := buildInsertShowOutput(node, tbl, handlerCtx, commentDirectives, extended)
-		if !ok {
-			return errOut
-		}
-		keys = stmtKeys
-	case "METHODS":
-		var rsc formulation.Resource
-		rsc, err = prov.GetResource(
-			node.OnTable.Qualifier.GetRawVal(),
-			node.OnTable.Name.GetRawVal(),
-			handlerCtx.GetRuntimeContext())
-		if err != nil {
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
-				handlerCtx.GetTypingConfig()))
-		}
-		methods := rsc.GetMethodsMatched()
-		var filter func(formulation.ITable) (formulation.ITable, error)
-		if tbl == nil {
-			logging.GetLogger().Infoln(
-				"table and therefore filter not found for AST, shall procede nil filter")
-		} else {
-			filter = tbl.GetTableFilter()
-		}
-		methods, err = filterMethods(methods, filter)
-		if err != nil {
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
-				handlerCtx.GetTypingConfig()))
-		}
-		mOrd, mErr := methods.OrderMethods()
-		if mErr != nil {
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, mErr, nil,
-				handlerCtx.GetTypingConfig()))
-		}
-		views, hasViews := rsc.GetViewsForSqlDialect(
-			handlerCtx.GetSQLSystem().GetName(),
-		)
-		methodKeys := make(map[string]map[string]interface{})
-		j := 0
-		if hasViews {
-			for i, v := range views {
-				vMap := v.ToPresentationMap(extended)
-				if i == 0 {
-					methodKeys[fmt.Sprintf("%06d", i)] = vMap
-					j++
-					columnOrder = v.GetColumnOrder(extended)
-				}
-			}
-		}
-		for i, k := range mOrd {
-			method := k
-			methMap := method.ToPresentationMap(extended)
-			methodKeys[fmt.Sprintf("%06d", j+i)] = methMap
-			columnOrder = method.GetColumnOrder(extended)
-		}
-		keys = methodKeys
-	case "PROVIDERS":
-		keys, err = handlerCtx.GetSupportedProviders(extended)
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
-		}
-		rv := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
-			handlerCtx.GetTypingConfig()))
-		if len(keys) == 0 {
-			rv = util.EmptyProtectResultSet(
-				rv,
-				[]string{"name", "version"},
-				handlerCtx.GetTypingConfig(),
-			)
-		}
-		return rv
-	case "RESOURCES":
-		svcName := node.OnTable.Name.GetRawVal()
-		if svcName == "" {
-			return prepareErroneousResultSet(
-				keys,
-				columnOrder,
-				fmt.Errorf("no service designated from which to resolve resources"),
-				handlerCtx.GetTypingConfig(),
-			)
-		}
-		var resources map[string]formulation.Resource
-		resources, err = prov.GetResourcesRedacted(svcName, handlerCtx.GetRuntimeContext(), extended)
-		if err != nil {
-			return prepareErroneousResultSet(keys, columnOrder, err,
-				handlerCtx.GetTypingConfig())
-		}
-		columnOrder = formulation.GetResourcesHeader(extended)
-		var filter func(formulation.ITable) (formulation.ITable, error)
-		filter = tableFilter
-		resources, err = filterResources(resources, filter)
-		if err != nil {
-			return prepareErroneousResultSet(keys, columnOrder, err,
-				handlerCtx.GetTypingConfig(),
-			)
-		}
-		keys = make(map[string]map[string]interface{})
-		for k, v := range resources {
-			keys[k] = v.ToMap(extended)
-		}
-	case "SERVICES":
-		logging.GetLogger().Infoln(
-			fmt.Sprintf(
-				"Show For node.Type = '%s': Displaying services for provider = '%s'",
-				node.Type,
-				prov.GetProviderString(),
-			),
-		)
-		var services map[string]formulation.ProviderService
-		services, err = prov.GetProviderServicesRedacted(handlerCtx.GetRuntimeContext(), extended)
-		if err != nil {
-			return prepareErroneousResultSet(keys, columnOrder, err,
-				handlerCtx.GetTypingConfig(),
-			)
-		}
-		columnOrder = formulation.GetServicesHeader(extended)
-		services, err = filterServices(services, tableFilter, handlerCtx.GetRuntimeContext().UseNonPreferredAPIs)
-		if err != nil {
-			return prepareErroneousResultSet(keys, columnOrder, err,
-				handlerCtx.GetTypingConfig())
-		}
-		keys = convertProviderServicesToMap(services, extended)
-	case "VERSION":
-		columnOrder, keys = buildVersionShowOutput(extended)
-	case "CONTRIBUTORS":
-		columnOrder, keys = buildContributorsShowOutput(extended)
-	case "DEPENDENCIES":
-		return buildDependenciesShowOutput(node, extended, handlerCtx)
-	}
-	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
-		handlerCtx.GetTypingConfig()))
-}
-
 func buildDependenciesShowOutput(
 	node *sqlparser.Show, extended bool, handlerCtx handler.HandlerContext,
 ) internaldto.ExecutorOutput {
@@ -314,69 +144,6 @@ func (row *dependencySQLRow) GetRowDataForPgWire() []interface{} {
 	return values
 }
 
-// buildInsertShowOutput renders the SHOW INSERT result for a resource method.
-// On success it returns the rows map, a zero-value ExecutorOutput, and true.
-// On any resolver / formatter failure it returns nil, an erroneous output,
-// and false; callers should propagate that output to the caller directly.
-// Extracted from NewShowInstructionExecutor to keep gocyclo under threshold.
-func buildInsertShowOutput(
-	node *sqlparser.Show,
-	tbl tablemetadata.ExtendedTableMetadata,
-	handlerCtx handler.HandlerContext,
-	commentDirectives sqlparser.CommentDirectives,
-	extended bool,
-) (map[string]map[string]interface{}, internaldto.ExecutorOutput, bool) {
-	ppCtx := prettyprint.NewPrettyPrintContext(
-		handlerCtx.GetRuntimeContext().OutputFormat == constants.PrettyTextStr,
-		constants.DefaultPrettyPrintIndent,
-		constants.DefaultPrettyPrintBaseIndent,
-		"'",
-		logging.GetLogger(),
-	)
-	meth, methErr := tbl.GetMethod()
-	if methErr != nil {
-		tblName, tblErr := tbl.GetStackQLTableName()
-		if tblErr != nil {
-			return nil, util.GenerateSimpleErroneousOutput(
-				fmt.Errorf(
-					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS: %w", //nolint:lll // prescribed message
-					methErr),
-				handlerCtx.GetTypingConfig(),
-			), false
-		}
-		return nil, util.GenerateSimpleErroneousOutput(
-			fmt.Errorf(
-				"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // prescribed message
-				tblName, methErr),
-			handlerCtx.GetTypingConfig(),
-		), false
-	}
-	svc, svcErr := tbl.GetService()
-	if svcErr != nil {
-		return nil, util.GenerateSimpleErroneousOutput(svcErr,
-			handlerCtx.GetTypingConfig(),
-		), false
-	}
-	pp := prettyprint.NewPrettyPrinter(ppCtx)
-	ppPlaceholder := prettyprint.NewPrettyPrinter(ppCtx)
-	requiredOnly := commentDirectives != nil && commentDirectives.IsSet("REQUIRED")
-	insertStmt, insertErr := metadatavisitors.ToInsertStatement(
-		node.Columns, meth, svc, extended, pp, ppPlaceholder, requiredOnly)
-	tableName, _ := tbl.GetTableName()
-	if insertErr != nil {
-		return nil, util.GenerateSimpleErroneousOutput(
-			fmt.Errorf("error creating insert statement for %s: %w", tableName, insertErr),
-			handlerCtx.GetTypingConfig(),
-		), false
-	}
-	stmtStr := fmt.Sprintf(insertStmt, tableName)
-	return map[string]map[string]interface{}{
-		"1": {
-			"insert_statement": stmtStr,
-		},
-	}, nil, true
-}
-
 // buildVersionShowOutput renders the SHOW VERSION result. Extracted so that
 // NewShowInstructionExecutor stays under the gocyclo threshold.
 func buildVersionShowOutput(extended bool) ([]string, map[string]map[string]interface{}) {
@@ -415,233 +182,6 @@ func buildContributorsShowOutput(extended bool) ([]string, map[string]map[string
 	return []string{"contributor"}, keys
 }
 
-//nolint:errcheck // future proofing
-func filterResources(
-	resources map[string]formulation.Resource,
-	tableFilter func(formulation.ITable) (formulation.ITable, error),
-) (map[string]formulation.Resource, error) {
-	var err error
-	if tableFilter != nil {
-		filteredResources := make(map[string]formulation.Resource)
-		for k, rsc := range resources {
-			filteredResource, filterErr := tableFilter(rsc)
-			if filterErr == nil && filteredResource != nil {
-				filteredResources[k] = filteredResource.(formulation.Resource)
-			}
-			if filterErr != nil {
-				err = filterErr
-			}
-		}
-		resources = filteredResources
-	}
-	return resources, err
-}
-
-func getProviderServiceMap(item formulation.ProviderService, extended bool) map[string]interface{} {
-	retVal := map[string]interface{}{
-		"id":    item.GetID(),
-		"name":  item.GetName(),
-		"title": item.GetTitle(),
-	}
-	if extended {
-		retVal["description"] = item.GetDescription()
-		retVal["version"] = item.GetVersion()
-	}
-	return retVal
-}
-
-func convertProviderServicesToMap(
-	services map[string]formulation.ProviderService,
-	extended bool,
-) map[string]map[string]interface{} {
-	retVal := make(map[string]map[string]interface{})
-	for k, v := range services {
-		retVal[k] = getProviderServiceMap(v, extended)
-	}
-	return retVal
-}
-
-//nolint:errcheck // future proofing
-func filterServices(
-	services map[string]formulation.ProviderService,
-	tableFilter func(formulation.ITable) (formulation.ITable, error),
-	useNonPreferredAPIs bool,
-) (map[string]formulation.ProviderService, error) {
-	var err error
-	//nolint:nestif // TODO: refactor
-	if tableFilter != nil {
-		filteredServices := make(map[string]formulation.ProviderService)
-		for k, svc := range services {
-			if useNonPreferredAPIs || svc.IsPreferred() {
-				filteredService, filterErr := tableFilter(svc)
-				if filterErr == nil && filteredService != nil {
-					filteredServices[k] = (filteredService.(formulation.ProviderService))
-				}
-				if filterErr != nil {
-					err = filterErr
-				}
-			}
-		}
-		services = filteredServices
-	}
-	return services, err
-}
-
-func filterMethods(
-	methods formulation.Methods,
-	tableFilter func(formulation.ITable) (formulation.ITable, error),
-) (formulation.Methods, error) {
-	var err error
-	if tableFilter != nil {
-		filteredMethods := formulation.EmptyMethods()
-		for _, m := range methods.List() {
-			k := m.GetKey()
-			pm := m.GetValue()
-			filteredMethod, filterErr := tableFilter(pm)
-			if filterErr == nil && filteredMethod != nil {
-				//nolint:errcheck // letting it go for now, but should be addressed
-				filteredMethods.Put(k, pm)
-			}
-			if filterErr != nil {
-				err = filterErr
-			}
-		}
-		methods = filteredMethods
-	}
-	return methods, err
-}
-
-func prepareErroneousResultSet(
-	rowMap map[string]map[string]interface{}, //nolint:unparam // future proofing
-	columnOrder []string,
-	err error,
-	typCfg typing.Config,
-) internaldto.ExecutorOutput {
-	return util.PrepareResultSet(
-		internaldto.NewPrepareResultSetDTO(
-			nil,
-			rowMap,
-			columnOrder,
-			nil,
-			err,
-			nil,
-			typCfg,
-		),
-	)
-}
-
-func NewDescribeTableInstructionExecutor(
-	handlerCtx handler.HandlerContext,
-	tbl tablemetadata.ExtendedTableMetadata,
-	extended bool,
-	full bool, //nolint:revive // future proofing
-) internaldto.ExecutorOutput {
-	schema, err := tbl.GetSelectableObjectSchema()
-	if err != nil {
-		return internaldto.NewErroneousExecutorOutput(err)
-	}
-	columnOrder := formulation.GetDescribeHeader(extended)
-	descriptionMap := schema.ToDescriptionMap(extended)
-	keys := make(map[string]map[string]interface{})
-	for k, v := range descriptionMap {
-		switch val := v.(type) { //nolint:gocritic // review later
-		case map[string]interface{}:
-			keys[k] = val
-		}
-	}
-	return util.PrepareResultSet(
-		internaldto.NewPrepareResultSetDTO(
-			nil,
-			keys,
-			columnOrder,
-			util.DescribeRowSort,
-			err,
-			nil,
-			handlerCtx.GetTypingConfig(),
-		),
-	)
-}
-
-func NewDescribeMethodInstructionExecutor(
-	handlerCtx handler.HandlerContext,
-	rsc formulation.Resource,
-	methodName string,
-	extended bool,
-) internaldto.ExecutorOutput {
-	mi, err := formulation.IntrospectMethod(rsc, methodName, extended)
-	if err != nil {
-		return internaldto.NewErroneousExecutorOutput(err)
-	}
-	columnOrder := []string{"name", "type", "param_type", "shape"}
-	if extended {
-		columnOrder = append(columnOrder, "description")
-	}
-	rows := make(map[string]map[string]interface{})
-	for i, f := range mi.GetFields() {
-		row := map[string]interface{}{
-			"name":       f.GetName(),
-			"type":       f.GetType(),
-			"param_type": string(f.GetParamType()),
-			"shape":      f.GetShape(),
-		}
-		if extended {
-			row["description"] = f.GetDescription()
-		}
-		rows[fmt.Sprintf("%06d", i)] = row
-	}
-	return util.PrepareResultSet(
-		internaldto.NewPrepareResultSetDTO(
-			nil, rows, columnOrder, nil, nil, nil,
-			handlerCtx.GetTypingConfig(),
-		),
-	)
-}
-
-//nolint:revive // future proofing
-func NewDescribeViewInstructionExecutor(
-	handlerCtx handler.HandlerContext,
-	tbl tablemetadata.ExtendedTableMetadata,
-	nonControlColumns []typing.ColumnMetadata,
-	extended bool,
-	full bool,
-) internaldto.ExecutorOutput {
-	columnOrder := formulation.GetDescribeHeader(extended)
-	descriptionMap := columnsToFlatDescriptionMap(nonControlColumns, extended)
-	keys := make(map[string]map[string]interface{})
-	for k, v := range descriptionMap {
-		switch val := v.(type) { //nolint:gocritic // TODO: review
-		case map[string]interface{}:
-			keys[k] = val
-		}
-	}
-	return util.PrepareResultSet(
-		internaldto.NewPrepareResultSetDTO(
-			nil,
-			keys,
-			columnOrder,
-			util.DescribeRowSort,
-			nil,
-			nil,
-			handlerCtx.GetTypingConfig(),
-		),
-	)
-}
-
-func columnsToFlatDescriptionMap(colz []typing.ColumnMetadata, extended bool) map[string]interface{} {
-	retVal := make(map[string]interface{})
-	for _, col := range colz {
-		colName := col.GetIdentifier()
-		colMap := make(map[string]interface{})
-		colMap["name"] = colName
-		colMap["type"] = col.GetType()
-		if extended {
-			colMap["description"] = ""
-		}
-		retVal[colName] = colMap
-	}
-	return retVal
-}
-
 //nolint:revive // future proofing
 func NewLocalSelectExecutor(
 	handlerCtx handler.HandlerContext,
@@ -676,4 +216,50 @@ func NewLocalSelectExecutor(
 				handlerCtx.GetTypingConfig(),
 			))
 		}), nil
+}
+
+func NewShowInstructionExecutor(
+	node *sqlparser.Show, prov provider.IProvider, handlerCtx handler.HandlerContext,
+) internaldto.ExecutorOutput {
+	if execute, handled := intrinsic.GeneratePrimitiveFunc(handlerCtx, node); handled {
+		return execute()
+	}
+	extended := strings.EqualFold(strings.TrimSpace(node.Extended), "extended")
+	var rows map[string]map[string]interface{}
+	var columns []string
+	switch strings.ToUpper(node.Type) {
+	case "AUTH":
+		authCtx, err := handlerCtx.GetAuthContext(prov.GetProviderString())
+		if err != nil {
+			return internaldto.NewErroneousExecutorOutput(err)
+		}
+		metadata, err := prov.ShowAuth(authCtx)
+		if err != nil {
+			return internaldto.NewErroneousExecutorOutput(err)
+		}
+		rows, columns = map[string]map[string]interface{}{"1": metadata.ToMap()}, []string{"principal", "type", "source"}
+	case "PROVIDERS":
+		var err error
+		rows, err = handlerCtx.GetSupportedProviders(extended)
+		if err != nil {
+			return internaldto.NewErroneousExecutorOutput(err)
+		}
+		if len(rows) == 0 {
+			columns = []string{"name", "version"}
+		}
+	case "VERSION":
+		columns, rows = buildVersionShowOutput(extended)
+	case "CONTRIBUTORS":
+		columns, rows = buildContributorsShowOutput(extended)
+	case "DEPENDENCIES":
+		return buildDependenciesShowOutput(node, extended, handlerCtx)
+	default:
+		return internaldto.NewErroneousExecutorOutput(fmt.Errorf("unsupported SHOW %s", node.Type))
+	}
+	result := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(
+		nil, rows, columns, nil, nil, nil, handlerCtx.GetTypingConfig()))
+	if len(rows) == 0 {
+		return util.EmptyProtectResultSet(result, columns, handlerCtx.GetTypingConfig())
+	}
+	return result
 }

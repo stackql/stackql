@@ -7,9 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
@@ -19,7 +16,10 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/kstore"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"gopkg.in/yaml.v2"
@@ -156,7 +156,10 @@ func buildSQLEngine(
 	sqlCfg dto.SQLBackendCfg,
 	controlAttributes sqlcontrol.ControlAttributes,
 ) (sqlengine.SQLEngine, error) {
-	return sqlengine.NewSQLEngine(sqlCfg, controlAttributes)
+	return sqlengine.NewSQLEngine(sqlengine.Config{
+		DBEngine: sqlCfg.DBEngine, DSN: sqlCfg.GetDSN(), DbInitFilePath: sqlCfg.DbInitFilePath,
+		InitMaxRetries: sqlCfg.InitMaxRetries, InitRetryInitialDelay: sqlCfg.InitRetryInitialDelay,
+	}, controlAttributes)
 }
 
 func buildGCExec(

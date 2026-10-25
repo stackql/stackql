@@ -1,10 +1,8 @@
 package astindirect
 
 import (
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/typing"
 )
@@ -15,7 +13,6 @@ type CTE struct {
 	name                  string
 	selectStmt            sqlparser.SelectStatement
 	selCtx                drm.PreparedStatementCtx
-	paramCollection       internaldto.TableParameterCollection
 	underlyingSymbolTable symtab.SymTab
 	next                  Indirect
 	isElide               bool
@@ -84,14 +81,6 @@ func (c *CTE) GetRelationalColumns() []typing.RelationalColumn {
 	return nil
 }
 
-func (c *CTE) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
-	return c.paramCollection, c.paramCollection != nil
-}
-
-func (c *CTE) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
-	c.paramCollection = paramCollection
-}
-
 func (c *CTE) GetUnderlyingSymTab() symtab.SymTab {
 	return c.underlyingSymbolTable
 }
@@ -115,14 +104,6 @@ func (c *CTE) GetColumns() []typing.ColumnMetadata {
 		cols = append(cols, typing.NewRelayedColDescriptor(relCol, ""))
 	}
 	return cols
-}
-
-func (c *CTE) GetOptionalParameters() map[string]formulation.Addressable {
-	return nil
-}
-
-func (c *CTE) GetRequiredParameters() map[string]formulation.Addressable {
-	return nil
 }
 
 func (c *CTE) GetColumnByName(name string) (typing.ColumnMetadata, bool) {

@@ -3,7 +3,6 @@ package astindirect
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -16,7 +15,6 @@ type View struct {
 	viewDTO               internaldto.RelationDTO
 	selectStmt            sqlparser.SelectStatement
 	selCtx                drm.PreparedStatementCtx
-	paramCollection       internaldto.TableParameterCollection
 	underlyingSymbolTable symtab.SymTab
 	next                  Indirect
 	isElide               bool
@@ -54,14 +52,6 @@ func (v *View) GetRelationalColumns() []typing.RelationalColumn {
 	return nil
 }
 
-func (v *View) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
-	return v.paramCollection, v.paramCollection != nil
-}
-
-func (v *View) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
-	v.paramCollection = paramCollection
-}
-
 func (v *View) GetUnderlyingSymTab() symtab.SymTab {
 	return v.underlyingSymbolTable
 }
@@ -76,14 +66,6 @@ func (v *View) GetName() string {
 
 func (v *View) GetColumns() []typing.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
-}
-
-func (v *View) GetOptionalParameters() map[string]formulation.Addressable {
-	return nil
-}
-
-func (v *View) GetRequiredParameters() map[string]formulation.Addressable {
-	return nil
 }
 
 func (v *View) GetColumnByName(name string) (typing.ColumnMetadata, bool) {

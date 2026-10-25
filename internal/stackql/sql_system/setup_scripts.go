@@ -1,7 +1,7 @@
 package sql_system //nolint:stylecheck,revive // package name is meaningful and readable
 
 import (
-	"github.com/stackql/any-sdk/public/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
 //nolint:gochecknoglobals // fine with this

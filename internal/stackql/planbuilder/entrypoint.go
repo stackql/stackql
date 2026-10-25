@@ -3,13 +3,13 @@ package planbuilder
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/earlyanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/intrinsic"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parser"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
@@ -107,10 +107,19 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	// An omnisdk data relation streams its rows straight to the output writer,
 	// so it is not backed by a view and analysis would try, and fail, to resolve
 	// it as a registry-backed relation. Plan it here, ahead of that analysis.
-	if executor, inverse, isStream := intrinsic.GenerateTransactionStreamFunc(handlerCtx, statement); isStream {
+	executor, inverse, handled := intrinsic.GenerateTransactionStreamFunc(handlerCtx, statement)
+	if !handled {
+		executor, handled = intrinsic.GeneratePrimitiveFunc(handlerCtx, statement)
+	}
+	if handled {
 		stmtType := sqlparser.ASTToStatementType(statement)
 		qPlan.SetType(stmtType)
-		qPlan.SetReadOnly(stmtType == sqlparser.StmtSelect)
+		readOnly := stmtType == sqlparser.StmtSelect
+		switch statement.(type) {
+		case *sqlparser.Show, *sqlparser.DescribeTable, *sqlparser.DescribeMethod:
+			readOnly = true
+		}
+		qPlan.SetReadOnly(readOnly)
 		qPlan.SetCacheable(false)
 		qPlan.SetStatement(statement)
 		pGBuilder.getPlanGraphHolder().CreatePrimitiveNode(

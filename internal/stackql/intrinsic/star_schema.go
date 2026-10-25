@@ -39,6 +39,14 @@ func resolvedStarColumns(ctx queryContext, source translatedSource, star *sqlpar
 	if selected, ok := resolved.(omnisdk.SelectedMethods); ok {
 		methods = selected.SelectedMethods()
 	}
+	if methods == nil {
+		methods = map[string]omnisdk.MethodSignature{}
+	}
+	for alias, table := range tables {
+		if _, ordered := table.(orderedRelation); ordered {
+			methods[alias] = table.Methods()[0]
+		}
+	}
 	excluded := map[string]bool{}
 	for _, output := range aliasOutputs {
 		excluded[output.Name()] = true
@@ -91,7 +99,11 @@ func starSQLColumns(
 		}
 		// Scope columns describe host output; they do not introduce value producers.
 		names = append(names, starScopeNames(methods[projection.Alias()])...)
-		slices.Sort(names)
+		if method, ok := methods[projection.Alias()].(orderedSignature); ok {
+			names = method.Columns()
+		} else {
+			slices.Sort(names)
+		}
 		for _, name := range slices.Compact(names) {
 			expressions = append(expressions, &sqlparser.AliasedExpr{Expr: &sqlparser.ColName{
 				Name:      sqlparser.NewColIdent(name),

@@ -14,15 +14,15 @@ func TestClassifyBackendError_UpstreamStatusVariants(t *testing.T) {
 		retryable bool
 	}{
 		{
-			name: "any-sdk detail form 403",
+			name: "Omni HTTP 403",
 			err: fmt.Errorf(
-				"upstream provider error: HTTP response error.  Status code 403.  Detail: 'rate limit exceeded'"),
+				"httpx: request to https://example.invalid failed: status 403: rate limit exceeded"),
 			status:    403,
 			retryable: false,
 		},
 		{
-			name:      "any-sdk body form 429",
-			err:       fmt.Errorf(`upstream provider error: Response error.  Status code 429.  Body: {"message":"slow down"}`),
+			name:      "Omni HTTP 429",
+			err:       fmt.Errorf(`httpx: request to https://example.invalid failed: status 429: {"message":"slow down"}`),
 			status:    429,
 			retryable: true,
 		},

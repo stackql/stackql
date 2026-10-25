@@ -1,0 +1,124 @@
+{
+  "function": "regexp_like",
+  "vectors": [
+    {
+      "id": "sef_1_01",
+      "source": "sqlite-ext-functions test/regexp.sql 1_01",
+      "args": [
+        null,
+        "pattern"
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_1_02",
+      "source": "sqlite-ext-functions test/regexp.sql 1_02",
+      "args": [
+        "source",
+        null
+      ],
+      "result": null
+    },
+    {
+      "id": "sef_2_01",
+      "source": "sqlite-ext-functions test/regexp.sql 2_01",
+      "args": [
+        "hello world",
+        "hello"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_2_02",
+      "source": "sqlite-ext-functions test/regexp.sql 2_02",
+      "args": [
+        "hello world",
+        "^world"
+      ],
+      "result": 0
+    },
+    {
+      "id": "sef_2_03",
+      "source": "sqlite-ext-functions test/regexp.sql 2_03",
+      "args": [
+        "hello world",
+        "world$"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_3_01",
+      "source": "sqlite-ext-functions test/regexp.sql 3_01",
+      "args": [
+        "hello.world",
+        "hello\\.world"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_3_02",
+      "source": "sqlite-ext-functions test/regexp.sql 3_02",
+      "args": [
+        "abc123",
+        "[0-9]+"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_3_03",
+      "source": "sqlite-ext-functions test/regexp.sql 3_03",
+      "args": [
+        "abc",
+        "[0-9]+"
+      ],
+      "result": 0
+    },
+    {
+      "id": "sef_10_01",
+      "source": "sqlite-ext-functions test/regexp.sql 10_01",
+      "args": [
+        "abracadabra",
+        "abra(cad)?abra"
+      ],
+      "result": 1,
+      "retiredCResult": 0,
+      "note": "tiny-regex-c (the retired C engine) did not support groups: '(' and ')' were literal characters, so this pattern could not match and the C suite recorded the opposite outcome (see retiredCResult). Go RE2 supports groups; expectation deliberately updated per DIVERGENCES.md."
+    },
+    {
+      "id": "sef_11_01",
+      "source": "sqlite-ext-functions test/regexp.sql 11_01",
+      "args": [
+        "hello",
+        ""
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_12_01",
+      "source": "sqlite-ext-functions test/regexp.sql 12_01",
+      "args": [
+        "hello",
+        "h.llo"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_12_02",
+      "source": "sqlite-ext-functions test/regexp.sql 12_02",
+      "args": [
+        "123abc",
+        "\\d+\\w+"
+      ],
+      "result": 1
+    },
+    {
+      "id": "pr783_01",
+      "source": "stackql PR #783 cgo golden sample",
+      "args": [
+        "abc123",
+        "\\d+"
+      ],
+      "result": 1
+    }
+  ]
+}

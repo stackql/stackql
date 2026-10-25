@@ -21,6 +21,10 @@ type awaitedDocQuery struct{ docQuery }
 
 func (awaitedDocQuery) awaitsMutation() bool { return true }
 
+func (q awaitedDocQuery) getRelations() map[string]omnisdk.Relation {
+	return queryRelations(q.docQuery)
+}
+
 func mutationAwait(stmt sqlparser.Statement) bool {
 	var comments sqlparser.Comments
 	switch node := stmt.(type) {
@@ -47,19 +51,23 @@ type completionRead func(context.Context, string, map[string]any) (omnisdk.Row, 
 type completionWait func(context.Context, time.Duration) error
 
 type linkedOperationCompletion struct {
-	mu     sync.Mutex
-	read   completionRead
-	wait   completionWait
-	writer io.Writer
+	mu           sync.Mutex
+	read         completionRead
+	wait         completionWait
+	writer       io.Writer
+	readResource bool
 }
 
 func newLinkedOperationCompletion(
-	read completionRead, wait completionWait, writer io.Writer,
+	read completionRead, wait completionWait, writer io.Writer, resourceNeeded ...bool,
 ) omnisdk.MutationCompletion {
-	return &linkedOperationCompletion{read: read, wait: wait, writer: writer}
+	return &linkedOperationCompletion{read: read, wait: wait, writer: writer,
+		readResource: len(resourceNeeded) == 0 || resourceNeeded[0]}
 }
 
-func newOperationCompletion(ctx queryContext, address string) (omnisdk.MutationCompletion, error) {
+func newOperationCompletion(
+	ctx queryContext, address string, resourceNeeded ...bool,
+) (omnisdk.MutationCompletion, error) {
 	parts := strings.Split(address, ".")
 	if len(parts) != 3 || strings.TrimPrefix(parts[0], UnstablePrefix) != "google" || parts[1] != "compute" {
 		return nil, fmt.Errorf("AWAIT completion is not supported for %s", address)
@@ -90,7 +98,7 @@ func newOperationCompletion(ctx queryContext, address string) (omnisdk.MutationC
 			return nil
 		}
 	}
-	return newLinkedOperationCompletion(read, wait, writer), nil
+	return newLinkedOperationCompletion(read, wait, writer, resourceNeeded...), nil
 }
 
 func (c *linkedOperationCompletion) Complete(
@@ -139,13 +147,26 @@ func (c *linkedOperationCompletion) Complete(
 		return nil, fmt.Errorf("AWAIT operation failed: %v", failure)
 	}
 	c.diagnosticf("%s: %s complete\n", kind, action)
-	if verb == "delete" {
+	return c.completedResult(ctx, verb, action, target, inputs, operation)
+}
+
+func (c *linkedOperationCompletion) completedResult(
+	ctx context.Context, verb, action, target string, inputs map[string]any, operation omnisdk.Row,
+) (omnisdk.Row, error) {
+	if operationDeletesResource(verb, action) {
 		return nil, nil //nolint:nilnil // Successful DELETE has no resource row.
+	}
+	if !c.readResource {
+		return operation, nil
 	}
 	if target == "" {
 		return nil, fmt.Errorf("AWAIT completed without targetLink")
 	}
 	return c.read(ctx, target, inputs)
+}
+
+func operationDeletesResource(verb, action string) bool {
+	return verb == "delete" || (verb == "exec" && action == "delete")
 }
 
 func (c *linkedOperationCompletion) diagnosticf(format string, values ...any) {
@@ -222,7 +243,8 @@ func configureMutationCompletion(ctx queryContext, translated docQuery, args *om
 	if !queryAwaitsMutation(translated) {
 		return nil
 	}
-	completion, err := newOperationCompletion(ctx, translated.getQuery().Target().Resource().Handle())
+	completion, err := newOperationCompletion(
+		ctx, translated.getQuery().Target().Resource().Handle(), len(translated.getOutputs()) > 0)
 	if err != nil {
 		return err
 	}

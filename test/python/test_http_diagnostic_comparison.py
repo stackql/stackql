@@ -10,6 +10,7 @@ class DiagnosticComparisonTest(unittest.TestCase):
             self.assertEqual(left, right)
             return True
         host = SimpleNamespace(_execution_platform=platform, should_be_equal=equal)
+        host.application_stderr = lambda stderr: StackQLInterfaces.application_stderr(host, stderr)
         result = SimpleNamespace(stdout="same rows", stderr=actual)
         return StackQLInterfaces._verify_both_streams(
             host, result, "same rows", expected, unordered_http_diagnostics=True)
@@ -43,6 +44,16 @@ class DiagnosticComparisonTest(unittest.TestCase):
                        noise + one + "\n" + two + "\nunexpected application error"):
             with self.assertRaises(AssertionError):
                 self.compare(actual, one + "\n" + two, "docker")
+
+    def test_application_stderr_preserves_errors_after_compose_noise(self):
+        noise = ('time="2026-10-25T09:41:37Z" level=warning msg="The \\"UID\\" variable is not set. Defaulting to a blank string."\n'
+                 ' Container execrun-postgres_stackql-1  Running')
+        docker = SimpleNamespace(_execution_platform="docker")
+        native = SimpleNamespace(_execution_platform="native")
+        self.assertEqual(StackQLInterfaces.application_stderr(docker, noise), "")
+        self.assertEqual(StackQLInterfaces.application_stderr(native, noise), noise)
+        error = 'fn: no function "strftime"'
+        self.assertEqual(StackQLInterfaces.application_stderr(docker, noise + "\n" + error), error)
 
 
 if __name__ == "__main__":

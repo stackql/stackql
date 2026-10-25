@@ -3,7 +3,7 @@ package presentation
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/pkg/dto"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 type Driver interface {

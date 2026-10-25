@@ -582,11 +582,6 @@ jobs:
         registry:
           - test/registry-mocked
           - test/registry
-        sdk:
-          - any
-        include:
-          - registry: test/registry-mocked
-            sdk: omni
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
@@ -902,7 +897,6 @@ jobs:
     - name: Run robot mocked functional tests
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
-      if: success() && matrix.sdk != 'omni'
       run: |
         if [ "${{ matrix.registry }}" = "test/registry" ]; then
           robot \
@@ -916,61 +910,36 @@ jobs:
         fi
 
     - name: Output from mocked functional tests
-      if: always() && matrix.sdk != 'omni'
+      if: always()
       run: |
         cat ./test/robot/reports/output.xml
 
-    # Omni cutover readiness: report the full suite result, then fail CI if it fails.
-    - name: Omni cutover readiness traffic light
-      if: matrix.sdk == 'omni'
-      env:
-        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
-        # "omni":"all" routes unprefixed providers through omnisdk; "unstable" alone only exposes stackql_unstable_*.
-        STACKQL_ROBOT_DEFAULT_PREVIEW: '{"unstable":true,"staging":true,"omni":"all"}'
+    - name: Robot results traffic light
+      if: always()
       run: |
-        pgrep -f flask | xargs kill -9 || true
-        if python cicd/python/build.py --robot-test --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true" } }'; then
-          robot_status=0
-        else
-          robot_status=$?
-        fi
         if [ -f test/robot/reports/output.xml ]; then
-          if python test/python/stackql_test_tooling/robot_summary.py \
+          python test/python/stackql_test_tooling/robot_summary.py \
             --output test/robot/reports/output.xml \
-            --title "Omni cutover readiness" \
-            --require-100-percent \
-            --context "Mocked functional suite, every run opted in with STACKQL_ROBOT_DEFAULT_PREVIEW=${STACKQL_ROBOT_DEFAULT_PREVIEW}" \
-            >> "${GITHUB_STEP_SUMMARY}"; then
-            summary_status=0
-          else
-            summary_status=$?
-          fi
+            --title "Robot results" \
+            --require-100-percent >> "${GITHUB_STEP_SUMMARY}"
         else
           {
-            echo "# 🔴 Omni cutover readiness"
+            echo "# 🔴 Robot results"
             echo ""
             echo "No robot output was produced; the suite did not run."
           } >> "${GITHUB_STEP_SUMMARY}"
-          summary_status=1
-        fi
-        if [ "$robot_status" -ne 0 ] || [ "$summary_status" -ne 0 ]; then
           exit 1
         fi
-
-    - name: Output from omni functional tests
-      if: always() && matrix.sdk == 'omni'
-      run: |
-        cat ./test/robot/reports/output.xml
 
     - name: Upload Robot Reports Artifact
       uses: actions/upload-artifact@v7.0.1
       if: always() && github.repository == 'stackql/stackql-devel' && matrix.registry == 'test/registry-mocked'
       with:
-        name: stackql_linux_${{ matrix.sdk }}_robot_reports
+        name: stackql_linux_robot_reports
         path: test/robot/reports
 
     - name: Run robot mocked functional tests with aggressive concurrency
-      if: success() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
+      if: success() && matrix.registry != 'test/registry'
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
         pgrep -f flask | xargs kill -9 || true
@@ -978,12 +947,12 @@ jobs:
         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1  } }'
 
     - name: Output from mocked functional tests with aggressive concurrency
-      if: always() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
+      if: always() && matrix.registry != 'test/registry'
       run: |
         cat ./test/robot/reports/output.xml
     
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.registry != 'test/registry'
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -996,7 +965,7 @@ jobs:
         python cicd/python/build.py --robot-test-integration
 
     - name: install and test deb package
-      if: matrix.registry != 'test/registry' && matrix.sdk != 'omni'
+      if: matrix.registry != 'test/registry'
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
@@ -1015,7 +984,7 @@ jobs:
         echo "stackql version: ${stackqlVersion}"
     
     - name: Output from mocked deb package functional tests
-      if: always() && matrix.registry != 'test/registry' && matrix.sdk != 'omni'
+      if: always() && matrix.registry != 'test/registry'
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |

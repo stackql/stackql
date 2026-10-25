@@ -11,25 +11,26 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/pkg/jsonpath"
-	"github.com/stackql/any-sdk/pkg/netutils"
-	"github.com/stackql/any-sdk/pkg/nomenclature"
-	"github.com/stackql/any-sdk/public/formulation"
-	"github.com/stackql/any-sdk/public/sqlengine"
+	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/bundle"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/garbagecollector"
 	"github.com/stackql/stackql/internal/stackql/intrinsic"
+	"github.com/stackql/stackql/internal/stackql/jsonpath"
 	"github.com/stackql/stackql/internal/stackql/kstore"
+	"github.com/stackql/stackql/internal/stackql/netutils"
+	"github.com/stackql/stackql/internal/stackql/nomenclature"
 	"github.com/stackql/stackql/internal/stackql/provider"
+	"github.com/stackql/stackql/internal/stackql/registry"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/writer"
@@ -65,7 +66,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetCurrentProvider() string
 	GetAuthContexts() dto.AuthContexts
-	GetRegistry() formulation.RegistryAPI
+	GetRegistry() registry.RegistryAPI
 	GetErrorPresentation() string
 	GetOutfile() io.Writer
 	GetOutErrFile() io.Writer
@@ -73,7 +74,6 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetSQLDataSource(name string) (sql_datasource.SQLDataSource, bool)
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSQLSystem() sql_system.SQLSystem
-	GetPersistenceSystem() formulation.PersistenceSystem
 	GetGarbageCollector() garbagecollector.GarbageCollector
 	GetDrmConfig() drm.Config
 	SetTxnCounterMgr(txncounter.Manager)
@@ -138,14 +138,13 @@ type standardHandlerContext struct {
 	authContexts        dto.AuthContexts
 	docAuthProviders    map[string]struct{}
 	sqlDataSources      map[string]sql_datasource.SQLDataSource
-	registry            formulation.RegistryAPI
+	registry            registry.RegistryAPI
 	errorPresentation   string
 	outfile             io.Writer
 	outErrFile          io.Writer
 	lRUCache            *lrucache.LRUCache
 	sqlEngine           sqlengine.SQLEngine
 	sqlSystem           sql_system.SQLSystem
-	persistenceSystem   formulation.PersistenceSystem
 	garbageCollector    garbagecollector.GarbageCollector
 	drmConfig           drm.Config
 	txnCounterMgr       txncounter.Manager
@@ -248,9 +247,9 @@ func (hc *standardHandlerContext) GetAuthContexts() dto.AuthContexts {
 	return hc.authContexts
 }
 
-func (hc *standardHandlerContext) GetRegistry() formulation.RegistryAPI { return hc.registry }
-func (hc *standardHandlerContext) GetErrorPresentation() string         { return hc.errorPresentation }
-func (hc *standardHandlerContext) GetOutfile() io.Writer                { return hc.outfile }
+func (hc *standardHandlerContext) GetRegistry() registry.RegistryAPI { return hc.registry }
+func (hc *standardHandlerContext) GetErrorPresentation() string      { return hc.errorPresentation }
+func (hc *standardHandlerContext) GetOutfile() io.Writer             { return hc.outfile }
 func (hc *standardHandlerContext) GetOutErrFile() io.Writer {
 	defer hc.sessionCtxMutex.Unlock()
 	hc.sessionCtxMutex.Lock()
@@ -264,9 +263,7 @@ func (hc *standardHandlerContext) SetOutErrFile(w io.Writer) {
 func (hc *standardHandlerContext) GetLRUCache() *lrucache.LRUCache    { return hc.lRUCache }
 func (hc *standardHandlerContext) GetSQLEngine() sqlengine.SQLEngine  { return hc.sqlEngine }
 func (hc *standardHandlerContext) GetSQLSystem() sql_system.SQLSystem { return hc.sqlSystem }
-func (hc *standardHandlerContext) GetPersistenceSystem() formulation.PersistenceSystem {
-	return hc.persistenceSystem
-}
+
 func (hc *standardHandlerContext) GetGarbageCollector() garbagecollector.GarbageCollector {
 	return hc.garbageCollector
 }
@@ -284,8 +281,8 @@ func (hc *standardHandlerContext) GetPGInternalRouter() dbmsinternal.Router {
 	return hc.pgInternalRouter
 }
 
-func getProviderMap(providerName string, providerDesc formulation.ProviderDescription) map[string]interface{} {
-	latestVersion, err := providerDesc.GetLatestVersion()
+func getProviderMap(providerName string, providerDesc registry.ProviderDescription) map[string]interface{} {
+	latestVersion, err := registry.LatestVersion(providerDesc.Versions)
 	if err != nil {
 		//nolint:lll // long message
 		latestVersion = fmt.Sprintf("could not infer latest version due to error.  Suggested action is that you wipe the local provider directory.  Error =  '%s'", err.Error())
@@ -299,7 +296,7 @@ func getProviderMap(providerName string, providerDesc formulation.ProviderDescri
 
 func getProviderMapExtended(
 	providerName string,
-	providerDesc formulation.ProviderDescription,
+	providerDesc registry.ProviderDescription,
 ) map[string]interface{} {
 	return getProviderMap(providerName, providerDesc)
 }
@@ -388,8 +385,7 @@ func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IPr
 	if !ok {
 		prov, err = provider.GenerateProvider(
 			hc.runtimeContext, ds.Name, ds.Tag,
-			hc.registry, hc.sqlSystem, hc.persistenceSystem,
-			hc.defaultHTTPClient,
+			hc.registry, hc.sqlSystem,
 		)
 		if err == nil {
 			hc.providers[providerName] = prov
@@ -459,17 +455,25 @@ func (hc *standardHandlerContext) LogHTTPResponseMap(target interface{}) {
 }
 
 func (hc *standardHandlerContext) GetAuthContext(providerName string) (*dto.AuthCtx, error) {
-	var err error
 	if providerName == "" {
 		providerName = hc.runtimeContext.ProviderStr
 	}
 	hc.authMapMutex.Lock()
-	defer hc.authMapMutex.Unlock()
 	authCtx, ok := hc.authContexts[providerName]
-	if !ok {
-		err = fmt.Errorf("cannot find AUTH context for provider = '%s'", providerName)
+	hc.authMapMutex.Unlock()
+	if ok {
+		return authCtx, nil
 	}
-	return authCtx, err
+	// Load only registration defaults. Authentication itself belongs to Omni.
+	if _, err := hc.GetProvider(providerName); err != nil {
+		return nil, err
+	}
+	hc.authMapMutex.Lock()
+	defer hc.authMapMutex.Unlock()
+	if authCtx, ok = hc.authContexts[providerName]; ok {
+		return authCtx, nil
+	}
+	return nil, fmt.Errorf("cannot find AUTH context for provider = '%s'", providerName)
 }
 
 func (hc *standardHandlerContext) UpdateIsolationLevel(isolationLevelStr string) error {
@@ -569,12 +573,12 @@ func (hc *standardHandlerContext) GetDBMSInternalRouter() dbmsinternal.Router {
 	return hc.pgInternalRouter
 }
 
-func GetRegistry(runtimeCtx dto.RuntimeCtx) (formulation.RegistryAPI, error) {
+func GetRegistry(runtimeCtx dto.RuntimeCtx) (registry.RegistryAPI, error) {
 	return getRegistry(runtimeCtx)
 }
 
-func getRegistry(runtimeCtx dto.RuntimeCtx) (formulation.RegistryAPI, error) {
-	var rc formulation.RegistryConfig
+func getRegistry(runtimeCtx dto.RuntimeCtx) (registry.RegistryAPI, error) {
+	var rc omnisdk.RegistryConfig
 	err := yaml.Unmarshal([]byte(runtimeCtx.RegistryRaw), &rc)
 	if err != nil {
 		return nil, err
@@ -587,7 +591,7 @@ func getRegistry(runtimeCtx dto.RuntimeCtx) (formulation.RegistryAPI, error) {
 		}
 	}
 	rt := netutils.GetRoundTripper(runtimeCtx, nil)
-	return formulation.NewRegistry(rc, rt)
+	return registry.NewRegistry(rc, rt)
 }
 
 func (hc *standardHandlerContext) Clone() HandlerContext {
@@ -612,7 +616,6 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		sqlEngine:            hc.sqlEngine,
 		sqlDataSources:       hc.sqlDataSources,
 		sqlSystem:            hc.sqlSystem,
-		persistenceSystem:    hc.persistenceSystem,
 		garbageCollector:     hc.garbageCollector,
 		outErrFile:           hc.outErrFile,
 		outfile:              hc.outfile,
@@ -693,7 +696,6 @@ func NewHandlerCtx(
 		sqlEngine:           sqlEngine,
 		sqlDataSources:      inputBundle.GetSQLDataSources(),
 		sqlSystem:           inputBundle.GetSQLSystem(),
-		persistenceSystem:   inputBundle.GetPersistenceSystem(),
 		garbageCollector:    inputBundle.GetGC(),
 		txnCounterMgr:       inputBundle.GetTxnCounterManager(),
 		txnStore:            inputBundle.GetTxnStore(),
@@ -711,7 +713,6 @@ func NewHandlerCtx(
 	}
 	drmCfg, err := drm.GenerateDRMConfig(
 		inputBundle.GetSQLSystem(),
-		inputBundle.GetPersistenceSystem(),
 		inputBundle.GetTypingConfig(),
 		rv.namespaceCollection,
 		controlAttributes,
@@ -723,55 +724,9 @@ func NewHandlerCtx(
 	return &rv, nil
 }
 
-func transformOpenapiStackqlAuthToLocal(authDTO formulation.AuthDTO) *dto.AuthCtx {
-	rv := &dto.AuthCtx{
-		Scopes:                  authDTO.GetScopes(),
-		Subject:                 authDTO.GetSubject(),
-		Type:                    authDTO.GetType(),
-		ValuePrefix:             authDTO.GetValuePrefix(),
-		KeyID:                   authDTO.GetKeyID(),
-		KeyIDEnvVar:             authDTO.GetKeyIDEnvVar(),
-		KeyFilePath:             authDTO.GetKeyFilePath(),
-		KeyFilePathEnvVar:       authDTO.GetKeyFilePathEnvVar(),
-		KeyEnvVar:               authDTO.GetKeyEnvVar(),
-		EnvVarAPIKeyStr:         authDTO.GetEnvVarAPIKeyStr(),
-		EnvVarAPISecretStr:      authDTO.GetEnvVarAPISecretStr(),
-		EnvVarUsername:          authDTO.GetEnvVarUsername(),
-		EnvVarPassword:          authDTO.GetEnvVarPassword(),
-		EncodedBasicCredentials: authDTO.GetInlineBasicCredentials(),
-		Location:                authDTO.GetLocation(),
-		Name:                    authDTO.GetName(),
-		TokenURL:                authDTO.GetTokenURL(),
-		GrantType:               authDTO.GetGrantType(),
-		ClientID:                authDTO.GetClientID(),
-		ClientSecret:            authDTO.GetClientSecret(),
-		ClientIDEnvVar:          authDTO.GetClientIDEnvVar(),
-		ClientSecretEnvVar:      authDTO.GetClientSecretEnvVar(),
-		Values:                  authDTO.GetValues(),
-		AuthStyle:               authDTO.GetAuthStyle(),
-		AccountID:               authDTO.GetAccountID(),
-		AccoountIDEnvVar:        authDTO.GetAccountIDEnvVar(),
-		// Doc-level OCI env var indirections (issue #710); a runtime --auth context
-		// still wins via updateAuthContextIfNotExists.
-		OciTenancyOCIDEnvVar:        authDTO.GetOciTenancyOCIDEnvVar(),
-		OciUserOCIDEnvVar:           authDTO.GetOciUserOCIDEnvVar(),
-		OciFingerprintEnvVar:        authDTO.GetOciFingerprintEnvVar(),
-		OciPrivateKeyEnvVar:         authDTO.GetOciPrivateKeyEnvVar(),
-		OciPrivateKeyFilePathEnvVar: authDTO.GetOciPrivateKeyPathEnvVar(),
-		OciPassphraseEnvVar:         authDTO.GetOciPassphraseEnvVar(),
-		OciRegionEnvVar:             authDTO.GetOciRegionEnvVar(),
+func transformOpenapiStackqlAuthToLocal(auth *omnisdk.ProviderAuth) *dto.AuthCtx {
+	if auth == nil {
+		return nil
 	}
-	successor, successorExists := authDTO.GetSuccessor()
-	currentParent := rv
-	for {
-		if successorExists {
-			transformedSuccessor := transformOpenapiStackqlAuthToLocal(successor)
-			currentParent.Successor = transformedSuccessor
-			currentParent = transformedSuccessor
-			successor, successorExists = successor.GetSuccessor()
-		} else {
-			break
-		}
-	}
-	return rv
+	return &dto.AuthCtx{AuthConfig: auth.AuthConfig, Successor: transformOpenapiStackqlAuthToLocal(auth.Successor)}
 }

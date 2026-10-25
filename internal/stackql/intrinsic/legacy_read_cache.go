@@ -10,14 +10,12 @@ import (
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql-labs/omnisdk/pkg/query"
 	"github.com/stackql-labs/omnisdk/pkg/rowcache"
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/stackql/internal/stackql/provider"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 )
 
 type legacyCacheHost interface {
 	queryContext
-	GetProvider(string) (provider.IProvider, error)
 	GetNamespaceCollection() tablenamespace.Collection
 }
 
@@ -55,9 +53,13 @@ func (c *legacyNamespaceCache) Lookup(ctx context.Context, key rowcache.Key) (ro
 	if len(pieces) != qualifiedResourceParts {
 		return nil, false, nil
 	}
-	table, names, err := c.metadata(canonical, pieces, key.Method)
+	table, names, err := c.metadata(canonical, key.Method)
 	if err != nil {
 		return nil, false, err
+	}
+
+	if table == "" {
+		return nil, false, nil
 	}
 
 	encoded, err := c.requestEncoding(canonical, key)
@@ -132,52 +134,6 @@ func configureLegacyReadCache(ctx queryContext, q query.Unresolved, args *omnisd
 	}
 }
 
-func (c *legacyNamespaceCache) metadata(
-	canonical string, pieces []string, methodName string,
-) (string, []string, error) {
-	prov, err := c.host.GetProvider(pieces[0])
-	if err != nil {
-		return "", nil, err
-	}
-	resource, err := prov.GetResource(pieces[1], pieces[2], c.host.GetRuntimeContext())
-	if err != nil {
-		return "", nil, err
-	}
-	method, err := resource.FindMethod(methodName)
-	if err != nil {
-		return "", nil, err
-	}
-	schema, _, err := method.GetSelectSchemaAndObjectPath()
-	if err != nil || schema == nil {
-		return "", nil, err
-	}
-	selectionName := schema.GetSelectionName()
-	if selectionName == "" {
-		response, _, responseErr := method.GetResponseBodySchemaAndMediaType()
-		if responseErr != nil {
-			return "", nil, responseErr
-		}
-		selectionName = response.GetSelectionName()
-	}
-	if schema.GetType() == "array" {
-		schema, err = schema.GetItemsSchema()
-		if err != nil {
-			return "", nil, err
-		}
-	}
-	table := canonical + "." + selectionName
-	var names []string
-	properties, err := schema.GetProperties()
-	if err != nil {
-		return "", nil, err
-	}
-	for name := range properties {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	return table, names, nil
-}
-
 // Cache hits stream from the host's SQL cursor; no table-sized row slice is built.
 type legacyCacheRows struct {
 	rows    *sql.Rows
@@ -228,3 +184,21 @@ func (r *legacyCacheRows) Next(ctx context.Context) bool {
 func (r *legacyCacheRows) Row() map[string]any { return r.current }
 func (r *legacyCacheRows) Err() error          { return r.err }
 func (r *legacyCacheRows) Close() error        { r.stop(); return r.rows.Close() }
+
+func (c *legacyNamespaceCache) metadata(canonical, method string) (string, []string, error) {
+	opts, err := documentOptions(c.host)
+	if err != nil {
+		return "", nil, err
+	}
+	signature, err := omnisdk.DescribeMethod(registryRoot(c.host), UnstablePrefix+canonical, method, opts...)
+	if err != nil {
+		return "", nil, err
+	}
+	named, ok := signature.(omnisdk.NamedResponse)
+	if !ok || named.RowSchemaName() == "" {
+		return "", nil, nil
+	}
+	names := append([]string(nil), signature.Columns()...)
+	sort.Strings(names)
+	return canonical + "." + named.RowSchemaName(), names, nil
+}

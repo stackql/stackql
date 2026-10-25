@@ -1,22 +1,22 @@
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete
-compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert in progress, 10 seconds elapsed
 compute#operation: insert complete

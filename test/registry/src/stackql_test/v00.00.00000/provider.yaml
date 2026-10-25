@@ -1,6 +1,6 @@
-id: azuread
+id: stackql_test
 description: A testing provider, originating from Azure Active Directory
-name: azuread
+name: stackql_test
 version: v00.00.00000
 providerServices:
   applications:

@@ -3,9 +3,6 @@ package taxonomy
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/pkg/logging"
-	"github.com/stackql/any-sdk/pkg/name_mangle"
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -217,49 +214,12 @@ func GetHeirarchyFromStatement(
 	isAwait bool,
 ) (tablemetadata.HeirarchyObjects, error) {
 	var hIDs internaldto.HeirarchyIdentifiers
-	getFirstAvailableMethod := false
 	if parameters == nil {
 		parameters = parserutil.NewParameterMap()
 	}
 	hIDs, err := GetHIDs(handlerCtx, node, parameters, viewPermissive)
 	if err != nil {
 		return nil, err
-	}
-	methodRequired := true
-	var methodAction string
-	switch n := node.(type) {
-	case *sqlparser.Exec, *sqlparser.ExecSubquery:
-	case *sqlparser.Select:
-		methodAction = "select"
-	case *sqlparser.DescribeTable:
-	case *sqlparser.DescribeMethod:
-		return nil, fmt.Errorf("DESCRIBE METHOD is dispatched outside of hierarchy resolution")
-	case sqlparser.TableName:
-	case *sqlparser.AliasedTableExpr:
-		switch n.Expr.(type) { //nolint:gocritic // this is expressive enough
-		case *sqlparser.Subquery:
-			retVal := tablemetadata.NewHeirarchyObjects(hIDs, isAwait)
-			return retVal, nil
-		}
-		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters, viewPermissive, isAwait)
-	case *sqlparser.Show:
-		switch strings.ToUpper(n.Type) {
-		case "INSERT":
-			methodAction = "insert"
-			getFirstAvailableMethod = true
-		case "METHODS":
-			methodRequired = false
-		default:
-			return nil, fmt.Errorf("cannot resolve taxonomy for SHOW statement of type = '%s'", strings.ToUpper(n.Type))
-		}
-	case *sqlparser.Insert:
-		methodAction = "insert"
-	case *sqlparser.Delete:
-		methodAction = "delete"
-	case *sqlparser.Update:
-		methodAction = strings.ToLower(n.Action)
-	default:
-		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
 	retVal := tablemetadata.NewHeirarchyObjects(hIDs, isAwait)
 	sqlDataSource, isSQLDataSource := handlerCtx.GetSQLDataSource(hIDs.GetProviderStr())
@@ -272,139 +232,9 @@ func GetHeirarchyFromStatement(
 	if isPgInternal {
 		return retVal, nil
 	}
-	prov, err := handlerCtx.GetProvider(hIDs.GetProviderStr())
-	retVal.SetProvider(prov)
-	viewDTO, viewExists := retVal.GetView()
-	var meth formulation.StandardOperationStore
-	var methStr string
-	var methodErr error
-	if methodAction == "" {
-		methodAction = "select"
-	}
-	if viewExists {
-		retVal.SetIndirect(viewDTO)
-		logging.GetLogger().Debugf("viewDTO = %v\n", viewDTO)
-		// return retVal, nil //nolint:nilerr // acceptable
-	}
-	if err != nil {
-		return returnViewOnErrorIfPresent(retVal, err, viewExists)
-	}
-	svcHdl, err := prov.GetServiceShard(hIDs.GetServiceStr(), hIDs.GetResourceStr(), handlerCtx.GetRuntimeContext())
-	if err != nil {
-		return returnViewOnErrorIfPresent(retVal, err, viewExists)
-	}
-	retVal.SetServiceHdl(svcHdl)
-	rsc, err := prov.GetResource(hIDs.GetServiceStr(), hIDs.GetResourceStr(), handlerCtx.GetRuntimeContext())
-	if err != nil {
-		return returnViewOnErrorIfPresent(retVal, err, viewExists)
-	}
-	retVal.SetResource(rsc)
-	viewNameMangler := name_mangle.NewViewNameMangler()
-	//nolint:nestif // not overly complex
-	if viewCollection, ok := rsc.GetViewsForSqlDialect(
-		handlerCtx.GetSQLSystem().GetName()); ok && methodAction == "select" && !viewExists {
-		for i, view := range viewCollection {
-			viewNameNaive := view.GetNameNaive()
-			viewName := viewNameMangler.MangleName(viewNameNaive, i)
-			// TODO: mutex required or some other strategy
-			viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
-				viewName, parameters.GetStringified())
-			if !viewExists {
-				// TODO: resolve any possible data race
-				err = handlerCtx.GetSQLSystem().CreateView(viewName, view.GetDDL(), true, nil)
-				if err != nil {
-					return nil, err
-				}
-				params := parameters.GetStringified()
-				viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
-					hIDs.GetTableName(), params)
-				if viewPermissive {
-					viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByName(hIDs.GetTableName())
-				}
-				if viewExists {
-					retVal.SetIndirect(viewDTO)
-				}
-				return retVal, nil
-			}
-			retVal.SetIndirect(viewDTO)
-			return retVal, nil //nolint:staticcheck // TODO: fix this
-		}
-	}
-	var method formulation.StandardOperationStore
-	switch node.(type) {
-	case *sqlparser.Exec, *sqlparser.ExecSubquery:
-		method, err = rsc.FindMethod(hIDs.GetMethodStr())
-		if err != nil {
-			return returnViewOnErrorIfPresent(retVal, err, viewExists)
-		}
-		retVal.SetMethod(method)
+	if view, ok := hIDs.GetView(); ok {
+		retVal.SetIndirect(view)
 		return retVal, nil
 	}
-	//nolint:nestif,ineffassign // acceptable for now
-	if methodRequired {
-		switch node.(type) { //nolint:gocritic // this is expressive enough
-		case *sqlparser.DescribeTable:
-			if viewExists {
-				return retVal, nil
-			}
-			m, mStr, mErr := prov.InferDescribeMethod(rsc)
-			if mErr != nil {
-				return nil, mErr
-			}
-			retVal.SetMethod(m)
-			retVal.SetMethodStr(mStr)
-			return retVal, nil
-		case *sqlparser.DescribeMethod:
-			return nil, fmt.Errorf("DESCRIBE METHOD is dispatched outside of hierarchy resolution")
-		}
-		if getFirstAvailableMethod {
-			meth, methStr, methodErr = prov.GetFirstMethodForAction( //nolint:staticcheck,wastedassign // acceptable
-				retVal.GetHeirarchyIDs().GetServiceStr(),
-				retVal.GetHeirarchyIDs().GetResourceStr(),
-				methodAction,
-				handlerCtx.GetRuntimeContext())
-		} else {
-			meth, methStr, methodErr = prov.GetMethodForAction(
-				retVal.GetHeirarchyIDs().GetServiceStr(),
-				retVal.GetHeirarchyIDs().GetResourceStr(),
-				methodAction,
-				parameters,
-				handlerCtx.GetRuntimeContext())
-			if methodErr != nil {
-				return returnViewOnErrorIfPresent(retVal, fmt.Errorf(
-					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // long string
-					retVal.GetHeirarchyIDs().GetTableName(), methodErr),
-					viewExists)
-			}
-		}
-		availableServers, availableServersDoExist := svcHdl.GetServers()
-		if meth != nil {
-			availableServers, availableServersDoExist = meth.GetServers()
-		}
-		if availableServersDoExist {
-			for _, srv := range availableServers {
-				for k := range srv.Variables {
-					logging.GetLogger().Debugf("server parameter = '%s'\n", k)
-				}
-			}
-		}
-		method = meth
-		retVal.SetMethodStr(methStr)
-	}
-	if methodRequired {
-		retVal.SetMethod(method)
-	}
-	return retVal, nil
-}
-
-// TODO: remove this rubbish
-func returnViewOnErrorIfPresent(
-	input tablemetadata.HeirarchyObjects, err error, hasView bool) (tablemetadata.HeirarchyObjects, error) {
-	if hasView {
-		return input, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return input, nil
+	return nil, fmt.Errorf("provider relations must be planned through omnisdk")
 }

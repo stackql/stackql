@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
+	"github.com/stackql/stackql/internal/stackql/streaming"
 )
 
 var (

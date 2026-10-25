@@ -1,10 +1,10 @@
 package garbagecollector
 
 import (
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/gcexec"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
 var (

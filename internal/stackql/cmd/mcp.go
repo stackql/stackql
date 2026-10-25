@@ -28,16 +28,16 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/stackql/any-sdk/pkg/db/db_util"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/diagnostics"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/mcpbackend"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
+	db_util "github.com/stackql/stackql/internal/stackql/sqlengine/connect"
 	"github.com/stackql/stackql/pkg/mcp_server"
 
 	_ "github.com/jackc/pgx/v5" //nolint:revive // canonical driver pattern
@@ -194,7 +194,7 @@ func runMCPServer(handlerCtx handler.HandlerContext, config *mcp_server.Config) 
 		cfg.DSN = dsn
 		cfg.InitMaxRetries = 5
 		cfg.InitRetryInitialDelay = 2
-		db, err := db_util.GetDB("pgx", "postgres", cfg)
+		db, err := db_util.Open("pgx", "postgres", cfg.GetDSN(), cfg.InitMaxRetries, cfg.InitRetryInitialDelay)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		backend, backendErr = mcpbackend.NewStackqlMCPReverseProxyService(
 			dsn,

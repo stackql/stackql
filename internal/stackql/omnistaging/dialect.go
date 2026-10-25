@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/stackql/internal/stackql/constants"
 )
 
 const (

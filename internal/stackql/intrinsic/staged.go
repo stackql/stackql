@@ -2,7 +2,7 @@ package intrinsic
 
 // A SELECT over document-driven relations whose remaining SQL needs every row
 // - ordering, grouping, aggregation, de-duplication, OFFSET - is split in two
-// when staging is enabled: omnisdk runs the joins and filters, its final
+// omnisdk runs the joins and filters, its final
 // relation is staged in one query-owned table, and the RDBMS evaluates the
 // rest of the statement over that table. See docs/technical/omnisdk_staging.md.
 
@@ -15,14 +15,14 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"sync"
 
+	"github.com/lib/pq/oid"
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql-labs/omnisdk/pkg/query"
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/omnistaging"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -41,42 +41,26 @@ const (
 	stagedNumericType = "numeric"
 )
 
-// stagingManager is created on first use from the SQL backend the session
-// already holds, and shared by every query thereafter.
-//
-//nolint:gochecknoglobals // one manager per backend, created once
-var (
-	stagingOnce    sync.Once
-	stagingManager omnistaging.Manager
-	errStaging     error
-)
-
+// Each query owns its staging manager and uses the session's SQL backend.
 func getStagingManager(ctx queryContext) (omnistaging.Manager, error) {
-	stagingOnce.Do(func() {
-		raw := ctx.GetRuntimeContext().SQLBackendCfgRaw
-		sqlCfg, err := dto.GetSQLBackendCfg(raw)
-		if err != nil {
-			errStaging = err
-			return
-		}
-		cfg, err := omnistaging.NewConfigFromSQLBackend(raw)
-		if err != nil {
-			errStaging = err
-			return
-		}
-		dialect, err := omnistaging.NewDialect(sqlCfg.GetSQLDialect(), cfg)
-		if err != nil {
-			errStaging = err
-			return
-		}
-		db, err := ctx.GetSQLEngine().GetDB()
-		if err != nil {
-			errStaging = err
-			return
-		}
-		stagingManager, errStaging = omnistaging.NewManager(context.Background(), db, dialect)
-	})
-	return stagingManager, errStaging
+	raw := ctx.GetRuntimeContext().SQLBackendCfgRaw
+	sqlCfg, err := dto.GetSQLBackendCfg(raw)
+	if err != nil {
+		return nil, err
+	}
+	cfg, err := omnistaging.NewConfigFromSQLBackend(raw)
+	if err != nil {
+		return nil, err
+	}
+	dialect, err := omnistaging.NewDialect(sqlCfg.GetSQLDialect(), cfg)
+	if err != nil {
+		return nil, err
+	}
+	db, err := ctx.GetSQLEngine().GetDB()
+	if err != nil {
+		return nil, err
+	}
+	return omnistaging.NewManager(context.Background(), db, dialect)
 }
 
 // needsStaging reports whether a SELECT carries SQL omnisdk leaves unapplied.
@@ -90,6 +74,10 @@ func needsStaging(node *sqlparser.Select) bool {
 	hasAggregate := false
 	//nolint:errcheck // the visitor returns no error
 	_ = sqlparser.Walk(func(n sqlparser.SQLNode) (bool, error) {
+		if _, groupConcat := n.(*sqlparser.GroupConcatExpr); groupConcat {
+			hasAggregate = true
+			return false, nil
+		}
 		if fn, isFunc := n.(*sqlparser.FuncExpr); isFunc && (fn.IsAggregate() || fn.Over != nil) {
 			hasAggregate = true
 			return false, nil
@@ -584,6 +572,17 @@ func readStagedResult(
 ) (internaldto.ExecutorOutput, error) {
 	var err error
 	rowMap := make(map[string]map[string]interface{})
+	numeric, err := numericSQLColumns(result)
+	if err != nil {
+		return nil, err
+	}
+	columnOIDs := make([]oid.Oid, len(columnOrder))
+	for i := range columnOIDs {
+		columnOIDs[i] = oid.T_text
+		if numeric[i] {
+			columnOIDs[i] = oid.T_numeric
+		}
+	}
 	for i := 0; result.Next(); i++ {
 		values := make([]any, len(columnOrder))
 		pointers := make([]any, len(columnOrder))
@@ -596,13 +595,19 @@ func readStagedResult(
 		row := make(map[string]interface{}, len(columnOrder))
 		for j, name := range columnOrder {
 			row[name] = outputValue(values[j])
+			if isNumber(values[j]) {
+				columnOIDs[j] = oid.T_numeric
+			}
 		}
 		rowMap[fmt.Sprintf("%012d", i)] = row
 	}
 	if err = result.Err(); err != nil {
 		return nil, err
 	}
-	return prepare(ctx, columnOrder, rowMap, util.DefaultRowSort), nil
+	payload := internaldto.NewPrepareResultSetDTO(
+		nil, rowMap, columnOrder, util.DefaultRowSort, nil, nil, ctx.GetTypingConfig())
+	payload.ColumnOIDs = columnOIDs
+	return util.PrepareResultSet(payload), nil
 }
 
 func outputValue(value any) any {

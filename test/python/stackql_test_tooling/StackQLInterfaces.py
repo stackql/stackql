@@ -123,6 +123,20 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     )
   
 
+  @keyword
+  def application_stderr(self, stderr: str) -> str:
+    if self._execution_platform != "docker":
+      return stderr
+    # Compose shares stderr with StackQL. Filter only recognized launcher
+    # warnings/status lines so application errors still fail assertions.
+    compose_line = re.compile(
+      r'^time="[^"]+" level=warning msg="(?:'
+      r'The .* variable is not set\. Defaulting to a blank string\.'
+      r'|[^"\n]*docker-compose\.ya?ml: the attribute .*version.* is obsolete,.*)"$'
+      r'|^ (?:Container|Network|Volume) \S+ +'
+      r'(?:Running|Creating|Created|Starting|Started|Waiting|Healthy|Stopping|Stopped|Removing|Removed)$')
+    return "\n".join(line for line in stderr.splitlines() if not compose_line.fullmatch(line))
+
   def _verify_both_streams(self, result, expected_output, expected_stderr_output, **cfg):
     pass_through = {
       'strip_spaces': cfg.pop('strip_spaces', False),
@@ -131,18 +145,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     stdout_ok = self.should_be_equal(result.stdout, expected_output, **pass_through)
     if cfg.pop('unordered_http_diagnostics', False):
       records = lambda text: sorted(part.strip() for part in re.split(r'(?m)(?=^http response status code:)', text) if part.strip())
-      actual_stderr = result.stderr
-      if self._execution_platform == "docker":
-        # Compose writes launcher diagnostics to the same pipe as the application.
-        # Remove only known launcher lines; retain every application diagnostic.
-        compose_line = re.compile(
-          r'^time="[^"]+" level=warning msg="(?:'
-          r'The .* variable is not set\. Defaulting to a blank string\.'
-          r'|[^"\n]*docker-compose\.ya?ml: the attribute .*version.* is obsolete,.*)"$'
-          r'|^ (?:Container|Network|Volume) \S+ +'
-          r'(?:Running|Creating|Created|Starting|Started|Waiting|Healthy|Stopping|Stopped|Removing|Removed)$')
-        actual_stderr = "\n".join(
-          line for line in actual_stderr.splitlines() if not compose_line.fullmatch(line))
+      actual_stderr = self.application_stderr(result.stderr)
       stderr_ok = self.should_be_equal(records(actual_stderr), records(expected_stderr_output))
       return stdout_ok and stderr_ok
     if self._execution_platform == "docker":
@@ -1234,11 +1237,6 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     **cfg
   ):
     comparison = {'unordered_http_diagnostics': cfg.pop('unordered_http_diagnostics', False)}
-    omni_expected = cfg.pop('omni_expected_stderr_output', None)
-    effective_preview = next((arg.split('=', 1)[1] for arg in _with_default_preview(args)
-                              if isinstance(arg, str) and arg.startswith('--preview=')), '{}')
-    if omni_expected is not None and json.loads(effective_preview).get('omni') == 'all':
-      expected_stderr_output = omni_expected
     repeat_count = int(cfg.pop('repeat_count', 1))
     for _ in range(repeat_count):
       result = self._run_stackql_exec_command(

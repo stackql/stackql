@@ -5,12 +5,9 @@ import (
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
-	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/router"
-	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
 type PlanBuilderInput interface {
@@ -18,7 +15,6 @@ type PlanBuilderInput interface {
 	Refocus(sqlparser.SQLNode) PlanBuilderInput
 	GetAliasedTables() parserutil.TableAliasMap
 	GetAnnotatedAST() annotatedast.AnnotatedAst
-	GetAnnotations() (taxonomy.AnnotationCtxMap, bool)
 	GetAuth() (*sqlparser.Auth, bool)
 	GetAuthRevoke() (*sqlparser.AuthRevoke, bool)
 	GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr
@@ -57,8 +53,6 @@ type PlanBuilderInput interface {
 
 	GetMessages() []string
 	WithMessages(messages []string) PlanBuilderInput
-	WithParameterRouter(router.ParameterRouter) PlanBuilderInput
-	WithTableRouteVisitor(tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput
 	SetReadOnly(bool)
 	IsReadOnly() bool
 	Next() (PlanBuilderInput, bool)
@@ -76,10 +70,6 @@ type StandardPlanBuilderInput struct {
 	tables                   sqlparser.TableExprs
 	paramsPlaceheld          parserutil.ParameterMap
 	tcc                      internaldto.TxnControlCounters
-	paramRouter              router.ParameterRouter
-	tableRouteVisitor        router.TableRouteAstVisitor
-	onConditionDataFlows     dataflow.Collection
-	onConditionsToRewrite    map[*sqlparser.ComparisonExpr]struct{}
 	tccSetAheadOfTime        bool
 	messages                 []string
 	readOnly                 bool
@@ -205,49 +195,12 @@ func (pbi *StandardPlanBuilderInput) GetMessages() []string {
 	return pbi.messages
 }
 
-func (pbi *StandardPlanBuilderInput) GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{} {
-	return pbi.onConditionsToRewrite
-}
-
 func (pbi *StandardPlanBuilderInput) IsTccSetAheadOfTime() bool {
 	return pbi.tccSetAheadOfTime
 }
 
 func (pbi *StandardPlanBuilderInput) SetIsTccSetAheadOfTime(tccSetAheadOfTime bool) {
 	pbi.tccSetAheadOfTime = tccSetAheadOfTime
-}
-
-func (pbi *StandardPlanBuilderInput) GetOnConditionDataFlows() (dataflow.Collection, bool) {
-	return pbi.onConditionDataFlows, pbi.onConditionDataFlows != nil
-}
-
-func (pbi *StandardPlanBuilderInput) SetOnConditionsToRewrite(
-	onConditionsToRewrite map[*sqlparser.ComparisonExpr]struct{}) {
-	pbi.onConditionsToRewrite = onConditionsToRewrite
-}
-
-func (pbi *StandardPlanBuilderInput) SetOnConditionDataFlows(onConditionDataFlows dataflow.Collection) {
-	pbi.onConditionDataFlows = onConditionDataFlows
-}
-
-func (pbi *StandardPlanBuilderInput) GetTableMap() (taxonomy.TblMap, bool) {
-	if pbi.tableRouteVisitor != nil {
-		return pbi.tableRouteVisitor.GetTableMap(), true
-	}
-	return nil, false
-}
-
-func (pbi *StandardPlanBuilderInput) GetAnnotations() (taxonomy.AnnotationCtxMap, bool) {
-	if pbi.tableRouteVisitor != nil {
-		return pbi.tableRouteVisitor.GetAnnotations(), true
-	}
-	return nil, false
-}
-
-func (pbi *StandardPlanBuilderInput) WithTableRouteVisitor(
-	tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput {
-	pbi.tableRouteVisitor = tableRouteVisitor
-	return pbi
 }
 
 func (pbi *StandardPlanBuilderInput) GetRawQuery() string {
@@ -262,14 +215,6 @@ func (pbi *StandardPlanBuilderInput) SetRawQuery(rawQuery string) {
 }
 
 // router.ParameterRouter.
-func (pbi *StandardPlanBuilderInput) GetParameterRouter() (router.ParameterRouter, bool) {
-	return pbi.paramRouter, true
-}
-
-func (pbi *StandardPlanBuilderInput) WithParameterRouter(paramRouter router.ParameterRouter) PlanBuilderInput {
-	pbi.paramRouter = paramRouter
-	return pbi
-}
 
 func (pbi *StandardPlanBuilderInput) GetAnnotatedAST() annotatedast.AnnotatedAst {
 	return pbi.annotatedAST

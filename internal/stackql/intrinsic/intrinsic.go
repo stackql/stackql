@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/formulation"
-	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -61,6 +60,12 @@ func GeneratePrimitiveFunc(
 ) (func() internaldto.ExecutorOutput, bool) {
 	current := ctx.GetCurrentProvider()
 	switch node := stmt.(type) {
+	case *sqlparser.Auth:
+		return authFunc(ctx, node), true
+	case *sqlparser.AuthRevoke:
+		return authRevokeFunc(ctx, node), true
+	case *sqlparser.Sleep:
+		return sleepFunc(node), true
 	case *sqlparser.Use:
 		return useFunc(ctx, node)
 	case *sqlparser.Show:
@@ -79,6 +84,18 @@ func GenerateStreamFunc(
 	ctx queryContext,
 	stmt sqlparser.Statement,
 ) (func() internaldto.ExecutorOutput, bool) {
+	switch node := stmt.(type) {
+	case *sqlparser.Union:
+		return statementReadFunc(ctx, node), true
+	case *sqlparser.ParenSelect:
+		return statementReadFunc(ctx, node), true
+	}
+	if node, isExec := stmt.(*sqlparser.Exec); isExec {
+		return execFunc(ctx, node), true
+	}
+	if execute, handled := materializedFunc(ctx, stmt); handled {
+		return execute, true
+	}
 	if node, isSelect := stmt.(*sqlparser.Select); isSelect {
 		return selectFunc(ctx, node, ctx.GetCurrentProvider())
 	}
@@ -135,7 +152,7 @@ func useFunc(ctx queryContext, node *sqlparser.Use) (func() internaldto.Executor
 		return nil, false
 	}
 	return func() internaldto.ExecutorOutput {
-		ctx.SetCurrentProvider(ProviderName)
+		ctx.SetCurrentProvider(node.DBName.GetRawVal())
 		return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
 	}, true
 }
@@ -151,6 +168,10 @@ func showFunc(
 		return fn, true
 	}
 	switch strings.ToUpper(strings.TrimSpace(node.Type)) {
+	case "INSERT":
+		if bundle, isDoc := docProvider(resolveProvider(node.OnTable.QualifierSecond.GetRawVal(), currentProvider)); isDoc {
+			return func() internaldto.ExecutorOutput { return showDocInsert(ctx, node, bundle) }, true
+		}
 	case "SERVICES":
 		provider := resolveProvider(node.OnTable.Name.GetRawVal(), currentProvider)
 		if bundle, isDoc := docProvider(provider); isDoc {
@@ -206,6 +227,15 @@ func describeTableFunc(
 	if fn, isPreview := describePreviewTableFunc(ctx, node, currentProvider); isPreview {
 		return fn, true
 	}
+	if fn, stored := describeStoredFunc(ctx, node, currentProvider); stored {
+		return fn, true
+	}
+	if bundle, ok := docProvider(resolveProvider(node.Table.QualifierSecond.GetRawVal(), currentProvider)); ok {
+		return func() internaldto.ExecutorOutput {
+			return describeDocument(ctx, bundle, node.Table.Qualifier.GetRawVal(),
+				node.Table.Name.GetRawVal(), "", isExtended(node.Extended))
+		}, true
+	}
 	tbl, ok := lookupTable(
 		node.Table.QualifierSecond.GetRawVal(),
 		node.Table.Qualifier.GetRawVal(),
@@ -224,6 +254,12 @@ func describeMethodFunc(
 	node *sqlparser.DescribeMethod,
 	currentProvider string,
 ) (func() internaldto.ExecutorOutput, bool) {
+	if bundle, ok := docProvider(resolveProvider(node.Provider.GetRawVal(), currentProvider)); ok {
+		return func() internaldto.ExecutorOutput {
+			return describeDocument(ctx, bundle, node.Service.GetRawVal(),
+				node.Resource.GetRawVal(), node.Method.GetRawVal(), isExtended(node.Extended))
+		}, true
+	}
 	tbl, ok := lookupTable(
 		node.Provider.GetRawVal(),
 		node.Service.GetRawVal(),
@@ -275,7 +311,7 @@ func showServices(ctx queryContext, extended bool) internaldto.ExecutorOutput {
 	}
 	rows := map[string]map[string]interface{}{"000001": row}
 	appendPreviewServices(rows, extended)
-	return prepare(ctx, formulation.GetServicesHeader(extended), rows, util.DefaultRowSort)
+	return prepare(ctx, util.GetServicesHeader(extended), rows, util.DefaultRowSort)
 }
 
 func showResources(ctx queryContext, serviceStr string, extended bool) internaldto.ExecutorOutput {
@@ -300,7 +336,7 @@ func showResources(ctx queryContext, serviceStr string, extended bool) internald
 		}
 		rows[fmt.Sprintf("%06d", i)] = row
 	}
-	return prepare(ctx, formulation.GetResourcesHeader(extended), rows, util.DefaultRowSort)
+	return prepare(ctx, util.GetResourcesHeader(extended), rows, util.DefaultRowSort)
 }
 
 func showMethods(ctx queryContext, tbl table, extended bool) internaldto.ExecutorOutput {
@@ -326,7 +362,7 @@ func showMethods(ctx queryContext, tbl table, extended bool) internaldto.Executo
 func describeTable(ctx queryContext, tbl table, extended bool) internaldto.ExecutorOutput {
 	return prepare(
 		ctx,
-		formulation.GetDescribeHeader(extended),
+		util.GetDescribeHeader(extended),
 		columnRows(tbl.columns, extended, nil),
 		util.DescribeRowSort,
 	)
@@ -364,4 +400,38 @@ func columnRows(
 		rows[fmt.Sprintf("%06d", i)] = row
 	}
 	return rows
+}
+
+// ValidateStatement builds an Omni plan without opening its cursor or dispatching requests.
+func ValidateStatement(ctx queryContext, stmt sqlparser.Statement) (bool, error) {
+	dialect, err := backendDialect(ctx)
+	if err != nil {
+		return true, err
+	}
+	translator := newDocTranslator(ctx.GetCurrentProvider(), dialect)
+	var translated docQuery
+	switch node := stmt.(type) {
+	case *sqlparser.Select:
+		handled, sourceErr := fromDocProviders(node.From, ctx.GetCurrentProvider())
+		if !handled {
+			return false, sourceErr
+		}
+		if sourceErr != nil {
+			return true, sourceErr
+		}
+		_, _, err = planStatementRead(ctx, node, ctx.GetCurrentProvider(), 0, nil)
+		return true, err
+	case *sqlparser.Insert, *sqlparser.Update, *sqlparser.Delete:
+		translated, err = translator.mutation(stmt)
+	case *sqlparser.Exec:
+		_, _, err = execPlan(ctx, node)
+		return true, err
+	default:
+		return false, nil
+	}
+	if err != nil {
+		return true, err
+	}
+	_, _, err = planDocQuery(ctx, translated)
+	return true, err
 }

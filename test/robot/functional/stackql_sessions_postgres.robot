@@ -30,12 +30,14 @@ SQLAlchemy Session Postgres PID Function
     ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-Postgres-PID-Function.tmp
     [Teardown]    NONE
 
-SQLAlchemy Session Postgres Intel Views Exist
-    Log    This test expects exactly 4 results per query in the sequence
+SQLAlchemy Session Postgres Provider And Derived Reads
+    [Documentation]    Provider reads and nested SQL remain available without legacy acquisition-backed intel views.
+    ${queries} =    Evaluate
+    ...    ["select kind, name, maximumCardsPerInstance from google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc", "select kind, name from (select kind, name from google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a') t order by name desc", "select name, count(kind) as n from (select kind, name from google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a') t group by name order by n desc"]
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a postgres only test
     Should SQLALchemy Raw Session Inline Have Length Greater Than Or Equal To
     ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
-    ...    ${SELECT_ACCELERATOR_TYPES_DESC_SEQUENCE}
+    ...    ${queries}
     ...    12
     ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-Postgres-Intel-Views-Exist.tmp
     [Teardown]    NONE

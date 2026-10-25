@@ -1,19 +1,18 @@
 package driver_test
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/dto"
 	. "github.com/stackql/stackql/internal/stackql/driver"
+	"github.com/stackql/stackql/internal/stackql/intrinsic"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/util"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/stackql/stackql/internal/stackql/handler"
 
@@ -60,7 +59,7 @@ func getRuntimeCtx(providerStr string, outputFmtStr string, testName string) (*d
 }
 
 //nolint:lll // legacy test
-func TestDefaultedHttpClientIntegration(t *testing.T) {
+func TestOmniEndpointOverrideIntegration(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("skipping test on Windows")
 	}
@@ -77,29 +76,22 @@ func TestDefaultedHttpClientIntegration(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	expectedHost := "my-test-bucket.s3-ap-southeast-2.amazonaws.com"
-
 	reponseCounter := 0
 
 	tlsServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		io.Copy(io.Discard, r.Body)
-		assert.Equal(t, r.Host, expectedHost, "expected host does not match actual host")
 		w.WriteHeader(http.StatusOK)
 		reponseCounter++
 	}))
 	t.Cleanup(tlsServer.Close)
 
-	baseTransport := tlsServer.Client().Transport.(*http.Transport)
-	dummyClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig:   baseTransport.TLSClientConfig,
-			DisableKeepAlives: true,
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return net.Dial("tcp", tlsServer.Listener.Addr().String())
-			},
-		},
+	preview, err := json.Marshal(map[string]any{"endpoint": tlsServer.URL, "insecureSkipTLSVerify": true})
+	if err != nil {
+		t.Fatal(err)
 	}
+	intrinsic.Init(string(preview))
+	t.Cleanup(func() { intrinsic.Init("") })
 
 	testingQuery := `SELECT * FROM aws.s3.bucket_acls WHERE Bucket = 'my-test-bucket' AND created_date = '2024-01-01T00:00:00Z' AND region = 'ap-southeast-2';`
 
@@ -110,8 +102,6 @@ func TestDefaultedHttpClientIntegration(t *testing.T) {
 		inputBundle,
 		"v0.1.0",
 	)
-
-	handlerCtx.SetDefaultHTTPClient(dummyClient)
 
 	dr, _ := NewStackQLDriver(handlerCtx)
 

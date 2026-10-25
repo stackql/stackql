@@ -7,18 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/logging"
-	"github.com/stackql/any-sdk/pkg/streaming"
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
-	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
-	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/intrinsic"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
@@ -26,8 +22,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
-	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
-	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/internal/stackql/registry"
 	"github.com/stackql/stackql/internal/stackql/util"
 	"golang.org/x/mod/semver"
 
@@ -130,8 +125,6 @@ func (pgb *standardPlanGraphBuilder) createInstructionFor(pbi planbuilderinput.P
 		return pgb.handleDescribe(pbi)
 	case *sqlparser.DescribeMethod:
 		return pgb.handleDescribeMethod(pbi)
-	case *sqlparser.Exec:
-		return pgb.handleExec(pbi)
 	case *sqlparser.Explain:
 		return pgb.handleExplain(pbi)
 	case *sqlparser.Insert:
@@ -211,7 +204,10 @@ func (pgb *standardPlanGraphBuilder) handleExplain(pbi planbuilderinput.PlanBuil
 	if err != nil {
 		return err
 	}
-	instructionErr := pgb.createInstructionFor(childPbi)
+	handled, instructionErr := intrinsic.ValidateStatement(pbi.GetHandlerCtx(), explain.Statement)
+	if !handled {
+		instructionErr = pgb.createInstructionFor(childPbi)
+	}
 	explainMessages := []string{}
 	if instructionErr == nil {
 		explainMessages = append(explainMessages, "Execution plan generated successfully")
@@ -283,154 +279,17 @@ func (pgb *standardPlanGraphBuilder) pgInternal(pbi planbuilderinput.PlanBuilder
 }
 
 func (pgb *standardPlanGraphBuilder) handleAuth(pbi planbuilderinput.PlanBuilderInput) error {
-	handlerCtx := pbi.GetHandlerCtx()
-	node, ok := pbi.GetAuth()
-	if !ok {
-		return fmt.Errorf("could not cast node of type '%T' to required Auth", pbi.GetStatement())
+	execute, handled := intrinsic.GeneratePrimitiveFunc(pbi.GetHandlerCtx(), pbi.GetStatement())
+	if !handled {
+		return fmt.Errorf("cannot resolve authentication command")
 	}
-	primitiveGenerator := pgb.rootPrimitiveGenerator
-	prov, err := handlerCtx.GetProvider(node.Provider)
-	if err != nil {
-		return err
-	}
-	err = primitiveGenerator.AnalyzeStatement(pbi)
-	if err != nil {
-		logging.GetLogger().Debugln(fmt.Sprintf("err = %s", err.Error()))
-		return err
-	}
-	authCtx, authErr := handlerCtx.GetAuthContext(node.Provider)
-	if authErr != nil {
-		return authErr
-	}
-	pr := primitive.NewMetaDataPrimitive(
-		prov,
-		//nolint:revive // acceptable for now
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-			authType := strings.ToLower(node.Type)
-			if node.KeyFilePath != "" {
-				authCtx.KeyFilePath = node.KeyFilePath
-			}
-			if node.KeyEnvVar != "" {
-				authCtx.KeyEnvVar = node.KeyEnvVar
-			}
-			_, err = prov.Auth(authCtx, authType, true)
-			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
-		})
-	pgb.planGraphHolder.GetPrimitiveGraph().CreatePrimitiveNode(pr)
+	pgb.planGraphHolder.CreatePrimitiveNode(primitive.NewLocalPrimitive(
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput { return execute() }))
 	return nil
 }
 
 func (pgb *standardPlanGraphBuilder) handleAuthRevoke(pbi planbuilderinput.PlanBuilderInput) error {
-	handlerCtx := pbi.GetHandlerCtx()
-	stmt := pbi.GetStatement()
-	node, ok := stmt.(*sqlparser.AuthRevoke)
-	if !ok {
-		return fmt.Errorf("could not cast statement of type '%T' to required AuthRevoke", stmt)
-	}
-	primitiveGenerator := pgb.rootPrimitiveGenerator
-	err := primitiveGenerator.AnalyzeStatement(pbi)
-	if err != nil {
-		return err
-	}
-	prov, err := handlerCtx.GetProvider(node.Provider)
-	if err != nil {
-		return err
-	}
-	authCtx, authErr := handlerCtx.GetAuthContext(node.Provider)
-	if authErr != nil {
-		return authErr
-	}
-	pr := primitive.NewMetaDataPrimitive(
-		prov,
-		//nolint:revive // acceptable for now
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-			return internaldto.NewExecutorOutput(nil, nil, nil, nil, prov.AuthRevoke(authCtx))
-		})
-	pgb.planGraphHolder.CreatePrimitiveNode(pr)
-	return nil
-}
-
-func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBuilderInput) error {
-	handlerCtx := pbi.GetHandlerCtx()
-	node, ok := pbi.GetDescribeTable()
-	if !ok {
-		return fmt.Errorf("could not cast node of type '%T' to required DescribeTable", pbi.GetStatement())
-	}
-	primitiveGenerator := pgb.rootPrimitiveGenerator
-	err := primitiveGenerator.AnalyzeStatement(pbi)
-	if err != nil {
-		return err
-	}
-	md, err := primitiveGenerator.GetPrimitiveComposer().GetTable(node)
-	if err != nil {
-		return err
-	}
-	prov, err := md.GetProvider()
-	if err != nil {
-		return err
-	}
-	var extended bool = strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
-	var full bool = strings.TrimSpace(strings.ToUpper(node.Full)) == "FULL"
-	_, isView := md.GetHeirarchyObjects().GetHeirarchyIDs().GetView()
-	if isView {
-		stmtCtx, sOk := primitiveGenerator.GetPrimitiveComposer().GetIndirectDescribeSelectCtx()
-		if !sOk || stmtCtx == nil {
-			return fmt.Errorf("cannot describe view without context")
-		}
-		nonControlColummns := stmtCtx.GetNonControlColumns()
-		if len(nonControlColummns) < 1 {
-			return fmt.Errorf("cannot describe view lacking columns")
-		}
-		pr := primitive.NewMetaDataPrimitive(
-			prov,
-			//nolint:revive // acceptable for now
-			func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-				return primitivebuilder.NewDescribeViewInstructionExecutor(handlerCtx, md, nonControlColummns, extended, full)
-			})
-		pgb.planGraphHolder.CreatePrimitiveNode(pr)
-		return nil
-	}
-	pr := primitive.NewMetaDataPrimitive(
-		prov,
-		//nolint:revive // acceptable for now
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-			return primitivebuilder.NewDescribeTableInstructionExecutor(handlerCtx, md, extended, full)
-		})
-	pgb.planGraphHolder.CreatePrimitiveNode(pr)
-	return nil
-}
-
-func (pgb *standardPlanGraphBuilder) handleDescribeMethod(pbi planbuilderinput.PlanBuilderInput) error {
-	handlerCtx := pbi.GetHandlerCtx()
-	node, ok := pbi.GetDescribeMethod()
-	if !ok {
-		return fmt.Errorf("could not cast node of type '%T' to required DescribeMethod", pbi.GetStatement())
-	}
-	providerName := node.Provider.GetRawVal()
-	serviceName := node.Service.GetRawVal()
-	resourceName := node.Resource.GetRawVal()
-	methodName := node.Method.GetRawVal()
-	if providerName == "" || serviceName == "" || resourceName == "" || methodName == "" {
-		return fmt.Errorf("DESCRIBE METHOD requires <provider>.<service>.<resource>.<method>")
-	}
-	prov, err := handlerCtx.GetProvider(providerName)
-	if err != nil {
-		return err
-	}
-	runtimeCtx := handlerCtx.GetRuntimeContext()
-	rsc, err := prov.GetResource(serviceName, resourceName, runtimeCtx)
-	if err != nil {
-		return err
-	}
-	extended := strings.TrimSpace(strings.ToLower(node.Extended)) == "extended"
-	pr := primitive.NewMetaDataPrimitive(
-		prov,
-		//nolint:revive // acceptable for now
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-			return primitivebuilder.NewDescribeMethodInstructionExecutor(handlerCtx, rsc, methodName, extended)
-		})
-	pgb.planGraphHolder.CreatePrimitiveNode(pr)
-	return nil
+	return pgb.handleAuth(pbi)
 }
 
 func (pgb *standardPlanGraphBuilder) arrangePrebuildIndirects(
@@ -701,40 +560,12 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 		if err != nil {
 			return err
 		}
-		insertCtx := primitiveGenerator.GetPrimitiveComposer().GetInsertPreparedStatementCtx()
-		var selectCtx drm.PreparedStatementCtx
-		if len(node.SelectExprs) > 0 {
-			selectCtx = primitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx()
+		if !tbl.IsPhysicalTable() {
+			return fmt.Errorf("provider DELETE must be planned through omnisdk")
 		}
-		isPhysicalTable := tbl.IsPhysicalTable()
-		bldrInput := builder_input.NewBuilderInput(
-			pgb.planGraphHolder,
-			handlerCtx,
-			tbl,
-		)
-		var bldr primitivebuilder.Builder
-		if !isPhysicalTable {
-			bldr = primitivebuilder.NewDelete(
-				pgb.planGraphHolder,
-				handlerCtx,
-				insertCtx,
-				selectCtx,
-				node,
-				tbl,
-				nil,
-				primitiveGenerator.GetPrimitiveComposer().IsAwait(),
-				bldrInput,
-			)
-		} else {
-			tcc := pbi.GetTxnCtrlCtrs()
-			bldr = primitivebuilder.NewRawNativeExec(
-				pgb.planGraphHolder,
-				handlerCtx,
-				tcc,
-				handlerCtx.GetQuery(),
-				bldrInput,
-			)
-		}
+		bldrInput := builder_input.NewBuilderInput(pgb.planGraphHolder, handlerCtx, tbl)
+		bldr := primitivebuilder.NewRawNativeExec(pgb.planGraphHolder, handlerCtx,
+			pbi.GetTxnCtrlCtrs(), handlerCtx.GetQuery(), bldrInput)
 		err = bldr.Build()
 		if err != nil {
 			return err
@@ -769,7 +600,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 				return pgb.handleRegistryPull(reg, node, pbi)
 			case "list":
 				var colz []string
-				var provz map[string]formulation.ProviderDescription
+				var provz map[string]registry.ProviderDescription
 				keys := make(map[string]map[string]interface{})
 				if node.ProviderId == "" {
 					provz, err = reg.ListAllAvailableProviders()
@@ -784,7 +615,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 					sort.Strings(dks)
 					for i, k := range dks {
 						v := provz[k]
-						for _, ver := range v.Versions() {
+						for _, ver := range v.Versions {
 							keys[strconv.Itoa(i)] = map[string]interface{}{
 								"provider": k,
 								"version":  ver,
@@ -801,7 +632,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 					for k, v := range provz {
 						keys[strconv.Itoa(i)] = map[string]interface{}{
 							"provider": k,
-							"versions": strings.Join(v.Versions(), ", "),
+							"versions": strings.Join(v.Versions, ", "),
 						}
 						i++
 					}
@@ -821,7 +652,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 
 // handleRegistryPull is a helper function that pulls a provider version from the registry and persists it locally.
 func (pgb *standardPlanGraphBuilder) handleRegistryPull(
-	reg formulation.RegistryAPI,
+	reg registry.RegistryAPI,
 	node *sqlparser.Registry,
 	pbi planbuilderinput.PlanBuilderInput,
 ) internaldto.ExecutorOutput {
@@ -842,7 +673,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistryPull(
 	}
 	if providerDesc, exists := localProviders[providerID]; exists {
 		// Remove all existing versions
-		for _, version := range providerDesc.Versions() {
+		for _, version := range providerDesc.Versions {
 			if err = reg.RemoveProviderVersion(providerID, version); err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}
@@ -1028,11 +859,6 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 				if selErr != nil {
 					return selErr
 				}
-				sr := routeanalysis.NewSelectRoutePass(rowsNode, selPbi, nil)
-				err = sr.RoutePass()
-				if err != nil {
-					return err
-				}
 				_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
 				if err != nil {
 					return err
@@ -1080,112 +906,10 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		if isPhysicalTable {
 			bldrInput.SetIsTargetPhysicalTable(true)
 		}
-		return pgb.handleMutationOperation(
-			handlerCtx,
-			pbi,
-			primitiveGenerator,
-			node,
-			tbl,
-			selectPrimitiveNode,
-			bldrInput,
-			isAwait,
-		)
+		return primitivebuilder.NewInsertOrUpdate(bldrInput).Build()
 	}
 	pr := primitive.NewGenericPrimitive(nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
-	return nil
-}
-
-func (pgb *standardPlanGraphBuilder) handleMutationOperation(
-	handlerCtx handler.HandlerContext,
-	pbi planbuilderinput.PlanBuilderInput,
-	primitiveGenerator primitivegenerator.PrimitiveGenerator,
-	node sqlparser.SQLNode,
-	tbl tablemetadata.ExtendedTableMetadata,
-	selectPrimitiveNode primitivegraph.PrimitiveNode,
-	bldrInput builder_input.BuilderInput,
-	isAwait bool,
-) error {
-	var returningExpressions sqlparser.SelectExprs
-	var inputAction string
-	var bldr primitivebuilder.Builder
-	switch n := node.(type) {
-	case *sqlparser.Insert:
-		returningExpressions = n.SelectExprs
-		inputAction = n.Action
-	case *sqlparser.Update:
-		returningExpressions = n.SelectExprs
-		inputAction = n.Action
-	default:
-		return fmt.Errorf("unsupported mutation operation of type '%T'", node)
-	}
-	//nolint:nestif // acceptable complexity
-	if len(returningExpressions) > 0 {
-		// Two cases:
-		//   1. Synchronous.  Equivalent to select.
-		//   2. Asynchronous.  Whole other story.
-		tableMeta, tableMetaExists := bldrInput.GetTableMetadata()
-		if !tableMetaExists {
-			return fmt.Errorf("could not obtain table metadata for node '%s'", inputAction)
-		}
-		rc, rcErr := tableinsertioncontainer.NewTableInsertionContainer(
-			tableMeta,
-			handlerCtx.GetSQLEngine(),
-			handlerCtx.GetTxnCounterMgr(),
-		)
-		if rcErr != nil {
-			return rcErr
-		}
-		bldrInput.SetTableInsertionContainer(rc)
-		bldrInput.SetIsReturning(true)
-		if !isAwait {
-			bldr = primitivebuilder.NewSingleAcquireAndSelect(
-				bldrInput,
-				primitiveGenerator.GetPrimitiveComposer().GetInsertPreparedStatementCtx(),
-				primitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx(),
-				nil,
-			)
-		} else {
-			bldrInput.SetIsAwait(true)
-			bldrInput.SetIsReturning(true)
-			bldrInput.SetInsertCtx(primitiveGenerator.GetPrimitiveComposer().GetInsertPreparedStatementCtx())
-			lhsBldr := primitivebuilder.NewInsertOrUpdate(
-				bldrInput,
-			)
-			newBldrInput := builder_input.NewBuilderInput(
-				pgb.planGraphHolder,
-				handlerCtx,
-				tbl,
-			)
-			newBldrInput.SetParserNode(node)
-			newBldrInput.SetAnnotatedAST(pbi.GetAnnotatedAST())
-			newBldrInput.SetTxnCtrlCtrs(pbi.GetTxnCtrlCtrs())
-			newBldrInput.SetTableInsertionContainer(rc)
-			newBldrInput.SetDependencyNode(selectPrimitiveNode)
-			newBldrInput.SetIsAwait(isAwait)
-			rhsBldr := primitivebuilder.NewSingleSelect(
-				pgb.planGraphHolder,
-				handlerCtx,
-				primitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx(),
-				[]tableinsertioncontainer.TableInsertionContainer{rc},
-				nil,
-				streaming.NewNopMapStream(),
-			)
-			bldr = primitivebuilder.NewDependencySubDAGBuilder(
-				pgb.planGraphHolder,
-				[]primitivebuilder.Builder{lhsBldr},
-				rhsBldr,
-			)
-		}
-	} else {
-		bldr = primitivebuilder.NewInsertOrUpdate(
-			bldrInput,
-		)
-	}
-	err := bldr.Build()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -1240,62 +964,7 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 			bldrInput.SetTxnCtrlCtrs(pbi.GetTxnCtrlCtrs())
 			bldrInput.SetIsTargetPhysicalTable(true)
 		}
-		isAwait := primitiveGenerator.GetPrimitiveComposer().IsAwait()
-		return pgb.handleMutationOperation(
-			handlerCtx,
-			pbi,
-			primitiveGenerator,
-			node,
-			tbl,
-			selectPrimitiveNode,
-			bldrInput,
-			isAwait,
-		)
-	}
-	pr := primitive.NewGenericPrimitive(nil, nil, nil, primitive_context.NewPrimitiveContext())
-	pgb.planGraphHolder.CreatePrimitiveNode(pr)
-	return nil
-}
-
-func (pgb *standardPlanGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilderInput) error {
-	handlerCtx := pbi.GetHandlerCtx()
-	node, ok := pbi.GetExec()
-	if !ok {
-		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
-	}
-	if !handlerCtx.GetRuntimeContext().TestWithoutAPICalls { //nolint:nestif // acceptable complexity
-		primitiveGenerator := pgb.rootPrimitiveGenerator
-		err := primitiveGenerator.AnalyzeStatement(pbi)
-		if err != nil {
-			return err
-		}
-		//
-		if primitiveGenerator.IsShowResults() && primitiveGenerator.GetPrimitiveComposer().GetBuilder() != nil {
-			err = primitiveGenerator.GetPrimitiveComposer().GetBuilder().Build()
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		tbl, err := primitiveGenerator.GetPrimitiveComposer().GetTable(node)
-		if err != nil {
-			return err
-		}
-		tcc := pbi.GetTxnCtrlCtrs()
-		bldr := primitivebuilder.NewExec(
-			primitiveGenerator.GetPrimitiveComposer().GetGraphHolder(),
-			handlerCtx,
-			node,
-			tbl,
-			primitiveGenerator.GetPrimitiveComposer().IsAwait(),
-			primitiveGenerator.IsShowResults(),
-			tcc,
-		)
-		err = bldr.Build()
-		if err != nil {
-			return err
-		}
-		return nil
+		return primitivebuilder.NewInsertOrUpdate(bldrInput).Build()
 	}
 	pr := primitive.NewGenericPrimitive(nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
@@ -1314,9 +983,7 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 		return err
 	}
 	nodeTypeUpper := strings.ToUpper(node.Type)
-	var tbl tablemetadata.ExtendedTableMetadata
-	switch nodeTypeUpper {
-	case "TRANSACTION_ISOLATION_LEVEL":
+	if nodeTypeUpper == "TRANSACTION_ISOLATION_LEVEL" {
 		builder := primitiveGenerator.GetPrimitiveComposer().GetBuilder()
 		_, isNativeSelect := builder.(*primitivebuilder.NativeSelect)
 		if isNativeSelect {
@@ -1324,14 +991,6 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 			return err
 		}
 		return fmt.Errorf("improper usage of 'show transaction isolation level'")
-	case "INSERT":
-		tbl, err = primitiveGenerator.GetPrimitiveComposer().GetTable(node)
-		if err != nil {
-			return err
-		}
-	case "METHODS":
-		//nolint:wastedassign // TODO: fix this
-		tbl, err = primitiveGenerator.GetPrimitiveComposer().GetTable(node) //nolint:ineffassign,staticcheck,lll // TODO: fix this
 	}
 	prov := primitiveGenerator.GetPrimitiveComposer().GetProvider()
 	pr := primitive.NewMetaDataPrimitive(
@@ -1341,10 +1000,7 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 			return primitivebuilder.NewShowInstructionExecutor(
 				node,
 				prov,
-				tbl,
 				handlerCtx,
-				primitiveGenerator.GetPrimitiveComposer().GetCommentDirectives(),
-				primitiveGenerator.GetPrimitiveComposer().GetTableFilter(),
 			)
 		})
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
@@ -1352,17 +1008,7 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 }
 
 func (pgb *standardPlanGraphBuilder) handleSleep(pbi planbuilderinput.PlanBuilderInput) error {
-	// handlerCtx := pbi.GetHandlerCtx()
-	_, ok := pbi.GetSleep()
-	if !ok {
-		return fmt.Errorf("could not cast statement of type '%T' to required Sleep", pbi.GetStatement())
-	}
-	primitiveGenerator := pgb.rootPrimitiveGenerator
-	err := primitiveGenerator.AnalyzeStatement(pbi)
-	if err != nil {
-		return err
-	}
-	return nil
+	return pgb.handleAuth(pbi)
 }
 
 func (pgb *standardPlanGraphBuilder) handleUse(pbi planbuilderinput.PlanBuilderInput) error {
@@ -1416,4 +1062,22 @@ func createErroneousPlan(
 		instructions,
 	)
 	return qPlan, err
+}
+
+func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBuilderInput) error {
+	return pgb.handleIntrinsicMetadata(pbi)
+}
+
+func (pgb *standardPlanGraphBuilder) handleDescribeMethod(pbi planbuilderinput.PlanBuilderInput) error {
+	return pgb.handleIntrinsicMetadata(pbi)
+}
+
+func (pgb *standardPlanGraphBuilder) handleIntrinsicMetadata(pbi planbuilderinput.PlanBuilderInput) error {
+	execute, handled := intrinsic.GeneratePrimitiveFunc(pbi.GetHandlerCtx(), pbi.GetStatement())
+	if !handled {
+		return fmt.Errorf("cannot resolve metadata for %s", sqlparser.String(pbi.GetStatement()))
+	}
+	pgb.planGraphHolder.CreatePrimitiveNode(primitive.NewMetaDataPrimitive(nil,
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput { return execute() }))
+	return nil
 }

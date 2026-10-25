@@ -6,6 +6,7 @@ from robot.libraries.Process import Process
 from requests import get, post, Response
 
 import os
+import sys
 
 from pathlib import Path, PurePosixPath
 
@@ -435,6 +436,23 @@ class web_service_keywords(Process):
             cwd=self._cwd,
         )
     
+    @keyword
+    def reset_changing_firewalls(self, execution_platform: str, port: int = 1080) -> None:
+        # Reset inside the mock container for Docker execution. Provider-facing
+        # host aliases are not addresses the Robot runner can necessarily resolve.
+        command = [sys.executable]
+        if execution_platform == 'docker':
+            command = ['docker', 'compose', '-f', 'docker-compose-testing.yml',
+                       'exec', '-T', 'google_mockserver', 'python']
+        program = (
+            "import ssl; from urllib.request import Request, urlopen; "
+            f"urlopen(Request('https://127.0.0.1:{port}/reset/changing-firewalls', "
+            "method='POST'), context=ssl._create_unverified_context(), timeout=10).read()"
+        )
+        result = self.run_process(*command, '-c', program, cwd=self._cwd)
+        if result.rc != 0:
+            raise RuntimeError(f'Cannot reset changing-firewalls mock: {result.stderr}')
+
     @keyword
     def start_all_webservers(self, port_dict: Optional[dict] = None) -> None:
         # if system has docker installed and also has docker compose file, use that to run mock servers

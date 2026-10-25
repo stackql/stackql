@@ -2,7 +2,7 @@
 
 These guidelines help contributors, human and otherwise, understand and work effectively on this repository.
 
-We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) for further useful information.  For deeper understanding of the "brains" of `stackql`, it is worthwhile to consult [the `AGENTS.md` file of `any-sdk`](https://github.com/stackql/any-sdk/blob/main/AGENTS.md) and linked documents from there.
+We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) for further useful information.  For deeper understanding of the "brains" of `stackql`, it is worthwhile to consult [the omnisdk developer invariants](https://github.com/stackql-labs/omnisdk/blob/main/docs/developer/invariants.md) and linked documents from there.
 
 We have upgraded to golang `>= 1.27.3` in order to take advantage of [time simulation and other capabilities in `testing/synctest`](https://go.dev/blog/testing-time).
 
@@ -10,7 +10,7 @@ We have upgraded to golang `>= 1.27.3` in order to take advantage of [time simul
 ## Project Structure & Module Organization
 
 - Entrypoint: [`stackql/main.go`](/stackql/main.go).
-- Ideally, foreign system semantics are dealt with in the `any-sdk` repository.
+- Ideally, foreign system semantics are dealt with in the `omnisdk` repository.
 - Loose adherence to popular idioms:
     - App internals in [`internal`](/internal).
     - Re-usable modules in [`pkg`](/pkg).
@@ -31,7 +31,7 @@ Common commands (run from repo root):
 
 ## Coding Style & Naming Conventions
 
-- Program to abstractions; concrete types and foreign-system semantics belong behind interfaces, ideally in `any-sdk`.
+- Program to abstractions; concrete types and foreign-system semantics belong behind interfaces, in `omnisdk`.
 - `gofmt`/`goimports` formatting; `golangci-lint` must pass (see [`.golangci.yml`](/.golangci.yml)).
 - Go identifier conventions: exported `CamelCase`, unexported `camelCase`, acronyms uppercase (`HTTPClient`, not `HttpClient`). Package names short and lowercase.
 
@@ -43,7 +43,7 @@ Common commands (run from repo root):
 ## Tools & Resources
 
 - Inspect provider surface via the running server: `SHOW PROVIDERS;`, `SHOW SERVICES IN <provider>;`, `DESCRIBE <resource>;`.
-- Provider definitions live in the [`stackql-provider-registry`](https://github.com/stackql/stackql-provider-registry); the request-execution brain lives in [`any-sdk`](https://github.com/stackql/any-sdk).
+- Provider definitions live in the [`stackql-provider-registry`](https://github.com/stackql/stackql-provider-registry); the request-execution brain lives in [`omnisdk`](https://github.com/stackql-labs/omnisdk).
 
 ## Commit & Pull Request Guidelines
 
@@ -61,15 +61,16 @@ StackQL supports flexible configuration management, including authentication sec
 ## SQLite backend
 
 - The embedded backend is `modernc.org/sqlite` (pure Go, no cgo), pinned >= v1.57.0
-  (caller-constructed `Driver` function registration). It is consumed via
-  [`any-sdk`](https://github.com/stackql/any-sdk) `public/sqlengine`, which registers
+  (caller-constructed `Driver` function registration). It is owned by
+  `internal/stackql/sqlengine`, which registers
   the driver under the name `stackql-sqlite`.
-- DSN construction happens only via the central `BuildDSN` in any-sdk `public/sqlengine`
+- SQL connections, staging, and backend execution remain in StackQL; Omni contains no SQL staging.
+- DSN construction happens only via the central `BuildDSN` in `internal/stackql/sqlengine`
   (legacy mattn-style params such as `_busy_timeout=5000` are translated to modernc
   `_pragma=busy_timeout(5000)` syntax there); driver errors are inspected only via the
   error predicates in that package (`isBusy`, `isConstraintViolation`); the custom
   extension functions (`split_part`, `regexp_like`, `regexp_substr`, `regexp_replace`,
-  `json_equal`, `aws_policy_equal`) live only in any-sdk `public/sqlfuncs` and are
+  `json_equal`, `aws_policy_equal`) live only in `internal/stackql/sqlengine/internal/sqlfuncs` and are
   registered on the constructed driver, never globally.
 - Never reintroduce `mattn/go-sqlite3`, cgo, the `sqlite_stackql` build tag, or
   package-global function registration. All builds and release artifacts are

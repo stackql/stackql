@@ -198,7 +198,7 @@ func description(path string) string {
 	switch path {
 	case "github.com/stackql/stackql-parser":
 		return "StackQL SQL parser, derived from Vitess"
-	case "github.com/stackql/any-sdk":
+	case "github.com/stackql-labs/omnisdk":
 		return "StackQL provider SDK"
 	case "github.com/stackql/readline":
 		return "StackQL fork of chzyer/readline for interactive line editing"

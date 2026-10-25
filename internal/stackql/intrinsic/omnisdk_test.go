@@ -13,10 +13,10 @@ import (
 
 	"github.com/lib/pq/oid"
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/output"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 type fakeRows struct {
@@ -311,10 +311,10 @@ func TestOmnisdkAuthAPIKeyDefaultsMatchCanonicalProviders(t *testing.T) {
 		wantName   string
 		wantPrefix string
 	}{
-		{in: dto.AuthCtx{Type: "api_key", ValuePrefix: "token "}, wantName: "Authorization", wantPrefix: "token "},
-		{in: dto.AuthCtx{Type: "api_key"}, wantName: "Authorization", wantPrefix: "Bearer "},
-		{in: dto.AuthCtx{Type: "api_key", Name: "X-Api-Key"}, wantName: "X-Api-Key", wantPrefix: ""},
-		{in: dto.AuthCtx{Type: "bearer"}, wantName: "", wantPrefix: ""},
+		{in: dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: "api_key", ValuePrefix: "token "}}, wantName: "Authorization", wantPrefix: "token "},
+		{in: dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: "api_key"}}, wantName: "Authorization", wantPrefix: "Bearer "},
+		{in: dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: "api_key", Name: "X-Api-Key"}}, wantName: "X-Api-Key", wantPrefix: ""},
+		{in: dto.AuthCtx{AuthConfig: omnisdk.AuthConfig{Type: "bearer"}}, wantName: "", wantPrefix: ""},
 	} {
 		authCtx := tc.in
 		got := omnisdkAuth(&authCtx)

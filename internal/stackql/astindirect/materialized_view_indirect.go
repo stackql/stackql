@@ -4,7 +4,6 @@ package astindirect
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -17,7 +16,6 @@ import (
 type MaterializedView struct {
 	viewDTO               internaldto.RelationDTO
 	selectStmt            sqlparser.SelectStatement
-	paramCollection       internaldto.TableParameterCollection
 	sqlSystem             sql_system.SQLSystem
 	underlyingSymbolTable symtab.SymTab
 }
@@ -44,14 +42,6 @@ func (v *MaterializedView) Next() (Indirect, bool) {
 
 func (v *MaterializedView) GetType() IndirectType {
 	return MaterializedViewType
-}
-
-func (v *MaterializedView) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
-	return v.paramCollection, v.paramCollection != nil
-}
-
-func (v *MaterializedView) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
-	v.paramCollection = paramCollection
 }
 
 func (v *MaterializedView) GetUnderlyingSymTab() symtab.SymTab {
@@ -84,14 +74,6 @@ func (v *MaterializedView) GetRelationalColumnByIdentifier(name string) (typing.
 		}
 	}
 	return nil, false
-}
-
-func (v *MaterializedView) GetOptionalParameters() map[string]formulation.Addressable {
-	return nil
-}
-
-func (v *MaterializedView) GetRequiredParameters() map[string]formulation.Addressable {
-	return nil
 }
 
 func (v *MaterializedView) GetColumnByName(_ string) (typing.ColumnMetadata, bool) {

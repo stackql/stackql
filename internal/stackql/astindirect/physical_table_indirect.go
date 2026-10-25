@@ -4,7 +4,6 @@ package astindirect
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -17,7 +16,6 @@ import (
 type physicalTable struct {
 	tableDTO              internaldto.RelationDTO
 	selectStmt            sqlparser.SelectStatement
-	paramCollection       internaldto.TableParameterCollection
 	sqlSystem             sql_system.SQLSystem
 	underlyingSymbolTable symtab.SymTab
 }
@@ -44,14 +42,6 @@ func (v *physicalTable) Next() (Indirect, bool) {
 
 func (v *physicalTable) GetType() IndirectType {
 	return PhysicalTableType
-}
-
-func (v *physicalTable) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
-	return v.paramCollection, v.paramCollection != nil
-}
-
-func (v *physicalTable) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
-	v.paramCollection = paramCollection
 }
 
 func (v *physicalTable) GetUnderlyingSymTab() symtab.SymTab {
@@ -84,14 +74,6 @@ func (v *physicalTable) GetRelationalColumnByIdentifier(name string) (typing.Rel
 		}
 	}
 	return nil, false
-}
-
-func (v *physicalTable) GetOptionalParameters() map[string]formulation.Addressable {
-	return nil
-}
-
-func (v *physicalTable) GetRequiredParameters() map[string]formulation.Addressable {
-	return nil
 }
 
 func (v *physicalTable) GetColumnByName(_ string) (typing.ColumnMetadata, bool) {

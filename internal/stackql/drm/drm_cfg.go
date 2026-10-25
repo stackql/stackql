@@ -8,21 +8,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/any-sdk/pkg/logging"
-	"github.com/stackql/any-sdk/pkg/streaming"
-	"github.com/stackql/any-sdk/public/discovery"
-	"github.com/stackql/any-sdk/public/formulation"
-	"github.com/stackql/any-sdk/public/radix_tree_address_space"
-	"github.com/stackql/any-sdk/public/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/sqlmachinery"
+	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
-	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -46,17 +41,7 @@ type Config interface {
 	) (map[string]map[string]interface{}, map[int]map[int]interface{})
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetRelationalType(string) string
-	GenerateDDL(
-		util.AnnotatedTabulation,
-		formulation.Provider,
-		formulation.Service,
-		formulation.Resource,
-		formulation.StandardOperationStore,
-		bool,
-		int,
-		bool,
-		bool,
-	) ([]string, error)
+
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]typing.ColumnMetadata) ([]interface{}, []string)
@@ -64,30 +49,9 @@ type Config interface {
 	GetParserTableName(internaldto.HeirarchyIdentifiers, int) sqlparser.TableName
 	GetSQLSystem() sql_system.SQLSystem
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
-	GenerateInsertDML(
-		util.AnnotatedTabulation,
-		formulation.Provider,
-		formulation.Service,
-		formulation.Resource,
-		formulation.StandardOperationStore,
-		internaldto.TxnControlCounters,
-		bool,
-		bool,
-	) (PreparedStatementCtx, error)
-	GenerateSelectDML(
-		util.AnnotatedTabulation,
-		formulation.Provider,
-		formulation.Service,
-		formulation.Resource,
-		formulation.StandardOperationStore,
-		internaldto.TxnControlCounters,
-		string,
-		string,
-		bool,
-	) (PreparedStatementCtx, error)
+
 	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
-	OpenapiColumnsToRelationalColumns(cols []formulation.ColumnDescriptor) []typing.RelationalColumn
-	OpenapiColumnsToRelationalColumn(col formulation.ColumnDescriptor) typing.RelationalColumn
+
 	QueryDML(sqlmachinery.Querier, PreparedStatementParameterized) (*sql.Rows, error)
 	ExecDDL(
 		querier sqlmachinery.ExecQuerier,
@@ -120,13 +84,11 @@ type Config interface {
 }
 
 type staticDRMConfig struct {
-	namespaceCollection    tablenamespace.Collection
-	controlAttributes      sqlcontrol.ControlAttributes
-	sqlEngine              sqlengine.SQLEngine
-	sqlSystem              sql_system.SQLSystem
-	typCfg                 typing.Config
-	analyzerFactoryFactory discovery.StaticAnalyzerFactoryFactory
-	persistenceSystem      formulation.PersistenceSystem
+	namespaceCollection tablenamespace.Collection
+	controlAttributes   sqlcontrol.ControlAttributes
+	sqlEngine           sqlengine.SQLEngine
+	sqlSystem           sql_system.SQLSystem
+	typCfg              typing.Config
 }
 
 func (dc *staticDRMConfig) GetSQLSystem() sql_system.SQLSystem {
@@ -146,79 +108,6 @@ func (dc *staticDRMConfig) GetFullyQualifiedRelationName(relationName string) st
 
 func (dc *staticDRMConfig) DelimitFullyQualifiedRelationName(fqtn string) string {
 	return dc.sqlSystem.DelimitFullyQualifiedRelationName(fqtn)
-}
-
-func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
-	cols []formulation.ColumnDescriptor,
-) []typing.RelationalColumn {
-	var relationalColumns []typing.RelationalColumn
-	for _, col := range cols {
-		var typeStr string
-		schemaExists := false
-		if col.GetSchema() != nil && !col.GetSchema().IsEmpty() {
-			typeStr = dc.GetRelationalType(col.GetSchema().GetType())
-			schemaExists = true
-		} else { //nolint:gocritic // defer fix
-			if col.GetVal() != nil {
-				switch col.GetVal().Type { //nolint:gocritic,exhaustive // defer fix
-				case sqlparser.BitVal:
-				}
-			}
-		}
-		relationalColumn := typing.NewRelationalColumn(
-			col.GetName(),
-			typeStr,
-		).WithQualifier(
-			col.GetQualifier(),
-		).WithAlias(col.GetAlias()).WithDecorated(col.GetDecoratedCol()).WithParserNode(col.GetNode())
-		if schemaExists {
-			inferredOID := typing.GetOidForSchema(col.GetSchema())
-			relationalColumn = relationalColumn.WithOID(inferredOID)
-		}
-		// TODO: Need a way to handle postgres differences. This is a fragile point
-		relationalColumns = append(relationalColumns, relationalColumn)
-	}
-	return relationalColumns
-}
-
-func (dc *staticDRMConfig) ToExternalSQLRelationalColumn(
-	tabAnn util.AnnotatedTabulation,
-	colName string,
-) (typing.RelationalColumn, error) {
-	return nil, fmt.Errorf("cannot find column '%s' for external SQL table '%s'", colName, tabAnn.GetInputTableName())
-}
-
-func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
-	col formulation.ColumnDescriptor,
-) typing.RelationalColumn {
-	var typeStr string
-	schemaExists := false
-	//nolint:gocritic,exhaustive // defer fix
-	if col.GetSchema() != nil && !col.GetSchema().IsEmpty() {
-		typeStr = dc.GetRelationalType(col.GetSchema().GetType())
-		schemaExists = true
-	} else {
-		if col.GetVal() != nil {
-			switch col.GetVal().Type {
-			case sqlparser.BitVal:
-			}
-		}
-	}
-	decoratedCol := col.GetDecoratedCol()
-	// if col.Alias != "" {
-	// 	decoratedCol = fmt.Sprintf(`%s AS "%s"`, decoratedCol, col.Alias)
-	// }
-	relationalColumn := typing.NewRelationalColumn(
-		col.GetName(),
-		typeStr,
-	).WithQualifier(col.GetQualifier()).WithAlias(col.GetAlias()).WithDecorated(decoratedCol).WithParserNode(col.GetNode())
-	if schemaExists {
-		inferredOID := typing.GetOidForSchema(col.GetSchema())
-		relationalColumn = relationalColumn.WithOID(inferredOID)
-	}
-	// TODO: Need a way to handle postgres differences
-
-	return relationalColumn
 }
 
 func (dc *staticDRMConfig) translateColDefTypeToRelationalType(
@@ -428,354 +317,6 @@ func (dc *staticDRMConfig) getParserTableName(
 		QualifierSecond: sqlparser.NewTableIdent(hIDs.GetServiceStr()),
 		QualifierThird:  sqlparser.NewTableIdent(hIDs.GetProviderStr()),
 	}
-}
-
-func (dc *staticDRMConfig) inferColType(col formulation.Column) string {
-	schema := col.GetSchema()
-	return dc.inferColTypeFromSchema(schema)
-}
-
-func (dc *staticDRMConfig) inferColTypeFromSchema(schema formulation.Schema) string {
-	relationalType := textStr
-	if schema != nil && !schema.IsEmpty() && schema.GetType() != "" {
-		relationalType = dc.GetRelationalType(schema.GetType())
-	}
-	return relationalType
-}
-
-func (dc *staticDRMConfig) genRelationalTableFromExternalSQLTable(
-	tabAnn util.AnnotatedTabulation,
-	discoveryGenerationID int,
-) (relationaldto.RelationalTable, error) {
-	tableName, err := dc.getTableName(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
-	if err != nil {
-		return nil, err
-	}
-	relationalTable := relationaldto.NewRelationalTable(
-		tabAnn.GetHeirarchyIdentifiers(),
-		discoveryGenerationID,
-		tableName,
-		tabAnn.GetInputTableName(),
-	)
-	tableColumns, err := dc.sqlSystem.ObtainRelationalColumnsFromExternalSQLtable(tabAnn.GetHeirarchyIdentifiers())
-	if err != nil {
-		return nil, err
-	}
-	for _, col := range tableColumns {
-		relationalTable.PushBackColumn(col)
-	}
-	return relationalTable, nil
-}
-
-func (dc *staticDRMConfig) obtainAddressSpace(
-	prov formulation.Provider,
-	svc formulation.Service,
-	resource formulation.Resource,
-	m formulation.StandardOperationStore,
-	isAwait bool,
-) (formulation.AddressSpace, error) {
-	addressSpaceFormulator := formulation.NewAddressSpaceFormulator(
-		radix_tree_address_space.NewAddressSpaceGrammar(),
-		prov,
-		svc,
-		resource,
-		m,
-		m.GetProjections(),
-		isAwait,
-	)
-	addressSpaceErr := addressSpaceFormulator.Formulate()
-	if addressSpaceErr != nil {
-		return nil, addressSpaceErr
-	}
-	addressSpace := addressSpaceFormulator.GetAddressSpace()
-	if addressSpace == nil {
-		return nil, fmt.Errorf("failed to obtain address space")
-	}
-	return addressSpace, nil
-}
-
-func (dc *staticDRMConfig) obtainRelationFromAddressSpace(
-	isAwait bool,
-	addressSpace formulation.AddressSpace,
-	isNilResponseAllowed bool,
-) (formulation.Relation, error) {
-	inferredRelation, inferredRelationErr := addressSpace.ToRelation(
-		formulation.NewStandardAddressSpaceExpansionConfig(
-			isAwait,
-			true, // TODO: switch this off at the appropriate time
-			isNilResponseAllowed,
-		))
-	if inferredRelationErr != nil {
-		return nil, inferredRelationErr
-	}
-	return inferredRelation, nil
-}
-
-func (dc *staticDRMConfig) genRelationalTable(
-	tabAnn util.AnnotatedTabulation,
-	prov formulation.Provider,
-	svc formulation.Service,
-	resource formulation.Resource,
-	m formulation.StandardOperationStore,
-	isAwait bool,
-	discoveryGenerationID int,
-	isNilResponseAllowed bool,
-) (relationaldto.RelationalTable, error) {
-	tableName, err := dc.getTableName(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
-	if err != nil {
-		return nil, err
-	}
-	_, isSQLDataSource := tabAnn.GetSQLDataSource()
-	if isSQLDataSource {
-		return dc.genRelationalTableFromExternalSQLTable(tabAnn, discoveryGenerationID)
-	}
-	relationalTable := relationaldto.NewRelationalTable(
-		tabAnn.GetHeirarchyIdentifiers(),
-		discoveryGenerationID,
-		tableName,
-		tabAnn.GetInputTableName(),
-	)
-	addressSpace, hasAddressSpace := m.GetAddressSpace()
-	if !hasAddressSpace {
-		addressSpace, err = dc.obtainAddressSpace(prov, svc, resource, m, isAwait)
-		if err != nil {
-			return nil, err
-		}
-	}
-	inferredRelation, inferredRelationErr := dc.obtainRelationFromAddressSpace(isAwait, addressSpace, isNilResponseAllowed)
-	if inferredRelationErr != nil {
-		return nil, inferredRelationErr
-	}
-	tableColumns := inferredRelation.GetColumns()
-	for _, col := range tableColumns {
-		colName := col.GetName()
-		colType := dc.inferColType(col)
-		// relationalType := dc.GetRelationalType(colType)
-		// TODO: add drm logic to infer / transform width as suplied by openapi doc
-		colWidth := col.GetWidth()
-		relationalColumn := typing.NewRelationalColumn(colName, colType).WithWidth(colWidth)
-		relationalTable.PushBackColumn(relationalColumn)
-	}
-	return relationalTable, nil
-}
-
-func (dc *staticDRMConfig) GenerateDDL(
-	tabAnn util.AnnotatedTabulation,
-	prov formulation.Provider,
-	svc formulation.Service,
-	resource formulation.Resource,
-	m formulation.StandardOperationStore,
-	isAwait bool,
-	discoveryGenerationID int,
-	dropTable bool,
-	isNilResponseAllowed bool,
-) ([]string, error) {
-	relationalTable, err := dc.genRelationalTable(
-		tabAnn, prov, svc, resource, m, isAwait, discoveryGenerationID, isNilResponseAllowed)
-	if err != nil {
-		return nil, err
-	}
-	return dc.sqlSystem.GenerateDDL(relationalTable, dropTable)
-}
-
-//nolint:gocritic,govet,funlen,nestif,gocognit // defer fix; this orchestration remains intentionally cohesive
-func (dc *staticDRMConfig) GenerateInsertDML(
-	tabAnnotated util.AnnotatedTabulation,
-	prov formulation.Provider,
-	svc formulation.Service,
-	resource formulation.Resource,
-	method formulation.StandardOperationStore,
-	tcc internaldto.TxnControlCounters,
-	isNilResponseAllowed bool,
-	isAsync bool,
-) (PreparedStatementCtx, error) {
-	var columns []typing.ColumnMetadata
-	_, isSQLDataSource := tabAnnotated.GetSQLDataSource()
-	var tableName string
-	var discoverID int
-	var err error
-	if isSQLDataSource {
-		tableObj, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers())
-		tableName = tableObj.GetName()
-		discoverID = tableObj.GetDiscoveryID()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		tableObj, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers())
-		tableName = tableObj.GetName()
-		discoverID = tableObj.GetDiscoveryID()
-		if err != nil {
-			return nil, err
-		}
-	}
-	genIDColName := dc.controlAttributes.GetControlGenIDColumnName()
-	sessionIDColName := dc.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := dc.controlAttributes.GetControlTxnIDColumnName()
-	insIDColName := dc.controlAttributes.GetControlInsIDColumnName()
-	insEncodedColName := dc.controlAttributes.GetControlInsertEncodedIDColumnName()
-
-	relationalTable := relationaldto.NewRelationalTable(
-		tabAnnotated.GetHeirarchyIdentifiers(),
-		discoverID,
-		tableName,
-		tabAnnotated.GetInputTableName(),
-	)
-	if isSQLDataSource {
-		tableColumns, err := dc.sqlSystem.ObtainRelationalColumnsFromExternalSQLtable(tabAnnotated.GetHeirarchyIdentifiers())
-		if err != nil {
-			return nil, err
-		}
-		for _, col := range tableColumns {
-			columns = append(columns, typing.NewRelayedColDescriptor(col, col.GetType()))
-			relationalTable.PushBackColumn(col)
-		}
-	} else {
-		addressSpace, addressSpaceErr := dc.obtainAddressSpace(prov, svc, resource, method, isAsync)
-		if addressSpaceErr != nil {
-			return nil, addressSpaceErr
-		}
-		inferredRelation, relationErr := dc.obtainRelationFromAddressSpace(
-			isAsync,
-			addressSpace,
-			isNilResponseAllowed,
-		)
-		if relationErr != nil {
-			return nil, relationErr
-		}
-		tableColumns := inferredRelation.GetColumnDescriptors()
-		for _, col := range tableColumns {
-			//nolint:unconvert // defer fix
-			col := formulation.ColumnDescriptor(col)
-			relationalType := textStr
-			schema := col.GetSchema()
-			if schema != nil && !schema.IsEmpty() && schema.GetType() != "" {
-				relationalType = dc.GetRelationalType(schema.GetType())
-			}
-			columns = append(columns, typing.NewColDescriptor(col, relationalType))
-			relationalColumn := typing.NewRelationalColumn(col.GetName(), relationalType).WithParserNode(col.GetNode())
-			relationalTable.PushBackColumn(relationalColumn)
-		}
-	}
-	queryString, err := dc.sqlSystem.GenerateInsertDML(relationalTable, tcc)
-	if err != nil {
-		return nil, err
-	}
-	priorParameters := tabAnnotated.GetParameters()
-	// TODO: fix this for dependent table where dependency has `IN` clause!!!
-	transformedParams, paramErr := util.TransformSQLRawParameters(priorParameters, false)
-	if paramErr != nil {
-		return nil, paramErr
-	}
-	return NewPreparedStatementCtx(
-			queryString,
-			"",
-			genIDColName,
-			sessionIDColName,
-			[]string{tableName},
-			txnIDColName,
-			insIDColName,
-			insEncodedColName,
-			columns,
-			1,
-			tcc,
-			nil,
-			dc.namespaceCollection,
-			dc.sqlSystem,
-			transformedParams,
-		),
-		nil
-}
-
-//nolint:revive // future proofing
-func (dc *staticDRMConfig) GenerateSelectDML(
-	tabAnnotated util.AnnotatedTabulation,
-	prov formulation.Provider,
-	svc formulation.Service,
-	resource formulation.Resource,
-	method formulation.StandardOperationStore,
-	txnCtrlCtrs internaldto.TxnControlCounters,
-	selectSuffix,
-	rewrittenWhere string,
-	isAwait bool,
-) (PreparedStatementCtx, error) {
-	var quotedColNames []string
-	var columns []typing.ColumnMetadata
-
-	aliasStr := ""
-	if tabAnnotated.GetAlias() != "" {
-		aliasStr = fmt.Sprintf(` AS "%s" `, tabAnnotated.GetAlias())
-	}
-	tn, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers())
-	if err != nil {
-		return nil, err
-	}
-	relationalTable := relationaldto.NewRelationalTable(
-		tabAnnotated.GetHeirarchyIdentifiers(),
-		tn.GetDiscoveryID(),
-		tn.GetName(),
-		tabAnnotated.GetInputTableName(),
-	).WithAlias(aliasStr)
-	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
-		//nolint:unconvert,govet // defer fix
-		col := formulation.ColumnDescriptor(col)
-		var typeStr string
-		//nolint:gocritic,exhaustive // TODO: fix
-		if col.GetSchema() != nil {
-			typeStr = dc.GetRelationalType(col.GetSchema().GetType())
-		} else {
-			if col.GetVal() != nil {
-				switch col.GetVal().Type {
-				case sqlparser.BitVal:
-				}
-			}
-		}
-		columns = append(columns, typing.NewColDescriptor(col, typeStr))
-		// TODO: logic to infer column width
-		relationalColumn := typing.NewRelationalColumn(
-			col.GetName(),
-			typeStr,
-		).WithQualifier(col.GetQualifier()).WithParserNode(col.GetNode())
-		if col.GetDecoratedCol() == "" {
-			if col.GetAlias() != "" {
-				relationalColumn = relationalColumn.WithAlias(col.GetAlias())
-			}
-		} else {
-			relationalColumn = relationalColumn.WithDecorated(col.GetDecoratedCol())
-		}
-		relationalTable.PushBackColumn(relationalColumn)
-		quotedColNames = append( //nolint:staticcheck // TODO: fix
-			quotedColNames,
-			fmt.Sprintf("%s ", relationalColumn.CanonicalSelectionString()),
-		)
-	}
-	queryString, err := dc.sqlSystem.GenerateSelectDML(relationalTable, txnCtrlCtrs, selectSuffix, rewrittenWhere)
-
-	if err != nil {
-		return nil, err
-	}
-
-	genIDColName := dc.controlAttributes.GetControlGenIDColumnName()
-	sessionIDColName := dc.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := dc.controlAttributes.GetControlTxnIDColumnName()
-	insIDColName := dc.controlAttributes.GetControlInsIDColumnName()
-	return NewPreparedStatementCtx(
-		queryString,
-		"",
-		genIDColName,
-		sessionIDColName,
-		nil,
-		txnIDColName,
-		insIDColName,
-		dc.controlAttributes.GetControlInsertEncodedIDColumnName(),
-		columns,
-		1,
-		txnCtrlCtrs,
-		nil,
-		dc.namespaceCollection,
-		dc.sqlSystem,
-		tabAnnotated.GetParameters(),
-	), nil
 }
 
 //nolint:unparam // defer fixing this
@@ -1018,19 +559,16 @@ func (dc *staticDRMConfig) InsertIntoPhysicalTable(
 
 func GenerateDRMConfig(
 	sqlSystem sql_system.SQLSystem,
-	persistenceSystem formulation.PersistenceSystem,
 	typCfg typing.Config,
 	namespaceCollection tablenamespace.Collection,
 	controlAttributes sqlcontrol.ControlAttributes,
 ) (Config, error) {
 	rv := &staticDRMConfig{
-		namespaceCollection:    namespaceCollection,
-		controlAttributes:      controlAttributes,
-		sqlEngine:              sqlSystem.GetSQLEngine(),
-		sqlSystem:              sqlSystem,
-		typCfg:                 typCfg,
-		analyzerFactoryFactory: discovery.NewStandardStaticAnalyzerFactoryFactory(),
-		persistenceSystem:      persistenceSystem,
+		namespaceCollection: namespaceCollection,
+		controlAttributes:   controlAttributes,
+		sqlEngine:           sqlSystem.GetSQLEngine(),
+		sqlSystem:           sqlSystem,
+		typCfg:              typCfg,
 	}
 	return rv, nil
 }

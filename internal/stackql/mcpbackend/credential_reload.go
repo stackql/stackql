@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/dto"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 
 	"github.com/stackql/stackql/internal/stackql/envfile"
 	"github.com/stackql/stackql/internal/stackql/intrinsic"

@@ -8,6 +8,7 @@ import (
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql-labs/omnisdk/pkg/sqlfn"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )
 
 // expandDocumentViews substitutes a single FROM view before the normal SDK
@@ -84,7 +85,7 @@ func expandDocumentViews(
 			return nil, fmt.Errorf("view %s requires a separate relational staging boundary", key)
 		}
 		// Clone the caller before replacing any AST references.
-		clone, err := sqlparser.Parse(sqlparser.String(node))
+		clone, err := sqlparser.Parse(statementSQL(node))
 		if err != nil {
 			return nil, err
 		}
@@ -228,4 +229,33 @@ func inlineDocumentView(node, view *sqlparser.Select, alias string) (*sqlparser.
 	}
 	node.From = view.From
 	return node, nil
+}
+
+// View SQL belongs to the host; describe its declared projections without executing it.
+func describeDocumentView(ctx queryContext, view aot.View, extended bool) internaldto.ExecutorOutput {
+	statement, err := sqlparser.Parse(view.DDL())
+	if err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	node, ok := statement.(*sqlparser.Select)
+	if !ok {
+		return internaldto.NewErroneousExecutorOutput(fmt.Errorf("view must declare SELECT"))
+	}
+	columns := make([]column, 0, len(node.SelectExprs))
+	for _, expression := range node.SelectExprs {
+		selection, isSelection := expression.(*sqlparser.AliasedExpr)
+		if !isSelection {
+			continue
+		}
+		name, nameErr := projectionName(selection)
+		if nameErr != nil {
+			return internaldto.NewErroneousExecutorOutput(nameErr)
+		}
+		typ := "text"
+		if _, bare := selection.Expr.(*sqlparser.ColName); bare {
+			typ = "unknown"
+		}
+		columns = append(columns, column{name: name, dataType: typ})
+	}
+	return describeDocumentColumns(ctx, columns, extended)
 }

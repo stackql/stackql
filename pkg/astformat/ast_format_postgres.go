@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
+	"github.com/stackql/stackql/internal/stackql/constants"
 )
 
 //nolint:revive // Explicit type declaration removes any ambiguity
@@ -27,8 +28,9 @@ func PostgresSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.S
 		formatColIdent(node, buf)
 		return
 	case *sqlparser.FuncExpr:
+		node = postgresJSONExtract(node)
 		if strings.ToLower(node.Name.GetRawVal()) == constants.SQLFuncJSONExtractPostgres && len(node.Exprs) > 1 {
-			sb := sqlparser.NewTrackedBuffer(PostgresSelectExprsFormatter)
+			sb := buf
 			sb.AstPrintf(
 				node,
 				"%s(%v%s, %v",
@@ -40,11 +42,10 @@ func PostgresSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.S
 				sb.AstPrintf(node, ", %v", val)
 			}
 			sb.AstPrintf(node, ")")
-			buf.WriteString(sb.String())
 			return
 		}
 		if strings.ToLower(node.Name.GetRawVal()) == sqlparser.JsonArrayElementsTextStr && len(node.Exprs) >= 1 {
-			sb := sqlparser.NewTrackedBuffer(PostgresSelectExprsFormatter)
+			sb := buf
 			sb.AstPrintf(
 				node,
 				"%s(%v%s",
@@ -58,15 +59,13 @@ func PostgresSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.S
 				}
 			}
 			sb.AstPrintf(node, ")")
-			buf.WriteString(sb.String())
 			return
 		}
 		node.Format(buf)
 		return
 	case *sqlparser.GroupConcatExpr:
-		sb := sqlparser.NewTrackedBuffer(PostgresSelectExprsFormatter)
+		sb := buf
 		sb.AstPrintf(node, "%s(%v, %s)", constants.SQLFuncGroupConcatPostgres, node.Exprs[0], `','`)
-		buf.WriteString(sb.String())
 		return
 
 	default:
@@ -116,4 +115,16 @@ func formattedString(node sqlparser.SQLNode, formatter sqlparser.NodeFormatter) 
 	buf := sqlparser.NewTrackedBuffer(formatter)
 	buf.Myprintf("%v", node)
 	return buf.String()
+}
+
+func postgresJSONExtract(node *sqlparser.FuncExpr) *sqlparser.FuncExpr {
+	if !strings.EqualFold(node.Name.GetRawVal(), constants.SQLFuncJSONExtractConformed) {
+		return node
+	}
+	cloned := *node
+	rewritten, err := astfuncrewrite.GetPostgresASTFuncRewriter().RewriteFunc(&cloned)
+	if err != nil {
+		return node
+	}
+	return rewritten
 }

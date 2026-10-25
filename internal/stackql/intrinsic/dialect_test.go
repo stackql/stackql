@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stackql-labs/omnisdk/pkg/sqlfn"
-	"github.com/stackql/any-sdk/pkg/dto"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 // backendCtx is a queryContext whose only state is the SQL backend's configuration.

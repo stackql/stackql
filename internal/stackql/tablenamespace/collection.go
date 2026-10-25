@@ -1,9 +1,9 @@
 package tablenamespace
 
 import (
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/sqlengine"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
 type Collection interface {

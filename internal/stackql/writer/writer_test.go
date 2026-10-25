@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/presentation"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

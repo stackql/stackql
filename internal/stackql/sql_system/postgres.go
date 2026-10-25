@@ -10,16 +10,16 @@ import (
 	"time"
 
 	"github.com/lib/pq/oid"
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/pkg/logging"
-	"github.com/stackql/any-sdk/public/formulation"
-	"github.com/stackql/any-sdk/public/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/constants"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
+
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
+	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/serde"
 	"github.com/stackql/stackql/pkg/textutil"
@@ -144,14 +144,14 @@ func (eng *postgresSystem) GenerateDDL(
 
 func (eng *postgresSystem) RegisterExternalTable(
 	connectionName string,
-	tableDetails formulation.SQLExternalTable,
+	tableDetails sqlengine.SQLExternalTable,
 ) error {
 	return eng.registerExternalTable(connectionName, tableDetails)
 }
 
 func (eng *postgresSystem) registerExternalTable(
 	connectionName string,
-	tableDetails formulation.SQLExternalTable,
+	tableDetails sqlengine.SQLExternalTable,
 ) error {
 	q := `
 	INSERT INTO "__iql__.external.columns" (
@@ -640,10 +640,7 @@ func (eng *postgresSystem) RefreshMaterializedView(naiveViewName string,
 	varargs ...any) error {
 	fullyQualifiedRelationName := eng.getFullyQualifiedRelationName(naiveViewName)
 	//nolint:gosec // no viable alternative
-	deleteQuery := fmt.Sprintf(`
-		DELETE FROM "%s"`,
-		fullyQualifiedRelationName,
-	)
+	deleteQuery := "DELETE FROM " + eng.DelimitFullyQualifiedRelationName(fullyQualifiedRelationName)
 	txn, err := eng.sqlEngine.GetTx()
 	if err != nil {
 		return err
@@ -661,7 +658,8 @@ func (eng *postgresSystem) RefreshMaterializedView(naiveViewName string,
 		// no need to rollbak; assumed already done
 		return fmt.Errorf("cannot refresh materialized view = '%s': not found", naiveViewName)
 	}
-	insertQuery := eng.generateTableInsertDMLFromViewSelect(fullyQualifiedRelationName, selectQuery, colz)
+	insertQuery := eng.generateTableInsertDMLFromViewSelect(
+		eng.DelimitFullyQualifiedRelationName(fullyQualifiedRelationName), selectQuery, colz)
 	_, err = txn.Exec(insertQuery, varargs...)
 	if err != nil {
 		txn.Rollback()
@@ -985,7 +983,11 @@ func (eng *postgresSystem) GetFullyQualifiedRelationName(tableName string) strin
 }
 
 func (eng *postgresSystem) DelimitFullyQualifiedRelationName(fqtn string) string {
-	return fqtn
+	quote := func(name string) string { return `"` + strings.ReplaceAll(name, `"`, `""`) + `"` }
+	if eng.IsRelationExported(fqtn) {
+		return quote(eng.exportNamespace) + "." + quote(strings.TrimPrefix(fqtn, eng.exportNamespace+"."))
+	}
+	return quote(fqtn)
 }
 
 func (eng *postgresSystem) getFullyQualifiedRelationName(tableName string) string {
@@ -1883,13 +1885,14 @@ func (eng *postgresSystem) runMaterializedViewCreate(
 			return err
 		}
 	}
-	tableDDL := eng.generateTableDDL(naiveRelationName, colz)
+	tableDDL := eng.generateTableDDL(eng.DelimitFullyQualifiedRelationName(naiveRelationName), colz)
 	_, err := txn.Exec(tableDDL)
 	if err != nil {
 		txn.Rollback()
 		return err
 	}
-	insertQuery := eng.generateTableInsertDMLFromViewSelect(naiveRelationName, selectQuery, colz)
+	insertQuery := eng.generateTableInsertDMLFromViewSelect(
+		eng.DelimitFullyQualifiedRelationName(naiveRelationName), selectQuery, colz)
 	_, err = txn.Exec(insertQuery, varargs...)
 	if err != nil {
 		txn.Rollback()

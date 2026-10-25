@@ -8,14 +8,15 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/output"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/astformat"
 
@@ -141,7 +142,7 @@ func newStagingTestCtx(t *testing.T, endpoint string) *stagingTestCtx {
 	if err != nil {
 		t.Fatal(err)
 	}
-	engine, err := sqlengine.NewSQLEngine(sqlCfg, nil)
+	engine, err := sqlengine.NewSQLEngine(sqlengine.Config{DBEngine: sqlCfg.DBEngine, DSN: sqlCfg.GetDSN()}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +161,7 @@ func newStagingTestCtx(t *testing.T, endpoint string) *stagingTestCtx {
 	}
 	previous := previewCfg
 	previewCfg = newBackendInput(previewCfgDTO{
-		Unstable: true, Staging: true, Endpoint: endpointJSON, InsecureSkipTLSVerify: true,
+		Unstable: true, Endpoint: endpointJSON, InsecureSkipTLSVerify: true,
 	})
 	t.Cleanup(func() { previewCfg = previous })
 	return &stagingTestCtx{
@@ -193,8 +194,28 @@ func renderCSV(t *testing.T, sql string, out internaldto.ExecutorOutput) string 
 	return buf.String()
 }
 
-// The staging manager is created once per process, so every end-to-end case
-// shares one backend and runs in this one test.
+func TestDescribeDocumentWithoutExecutingProvider(t *testing.T) {
+	ctx := newStagingTestCtx(t, "https://unused.invalid")
+	for _, sql := range []string{
+		"describe fixture.orgs.members",
+		"describe method fixture.orgs.members.list_members",
+	} {
+		statement, err := sqlparser.Parse(sql)
+		if err != nil {
+			t.Fatal(err)
+		}
+		execute, handled := GeneratePrimitiveFunc(ctx, statement)
+		if !handled {
+			t.Fatalf("metadata statement was not handled: %s", sql)
+		}
+		result := renderCSV(t, sql, execute())
+		if !strings.Contains(result, "login,string") || !strings.Contains(result, "id,integer") {
+			t.Fatalf("missing declared response columns: %s", result)
+		}
+	}
+}
+
+// These end-to-end cases share a backend to verify staging cleanup across queries.
 func TestStagedSelectEndToEnd(t *testing.T) {
 	members := []map[string]any{
 		{"login": "a", "id": 1, "type": "User"},
@@ -404,6 +425,9 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 		}
 	}
 
+	testMaterializedReads(t, ctx)
+	testStatementReads(t, ctx)
+
 	db, err := ctx.engine.GetDB()
 	if err != nil {
 		t.Fatal(err)
@@ -426,5 +450,69 @@ func TestExpandedCTEDepthHonorsHostLimit(t *testing.T) {
 	}
 	if err := validateRelationDepth(query.From, 2, 0); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func testMaterializedReads(t *testing.T, ctx *stagingTestCtx) {
+	t.Helper()
+	for _, query := range []string{
+		"create materialized view omni_members as select login, id from fixture.orgs.members where org = 'dummyorg' order by id",
+		"create or replace materialized view omni_members as select login, id from fixture.orgs.members where org = 'dummyorg' order by id",
+	} {
+		execute, claimed := materializedFunc(ctx, parseStatement(t, query))
+		if !claimed {
+			t.Fatalf("materialized query not claimed: %s", query)
+		}
+		if err := execute().GetError(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	read, claimed := selectFunc(ctx, parseSelect(t, "select count(*) as n from omni_members"), "")
+	if !claimed {
+		t.Fatal("stored materialized view not claimed")
+	}
+	if got := renderCSV(t, "select count(*) as n from omni_members", read()); got != "n\n4\n" {
+		t.Fatalf("materialized rows: %q", got)
+	}
+
+}
+
+func testStatementReads(t *testing.T, ctx *stagingTestCtx) {
+	t.Helper()
+	for _, tc := range []struct{ sql, want string }{
+		{"select 1 as n union all select 1 as n", "n\n1\n1\n"},
+		{"select 1 as n union select 1 as n", "n\n1\n"},
+		{"select login, id from fixture.orgs.members where org = 'dummyorg' union all select login, id from fixture.orgs.members where org = 'dummyorg' order by id desc limit 2", "login,id\nb,10\nb,10\n"},
+		{"with combined as (select login from fixture.orgs.members where org = 'dummyorg' union all select login from fixture.orgs.members where org = 'dummyorg') select count(*) as n from combined", "n\n8\n"},
+	} {
+		execute, handled := GenerateStreamFunc(ctx, parseStatement(t, tc.sql))
+		if !handled {
+			t.Fatalf("statement not claimed: %s", tc.sql)
+		}
+		if got := renderCSV(t, tc.sql, execute()); got != tc.want {
+			t.Errorf("%s: got %q, want %q", tc.sql, got, tc.want)
+		}
+	}
+}
+
+func TestValidateStatementDoesNotDispatchRequests(t *testing.T) {
+	t.Setenv("FIXTURE_TOKEN", "test-token")
+	ctx := newStagingTestCtx(t, "https://unused.invalid")
+	for _, test := range []struct {
+		sql   string
+		valid bool
+	}{
+		{"select login from fixture.orgs.members where org = 'dummyorg'", true},
+		{"select count(*) from fixture.orgs.members where org = 'dummyorg'", true},
+		{"select login from fixture.orgs.missing", false},
+	} {
+		statement, err := sqlparser.Parse(test.sql)
+		if err != nil {
+			t.Fatal(err)
+		}
+		handled, err := ValidateStatement(ctx, statement)
+		if !handled || (err == nil) != test.valid {
+			t.Fatalf("%s: handled=%v err=%v", test.sql, handled, err)
+		}
 	}
 }

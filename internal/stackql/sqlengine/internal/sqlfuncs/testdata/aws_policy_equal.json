@@ -1,0 +1,254 @@
+{
+  "function": "aws_policy_equal",
+  "vectors": [
+    {
+      "id": "sef_1_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 1_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_2_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 2_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"},{\"Effect\":\"Deny\",\"Action\":\"ec2:*\",\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Deny\",\"Action\":\"ec2:*\",\"Resource\":\"*\"},{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}]}"
+      ],
+      "result": 0,
+      "note": "Statement arrays are order-sensitive"
+    },
+    {
+      "id": "sef_2_02",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 2_02",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Deny\",\"Action\":\"s3:*\",\"Resource\":\"*\"}]}"
+      ],
+      "result": 0
+    },
+    {
+      "id": "sef_3_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 3_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:PutObject\"],\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:PutObject\",\"s3:GetObject\"],\"Resource\":\"*\"}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_3_02",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 3_02",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":[\"arn:aws:s3:::mybucket\",\"arn:aws:s3:::otherbucket\"]}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":[\"arn:aws:s3:::otherbucket\",\"arn:aws:s3:::mybucket\"]}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_4_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 4_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"arn:aws:iam::123456789012:role/role1\",\"arn:aws:iam::123456789012:role/role2\"]},\"Action\":\"s3:*\",\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"arn:aws:iam::123456789012:role/role2\",\"arn:aws:iam::123456789012:role/role1\"]},\"Action\":\"s3:*\",\"Resource\":\"*\"}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_4_02",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 4_02",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:role/role1\",\"Service\":\"lambda.amazonaws.com\"},\"Action\":\"s3:*\",\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\",\"AWS\":\"arn:aws:iam::123456789012:role/role1\"},\"Action\":\"s3:*\",\"Resource\":\"*\"}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_5_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 5_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"arn:aws:iam::123456789012:role/role1\"]},\"Action\":[\"s3:GetObject\",\"s3:PutObject\"],\"Resource\":[\"arn:aws:s3:::bucket1/*\",\"arn:aws:s3:::bucket2/*\"],\"Condition\":{\"StringEquals\":{\"aws:PrincipalTag/department\":\"HR\"}}}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"arn:aws:iam::123456789012:role/role1\"]},\"Action\":[\"s3:PutObject\",\"s3:GetObject\"],\"Resource\":[\"arn:aws:s3:::bucket2/*\",\"arn:aws:s3:::bucket1/*\"],\"Condition\":{\"StringEquals\":{\"aws:PrincipalTag/department\":\"HR\"}}}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_6_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 6_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Condition\":{\"StringEquals\":{\"sts:ExternalId\":\"0000\"}},\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL\"}}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL\"},\"Action\":\"sts:AssumeRole\",\"Condition\":{\"StringEquals\":{\"sts:ExternalId\":\"0000\"}}}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_7_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 7_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"Statement1\",\"Effect\":\"Allow\",\"Action\":[\"ec2:DescribeInstances\",\"ec2:StartInstances\"],\"Resource\":\"*\"},{\"Sid\":\"Statement2\",\"Effect\":\"Deny\",\"Action\":\"ec2:StopInstances\",\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"Statement1\",\"Effect\":\"Allow\",\"Action\":[\"ec2:StartInstances\",\"ec2:DescribeInstances\"],\"Resource\":\"*\"},{\"Sid\":\"Statement2\",\"Effect\":\"Deny\",\"Action\":\"ec2:StopInstances\",\"Resource\":\"*\"}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "sef_8_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 8_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"*\",\"Resource\":\"arn:aws:s3:::mybucket\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"*\",\"Resource\":\"arn:aws:S3:::mybucket\"}]}"
+      ],
+      "result": 1,
+      "note": "ARN strings under unordered fields compare case-insensitively"
+    },
+    {
+      "id": "sef_9_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 9_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\"],\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:GetObject\",\"Resource\":\"*\"}]}"
+      ],
+      "result": 1,
+      "note": "single-element array form equals scalar form"
+    },
+    {
+      "id": "sef_10_01",
+      "source": "sqlite-ext-functions test/aws_policy_equal.sql 10_01",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\",\"Condition\":{\"StringEquals\":{\"aws:username\":\"johndoe\"},\"Bool\":{\"aws:SecureTransport\":\"true\"}}}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"true\"},\"StringEquals\":{\"aws:username\":\"johndoe\"}}}]}"
+      ],
+      "result": 1
+    },
+    {
+      "id": "pr783_01",
+      "source": "stackql PR #783 cgo golden sample",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\"],\"Resource\":\"*\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:GetObject\",\"Resource\":\"*\"}]}"
+      ],
+      "result": 1,
+      "note": "scalar vs array forms sample"
+    },
+    {
+      "id": "cref_null_lhs",
+      "source": "C reference implementation behavior (aws_policy_equal.c)",
+      "args": [
+        null,
+        "{}"
+      ],
+      "error": true,
+      "note": "NULL arguments raise an error in the C implementation, not NULL"
+    },
+    {
+      "id": "cref_null_rhs",
+      "source": "C reference implementation behavior (aws_policy_equal.c)",
+      "args": [
+        "{}",
+        null
+      ],
+      "error": true
+    },
+    {
+      "id": "cref_strcmp_shortcut",
+      "source": "C reference implementation behavior (aws_policy_equal.c)",
+      "args": [
+        "not json",
+        "not json"
+      ],
+      "result": 1,
+      "note": "byte-identical strings compare equal before any parsing"
+    },
+    {
+      "id": "cref_invalid_json",
+      "source": "C reference implementation behavior (aws_policy_equal.c)",
+      "args": [
+        "not json",
+        "not  json"
+      ],
+      "error": true,
+      "note": "non-identical unparseable documents raise a parse error"
+    },
+    {
+      "id": "fork_tags_top_01",
+      "source": "stackql-go-sqlite3 fork amalgamation (SQLITE_ENABLE_STACKQL) fork-only behavior",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}],\"Tags\":[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"data\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}],\"Tags\":[{\"Key\":\"team\",\"Value\":\"data\"},{\"Key\":\"env\",\"Value\":\"prod\"}]}"
+      ],
+      "result": 1,
+      "note": "top-level Tags arrays compare unordered (fork-only field-set addition)"
+    },
+    {
+      "id": "fork_tags_top_02",
+      "source": "stackql-go-sqlite3 fork amalgamation (SQLITE_ENABLE_STACKQL) fork-only behavior",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}],\"Tags\":[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"data\"}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}],\"Tags\":[{\"Key\":\"env\",\"Value\":\"dev\"},{\"Key\":\"team\",\"Value\":\"data\"}]}"
+      ],
+      "result": 0,
+      "note": "top-level Tags with a differing element are unequal"
+    },
+    {
+      "id": "fork_tags_statement_01",
+      "source": "stackql-go-sqlite3 fork amalgamation (SQLITE_ENABLE_STACKQL) fork-only behavior",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\",\"Tags\":[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"data\"}]}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\",\"Tags\":[{\"Key\":\"team\",\"Value\":\"data\"},{\"Key\":\"env\",\"Value\":\"prod\"}]}]}"
+      ],
+      "result": 1,
+      "note": "Tags arrays nested within a statement compare unordered (fork-only field-set addition)"
+    },
+    {
+      "id": "fork_tags_statement_02",
+      "source": "stackql-go-sqlite3 fork amalgamation (SQLITE_ENABLE_STACKQL) fork-only behavior",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\",\"Tags\":[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"data\"}]}]}",
+        "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\",\"Tags\":[{\"Key\":\"env\",\"Value\":\"dev\"},{\"Key\":\"team\",\"Value\":\"data\"}]}]}"
+      ],
+      "result": 0,
+      "note": "nested Tags with a differing element are unequal"
+    },
+    {
+      "id": "fork_tags_lower_01",
+      "source": "stackql-go-sqlite3 fork amalgamation (SQLITE_ENABLE_STACKQL) fork-only behavior",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"tags\":[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"data\"}]}",
+        "{\"Version\":\"2012-10-17\",\"tags\":[{\"Key\":\"team\",\"Value\":\"data\"},{\"Key\":\"env\",\"Value\":\"prod\"}]}"
+      ],
+      "result": 1,
+      "note": "lowercase tags is a distinct fork-only field-set entry (set matching is case-sensitive)"
+    },
+    {
+      "id": "fork_tags_lower_02",
+      "source": "stackql-go-sqlite3 fork amalgamation (SQLITE_ENABLE_STACKQL) fork-only behavior",
+      "args": [
+        "{\"Version\":\"2012-10-17\",\"tags\":[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"data\"}]}",
+        "{\"Version\":\"2012-10-17\",\"tags\":[{\"Key\":\"env\",\"Value\":\"dev\"},{\"Key\":\"team\",\"Value\":\"data\"}]}"
+      ],
+      "result": 0,
+      "note": "lowercase tags with a differing element are unequal"
+    },
+    {
+      "id": "fork_root_array_01",
+      "source": "stackql-go-sqlite3 fork amalgamation (SQLITE_ENABLE_STACKQL) fork-only behavior",
+      "args": [
+        "[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"data\"}]",
+        "[{\"Key\":\"team\",\"Value\":\"data\"},{\"Key\":\"env\",\"Value\":\"prod\"}]"
+      ],
+      "result": 1,
+      "note": "two top-level array documents compare unordered (fork-only behavior)"
+    },
+    {
+      "id": "fork_root_array_02",
+      "source": "stackql-go-sqlite3 fork amalgamation (SQLITE_ENABLE_STACKQL) fork-only behavior",
+      "args": [
+        "[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"data\"}]",
+        "[{\"Key\":\"env\",\"Value\":\"dev\"},{\"Key\":\"team\",\"Value\":\"data\"}]"
+      ],
+      "result": 0,
+      "note": "top-level array documents with a differing element are unequal"
+    }
+  ]
+}

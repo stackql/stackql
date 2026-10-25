@@ -6,9 +6,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
@@ -39,7 +39,7 @@ func GetRuntimeCtx(providerStr string, outputFmtStr string, testName string) (*d
 		LogLevelStr:               "warn",
 		ApplicationFilesRootPath:  appRoot,
 		AuthRaw:                   fmt.Sprintf(`{ "google": { "credentialsfilepath": "%s" }, "okta": { "credentialsfilepath": "%s", "type": "api_key" } }`, saKeyPath, oktaSaKeyPath),
-		RegistryRaw:               fmt.Sprintf(`{ "url": "file://%s",  "useEmbedded": false, useEmbedded, "verifyConfig": { "nopVerify": true } }`, registryRoot),
+		RegistryRaw:               fmt.Sprintf(`{ "url": "file://%s", "localDocRoot": "%s", "useEmbedded": false, "verifyConfig": { "nopVerify": true } }`, registryRoot, registryRoot),
 		OutputFormat:              outputFmtStr,
 		SQLBackendCfgRaw:          fmt.Sprintf(`{ "dbInitFilepath": "%s", "dsn": "file:%s?mode=memory&cache=shared" }`, dbInitFilePath, testName),
 		ExecutionConcurrencyLimit: 1,

@@ -7,15 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
-	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/formulation"
-	"github.com/stackql/any-sdk/public/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/constants"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
+
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/astformat"
 )
@@ -110,7 +110,7 @@ type SQLSystem interface {
 		varargs ...any) error
 
 	// External SQL data sources
-	RegisterExternalTable(connectionName string, tableDetails formulation.SQLExternalTable) error
+	RegisterExternalTable(connectionName string, tableDetails sqlengine.SQLExternalTable) error
 	ObtainRelationalColumnFromExternalSQLtable(
 		hierarchyIDs internaldto.HeirarchyIdentifiers,
 		colName string,

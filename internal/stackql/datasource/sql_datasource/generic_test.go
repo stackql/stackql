@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stackql/any-sdk/pkg/constants"
-	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/stackql/internal/stackql/constants"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

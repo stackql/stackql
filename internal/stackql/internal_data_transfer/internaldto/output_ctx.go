@@ -3,8 +3,8 @@ package internaldto
 import (
 	"time"
 
-	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/psql-wire/pkg/sqldata"
+	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 )
 
 type OutputContext struct {

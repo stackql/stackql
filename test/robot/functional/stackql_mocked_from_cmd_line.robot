@@ -1786,7 +1786,7 @@ Debug HTTP Plus Transparent Placeholder URL and Defaulted Request Body Returns E
     ...    |------------|-------------|
     ...    |${SPACE}bkp-000002${SPACE}|${SPACE}READY${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------|-------------|
-    ${hostName} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"     host.docker.internal    localhost
+    ${hostName} =    Set Variable    ${LOCAL_HOST_ALIAS}
     ${stderrStr} =    Catenate    SEPARATOR=\n
     ...    http request url: 'https://${hostName}:1091/', method: 'POST'
     ...    http request body = '{"Filters":{}}'
@@ -1937,6 +1937,7 @@ Response Error Printed by Default on 403 Null Body Error
     ...    stderr=${CURDIR}/tmp/Response-Error-Printed-by-Default-on-403-Error-stderr.tmp
 
 Create Changing Dynamic Materialized View Scenario Working
+    Reset Changing Firewalls    ${EXECUTION_PLATFORM}    ${MOCKSERVER_PORT_GOOGLE}
     ${inputStr} =    Catenate
     ...    create materialized view silly_changing_mv as select * from google.compute.firewalls where project = 'changing-project';
     ...    select name, id from silly_changing_mv order by name desc, id desc;
@@ -3038,31 +3039,31 @@ Registry Pull Overwrite Works in Both Directions
     ...    registry pull google 'v0.1.2';
     ...    show resources in google.storage;
     ${stdOutStr} =    Catenate    SEPARATOR=\n
-    ...    |------|------------------------|
-    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |------|------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.buckets${SPACE}|
-    ...    |------|------------------------|
-    ...    |------|-------------------------------|
-    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |------|-------------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.bucket_objects${SPACE}|
-    ...    |------|-------------------------------|
-    ...    |------|--------------------------------|
-    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |------|--------------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.storage_buckets${SPACE}|
-    ...    |------|--------------------------------|
-    ...    |------|-------------------------------|
-    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |------|-------------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.bucket_objects${SPACE}|
-    ...    |------|-------------------------------|
-    ...    |------|------------------------|
-    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |------|------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.buckets${SPACE}|
-    ...    |------|------------------------|
+    ...    |---------|------------------------|
+    ...    |${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------|------------------------|
+    ...    |${SPACE}buckets${SPACE}|${SPACE}google.storage.buckets${SPACE}|
+    ...    |---------|------------------------|
+    ...    |----------------|-------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------|-------------------------------|
+    ...    |${SPACE}bucket_objects${SPACE}|${SPACE}google.storage.bucket_objects${SPACE}|
+    ...    |----------------|-------------------------------|
+    ...    |-----------------|--------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------|--------------------------------|
+    ...    |${SPACE}storage_buckets${SPACE}|${SPACE}google.storage.storage_buckets${SPACE}|
+    ...    |-----------------|--------------------------------|
+    ...    |----------------|-------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------|-------------------------------|
+    ...    |${SPACE}bucket_objects${SPACE}|${SPACE}google.storage.bucket_objects${SPACE}|
+    ...    |----------------|-------------------------------|
+    ...    |---------|------------------------|
+    ...    |${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------|------------------------|
+    ...    |${SPACE}buckets${SPACE}|${SPACE}google.storage.buckets${SPACE}|
+    ...    |---------|------------------------|
     ${stdErrStr} =    Catenate    SEPARATOR=\n
     ...    google provider, version 'v0.1.2' successfully installed
     ...    google provider, version 'v0.1.1-alpha01' successfully installed
@@ -4563,7 +4564,7 @@ Inline Union Select Returns Expected Result
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    SELECT 'some\-placeholder' as bucket_name, 'ap\-southeast\-2' as region UNION SELECT 'some\-other\-placeholder' as bucket_name, 'ap\-southeast\-2' as region;
+    ...    SELECT 'some\-placeholder' as bucket_name, 'ap\-southeast\-2' as region UNION SELECT 'some\-other\-placeholder' as bucket_name, 'ap\-southeast\-2' as region ORDER BY bucket_name;
     ...    ${outputStr}
     ...    ${CURDIR}/tmp/Inline-Union-Select-Returns-Expected-Result.tmp
 
@@ -4900,7 +4901,7 @@ Verify Data Flow Replication in ON Conditions Is Mitigated Using Example of Netw
     ...    from google.compute.networks nw LEFT OUTER JOIN google.compute.subnetworks sn 
     ...    on lower(nw.name) = lower(split_part(sn.network, '/', 10)) and sn.project = split_part(nw.selfLink, '/', 7) 
     ...    where nw.project = 'testing-project' and sn.region = 'australia-southeast1' 
-    ...    group by network_name, subnetwork_name ;
+    ...    group by network_name, subnetwork_name order by network_name, subnetwork_name;
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |------------------------------|-----------------|--------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}subnetwork_name${SPACE}|${SPACE}subnet_count${SPACE}|
@@ -6480,7 +6481,7 @@ Aggregation of View of Table Valued Function List And Detail Dataflow Works As E
     ...    WHERE listing.data__TypeName = 'AWS::S3::Bucket'
     ...    AND detail.data__TypeName = 'AWS::S3::Bucket'
     ...    AND listing.region IN ('us-east-1', 'ap-southeast-1')
-    ...    ;
+    ...    order by id;
     ...    select 
     ...    id,
     ...    count(1) as total_tag_count 
@@ -6489,7 +6490,7 @@ Aggregation of View of Table Valued Function List And Detail Dataflow Works As E
     ...    having json_extract(json_group_object(tag_key, tag_value), '$.provisioner') = 'stackql' 
     ...    and json_extract(json_group_object(tag_key, tag_value), '$.env') = 'dev' 
     ...    and json_extract(json_group_object(tag_key, tag_value), '$.stackid') = 'payruns'
-    ...    ;
+    ...    order by id;
     ...    drop view if exists exotic_view_01;
     ${postgresInputStr} =    Catenate
     ...    create or replace view exotic_view_01 as
@@ -6531,7 +6532,7 @@ Aggregation of View of Table Valued Function List And Detail Dataflow Works As E
     ...    WHERE listing.data__TypeName = 'AWS::S3::Bucket'
     ...    AND detail.data__TypeName = 'AWS::S3::Bucket'
     ...    AND listing.region IN ('us-east-1', 'ap-southeast-1')
-    ...    ;
+    ...    order by id;
     ...    select 
     ...    id, 
     ...    count(1) as total_tag_count 
@@ -6540,7 +6541,7 @@ Aggregation of View of Table Valued Function List And Detail Dataflow Works As E
     ...    having json_extract_path_text(json_object_agg(tag_key, tag_value), 'provisioner') = 'stackql' 
     ...    and json_extract_path_text(json_object_agg(tag_key, tag_value), 'env') = 'dev' 
     ...    and json_extract_path_text(json_object_agg(tag_key, tag_value), 'stackid') = 'payruns'
-    ...    ;
+    ...    order by id;
     ...    drop view if exists exotic_view_01;
     ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
     ${outputStr} =    Catenate    SEPARATOR=\n
@@ -6577,7 +6578,7 @@ Aggregation of Doc Based View of Table Valued Function List And Detail Dataflow 
     ...    having json_extract(json_group_object(tag_key, tag_value), '$.provisioner') = 'stackql' 
     ...    and json_extract(json_group_object(tag_key, tag_value), '$.env') = 'dev' 
     ...    and json_extract(json_group_object(tag_key, tag_value), '$.stackid') = 'payruns'
-    ...    ;
+    ...    order by id;
     ${postgresInputStr} =    Catenate
     ...    select 
     ...    id,
@@ -6587,7 +6588,7 @@ Aggregation of Doc Based View of Table Valued Function List And Detail Dataflow 
     ...    having json_extract_path_text(json_object_agg(tag_key, tag_value), 'provisioner') = 'stackql' 
     ...    and json_extract_path_text(json_object_agg(tag_key, tag_value), 'env') = 'dev' 
     ...    and json_extract_path_text(json_object_agg(tag_key, tag_value), 'stackid') = 'payruns'
-    ...    ;
+    ...    order by id;
     ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |-----------------------------|-----------------|
@@ -6808,10 +6809,6 @@ Multi Dependency Multi Dependent Multiple List And Detail Dataflow Works As Exem
     ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
     ...    |${SPACE}dummy-key-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}{}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}RSA${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2048${SPACE}|${SPACE}\["sign","verify","wrapKey","unwrapKey","encrypt","decrypt"]${SPACE}|${SPACE}Microsoft.KeyVault/vaults/keys${SPACE}|
     ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
-    ${outputErrStr} =    Catenate    SEPARATOR=\n
-    ...    http response status code: 404, response body is nil
-    ...    http response status code: 404, response body is nil
-    ...    http response status code: 404, response body is nil
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -6822,11 +6819,11 @@ Multi Dependency Multi Dependent Multiple List And Detail Dataflow Works As Exem
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    ${outputErrStr}
+    ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details.tmp
     ...    stderr=${CURDIR}/tmp/Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
     ...    stackql_dataflow_permissive=True
-    ...    omni_expected_stderr_output=${EMPTY}
+
 
 Error GTE 400 Response Code Does Not Stop The World As Exemplified By AWS Subnet Route Associations List And Detail Pattern
     ${sqliteInputStr} =    Catenate
@@ -7069,10 +7066,6 @@ Static Input Read Many Multi Dependency Multi Dependent Multiple List And Detail
     ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
     ...    |${SPACE}dummy-key-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}{}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}RSA${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2048${SPACE}|${SPACE}\["sign","verify","wrapKey","unwrapKey","encrypt","decrypt"]${SPACE}|${SPACE}Microsoft.KeyVault/vaults/keys${SPACE}|
     ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
-    ${outputErrStr} =    Catenate    SEPARATOR=\n
-    ...    http response status code: 404, response body is nil
-    ...    http response status code: 404, response body is nil
-    ...    http response status code: 404, response body is nil
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -7083,10 +7076,10 @@ Static Input Read Many Multi Dependency Multi Dependent Multiple List And Detail
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    ${outputErrStr}
+    ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details.tmp
     ...    stderr=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
-    ...    omni_expected_stderr_output=${EMPTY}
+
 
 Self Join Polymorphic Works As Exemplified By Azure VPN List and Details
     ${sqliteInputStr} =    Catenate
@@ -8236,15 +8229,7 @@ Select Star From Transformed XML Response Body
     ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
     ...    |${SPACE}ap-southeast-1a${SPACE}${SPACE}${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ap-southeast-2${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}available${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}gp2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
-    ${outputStrPostgres} =    Catenate    SEPARATOR=\n
-    ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
-    ...    |${SPACE}availability_zone${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}create_time${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}encrypted${SPACE}|${SPACE}multi_attach_enabled${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}size${SPACE}|${SPACE}snapshot_id${SPACE}|${SPACE}${SPACE}status${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}volume_type${SPACE}|
-    ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
-    ...    |${SPACE}ap-southeast-1a${SPACE}${SPACE}${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ap-southeast-2${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}available${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}gp2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
-    ...    |${SPACE}ap-southeast-1a${SPACE}${SPACE}${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ap-southeast-2${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}available${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}gp2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
-    ${outputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${outputStrPostgres}    ${outputStrSQLite}
+    ${outputStr} =    Set Variable    ${outputStrSQLite}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -8769,23 +8754,7 @@ Select Paginated Star From Flattened Transformed JSON Response Body
     ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
     ...    |${SPACE}/subscriptions/1111/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/vnet2${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}vnet4${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/virtualNetworks${SPACE}|
     ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ${outputStrPostgres} =    Catenate    SEPARATOR=\n
-    ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}location${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}name${SPACE}${SPACE}|${SPACE}provisioning_state${SPACE}|${SPACE}subnet_address_prefix${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}subnet_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}subnet_name${SPACE}|${SPACE}subnet_provisioning_state${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}type${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ...    |${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vnet1${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.0.0/24${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1/subnets/test-1${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/virtualNetworks${SPACE}|
-    ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ...    |${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vnet1${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.1.0/24${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1/subnets/test-2${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/virtualNetworks${SPACE}|
-    ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ...    |${SPACE}/subscriptions/1111/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/vnet2${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vnet2${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/virtualNetworks${SPACE}|
-    ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ...    |${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}vnet3${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.0.0/24${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet3/subnets/test-1${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/virtualNetworks${SPACE}|
-    ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ...    |${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}vnet3${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.1.0/24${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet3/subnets/test-2${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/virtualNetworks${SPACE}|
-    ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ...    |${SPACE}/subscriptions/1111/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/vnet2${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}vnet4${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/virtualNetworks${SPACE}|
-    ...    |------------------------------------------------------------------------------------------|--------------------|-------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|-----------------------------------|
-    ${outputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${outputStrPostgres}    ${outputStrSQLite}
+    ${outputStr} =    Set Variable    ${outputStrSQLite}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -8819,23 +8788,7 @@ Select Paginated Projection From Flattened Transformed JSON Response Body
     ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
     ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ${outputStrPostgres} =    Catenate    SEPARATOR=\n
-    ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ...    |${SPACE}name${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}location${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}provisioning_state${SPACE}|${SPACE}subnet_address_prefix${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}subnet_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}subnet_name${SPACE}|${SPACE}subnet_provisioning_state${SPACE}|
-    ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.0.0/24${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1/subnets/test-1${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.1.0/24${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1/subnets/test-2${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ...    |${SPACE}vnet2${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.0.0/24${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet3/subnets/test-1${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.1.0/24${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}/subscriptions/1111/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet3/subnets/test-2${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-------------|---------------------------|
-    ${outputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${outputStrPostgres}    ${outputStrSQLite}
+    ${outputStr} =    Set Variable    ${outputStrSQLite}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -8885,35 +8838,7 @@ Select Join of Flattened Paginated Projection From Transformed JSON and XML Resp
     ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
     ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
     ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ${outputStrPostgres} =    Catenate    SEPARATOR=\n
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}name${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}location${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}provisioning_state${SPACE}|${SPACE}subnet_name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet2${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet2${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ${outputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${outputStrPostgres}    ${outputStrSQLite}
+    ${outputStr} =    Set Variable    ${outputStrSQLite}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -8967,35 +8892,7 @@ Select View of Join of Flattened Paginated Projection From Transformed JSON and 
     ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
     ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
     ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ${outputStrPostgres} =    Catenate    SEPARATOR=\n
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}name${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}location${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}provisioning_state${SPACE}|${SPACE}subnet_name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet2${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet2${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ${outputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${outputStrPostgres}    ${outputStrSQLite}
+    ${outputStr} =    Set Variable    ${outputStrSQLite}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -9049,35 +8946,7 @@ Select Materialized View of Join of Flattened Paginated Projection From Transfor
     ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
     ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
     ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ${outputStrPostgres} =    Catenate    SEPARATOR=\n
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}name${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}location${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}provisioning_state${SPACE}|${SPACE}subnet_name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet1${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet2${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet2${SPACE}|${SPACE}westus${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet3${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}test-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ...    |${SPACE}vnet4${SPACE}|${SPACE}australiasoutheast${SPACE}|${SPACE}Succeeded${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}<nil>${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}ap-southeast-1${SPACE}|
-    ...    |-------|--------------------|--------------------|-------------|-----------------------|----------------|
-    ${outputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${outputStrPostgres}    ${outputStrSQLite}
+    ${outputStr} =    Set Variable    ${outputStrSQLite}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -9682,8 +9551,8 @@ Explain Select Repeatably Generates Messagez
     ...    OK
     ...    OK
     ...    OK
-    ...    cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN google.storage.buckets: no appropriate method = 'select' for resource = 'buckets'
-    ...    cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN google.storage.buckets: no appropriate method = 'select' for resource = 'buckets'
+    ...    omnisdk: buckets (stackql_unstable_google.storage.buckets): no satisfiable select method (get needs bucket; list needs project)
+    ...    omnisdk: buckets (stackql_unstable_google.storage.buckets): no satisfiable select method (get needs bucket; list needs project)
     ...    Execution plan generated successfully
     ...    OK
     ...    Execution plan generated successfully
@@ -10896,7 +10765,7 @@ Recursive CTE Is Not Supported At Execution
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${query}
-    ...    cannot resolve ServiceHandle
+    ...    recursive provider CTEs require an iterative execution boundary
 
 # ===========================================================================
 # Issue #700: a required structured parameter supplied as JSON() in a SELECT
@@ -11643,14 +11512,14 @@ Unstable Github Org Members Staged Group By Exact Match
     ...    stdout=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Staged-Group-By.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Unstable-Github-Org-Members-Staged-Group-By-stderr.tmp
 
-Omni All Github Org Members Staged Order By With Offset Exact Match
-    [Documentation]    With omni set to all, a canonical provider name is routed
-    ...                to omnisdk rather than any-sdk, and staging applies the
+Omni Default Github Org Members Staged Order By With Offset Exact Match
+    [Documentation]    A canonical provider name uses omnisdk by default,
+    ...                and staging applies the
     ...                ORDER BY, LIMIT and OFFSET.
     [Teardown]    Remove Preview Mock Environment
     ${preview} =    Catenate    SEPARATOR=
     ...    {"endpoint":"https://${LOCAL_HOST_ALIAS}:${MOCKSERVER_PORT_GITHUB}",
-    ...    "insecureSkipTLSVerify":true,"omni":"all","staging":true}
+    ...    "insecureSkipTLSVerify":true}
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select login, type from github.orgs.members
     ...    where org = 'dummyorg' order by login desc limit 3 offset 1;
@@ -12260,8 +12129,8 @@ Preview Iac Destroy Without Collection Is Refused
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Destroy-No-Collection.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Destroy-No-Collection-stderr.tmp
 
-Omni Derived Relation Preserves Inner Order And Limit
-    [Documentation]    Derived relations execute through analyzer-owned Omni read handles.
+Omni Default Derived Relation Preserves Inner Order And Limit
+    [Documentation]    Derived relations execute through Omni read handles with no preview opt-in.
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select count(*) as n from (select login, contributions from github.repos.contributors where owner = 'dummyorg' and repo = 'dummyapp.io' order by contributions desc limit 2) contributors;
     Should StackQL Exec Inline Equal
@@ -12275,10 +12144,9 @@ Omni Derived Relation Preserves Inner Order And Limit
     ...    ${query}
     ...    n\n2
     ...    \-o\=csv
-    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
 
 Omni Nested Derived Relation Preserves Aggregate Boundary
-    [Documentation]    Derived relations execute through analyzer-owned Omni read handles.
+    [Documentation]    Derived relations execute through Omni read handles with no preview opt-in.
     ${query} =    Catenate    SEPARATOR=${SPACE}
     ...    select max(n) as n from (select count(*) as n from (select login from github.repos.contributors where owner = 'dummyorg' and repo = 'dummyapp.io' limit 2) limited) counted;
     Should StackQL Exec Inline Equal
@@ -12292,7 +12160,6 @@ Omni Nested Derived Relation Preserves Aggregate Boundary
     ...    ${query}
     ...    n\n2
     ...    \-o\=csv
-    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
 
 Omni Stored View Joins Provider Through Read Handles
     ${query} =    Catenate    SEPARATOR=${SPACE}
@@ -12310,7 +12177,6 @@ Omni Stored View Joins Provider Through Read Handles
     ...    ${query}
     ...    n\n2
     ...    \-o\=csv
-    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
 
 
 Omni CTEs Preserve Ordered Boundaries And Column Names
@@ -12333,7 +12199,6 @@ Omni CTEs Preserve Ordered Boundaries And Column Names
     ...    ${inputStr}
     ...    ${expectedStr}
     ...    \-o\=csv
-    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
 
 
 Omni CASE Join Skips Unselected Error Branches
@@ -12352,4 +12217,3 @@ Omni CASE Join Skips Unselected Error Branches
     ...    ${query}
     ...    n\n1
     ...    \-o\=csv
-    ...    --preview\={"unstable":true,"staging":true,"omni":"all"}
