@@ -13,42 +13,19 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/astformat"
 )
 
 type SQLSystem interface {
-	ComposeSelectQuery([]typing.RelationalColumn, []string, []string, string, string, string,
-		string, int, map[string][]internaldto.TxnControlCounters) (string, error)
 	DelimitGroupByColumn(term string) string
 	DelimitOrderByColumn(term string) string
-	// GCAdd() will record a Txn as active
-	GCAdd(string, internaldto.TxnControlCounters, internaldto.TxnControlCounters) error
-	// GCCollectAll() will remove all records from data tables.
-	GCCollectAll() error
-	// GCCollectObsoleted() must be mutex-protected.
-	GCCollectObsoleted(minTransactionID int) error
-	// GCControlTablesPurge() will remove all data from non ring control tables.
-	GCControlTablesPurge() error
-	// GCPurgeCache() will completely wipe the cache.
 	GCPurgeCache() error
-	// GCPurgeCache() will completely wipe the cache.
-	GCPurgeEphemeral() error
-	//
-	GenerateDDL(relationaldto.RelationalTable, bool) ([]string, error)
-	GenerateInsertDML(relationaldto.RelationalTable, internaldto.TxnControlCounters) (string, error)
-	GenerateSelectDML(relationaldto.RelationalTable, internaldto.TxnControlCounters, string, string) (string, error)
-	GetGCHousekeepingQuery(string, internaldto.TxnControlCounters) string
-	//
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetASTFuncRewriter() astfuncrewrite.ASTFuncRewriter
 	GetFullyQualifiedTableName(string) (string, error)
 	GetSQLEngine() sqlengine.SQLEngine
-	// PurgeAll() drops all data tables, does **not** drop control tables.
-	PurgeAll() error
 	SanitizeQueryString(queryString string) (string, error)
 	// **NOTE**: SanitizeWhereQueryString() is **NOT** idempotent.
 	SanitizeWhereQueryString(queryString string) (string, error)
@@ -62,7 +39,7 @@ type SQLSystem interface {
 	QueryNamespaced(string, string, string, string) (*sql.Rows, error)
 
 	IsTablePresent(string, string, string) bool
-	TableOldestUpdateUTC(string, string, string, string) (time.Time, internaldto.TxnControlCounters)
+	TableOldestUpdateUTC(string, string, string, string) (time.Time, bool)
 
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
@@ -137,7 +114,6 @@ func getNodeFormatter(name string) sqlparser.NodeFormatter {
 func NewSQLSystem(
 	sqlEngine sqlengine.SQLEngine,
 	analyticsNamespaceLikeString string,
-	controlAttributes sqlcontrol.ControlAttributes,
 	sqlCfg dto.SQLBackendCfg,
 	authCfg map[string]*dto.AuthCtx,
 	typCfg typing.Config,
@@ -151,7 +127,6 @@ func NewSQLSystem(
 		return newSQLiteSystem(
 			sqlEngine,
 			analyticsNamespaceLikeString,
-			controlAttributes,
 			formatter,
 			sqlCfg,
 			authCfg,
@@ -162,7 +137,6 @@ func NewSQLSystem(
 		return newPostgresSystem(
 			sqlEngine,
 			analyticsNamespaceLikeString,
-			controlAttributes,
 			formatter,
 			sqlCfg,
 			authCfg,

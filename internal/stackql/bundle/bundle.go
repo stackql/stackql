@@ -12,7 +12,6 @@ import (
 	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/txncounter"
@@ -20,7 +19,7 @@ import (
 
 type Bundle interface {
 	GetAuthContexts() map[string]*dto.AuthCtx
-	GetControlAttributes() sqlcontrol.ControlAttributes
+
 	GetGC() garbagecollector.GarbageCollector
 	GetNamespaceCollection() tablenamespace.Collection
 	GetDBMSInternalRouter() dbmsinternal.Router
@@ -44,7 +43,6 @@ func NewBundle(
 	sqlEngine sqlengine.SQLEngine,
 	sqlSystem sql_system.SQLSystem,
 	pgInternalRouter dbmsinternal.Router,
-	controlAttributes sqlcontrol.ControlAttributes,
 	txnStore kstore.KStore,
 	txnCtrMgr txncounter.Manager,
 	authContexts map[string]*dto.AuthCtx,
@@ -58,7 +56,6 @@ func NewBundle(
 		namespaces:             namespaces,
 		sqlEngine:              sqlEngine,
 		sqlSystem:              sqlSystem,
-		controlAttributes:      controlAttributes,
 		txnStore:               txnStore,
 		txnCtrMgr:              txnCtrMgr,
 		formatter:              sqlSystem.GetASTFormatter(),
@@ -72,7 +69,6 @@ func NewBundle(
 }
 
 type simpleBundle struct {
-	controlAttributes      sqlcontrol.ControlAttributes
 	garbageCollector       garbagecollector.GarbageCollector
 	namespaces             tablenamespace.Collection
 	sqlEngine              sqlengine.SQLEngine
@@ -122,10 +118,6 @@ func (sb *simpleBundle) GetSQLDataSources() map[string]sql_datasource.SQLDataSou
 
 func (sb *simpleBundle) GetAuthContexts() map[string]*dto.AuthCtx {
 	return sb.authContexts
-}
-
-func (sb *simpleBundle) GetControlAttributes() sqlcontrol.ControlAttributes {
-	return sb.controlAttributes
 }
 
 func (sb *simpleBundle) GetDBMSInternalRouter() dbmsinternal.Router {

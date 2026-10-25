@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - version*
+      - 'stable/**'
     tags:
       - lint*
       - build*

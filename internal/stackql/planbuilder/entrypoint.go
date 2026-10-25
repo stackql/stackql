@@ -42,7 +42,6 @@ func (pb *standardPlanBuilder) BuildUndoPlanFromContext(_ handler.HandlerContext
 
 //nolint:funlen,gocognit,errcheck,gocyclo,cyclop // no big deal
 func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error) {
-	defer handlerCtx.GetGarbageCollector().Close()
 	tcc, err := internaldto.NewTxnControlCounters(handlerCtx.GetTxnCounterMgr())
 	handlerCtx.GetTxnStore().Put(tcc.GetTxnID())
 	defer handlerCtx.GetTxnStore().Del(tcc.GetTxnID())

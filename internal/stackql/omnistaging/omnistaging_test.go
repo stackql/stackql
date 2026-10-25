@@ -124,7 +124,7 @@ func openSQLite(t *testing.T, path string) *sql.DB {
 	eng, err := sqlengine.NewSQLEngine(sqlengine.Config{
 		DBEngine: constants.DBEngineSQLite3Embedded,
 		DSN:      "file:" + path,
-	}, nil)
+	})
 	if err != nil {
 		t.Fatalf("cannot open sqlite engine: %v", err)
 	}

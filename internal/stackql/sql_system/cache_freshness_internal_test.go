@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 )
 
 // queryOnlyEngine satisfies sqlengine.SQLEngine for the one method the cache
@@ -34,7 +33,7 @@ func (e *recordingEngine) Query(q string, args ...any) (*sql.Rows, error) {
 }
 
 // injectedEncoding is the probe from issue #822: interpolated, it matched
-// another request's control counters.
+// another request's cache entry.
 const injectedEncoding = "missing' OR 1=1 --"
 
 func TestSQLiteTableOldestUpdateUTCBindsRequestEncoding(t *testing.T) {
@@ -44,32 +43,30 @@ func TestSQLiteTableOldestUpdateUTCBindsRequestEncoding(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 	db.SetMaxOpenConns(1)
-	_, err = db.Exec(`CREATE TABLE probe (modified text, encoded text, iql_generation_id int, iql_session_id int, iql_txn_id int, iql_insert_id int);
-INSERT INTO probe VALUES ('2026-10-01T00:00:00', 'other-request', 1, 2, 3, 4)`)
+	_, err = db.Exec(`CREATE TABLE probe (modified text, encoded text);
+INSERT INTO probe VALUES ('2026-10-01T00:00:00', 'other-request')`)
 	if err != nil {
 		t.Fatal(err)
 	}
 	sys := &sqLiteSystem{
-		sqlEngine:         queryOnlyEngine{db: db},
-		controlAttributes: sqlcontrol.GetControlAttributes("standard"),
+		sqlEngine: queryOnlyEngine{db: db},
 	}
-	if _, hit := sys.TableOldestUpdateUTC("probe", "other-request", "modified", "encoded"); hit == nil {
+	if _, hit := sys.TableOldestUpdateUTC("probe", "other-request", "modified", "encoded"); !hit {
 		t.Fatal("identical encoding must hit the cache")
 	}
-	if _, miss := sys.TableOldestUpdateUTC("probe", "missing", "modified", "encoded"); miss != nil {
+	if _, miss := sys.TableOldestUpdateUTC("probe", "missing", "modified", "encoded"); miss {
 		t.Fatal("unknown encoding must miss the cache")
 	}
-	if _, injected := sys.TableOldestUpdateUTC("probe", injectedEncoding, "modified", "encoded"); injected != nil {
-		t.Fatal("injected encoding must not match another request's counters")
+	if _, injected := sys.TableOldestUpdateUTC("probe", injectedEncoding, "modified", "encoded"); injected {
+		t.Fatal("injected encoding must not match another request's cache entry")
 	}
 }
 
 func TestPostgresTableOldestUpdateUTCBindsRequestEncoding(t *testing.T) {
 	eng := &recordingEngine{}
 	sys := &postgresSystem{
-		sqlEngine:         eng,
-		tableSchema:       "stackql_raw",
-		controlAttributes: sqlcontrol.GetControlAttributes("standard"),
+		sqlEngine:   eng,
+		tableSchema: "stackql_raw",
 	}
 	sys.TableOldestUpdateUTC("probe", injectedEncoding, "modified", "encoded")
 	if !strings.Contains(eng.query, "WHERE encoded = $1") || strings.Contains(eng.query, injectedEncoding) {

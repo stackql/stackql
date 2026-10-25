@@ -1,79 +1,35 @@
+// Package garbagecollector retains explicit PURGE commands. Query tables are
+// owned and eagerly released by omnistaging, independently of this package.
 package garbagecollector
 
-import (
-	"github.com/stackql/stackql/internal/stackql/gcexec"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
-)
-
-var (
-	_ GarbageCollector = &standardGarbageCollector{}
-)
+import "github.com/stackql/stackql/internal/stackql/sql_system"
 
 type GarbageCollector interface {
-	Close() error
 	Collect() error
 	Purge() error
 	PurgeCache() error
 	PurgeControlTables() error
 	PurgeEphemeral() error
-	Update(string, internaldto.TxnControlCounters, internaldto.TxnControlCounters) error
-}
-
-func NewGarbageCollector(
-	gcExecutor gcexec.GarbageCollectorExecutor,
-	gcCfg dto.GCCfg,
-	sqlEngine sqlengine.SQLEngine,
-) GarbageCollector {
-	return newStandardGarbageCollector(gcExecutor, gcCfg, sqlEngine)
-}
-
-func newStandardGarbageCollector(
-	gcExecutor gcexec.GarbageCollectorExecutor,
-	policy dto.GCCfg,
-	sqlEngine sqlengine.SQLEngine,
-) GarbageCollector {
-	return &standardGarbageCollector{
-		gcExecutor: gcExecutor,
-		isEager:    policy.IsEager,
-		sqlEngine:  sqlEngine,
-	}
 }
 
 type standardGarbageCollector struct {
-	gcExecutor gcexec.GarbageCollectorExecutor
-	isEager    bool
-	sqlEngine  sqlengine.SQLEngine
+	system sql_system.SQLSystem
 }
 
-func (gc *standardGarbageCollector) Update(tableName string, parentTcc, tcc internaldto.TxnControlCounters) error {
-	return gc.gcExecutor.Update(tableName, parentTcc, tcc)
+func NewGarbageCollector(system sql_system.SQLSystem) GarbageCollector {
+	return &standardGarbageCollector{system: system}
 }
 
-func (gc *standardGarbageCollector) Close() error {
-	if gc.isEager {
-		return gc.gcExecutor.Collect()
-	}
-	return nil
-}
+// Collect is a compatibility operation: query owners already release their
+// tables. Scanning and dropping query tables here could destroy another query.
+func (gc *standardGarbageCollector) Collect() error { return nil }
 
-func (gc *standardGarbageCollector) Collect() error {
-	return gc.gcExecutor.Collect()
-}
+// PurgeControlTables must not erase catalogue entries or reset query ID
+// allocation. No legacy GC control tables are created or maintained anymore.
+func (gc *standardGarbageCollector) PurgeControlTables() error { return nil }
 
-func (gc *standardGarbageCollector) Purge() error {
-	return gc.gcExecutor.Purge()
-}
+func (gc *standardGarbageCollector) Purge() error      { return gc.system.GCPurgeCache() }
+func (gc *standardGarbageCollector) PurgeCache() error { return gc.system.GCPurgeCache() }
 
-func (gc *standardGarbageCollector) PurgeEphemeral() error {
-	return gc.gcExecutor.PurgeEphemeral()
-}
-
-func (gc *standardGarbageCollector) PurgeCache() error {
-	return gc.gcExecutor.PurgeCache()
-}
-
-func (gc *standardGarbageCollector) PurgeControlTables() error {
-	return gc.gcExecutor.PurgeControlTables()
-}
+// PurgeEphemeral retains the legacy command; query tables have their own owner.
+func (gc *standardGarbageCollector) PurgeEphemeral() error { return nil }

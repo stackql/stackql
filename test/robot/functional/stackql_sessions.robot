@@ -569,3 +569,25 @@ Server Stability PG Session Repeat AWS EC2 Select
     ...         AND             Remove Environment Variable     PGPORT
     ...         AND             Remove Environment Variable     PGUSER 
     ...         AND             Remove Environment Variable     PGPASSWORD
+
+Legacy Purge Commands Preserve Stored Relations
+    [Documentation]    Legacy GC commands cannot erase catalogue entries or user data,
+    ...    including a user table whose name matches the analytics cache namespace.
+    ${query} =    Catenate
+    ...    create table stackql_analytics_gc_guard (value text);
+    ...    insert into stackql_analytics_gc_guard (value) values ('retained');
+    ...    create view gc_guard_view as select upper(value) as value from stackql_analytics_gc_guard;
+    ...    create materialized view gc_guard_materialized as select value from stackql_analytics_gc_guard;
+    ...    purge control_tables; purge ephemeral; purge cache; purge; purge conservative;
+    ...    select value from gc_guard_view;
+    ...    select value from gc_guard_materialized;
+    ...    drop materialized view gc_guard_materialized;
+    ...    drop view gc_guard_view;
+    ...    drop table stackql_analytics_gc_guard;
+    ${output} =    Run Stackql Exec Command No Errors
+    ...    ${STACKQL_EXE}    ${OKTA_SECRET_STR}    ${GITHUB_SECRET_STR}    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    ${AUTH_CFG_STR}    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${query}    stackql_output=csv
+    Should Contain    ${output.stdout}    RETAINED
+    Should Contain    ${output.stdout}    retained
+    [Teardown]    Stackql Per Test Teardown

@@ -1,8 +1,6 @@
 package drm
 
 import (
-	"strings"
-
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -19,7 +17,6 @@ type PreparedStatementCtx interface {
 	GetIndirectContexts() []PreparedStatementCtx
 	GetCtrlColumnRepeats() int
 	GetNonControlColumns() []typing.ColumnMetadata
-	GetGCHousekeepingQueries() string
 	GetQuery() string
 	SetGCCtrlCtrs(tcc internaldto.TxnControlCounters)
 	SetIndirectContexts(indirectContexts []PreparedStatementCtx)
@@ -151,12 +148,4 @@ func NewPreparedStatementCtx(
 
 func NewQueryOnlyPreparedStatementCtx(query string, nonControlCols []typing.ColumnMetadata) PreparedStatementCtx {
 	return &standardPreparedStatementCtx{query: query, nonControlColumns: nonControlCols, ctrlColumnRepeats: 0}
-}
-
-func (ps *standardPreparedStatementCtx) GetGCHousekeepingQueries() string {
-	var housekeepingQueries []string
-	for _, table := range ps.TableNames {
-		housekeepingQueries = append(housekeepingQueries, ps.sqlSystem.GetGCHousekeepingQuery(table, ps.txnCtrlCtrs))
-	}
-	return strings.Join(housekeepingQueries, "; ")
 }

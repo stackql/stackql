@@ -9,7 +9,6 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/logging"
 	db_util "github.com/stackql/stackql/internal/stackql/sqlengine/connect"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 
 	_ "github.com/snowflakedb/gosnowflake" //nolint:revive,nolintlint // anonymous import is a pattern for SQL drivers
 )
@@ -19,12 +18,11 @@ var (
 )
 
 type snowflakeTCPEngine struct {
-	db                *sql.DB
-	dsn               string
-	controlAttributes sqlcontrol.ControlAttributes
-	ctrlMutex         *sync.Mutex
-	sessionMutex      *sync.Mutex
-	discoveryMutex    *sync.Mutex
+	db             *sql.DB
+	dsn            string
+	ctrlMutex      *sync.Mutex
+	sessionMutex   *sync.Mutex
+	discoveryMutex *sync.Mutex
 }
 
 func (se *snowflakeTCPEngine) IsMemory() bool {
@@ -41,7 +39,6 @@ func (se *snowflakeTCPEngine) GetTx() (*sql.Tx, error) {
 
 func newSnowflakeTCPEngine(
 	cfg Config,
-	controlAttributes sqlcontrol.ControlAttributes,
 ) (*snowflakeTCPEngine, error) {
 	dsn := cfg.DSN
 	if dsn == "" {
@@ -53,12 +50,11 @@ func newSnowflakeTCPEngine(
 	}
 	db.SetConnMaxLifetime(-1)
 	eng := &snowflakeTCPEngine{
-		db:                db,
-		dsn:               dsn,
-		controlAttributes: controlAttributes,
-		ctrlMutex:         &sync.Mutex{},
-		sessionMutex:      &sync.Mutex{},
-		discoveryMutex:    &sync.Mutex{},
+		db:             db,
+		dsn:            dsn,
+		ctrlMutex:      &sync.Mutex{},
+		sessionMutex:   &sync.Mutex{},
+		discoveryMutex: &sync.Mutex{},
 	}
 	if cfg.DbInitFilePath != "" {
 		err = eng.execFile(cfg.DbInitFilePath)
