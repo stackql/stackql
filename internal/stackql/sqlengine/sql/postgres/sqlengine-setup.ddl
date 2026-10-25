@@ -45,43 +45,6 @@ CREATE TABLE IF NOT EXISTS "__iql__.cache.key_val" (
   ,tablespace_id INTEGER 
 );
 
-CREATE TABLE IF NOT EXISTS "__iql__.control.gc.txn_table_x_ref" (
-   iql_generation_id INTEGER not null
-  ,iql_session_id INTEGER not null
-  ,iql_transaction_id INTEGER not null
-  ,table_name TEXT not null
-  ,created_dttm TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-  ,collected_dttm TIMESTAMP WITH TIME ZONE DEFAULT null
-  ,PRIMARY KEY (iql_generation_id, iql_session_id, iql_transaction_id, table_name)
-)
-;
-
-CREATE TABLE IF NOT EXISTS "__iql__.control.gc.rings" (
-   ring_id BIGSERIAL PRIMARY KEY
-  ,ring_name TEXT not null UNIQUE
-  ,current_value INTEGER not null DEFAULT 0
-  ,current_offset INTEGER not null DEFAULT 0
-  ,width_bits INTEGER not null DEFAULT 32
-  ,created_dttm TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-  ,collected_dttm TIMESTAMP WITH TIME ZONE DEFAULT null
-)
-;
-
-CREATE INDEX IF NOT EXISTS "idx.__iql__.control.gc.rings.ring_name" 
-ON "__iql__.control.gc.rings" (ring_name)
-;
-
-INSERT INTO "__iql__.control.gc.rings" (ring_name) 
-VALUES ('transaction_id')
-ON CONFLICT (ring_name) DO NOTHING
-;
-
-INSERT INTO "__iql__.control.gc.rings" (ring_name) 
-VALUES ('session_id')
-ON CONFLICT (ring_name) DO NOTHING
-;
-
-
 CREATE TABLE IF NOT EXISTS "__iql__.views" (
    iql_view_id BIGSERIAL PRIMARY KEY
   ,view_name TEXT NOT NULL UNIQUE

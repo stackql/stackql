@@ -30,7 +30,6 @@ import (
 	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/writer"
@@ -63,7 +62,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetQueryStartTime() time.Time
 	GetRuntimeContext() dto.RuntimeCtx
 	GetProviders() map[string]provider.IProvider
-	GetControlAttributes() sqlcontrol.ControlAttributes
+
 	GetCurrentProvider() string
 	GetAuthContexts() dto.AuthContexts
 	GetRegistry() registry.RegistryAPI
@@ -133,7 +132,6 @@ type standardHandlerContext struct {
 	queryStartTime      time.Time
 	runtimeContext      dto.RuntimeCtx
 	providers           map[string]provider.IProvider
-	controlAttributes   sqlcontrol.ControlAttributes
 	currentProvider     string
 	authContexts        dto.AuthContexts
 	docAuthProviders    map[string]struct{}
@@ -236,10 +234,7 @@ func (hc *standardHandlerContext) GetQueryStartTime() time.Time                {
 func (hc *standardHandlerContext) GetQuery() string                            { return hc.query }
 func (hc *standardHandlerContext) GetRuntimeContext() dto.RuntimeCtx           { return hc.runtimeContext }
 func (hc *standardHandlerContext) GetProviders() map[string]provider.IProvider { return hc.providers }
-func (hc *standardHandlerContext) GetControlAttributes() sqlcontrol.ControlAttributes {
-	return hc.controlAttributes
-}
-func (hc *standardHandlerContext) GetCurrentProvider() string { return hc.currentProvider }
+func (hc *standardHandlerContext) GetCurrentProvider() string                  { return hc.currentProvider }
 
 func (hc *standardHandlerContext) GetAuthContexts() dto.AuthContexts {
 	hc.authMapMutex.Lock()
@@ -610,7 +605,6 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		authContexts:         hc.authContexts,
 		docAuthProviders:     hc.docAuthProviders,
 		registry:             hc.registry,
-		controlAttributes:    hc.controlAttributes,
 		errorPresentation:    hc.errorPresentation,
 		lRUCache:             hc.lRUCache,
 		sqlEngine:            hc.sqlEngine,
@@ -658,7 +652,7 @@ func NewHandlerCtx(
 		return nil, err
 	}
 	providers := make(map[string]provider.IProvider)
-	controlAttributes := inputBundle.GetControlAttributes()
+
 	sqlEngine := inputBundle.GetSQLEngine()
 	outWriter, isOutwriter := inputBundle.GetStdOut()
 	outErrWriter, isOutErrWriter := inputBundle.GetStdErr()
@@ -690,7 +684,6 @@ func NewHandlerCtx(
 		authContexts:        inputBundle.GetAuthContexts(),
 		docAuthProviders:    map[string]struct{}{},
 		registry:            reg,
-		controlAttributes:   controlAttributes,
 		errorPresentation:   runtimeCtx.ErrorPresentation,
 		lRUCache:            lruCache,
 		sqlEngine:           sqlEngine,
@@ -715,7 +708,6 @@ func NewHandlerCtx(
 		inputBundle.GetSQLSystem(),
 		inputBundle.GetTypingConfig(),
 		rv.namespaceCollection,
-		controlAttributes,
 	)
 	if err != nil {
 		return nil, err

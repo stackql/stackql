@@ -66,14 +66,6 @@ const (
 	ReversalStreamID    int64  = -1
 )
 
-type GCStatus int
-
-const (
-	GCWhite GCStatus = iota
-	GCBlack
-	GCGrey
-)
-
 type BackendQueryType int
 
 const (

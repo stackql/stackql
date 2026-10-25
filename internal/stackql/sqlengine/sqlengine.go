@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 )
 
 func getFilePathFromRepositoryRoot(relativePath string) (string, error) {
@@ -37,14 +35,14 @@ type SQLEngine interface {
 	IsMemory() bool
 }
 
-func NewSQLEngine(cfg Config, controlAttributes sqlcontrol.ControlAttributes) (SQLEngine, error) {
+func NewSQLEngine(cfg Config) (SQLEngine, error) {
 	switch cfg.DBEngine {
 	case "sqlite3_embedded":
-		return newSQLiteEmbeddedEngine(cfg, controlAttributes)
+		return newSQLiteEmbeddedEngine(cfg)
 	case "postgres_tcp":
-		return newPostgresTCPEngine(cfg, controlAttributes)
+		return newPostgresTCPEngine(cfg)
 	case "snowflake":
-		return newSnowflakeTCPEngine(cfg, controlAttributes)
+		return newSnowflakeTCPEngine(cfg)
 	default:
 		return nil, fmt.Errorf(`SQL backend DB Engine of type '%s' is not permitted`, cfg.DBEngine)
 	}

@@ -12,14 +12,12 @@ import (
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/garbagecollector"
-	"github.com/stackql/stackql/internal/stackql/gcexec"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/kstore"
 	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"gopkg.in/yaml.v2"
@@ -32,7 +30,6 @@ import (
 
 //nolint:funlen // let us not worry about tidyness in this boilerplate
 func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
-	controlAttributes := sqlcontrol.GetControlAttributes("standard")
 	sqlCfg, err := dto.GetSQLBackendCfg(runtimeCtx.SQLBackendCfgRaw)
 	if err != nil {
 		return nil, err
@@ -46,7 +43,7 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling auth: %w", err)
 	}
-	se, err := buildSQLEngine(sqlCfg, controlAttributes)
+	se, err := buildSQLEngine(sqlCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +51,7 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	gcCfg, err := dto.GetGCCfg(runtimeCtx.GCCfgRaw)
-	if err != nil {
+	if _, err = dto.GetGCCfg(runtimeCtx.GCCfgRaw); err != nil {
 		return nil, err
 	}
 	txnStoreCfg, err := dto.GetKStoreCfg(runtimeCtx.StoreTxnCfgRaw)
@@ -65,7 +61,6 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	system, err := sql_system.NewSQLSystem(
 		se,
 		namespaces.GetAnalyticsCacheTableNamespaceConfigurator().GetLikeString(),
-		controlAttributes,
 		sqlCfg,
 		ac, typCfg, runtimeCtx.ExportAlias)
 	if err != nil {
@@ -87,11 +82,7 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	gcExec, err := buildGCExec(se, namespaces, system, txnStore)
-	if err != nil {
-		return nil, err
-	}
-	gc := buildGC(gcExec, gcCfg, se)
+	gc := garbagecollector.NewGarbageCollector(system)
 	txnCtrMgr, err := getTxnCounterManager(se)
 	if err != nil {
 		return nil, err
@@ -115,7 +106,6 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 		se,
 		system,
 		pgInternal,
-		controlAttributes,
 		txnStore,
 		txnCtrMgr,
 		ac,
@@ -154,29 +144,11 @@ func initNamespaces(
 
 func buildSQLEngine(
 	sqlCfg dto.SQLBackendCfg,
-	controlAttributes sqlcontrol.ControlAttributes,
 ) (sqlengine.SQLEngine, error) {
 	return sqlengine.NewSQLEngine(sqlengine.Config{
 		DBEngine: sqlCfg.DBEngine, DSN: sqlCfg.GetDSN(), DbInitFilePath: sqlCfg.DbInitFilePath,
 		InitMaxRetries: sqlCfg.InitMaxRetries, InitRetryInitialDelay: sqlCfg.InitRetryInitialDelay,
-	}, controlAttributes)
-}
-
-func buildGCExec(
-	sqlEngine sqlengine.SQLEngine,
-	namespaces tablenamespace.Collection,
-	system sql_system.SQLSystem,
-	txnStore kstore.KStore,
-) (gcexec.GarbageCollectorExecutor, error) {
-	return gcexec.GetGarbageCollectorExecutorInstance(sqlEngine, namespaces, system, txnStore)
-}
-
-func buildGC(
-	gcExec gcexec.GarbageCollectorExecutor,
-	gcCfg dto.GCCfg,
-	sqlEngine sqlengine.SQLEngine,
-) garbagecollector.GarbageCollector {
-	return garbagecollector.NewGarbageCollector(gcExec, gcCfg, sqlEngine)
+	})
 }
 
 func getTxnCounterManager(sqlEngine sqlengine.SQLEngine) (txncounter.Manager, error) {

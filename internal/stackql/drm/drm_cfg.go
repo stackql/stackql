@@ -13,7 +13,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/sqlmachinery"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -42,7 +41,6 @@ type Config interface {
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetRelationalType(string) string
 
-	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]typing.ColumnMetadata) ([]interface{}, []string)
 	GetNamespaceCollection() tablenamespace.Collection
@@ -85,7 +83,6 @@ type Config interface {
 
 type staticDRMConfig struct {
 	namespaceCollection tablenamespace.Collection
-	controlAttributes   sqlcontrol.ControlAttributes
 	sqlEngine           sqlengine.SQLEngine
 	sqlSystem           sql_system.SQLSystem
 	typCfg              typing.Config
@@ -148,14 +145,6 @@ func (dc *staticDRMConfig) ColumnToRelationalColumn(
 		col.GetRelationalType(),
 	).WithAlias(col.GetIdentifier())
 	return relationalColumn
-}
-
-func (dc *staticDRMConfig) GetControlAttributes() sqlcontrol.ControlAttributes {
-	return dc.getControlAttributes()
-}
-
-func (dc *staticDRMConfig) getControlAttributes() sqlcontrol.ControlAttributes {
-	return dc.controlAttributes
 }
 
 func (dc *staticDRMConfig) GetGolangSlices(nonControlColumns []typing.ColumnMetadata) ([]interface{}, []string) {
@@ -561,11 +550,9 @@ func GenerateDRMConfig(
 	sqlSystem sql_system.SQLSystem,
 	typCfg typing.Config,
 	namespaceCollection tablenamespace.Collection,
-	controlAttributes sqlcontrol.ControlAttributes,
 ) (Config, error) {
 	rv := &staticDRMConfig{
 		namespaceCollection: namespaceCollection,
-		controlAttributes:   controlAttributes,
 		sqlEngine:           sqlSystem.GetSQLEngine(),
 		sqlSystem:           sqlSystem,
 		typCfg:              typCfg,

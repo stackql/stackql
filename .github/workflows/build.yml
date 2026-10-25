@@ -1333,9 +1333,18 @@ jobs:
           [automount]
           options = "metadata"
 
+    # Keep repeated registry reads, subprocess launches, and SQLite writes off
+    # the Windows-mounted checkout (/mnt/d), where WSL filesystem I/O is costly.
+    - shell: wsl-bash -u root {0}
+      name: Copy test workspace to Linux filesystem
+      run: |
+        mkdir -p /tmp/stackql-wsl-tests
+        cp -a . /tmp/stackql-wsl-tests/
+
     - shell: wsl-bash -u root {0}
       name: Stackql permissions
       run:  |
+        cd /tmp/stackql-wsl-tests
         chmod a+rwx build/stackql
         chmod a+rx build/signing-fixtures
         ls -al build/stackql
@@ -1343,6 +1352,7 @@ jobs:
     - shell: wsl-bash -u root {0}
       name: Install Python dependencies
       run: |
+        cd /tmp/stackql-wsl-tests
         python3 -m venv .venv;
         source .venv/bin/activate; 
         pip3 install -r cicd/requirements.txt;
@@ -1350,12 +1360,14 @@ jobs:
     - shell: wsl-bash {0}
       name: Generate rewritten registry for simulations
       run: |
+        cd /tmp/stackql-wsl-tests
         source .venv/bin/activate;
         python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
 
     - shell: wsl-bash {0}
       name: Create certificates for robot tests
       run: |
+          cd /tmp/stackql-wsl-tests
           openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
           openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
           openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
@@ -1363,6 +1375,7 @@ jobs:
     - shell: wsl-bash {0}
       name: Run robot mocked functional tests
       run: |
+          cd /tmp/stackql-wsl-tests
           . cicd/version.txt
           export BUILDBRANCH="${{github.ref}}"
           export BUILDPATCHVERSION="${{github.run_number}}"
@@ -1384,6 +1397,7 @@ jobs:
       name: Output from mocked functional tests
       if: always()
       run: |
+          cd /tmp/stackql-wsl-tests
           cat ./test/robot/reports/output.xml
     
     - shell: wsl-bash {0}
@@ -1393,6 +1407,7 @@ jobs:
       env:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       run: |
+          cd /tmp/stackql-wsl-tests
           . cicd/version.txt
           export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
           export AZURE_CLIENT_SECRET='${{ secrets.AZURE_CLIENT_SECRET }}'

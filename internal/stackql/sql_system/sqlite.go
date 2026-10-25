@@ -16,20 +16,16 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/typing"
 
 	"github.com/stackql/stackql/pkg/serde"
-	"github.com/stackql/stackql/pkg/textutil"
 )
 
 func newSQLiteSystem(
 	sqlEngine sqlengine.SQLEngine,
 	analyticsNamespaceLikeString string,
-	controlAttributes sqlcontrol.ControlAttributes,
 	formatter sqlparser.NodeFormatter,
 	sqlCfg dto.SQLBackendCfg, //nolint:unparam,revive // future proof
 	authCfg map[string]*dto.AuthCtx,
@@ -40,7 +36,6 @@ func newSQLiteSystem(
 		defaultGolangKind:            reflect.String,
 		defaultRelationalType:        "text",
 		typeCfg:                      typCfg,
-		controlAttributes:            controlAttributes,
 		analyticsNamespaceLikeString: analyticsNamespaceLikeString,
 		sqlEngine:                    sqlEngine,
 		formatter:                    formatter,
@@ -52,7 +47,6 @@ func newSQLiteSystem(
 }
 
 type sqLiteSystem struct {
-	controlAttributes            sqlcontrol.ControlAttributes
 	analyticsNamespaceLikeString string
 	sqlEngine                    sqlengine.SQLEngine
 	formatter                    sqlparser.NodeFormatter
@@ -157,51 +151,6 @@ func (eng *sqLiteSystem) GetASTFormatter() sqlparser.NodeFormatter {
 
 func (eng *sqLiteSystem) GetASTFuncRewriter() astfuncrewrite.ASTFuncRewriter {
 	return astfuncrewrite.GetNopFuncRewriter()
-}
-
-//nolint:revive // future proof
-func (eng *sqLiteSystem) GCAdd(
-	tableName string, parentTcc,
-	lockableTcc internaldto.TxnControlCounters,
-) error {
-	maxTxnColName := eng.controlAttributes.GetControlMaxTxnColumnName()
-	q := fmt.Sprintf(
-		`
-		UPDATE "%s" 
-		SET "%s" = r.current_value
-		FROM (
-			SELECT *
-			FROM
-				"__iql__.control.gc.rings"
-		) AS r
-		WHERE 
-			"%s" = ? 
-			AND 
-			"%s" = ? 
-			AND
-			r.ring_name = 'transaction_id'
-			AND
-			"%s" < CASE 
-			   WHEN ("%s" - r.current_offset) < 0
-				 THEN CAST(pow(2, r.width_bits) + ("%s" - r.current_offset)  AS int)
-				 ELSE "%s" - r.current_offset
-				 END
-		`,
-		tableName,
-		maxTxnColName,
-		eng.controlAttributes.GetControlTxnIDColumnName(),
-		eng.controlAttributes.GetControlInsIDColumnName(),
-		maxTxnColName,
-		maxTxnColName,
-		maxTxnColName,
-		maxTxnColName,
-	)
-	_, err := eng.sqlEngine.Exec(q, lockableTcc.GetTxnID(), lockableTcc.GetInsertID())
-	return err
-}
-
-func (eng *sqLiteSystem) GCCollectObsoleted(minTransactionID int) error {
-	return eng.gCCollectObsoleted(minTransactionID)
 }
 
 func (eng *sqLiteSystem) RegisterExternalTable(
@@ -417,133 +366,8 @@ func (eng *sqLiteSystem) obtainRelationalColumnFromExternalSQLtable(
 // tables behind user space tables and materialized views are user data and are
 // excluded via the "__iql__.tables" and "__iql__.materialized_views" catalogues
 // (issue #799).
-func (eng *sqLiteSystem) gCCollectObsoleted(minTransactionID int) error {
-	maxTxnColName := eng.controlAttributes.GetControlMaxTxnColumnName()
-	obtainQuery := fmt.Sprintf(
-		`
-		SELECT
-			'DELETE FROM "' || name || '" WHERE "%s" < %d ; '
-		FROM
-			sqlite_master 
-		where 
-			type = 'table'
-		  and
-			name not like '__iql__%%' 
-			and
-			name NOT LIKE 'sqlite_%%' 
-			and
-			name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
-			and
-			name NOT IN (SELECT table_name FROM "__iql__.tables")
-		`,
-		maxTxnColName,
-		minTransactionID,
-	)
-	deleteQueryResultSet, err := eng.sqlEngine.Query(obtainQuery)
-	if err != nil {
-		return err
-	}
-	return eng.readExecGeneratedQueries(deleteQueryResultSet)
-}
-
-func (eng *sqLiteSystem) GCCollectAll() error {
-	return eng.gCCollectAll()
-}
-
 func (eng *sqLiteSystem) GetSQLEngine() sqlengine.SQLEngine {
 	return eng.sqlEngine
-}
-
-func (eng *sqLiteSystem) gCCollectAll() error {
-	obtainQuery := `
-		SELECT
-			'DELETE FROM "' || name || '"  ; '
-		FROM
-			sqlite_master 
-		where 
-			type = 'table'
-		  and
-			name not like '__iql__%%' 
-			and
-			name NOT LIKE 'sqlite_%%' 
-			and
-			name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
-			and
-			name NOT IN (SELECT table_name FROM "__iql__.tables")
-		`
-	deleteQueryResultSet, err := eng.sqlEngine.Query(obtainQuery)
-	if err != nil {
-		return err
-	}
-	return eng.readExecGeneratedQueries(deleteQueryResultSet)
-}
-
-func (eng *sqLiteSystem) generateDropTableStatement(relationalTable relationaldto.RelationalTable) (string, error) {
-	s, err := relationalTable.GetName()
-	return fmt.Sprintf(`drop table if exists "%s"`, s), err
-}
-
-func (eng *sqLiteSystem) GCControlTablesPurge() error {
-	return eng.gcControlTablesPurge()
-}
-
-func (eng *sqLiteSystem) GenerateDDL(relationalTable relationaldto.RelationalTable, dropTable bool) ([]string, error) {
-	return eng.generateDDL(relationalTable, dropTable)
-}
-
-func (eng *sqLiteSystem) generateDDL(relationalTable relationaldto.RelationalTable, dropTable bool) ([]string, error) {
-	var colDefs, retVal []string
-	var rv strings.Builder
-	if dropTable {
-		dt, err := eng.generateDropTableStatement(relationalTable)
-		if err != nil {
-			return nil, err
-		}
-		retVal = append(retVal, dt)
-	}
-	tableName, err := relationalTable.GetName()
-	if err != nil {
-		return nil, err
-	}
-	rv.WriteString(fmt.Sprintf(`create table if not exists "%s" ( `, tableName))
-	colDefs = append(colDefs, fmt.Sprintf(`"iql_%s_id" INTEGER PRIMARY KEY AUTOINCREMENT`, tableName))
-	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
-	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
-	maxTxnIDColName := eng.controlAttributes.GetControlMaxTxnColumnName()
-	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
-	lastUpdateColName := eng.controlAttributes.GetControlLatestUpdateColumnName()
-	insertEncodedColName := eng.controlAttributes.GetControlInsertEncodedIDColumnName()
-	gcStatusColName := eng.controlAttributes.GetControlGCStatusColumnName()
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, genIDColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, sessionIDColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, txnIDColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, maxTxnIDColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, insIDColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" TEXT `, insertEncodedColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP `, lastUpdateColName)) //nolint:lll // this is a long line but it is a string
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" SMALLINT NOT NULL DEFAULT %d `, gcStatusColName, constants.GCBlack))
-	for _, col := range relationalTable.GetColumns() {
-		var b strings.Builder
-		colName := col.GetName()
-		colType := col.GetType()
-		b.WriteString(`"` + colName + `" `)
-		b.WriteString(colType)
-		colDefs = append(colDefs, b.String())
-	}
-	rv.WriteString(strings.Join(colDefs, " , "))
-	rv.WriteString(" ) ")
-	retVal = append(retVal, rv.String())
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), genIDColName, tableName, genIDColName))         //nolint:lll // this is a long line but it is more readable this way
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), sessionIDColName, tableName, sessionIDColName)) //nolint:lll // this is a long line but it is more readable this way
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), txnIDColName, tableName, txnIDColName))         //nolint:lll // this is a long line but it is more readable this way
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), insIDColName, tableName, insIDColName))         //nolint:lll // this is a long line but it is more readable this way
-	rawViewDDL, err := eng.generateViewDDL(relationalTable)
-	if err != nil {
-		return nil, err
-	}
-	retVal = append(retVal, rawViewDDL...)
-	return retVal, nil
 }
 
 func (eng *sqLiteSystem) GetViewByName(viewName string) (internaldto.RelationDTO, bool) {
@@ -685,26 +509,6 @@ func (eng *sqLiteSystem) createView(
 	}
 	_, err := eng.sqlEngine.Exec(q, viewName, rawDDL, requiredParamsString)
 	return err
-}
-
-func (eng *sqLiteSystem) generateViewDDL(relationalTable relationaldto.RelationalTable) ([]string, error) {
-	var colNames, retVal []string
-	var createViewBuilder strings.Builder
-	retVal = append(retVal, fmt.Sprintf(`drop view if exists "%s" ; `, relationalTable.GetBaseName()))
-	createViewBuilder.WriteString(fmt.Sprintf(`create view "%s" AS `, relationalTable.GetBaseName()))
-	for _, col := range relationalTable.GetColumns() {
-		var b strings.Builder
-		colName := col.DelimitedSelectionString(`"`)
-		b.WriteString(colName)
-		colNames = append(colNames, b.String())
-	}
-	tableName, err := relationalTable.GetName()
-	if err != nil {
-		return nil, err
-	}
-	createViewBuilder.WriteString(fmt.Sprintf(`select %s from "%s" ;`, strings.Join(colNames, ", "), tableName))
-	retVal = append(retVal, createViewBuilder.String())
-	return retVal, nil
 }
 
 //nolint:unparam,revive // future proof
@@ -1109,180 +913,29 @@ func (eng *sqLiteSystem) IsTablePresent(
 // Therefore, this method will behave correctly provided that the column `colName`
 // is populated with `DateTime('now')`.
 func (eng *sqLiteSystem) TableOldestUpdateUTC(
-	tableName string,
-	requestEncoding string,
-	updateColName string,
-	requestEncodingColName string,
-) (time.Time, internaldto.TxnControlCounters) {
-	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
-	ssnIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
-	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
-	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
-		fmt.Sprintf(
-			"SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = ?;",
-			updateColName,
-			genIDColName,
-			ssnIDColName,
-			txnIDColName,
-			insIDColName,
-			tableName,
-			requestEncodingColName,
-		),
+	tableName, requestEncoding, updateColName, requestEncodingColName string,
+) (time.Time, bool) {
+	rows, err := eng.sqlEngine.Query(
+		fmt.Sprintf(`SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) FROM "%s" WHERE %s = ?`,
+			updateColName, tableName, requestEncodingColName),
 		requestEncoding,
 	)
-	//nolint:nestif // TODO: simplify nested if statements
-	if err == nil && rows != nil {
-		defer rows.Close()
-		rowExists := rows.Next()
-		if rowExists {
-			var oldest string
-			var genID, sessionID, txnID, insertID int
-			err = rows.Scan(&oldest, &genID, &sessionID, &txnID, &insertID)
-			if err == nil {
-				var oldestTime time.Time
-				oldestTime, err = time.Parse("2006-01-02T15:04:05", oldest)
-				if err == nil {
-					tcc := internaldto.NewTxnControlCountersFromVals(genID, sessionID, txnID, insertID)
-					tcc.SetTableName(tableName)
-					return oldestTime, tcc
-				}
-			}
-		}
+	if err != nil || rows == nil {
+		return time.Time{}, false
 	}
-	return time.Time{}, nil
-}
-
-func (eng *sqLiteSystem) GetGCHousekeepingQuery(tableName string, tcc internaldto.TxnControlCounters) string {
-	return eng.getGCHousekeepingQuery(tableName, tcc)
-}
-
-func (eng *sqLiteSystem) getGCHousekeepingQuery(tableName string, tcc internaldto.TxnControlCounters) string {
-	templateQuery := `INSERT OR IGNORE INTO 
-	  "__iql__.control.gc.txn_table_x_ref" (
-			iql_generation_id, 
-			iql_session_id, 
-			iql_transaction_id, 
-			table_name
-		) values(%d, %d, %d, '%s')`
-	return fmt.Sprintf(templateQuery, tcc.GetGenID(), tcc.GetSessionID(), tcc.GetTxnID(), tableName)
-}
-
-func (eng *sqLiteSystem) render(alias string, aliasToCountersMap map[string][]internaldto.TxnControlCounters) string {
-	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
-	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
-	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
-	var controls []string
-	if alias != "" {
-		for range aliasToCountersMap[alias] {
-			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
-			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
-			iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
-			controls = append(controls, fmt.Sprintf(`( %s = ? AND %s = ? AND %s = ? AND %s = ? )`, gIDcn, sIDcn, tIDcn, iIDcn))
-		}
-		return fmt.Sprintf(`( %s )`, strings.Join(controls, " OR "))
+	defer rows.Close()
+	if !rows.Next() {
+		return time.Time{}, false
 	}
-	for range aliasToCountersMap[alias] {
-		gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
-		sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
-		tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
-		iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
-		controls = append(controls, fmt.Sprintf(`( %s = ? AND %s = ? AND %s = ? AND %s = ? )`, gIDcn, sIDcn, tIDcn, iIDcn))
+	var oldest string
+	if err = rows.Scan(&oldest); err != nil {
+		return time.Time{}, false
 	}
-	if len(controls) == 0 {
-		return "1 = 1"
-	}
-	return fmt.Sprintf(`( %s )`, strings.Join(controls, " OR "))
+	stamp, err := time.Parse("2006-01-02T15:04:05", oldest)
+	return stamp, err == nil && rows.Err() == nil
 }
 
 //nolint:revive // Liskov substitution principle
-func (eng *sqLiteSystem) ComposeSelectQuery(
-	columns []typing.RelationalColumn,
-	tableAliases []string,
-	hoistedTableAliases []string,
-	fromString string,
-	rewrittenWhere string,
-	selectQualifier string,
-	selectSuffix string,
-	parameterOffset int,
-	aliasToCountersMap map[string][]internaldto.TxnControlCounters,
-) (string, error) {
-	return eng.composeSelectQuery(
-		columns, tableAliases, hoistedTableAliases,
-		fromString, rewrittenWhere, selectQualifier, selectSuffix, aliasToCountersMap)
-}
-
-func (eng *sqLiteSystem) composeSelectQuery(
-	columns []typing.RelationalColumn,
-	tableAliases []string,
-	hoistedTableAliases []string,
-	fromString string,
-	rewrittenWhere string,
-	selectQualifier string,
-	selectSuffix string,
-	aliasToCountersMap map[string][]internaldto.TxnControlCounters,
-) (string, error) {
-	var q strings.Builder
-	var quotedColNames []string
-	for _, col := range columns {
-		quotedColNames = append(quotedColNames, col.CanonicalSelectionString())
-	}
-	var wq strings.Builder
-	var hoistedControlOnComparisons []string
-	i := 0
-	if len(hoistedTableAliases) > 0 {
-		for _, alias := range hoistedTableAliases {
-			hoistedControlOnComparisons = append(
-				hoistedControlOnComparisons,
-				eng.render(alias, aliasToCountersMap),
-			)
-			i++
-		}
-		fromString = textutil.ExpandPlaceholders(
-			fromString,
-			textutil.ControlOnClausePlaceholder,
-			hoistedControlOnComparisons,
-		)
-	}
-	var controlWhereComparisons []string
-	for _, alias := range tableAliases {
-		controlWhereComparisons = append(
-			controlWhereComparisons,
-			eng.render(alias, aliasToCountersMap),
-		)
-		i++
-	}
-	if len(controlWhereComparisons) > 0 {
-		controlWhereSubClause := fmt.Sprintf("( %s )", strings.Join(controlWhereComparisons, " AND "))
-		wq.WriteString(controlWhereSubClause)
-	}
-
-	if strings.TrimSpace(rewrittenWhere) != "" {
-		if len(controlWhereComparisons) > 0 {
-			wq.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
-		} else {
-			wq.WriteString(fmt.Sprintf(" ( %s ) ", rewrittenWhere))
-		}
-	}
-	whereExprsStr := wq.String()
-
-	q.WriteString(fmt.Sprintf(`SELECT %s %s `, selectQualifier, strings.Join(quotedColNames, ", ")))
-	if fromString != "" {
-		q.WriteString(fmt.Sprintf(`FROM %s `, fromString))
-	}
-	if whereExprsStr != "" {
-		q.WriteString(" WHERE ")
-		q.WriteString(whereExprsStr)
-	}
-	q.WriteString(selectSuffix)
-
-	query := q.String()
-
-	return eng.sanitizeQueryString(query)
-}
-
 func (eng *sqLiteSystem) GetFullyQualifiedTableName(unqualifiedTableName string) (string, error) {
 	return eng.getFullyQualifiedTableName(unqualifiedTableName)
 }
@@ -1307,128 +960,6 @@ func (eng *sqLiteSystem) sanitizeWhereQueryString(queryString string) (string, e
 	return queryString, nil
 }
 
-func (eng *sqLiteSystem) GenerateInsertDML(
-	relationalTable relationaldto.RelationalTable,
-	tcc internaldto.TxnControlCounters,
-) (string, error) {
-	return eng.generateInsertDML(relationalTable, tcc)
-}
-
-func (eng *sqLiteSystem) generateInsertDML(
-	relationalTable relationaldto.RelationalTable,
-	tcc internaldto.TxnControlCounters, //nolint:unparam,revive // future proof
-) (string, error) {
-	var q strings.Builder
-	var quotedColNames, vals []string
-	tableName, err := relationalTable.GetName()
-	if err != nil {
-		return "", err
-	}
-	q.WriteString(fmt.Sprintf(`INSERT INTO "%s" `, tableName))
-	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
-	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
-	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
-	insEncodedColName := eng.controlAttributes.GetControlInsertEncodedIDColumnName()
-	quotedColNames = append(quotedColNames, `"`+genIDColName+`" `)
-	quotedColNames = append(quotedColNames, `"`+sessionIDColName+`" `)
-	quotedColNames = append(quotedColNames, `"`+txnIDColName+`" `)
-	quotedColNames = append(quotedColNames, `"`+insIDColName+`" `)
-	quotedColNames = append(quotedColNames, `"`+insEncodedColName+`" `)
-	vals = append(vals, "?")
-	vals = append(vals, "?")
-	vals = append(vals, "?")
-	vals = append(vals, "?")
-	vals = append(vals, "?")
-	for _, col := range relationalTable.GetColumns() {
-		quotedColNames = append(quotedColNames, `"`+col.GetName()+`" `)
-		vals = append(vals, "?")
-	}
-	q.WriteString(fmt.Sprintf(" (%s) ", strings.Join(quotedColNames, ", ")))
-	q.WriteString(fmt.Sprintf(" VALUES (%s) ", strings.Join(vals, ", ")))
-	return q.String(), nil
-}
-
-func (eng *sqLiteSystem) GenerateSelectDML(
-	relationalTable relationaldto.RelationalTable,
-	txnCtrlCtrs internaldto.TxnControlCounters,
-	selectSuffix,
-	rewrittenWhere string,
-) (string, error) {
-	return eng.generateSelectDML(relationalTable, txnCtrlCtrs, selectSuffix, rewrittenWhere)
-}
-
-func (eng *sqLiteSystem) generateSelectDML(
-	relationalTable relationaldto.RelationalTable,
-	txnCtrlCtrs internaldto.TxnControlCounters, //nolint:unparam,revive // future proof
-	selectSuffix, rewrittenWhere string,
-) (string, error) {
-	var q strings.Builder
-	var quotedColNames []string
-	for _, col := range relationalTable.GetColumns() {
-		var colEntry strings.Builder
-		if col.GetDecorated() == "" {
-			colEntry.WriteString(fmt.Sprintf(`"%s" `, col.GetName()))
-			if col.GetAlias() != "" {
-				colEntry.WriteString(fmt.Sprintf(` AS "%s"`, col.GetAlias()))
-			}
-		} else {
-			colEntry.WriteString(fmt.Sprintf("%s ", col.GetDecorated()))
-		}
-		quotedColNames = append(quotedColNames, fmt.Sprintf("%s ", colEntry.String()))
-	}
-	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
-	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
-	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
-	aliasStr := ""
-	if relationalTable.GetAlias() != "" {
-		aliasStr = fmt.Sprintf(` AS "%s" `, relationalTable.GetAlias())
-	}
-	tableName, err := relationalTable.GetName()
-	if err != nil {
-		return "", err
-	}
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s" %s WHERE `, strings.Join(quotedColNames, ", "), tableName, aliasStr))
-	q.WriteString(
-		fmt.Sprintf(
-			`( "%s" = ? AND "%s" = ? AND "%s" = ? AND "%s" = ? ) `,
-			genIDColName,
-			sessionIDColName,
-			txnIDColName,
-			insIDColName,
-		),
-	)
-	if strings.TrimSpace(rewrittenWhere) != "" {
-		q.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
-	}
-	q.WriteString(selectSuffix)
-
-	return q.String(), nil
-}
-
-func (eng *sqLiteSystem) gcControlTablesPurge() error {
-	obtainQuery := `
-		SELECT
-		  'DELETE FROM "' || name || '" ; '
-		FROM
-			sqlite_master 
-		where 
-			type = 'table'
-			and
-			name like '__iql__%'
-		`
-	deleteQueryResultSet, err := eng.sqlEngine.Query(obtainQuery)
-	if err != nil {
-		return err
-	}
-	return eng.readExecGeneratedQueries(deleteQueryResultSet)
-}
-
-func (eng *sqLiteSystem) GCPurgeEphemeral() error {
-	return eng.gcPurgeEphemeral()
-}
-
 func (eng *sqLiteSystem) GCPurgeCache() error {
 	return eng.gcPurgeCache()
 }
@@ -1439,42 +970,16 @@ func (eng *sqLiteSystem) gcPurgeCache() error {
 		'DROP TABLE IF EXISTS "' || name || '" ; ' 
 	from sqlite_schema 
 	where type = 'table' and name like ?
+    and name not like '__iql__%'
+    and name not like 'sqlite_%'
+    and name not in (select view_name from "__iql__.materialized_views")
+    and name not in (select table_name from "__iql__.tables")
 	`
 	rows, err := eng.sqlEngine.Query(query, eng.analyticsNamespaceLikeString)
 	if err != nil {
 		return err
 	}
 	return eng.readExecGeneratedQueries(rows)
-}
-
-func (eng *sqLiteSystem) gcPurgeEphemeral() error {
-	query := `
-	select distinct 
-		'DROP TABLE IF EXISTS "' || name || '" ; ' 
-	from 
-		sqlite_schema 
-	where 
-		type = 'table' 
-		and 
-		name NOT like ? 
-		and 
-		name not like '__iql__%' 
-		and
-		name NOT LIKE 'sqlite_%' 
-		and
-		name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
-		and
-		name NOT IN (SELECT table_name FROM "__iql__.tables")
-	`
-	rows, err := eng.sqlEngine.Query(query, eng.analyticsNamespaceLikeString)
-	if err != nil {
-		return err
-	}
-	return eng.readExecGeneratedQueries(rows)
-}
-
-func (eng *sqLiteSystem) PurgeAll() error {
-	return eng.purgeAll()
 }
 
 func (eng *sqLiteSystem) GetOperatorOr() string {
@@ -1483,30 +988,6 @@ func (eng *sqLiteSystem) GetOperatorOr() string {
 
 func (eng *sqLiteSystem) GetOperatorStringConcat() string {
 	return "|"
-}
-
-func (eng *sqLiteSystem) purgeAll() error {
-	obtainQuery := `
-		SELECT
-			'DROP TABLE IF EXISTS "' || name || '" ; '
-		FROM
-			sqlite_master 
-		where 
-			type = 'table'
-		  AND
-			name NOT LIKE '__iql__%'
-			and
-			name NOT LIKE 'sqlite_%'
-			and
-			name NOT IN (SELECT view_name FROM "__iql__.materialized_views")
-			and
-			name NOT IN (SELECT table_name FROM "__iql__.tables")
-		`
-	deleteQueryResultSet, err := eng.sqlEngine.Query(obtainQuery)
-	if err != nil {
-		return err
-	}
-	return eng.readExecGeneratedQueries(deleteQueryResultSet)
 }
 
 func (eng *sqLiteSystem) DelimitGroupByColumn(term string) string {

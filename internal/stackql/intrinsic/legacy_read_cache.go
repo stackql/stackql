@@ -10,7 +10,6 @@ import (
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql-labs/omnisdk/pkg/query"
 	"github.com/stackql-labs/omnisdk/pkg/rowcache"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 )
 
@@ -67,9 +66,10 @@ func (c *legacyNamespaceCache) Lookup(ctx context.Context, key rowcache.Key) (ro
 		return nil, false, err
 	}
 
-	attributes := sqlcontrol.GetControlAttributes("standard")
-	requestColumn := attributes.GetControlInsertEncodedIDColumnName()
-	_, hit := c.namespace.Match(table, encoded, attributes.GetControlLatestUpdateColumnName(), requestColumn)
+	// Compatibility with existing analytics-cache tables: these two metadata
+	// columns identify the request and its age; no transaction counters are read.
+	const requestColumn = "iql_insert_encoded"
+	hit := c.namespace.Match(table, encoded, "iql_last_modified", requestColumn)
 	if !hit {
 		return nil, false, nil
 	}

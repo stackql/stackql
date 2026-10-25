@@ -10,7 +10,6 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/logging"
 	db_util "github.com/stackql/stackql/internal/stackql/sqlengine/connect"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 
 	_ "github.com/jackc/pgx/v5/stdlib" //nolint:revive,nolintlint // anonymous import is a pattern for SQL drivers
 )
@@ -21,12 +20,11 @@ var (
 )
 
 type postgresTCPEngine struct {
-	db                *sql.DB
-	dsn               string
-	controlAttributes sqlcontrol.ControlAttributes
-	ctrlMutex         *sync.Mutex
-	sessionMutex      *sync.Mutex
-	discoveryMutex    *sync.Mutex
+	db             *sql.DB
+	dsn            string
+	ctrlMutex      *sync.Mutex
+	sessionMutex   *sync.Mutex
+	discoveryMutex *sync.Mutex
 }
 
 func (se *postgresTCPEngine) IsMemory() bool {
@@ -43,7 +41,6 @@ func (se *postgresTCPEngine) GetTx() (*sql.Tx, error) {
 
 func newPostgresTCPEngine(
 	cfg Config,
-	controlAttributes sqlcontrol.ControlAttributes,
 ) (*postgresTCPEngine, error) {
 	dsn := cfg.DSN
 	if dsn == "" {
@@ -55,12 +52,11 @@ func newPostgresTCPEngine(
 	}
 	db.SetConnMaxLifetime(-1)
 	eng := &postgresTCPEngine{
-		db:                db,
-		dsn:               dsn,
-		controlAttributes: controlAttributes,
-		ctrlMutex:         &sync.Mutex{},
-		sessionMutex:      &sync.Mutex{},
-		discoveryMutex:    &sync.Mutex{},
+		db:             db,
+		dsn:            dsn,
+		ctrlMutex:      &sync.Mutex{},
+		sessionMutex:   &sync.Mutex{},
+		discoveryMutex: &sync.Mutex{},
 	}
 	if cfg.DbInitFilePath != "" {
 		err = eng.execFile(cfg.DbInitFilePath)

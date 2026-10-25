@@ -16,7 +16,6 @@ import (
 	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/astformat"
 
@@ -142,7 +141,7 @@ func newStagingTestCtx(t *testing.T, endpoint string) *stagingTestCtx {
 	if err != nil {
 		t.Fatal(err)
 	}
-	engine, err := sqlengine.NewSQLEngine(sqlengine.Config{DBEngine: sqlCfg.DBEngine, DSN: sqlCfg.GetDSN()}, nil)
+	engine, err := sqlengine.NewSQLEngine(sqlengine.Config{DBEngine: sqlCfg.DBEngine, DSN: sqlCfg.GetDSN()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +238,7 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 	if sysErr != nil {
 		t.Fatal(sysErr)
 	}
-	ctx.system, sysErr = sql_system.NewSQLSystem(ctx.engine, "", sqlcontrol.GetControlAttributes("standard"), sqlCfg, nil, ctx.typCfg, "")
+	ctx.system, sysErr = sql_system.NewSQLSystem(ctx.engine, "", sqlCfg, nil, ctx.typCfg, "")
 	if sysErr != nil {
 		t.Fatal(sysErr)
 	}
@@ -266,13 +265,11 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 		sql  string
 		want string
 	}{
-
 		{
 			sql: "select m.login from stackql_unstable_fixture.orgs.members m join local_people p " +
 				"on p.id=e.value, json_each('[10]') e where m.org='dummyorg' and m.id=p.id",
 			want: "login\nb\n",
 		},
-
 		{
 			sql:  "select login, case when id=10 then 'chosen' else json('invalid-json') end as choice" + from + " and id=10",
 			want: "login,choice\nb,chosen\n",
@@ -286,19 +283,16 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 			sql:  "select substr(login,1,instr(login,'b')-1) as prefix" + from + " and id=10",
 			want: "prefix\n\n",
 		},
-
 		{
 			sql:  "select 'member:' || login as label" + from + " and id=10",
 			want: "label\nmember:b\n",
 		},
-
 		{
 			sql: "with local_people as (select 2 as id) " +
 				"select m.login, v.note from stackql_unstable_fixture.orgs.members m " +
 				"join stored_people v on m.id=v.id where m.org='dummyorg'",
 			want: "login,note\nb,chosen\n",
 		},
-
 		{
 			sql: "with picked as (select login,id" + from + " order by id desc limit 2) " +
 				"select login from picked order by login",
@@ -321,14 +315,12 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 				"join local_people p on m.id=p.id where m.org='dummyorg'",
 			want: "login,id\nc,2\n",
 		},
-
 		{
 			sql: "select count(*) as n from stackql_unstable_fixture.orgs.members m " +
 				"join stackql_unstable_fixture.orgs.members n on m.org=n.org and m.id=n.id " +
 				"where m.org='dummyorg' and n.org='dummyorg'",
 			want: "n\n4\n",
 		},
-
 		{
 			sql: "select m.login, e.value from stackql_unstable_fixture.orgs.members m, json_each('[1,2]') e " +
 				"where m.org='dummyorg' and m.id=10 order by e.value",
@@ -339,7 +331,6 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 				"join stackql_unstable_fixture.orgs.members n on m.id=n.id where m.org='dummyorg' and n.org='dummyorg'",
 			want: "n\n4\n",
 		},
-
 		{
 			sql:  "select s.login from (select login, id" + from + ") s where s.id > 2 order by s.id desc",
 			want: "login\nb\nd\n",
@@ -356,18 +347,15 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 			sql:  "select outer_rows.login from (select inner_rows.login from (select login, id" + from + ") inner_rows where inner_rows.id = 2) outer_rows",
 			want: "login\nc\n",
 		},
-
 		{
 			sql: "select m.login, s.login as selected from stackql_unstable_fixture.orgs.members m left join (select login, id" + from + " order by id desc limit 2) s on m.id = s.id where m.org = 'dummyorg' order by m.login",
 			// CSV presentation spells SQL NULL as null.
 			want: "login,selected\na,null\nb,b\nc,null\nd,d\n",
 		},
-
 		{
 			sql:  "select s.login from (select *" + from + " order by id desc limit 2) s order by s.login",
 			want: "login\nb\nd\n",
 		},
-
 		{
 			sql:  "select m.login, x.label from (select 'b' as login, 'constant' as label) x join (select login" + from + ") m on x.login = m.login",
 			want: "login,label\nb,constant\n",
@@ -376,7 +364,6 @@ func TestStagedSelectEndToEnd(t *testing.T) {
 			sql:  "select s.login from (select login, lag(id) over (order by id) as previous_id" + from + ") s where s.previous_id is null",
 			want: "login\na\n",
 		},
-
 		{
 			sql:  "select v.login,p.note from scoped_members v join local_people p on v.id=p.id order by v.login",
 			want: "login,note\nb,chosen\n",

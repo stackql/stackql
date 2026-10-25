@@ -1,15 +1,8 @@
 BEGIN TRANSACTION;
 
 create table if not exists "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository" ( 
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id" BIGSERIAL PRIMARY KEY , 
-  "iql_generation_id" INTEGER  , 
-  "iql_session_id" INTEGER  , 
-  "iql_txn_id" INTEGER  , 
-  "iql_max_txn_id" INTEGER  , 
-  "iql_insert_id" INTEGER  , 
   "iql_insert_encoded" TEXT  , 
   "iql_last_modified" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP  , 
-  "iql_gc_status" SMALLINT NOT NULL DEFAULT 1  , 
   "branches_url" text , 
   "collaborators_url" text , 
   "deployments_url" text , 
@@ -100,14 +93,11 @@ create table if not exists "stackql_raw"."stackql_analytics_github.repos.repos.m
   "username" text , 
   "org" text 
 );
+DELETE FROM "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository";
+
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  
 (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -197,13 +187,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "watchers_count",
   "org" 
 )
-VALUES(
-2,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/fullstackchronicles.io/git/refs{/sha}',
 'git@github.com:stackql/fullstackchronicles.io.git',
@@ -295,11 +279,6 @@ false,
 
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -388,13 +367,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-3,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/docusaurus-plugin-hubspot/git/refs{/sha}',
 'git@github.com:stackql/docusaurus-plugin-hubspot.git',
@@ -509,11 +482,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -602,13 +570,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-4,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/gatsby-plugin-smartlook/git/refs{/sha}',
 'git@github.com:stackql/gatsby-plugin-smartlook.git',
@@ -718,11 +680,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -811,13 +768,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-5,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/docusaurus-plugin-smartlook/git/refs{/sha}',
 'git@github.com:stackql/docusaurus-plugin-smartlook.git',
@@ -932,11 +883,6 @@ false,
 
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -1025,13 +971,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-6,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql.io/git/refs{/sha}',
 'git@github.com:stackql/stackql.io.git',
@@ -1122,11 +1062,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -1215,13 +1150,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-7,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-provider-registry/git/refs{/sha}',
 'git@github.com:stackql/stackql-provider-registry.git',
@@ -1312,11 +1241,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -1405,13 +1329,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-8,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/releases.stackql.io/git/refs{/sha}',
 'git@github.com:stackql/releases.stackql.io.git',
@@ -1503,11 +1421,6 @@ false,
 
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -1596,13 +1509,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-9,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql/git/refs{/sha}',
 'git@github.com:stackql/stackql.git',
@@ -1717,11 +1624,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -1810,13 +1712,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-10,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/go-openapistackql/git/refs{/sha}',
 'git@github.com:stackql/go-openapistackql.git',
@@ -1930,11 +1826,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -2023,13 +1914,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-11,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/go-spew/git/refs{/sha}',
 'git@github.com:stackql/go-spew.git',
@@ -2139,11 +2024,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -2232,14 +2112,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-12,
-1,
-3,
-2,
-1,
-
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-devel/git/refs{/sha}',
@@ -2354,11 +2227,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -2447,13 +2315,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-13,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/go-sqlite3/git/refs{/sha}',
 'git@github.com:stackql/go-sqlite3.git',
@@ -2567,11 +2429,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -2660,13 +2517,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-14,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/vitess/git/refs{/sha}',
 'git@github.com:stackql/vitess.git',
@@ -2780,11 +2631,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -2873,13 +2719,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-15,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/readline/git/refs{/sha}',
 'git@github.com:stackql/readline.git',
@@ -2992,11 +2832,6 @@ false,
 'stackql');
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -3085,13 +2920,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-16,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/color/git/refs{/sha}',
 'git@github.com:stackql/color.git',
@@ -3205,11 +3034,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -3298,13 +3122,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-17,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-artwork/git/refs{/sha}',
 'git@github.com:stackql/stackql-artwork.git',
@@ -3418,11 +3236,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -3511,13 +3324,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-18,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/pystackql/git/refs{/sha}',
 'git@github.com:stackql/pystackql.git',
@@ -3633,11 +3440,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -3726,13 +3528,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-19,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-jupyter-demo/git/refs{/sha}',
 'git@github.com:stackql/stackql-jupyter-demo.git',
@@ -3850,11 +3646,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -3943,13 +3734,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-20,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-mac-installer/git/refs{/sha}',
 'git@github.com:stackql/stackql-mac-installer.git',
@@ -4063,11 +3848,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -4156,13 +3936,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-  21,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/pg-server-thin/git/refs{/sha}',
 'git@github.com:stackql/pg-server-thin.git',
@@ -4276,11 +4050,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -4369,13 +4138,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-22,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/psql-wire/git/refs{/sha}',
 'git@github.com:stackql/psql-wire.git',
@@ -4489,11 +4252,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -4582,13 +4340,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-23,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/pg-server-various/git/refs{/sha}',
 'git@github.com:stackql/pg-server-various.git',
@@ -4702,11 +4454,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -4795,13 +4542,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-24,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/provider-doc-util/git/refs{/sha}',
 'git@github.com:stackql/provider-doc-util.git',
@@ -4915,11 +4656,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -5008,13 +4744,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-25,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/go-suffix-map/git/refs{/sha}',
 'git@github.com:stackql/go-suffix-map.git',
@@ -5128,11 +4858,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -5221,13 +4946,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-26,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/okta-pkce-login/git/refs{/sha}',
 'git@github.com:stackql/okta-pkce-login.git',
@@ -5346,11 +5065,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -5439,13 +5153,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-27,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/github-oauth-login/git/refs{/sha}',
 'git@github.com:stackql/github-oauth-login.git',
@@ -5559,11 +5267,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -5652,12 +5355,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(28,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/local-registry/git/refs{/sha}',
 'git@github.com:stackql/local-registry.git',
@@ -5771,11 +5469,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -5864,12 +5557,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(29,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/cloudy-redirect-app/git/refs{/sha}',
 'git@github.com:stackql/cloudy-redirect-app.git',
@@ -5983,11 +5671,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -6076,13 +5759,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-30,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/openapi-doc-util/git/refs{/sha}',
 'git@github.com:stackql/openapi-doc-util.git',
@@ -6204,11 +5881,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -6297,13 +5969,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-31,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-jupyter-google-okta-iam/git/refs{/sha}',
 'git@github.com:stackql/stackql-jupyter-google-okta-iam.git',
@@ -6419,11 +6085,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -6512,13 +6173,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-32,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-gcp-foundations/git/refs{/sha}',
 'git@github.com:stackql/stackql-gcp-foundations.git',
@@ -6636,11 +6291,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -6729,13 +6379,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-33,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-demo/git/refs{/sha}',
 'git@github.com:stackql/stackql-demo.git',
@@ -6849,11 +6493,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -6942,13 +6581,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-34,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/registry.stackql.io/git/refs{/sha}',
 'git@github.com:stackql/registry.stackql.io.git',
@@ -7070,11 +6703,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -7163,13 +6791,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-35,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-docs/git/refs{/sha}',
 'git@github.com:stackql/stackql-docs.git',
@@ -7283,11 +6905,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -7376,13 +6993,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-36,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-provider-doc-generator/git/refs{/sha}',
 'git@github.com:stackql/stackql-provider-doc-generator.git',
@@ -7496,11 +7107,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -7589,13 +7195,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-37,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/google-discovery-to-openapi/git/refs{/sha}',
 'git@github.com:stackql/google-discovery-to-openapi.git',
@@ -7709,11 +7309,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -7802,13 +7397,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-38,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-azure-openapi/git/refs{/sha}',
 'git@github.com:stackql/stackql-azure-openapi.git',
@@ -7930,11 +7519,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -8023,13 +7607,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(
-39,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/aws2openapi/git/refs{/sha}',
 'git@github.com:stackql/aws2openapi.git',
@@ -8143,11 +7721,6 @@ false,
 );
 
 INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  (
-  "iql_stackql_analytics_github.repos.repos.minimal-repository_id",
-  "iql_generation_id",
-  "iql_session_id",
-  "iql_txn_id",
-  "iql_insert_id",
   "iql_insert_encoded",
   "iql_last_modified",
   "git_refs_url",
@@ -8236,12 +7809,7 @@ INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos.minimal-reposito
   "disabled",
   "watchers_count",
   "org" 
-)  VALUES(40,
-1,
-3,
-2,
-1,
-'%path%org%stackql%%region%region%%',
+)  VALUES('%path%org%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'https://api.github.com/repos/stackql/stackql-middleware/git/refs{/sha}',
 'git@github.com:stackql/stackql-middleware.git',
@@ -8355,11 +7923,6 @@ false,
 );
 
 CREATE TABLE IF NOT EXISTS "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" (
-  "iql_github.repos.collaborator.generation_1_id" BIGSERIAL PRIMARY KEY ,
-  "iql_generation_id" INTEGER  ,
-  "iql_session_id" INTEGER  ,
-  "iql_txn_id" INTEGER  ,
-  "iql_insert_id" INTEGER,
   "iql_insert_encoded" text,
   "iql_last_modified" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   "node_id" text ,
@@ -8387,14 +7950,11 @@ CREATE TABLE IF NOT EXISTS "stackql_raw"."stackql_analytics_github.repos.collabo
   "owner" text ,
   "repo" text 
 );
+DELETE FROM "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator";
 
 
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(1,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%fullstackchronicles.io%%region%region%%',
+
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%fullstackchronicles.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8426,13 +7986,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'fullstackchronicles.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(2,
-1,
-3,
-2,
-2,
-
- '%path%owner%stackql%%path%repo%fullstackchronicles.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%fullstackchronicles.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8464,13 +8018,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'fullstackchronicles.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(3,
-1,
-3,
-2,
-2,
-
- '%path%owner%stackql%%path%repo%fullstackchronicles.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%fullstackchronicles.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8502,13 +8050,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'fullstackchronicles.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(4,
-1,
-3,
-2,
-2,
-
- '%path%owner%stackql%%path%repo%fullstackchronicles.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%fullstackchronicles.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8540,13 +8082,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'fullstackchronicles.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(5,
-1,
-3,
-2,
-2,
-
- '%path%owner%stackql%%path%repo%docusaurus-plugin-hubspot%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%docusaurus-plugin-hubspot%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8578,13 +8114,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'docusaurus-plugin-hubspot');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(6,
-1,
-3,
-2,
-2,
-
- '%path%owner%stackql%%path%repo%docusaurus-plugin-hubspot%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%docusaurus-plugin-hubspot%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8616,13 +8146,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'docusaurus-plugin-hubspot');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(7,
-1,
-3,
-2,
-2,
-
- '%path%owner%stackql%%path%repo%docusaurus-plugin-hubspot%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%docusaurus-plugin-hubspot%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8654,13 +8178,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'docusaurus-plugin-hubspot');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(8,
-1,
-3,
-2,
-2,
-
- '%path%owner%stackql%%path%repo%docusaurus-plugin-hubspot%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%docusaurus-plugin-hubspot%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8692,13 +8210,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'docusaurus-plugin-hubspot');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(9,
-1,
-3,
-2,
-2,
-
- '%path%owner%stackql%%path%repo%gatsby-plugin-smartlook%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%gatsby-plugin-smartlook%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -8730,13 +8242,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'gatsby-plugin-smartlook');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(10,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%gatsby-plugin-smartlook%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%gatsby-plugin-smartlook%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -8768,13 +8274,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'gatsby-plugin-smartlook');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(11,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%gatsby-plugin-smartlook%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%gatsby-plugin-smartlook%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -8806,13 +8306,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'gatsby-plugin-smartlook');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(12,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%gatsby-plugin-smartlook%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%gatsby-plugin-smartlook%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -8844,13 +8338,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'gatsby-plugin-smartlook');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(13,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%docusaurus-plugin-smartlook%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%docusaurus-plugin-smartlook%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8882,13 +8370,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'docusaurus-plugin-smartlook');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(14,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%docusaurus-plugin-smartlook%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%docusaurus-plugin-smartlook%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8920,13 +8402,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'docusaurus-plugin-smartlook');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(15,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%docusaurus-plugin-smartlook%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%docusaurus-plugin-smartlook%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8958,13 +8434,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'docusaurus-plugin-smartlook');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(16,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%docusaurus-plugin-smartlook%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%docusaurus-plugin-smartlook%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -8996,13 +8466,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'docusaurus-plugin-smartlook');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(17,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9034,13 +8498,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(18,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9072,13 +8530,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(19,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9110,13 +8562,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(20,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9148,13 +8594,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(21,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-provider-registry%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-provider-registry%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9186,13 +8626,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-provider-registry');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(22,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-provider-registry%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-provider-registry%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9224,13 +8658,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-provider-registry');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(23,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-provider-registry%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-provider-registry%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9262,13 +8690,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-provider-registry');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(24,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-provider-registry%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-provider-registry%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9300,13 +8722,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-provider-registry');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(25,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%releases.stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%releases.stackql.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9338,13 +8754,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'releases.stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(26,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%releases.stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%releases.stackql.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9376,13 +8786,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'releases.stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(27,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%releases.stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%releases.stackql.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9414,13 +8818,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'releases.stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(28,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%releases.stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%releases.stackql.io%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9452,13 +8850,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'releases.stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(29,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9492,13 +8884,7 @@ NULL,
 'stackql'
 );
 
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(
-30,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'SOMENODEID000000002',
 '{"admin":true,
@@ -9530,12 +8916,7 @@ NULL,
 'stackql'
 );
 
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(31,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'SOMENODEID000000003',
 '{"admin":false,
@@ -9567,13 +8948,7 @@ NULL,
 'stackql'
 );
 
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(
-32,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'SOMENODEID000000004',
 '{"admin":true,
@@ -9605,13 +8980,7 @@ NULL,
 'stackql'
 );
 
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(
-33,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%go-openapistackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-openapistackql%%region%region%%',
 CURRENT_TIMESTAMP,
 'SOMENODEID000000001',
 '{"admin":true,
@@ -9643,13 +9012,7 @@ NULL,
 'go-openapistackql'
 );
 
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(34,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-openapistackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-openapistackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9681,13 +9044,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'go-openapistackql');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(35,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-openapistackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-openapistackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9719,13 +9076,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'go-openapistackql');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(36,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-openapistackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-openapistackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9757,13 +9108,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'go-openapistackql');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(37,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-spew%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-spew%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9795,13 +9140,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'go-spew');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(38,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-spew%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-spew%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9833,13 +9172,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'go-spew');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(39,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-spew%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-spew%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9871,13 +9204,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'go-spew');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(40,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-spew%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-spew%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9909,13 +9236,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'go-spew');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(41,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-devel%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-devel%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9947,13 +9268,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-devel');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(42,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-devel%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-devel%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -9985,13 +9300,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-devel');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(43,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-devel%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-devel%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10023,13 +9332,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-devel');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(44,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-devel%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-devel%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10061,13 +9364,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-devel');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(45,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-sqlite3%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-sqlite3%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10099,13 +9396,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'go-sqlite3');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(46,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-sqlite3%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-sqlite3%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10137,13 +9428,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'go-sqlite3');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(47,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-sqlite3%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-sqlite3%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10175,13 +9460,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'go-sqlite3');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(48,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-sqlite3%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-sqlite3%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10213,13 +9492,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'go-sqlite3');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(49,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%vitess%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%vitess%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10251,13 +9524,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'vitess');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(50,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%vitess%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%vitess%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10289,13 +9556,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'vitess');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(51,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%vitess%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%vitess%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10327,13 +9588,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'vitess');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(52,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%vitess%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%vitess%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10365,13 +9620,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'vitess');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(53,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%readline%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%readline%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10403,13 +9652,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'readline');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(54,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%readline%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%readline%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10441,13 +9684,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'readline');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(55,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%readline%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%readline%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10479,13 +9716,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'readline');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(56,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%readline%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%readline%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10517,13 +9748,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'readline');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(57,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%color%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%color%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10555,13 +9780,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'color');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(58,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%color%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%color%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10593,13 +9812,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'color');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(59,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%color%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%color%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10631,13 +9844,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'color');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(60,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%color%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%color%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10669,13 +9876,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'color');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(61,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-artwork%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-artwork%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10707,13 +9908,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-artwork');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(62,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-artwork%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-artwork%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10745,13 +9940,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-artwork');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(63,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-artwork%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-artwork%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10783,13 +9972,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-artwork');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(64,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-artwork%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-artwork%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10821,13 +10004,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-artwork');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(65,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pystackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pystackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10859,13 +10036,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'pystackql');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(66,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pystackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pystackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10897,13 +10068,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'pystackql');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(67,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pystackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pystackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10935,13 +10100,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'pystackql');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(68,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pystackql%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pystackql%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -10973,13 +10132,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'pystackql');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(69,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-jupyter-demo%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-jupyter-demo%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11011,13 +10164,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-jupyter-demo');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(70,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-jupyter-demo%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-jupyter-demo%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11049,13 +10196,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-jupyter-demo');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(71,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-jupyter-demo%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-jupyter-demo%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11087,13 +10228,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-jupyter-demo');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(72,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-jupyter-demo%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-jupyter-demo%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11125,13 +10260,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-jupyter-demo');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(73,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-mac-installer%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-mac-installer%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11163,13 +10292,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-mac-installer');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(74,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-mac-installer%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-mac-installer%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11201,13 +10324,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-mac-installer');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(75,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-mac-installer%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-mac-installer%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11239,13 +10356,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-mac-installer');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(76,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%stackql-mac-installer%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-mac-installer%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11277,13 +10388,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-mac-installer');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(77,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pg-server-thin%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pg-server-thin%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11315,13 +10420,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'pg-server-thin');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(78,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pg-server-thin%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pg-server-thin%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11353,13 +10452,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'pg-server-thin');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(79,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pg-server-thin%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pg-server-thin%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11391,13 +10484,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'pg-server-thin');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(80,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pg-server-thin%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pg-server-thin%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11429,13 +10516,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'pg-server-thin');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(81,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%psql-wire%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%psql-wire%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11467,13 +10548,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'psql-wire');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(82,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%psql-wire%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%psql-wire%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11505,13 +10580,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'psql-wire');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(83,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%psql-wire%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%psql-wire%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11543,13 +10612,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'psql-wire');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(84,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%psql-wire%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%psql-wire%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11581,13 +10644,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'psql-wire');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(85,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pg-server-various%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pg-server-various%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11619,13 +10676,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'pg-server-various');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(86,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pg-server-various%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pg-server-various%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11657,13 +10708,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'pg-server-various');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(87,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pg-server-various%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pg-server-various%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11695,13 +10740,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'pg-server-various');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(88,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%pg-server-various%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%pg-server-various%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11733,13 +10772,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'pg-server-various');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(89,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%provider-doc-util%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%provider-doc-util%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11771,13 +10804,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'provider-doc-util');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(90,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%provider-doc-util%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%provider-doc-util%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11809,13 +10836,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'provider-doc-util');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(91,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%provider-doc-util%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%provider-doc-util%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11847,13 +10868,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'provider-doc-util');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(92,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%provider-doc-util%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%provider-doc-util%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11885,13 +10900,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'provider-doc-util');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(93,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-suffix-map%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-suffix-map%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11923,13 +10932,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'go-suffix-map');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(94,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-suffix-map%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-suffix-map%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11961,13 +10964,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'go-suffix-map');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(95,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-suffix-map%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-suffix-map%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -11999,13 +10996,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'go-suffix-map');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(96,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%go-suffix-map%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%go-suffix-map%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -12037,13 +11028,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'go-suffix-map');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(97,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%okta-pkce-login%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%okta-pkce-login%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -12075,13 +11060,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'okta-pkce-login');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(98,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%okta-pkce-login%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%okta-pkce-login%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -12113,13 +11092,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'okta-pkce-login');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(99,
-1,
-3,
-2,
-2,
-
-'%path%owner%stackql%%path%repo%okta-pkce-login%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%okta-pkce-login%%region%region%%',
 
 CURRENT_TIMESTAMP,
 
@@ -12151,12 +11124,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'okta-pkce-login');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(100,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%okta-pkce-login%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%okta-pkce-login%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12188,12 +11156,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'okta-pkce-login');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(101,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%github-oauth-login%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%github-oauth-login%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12225,12 +11188,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'github-oauth-login');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(102,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%github-oauth-login%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%github-oauth-login%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12262,12 +11220,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'github-oauth-login');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(103,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%github-oauth-login%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%github-oauth-login%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12299,12 +11252,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'github-oauth-login');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(104,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%github-oauth-login%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%github-oauth-login%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12336,12 +11284,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'github-oauth-login');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(105,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%local-registry%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%local-registry%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12373,12 +11316,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'local-registry');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(106,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%local-registry%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%local-registry%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12410,12 +11348,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'local-registry');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(107,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%local-registry%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%local-registry%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12447,12 +11380,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'local-registry');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(108,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%local-registry%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%local-registry%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12484,12 +11412,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'local-registry');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(109,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%cloudy-redirect-app%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%cloudy-redirect-app%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12521,12 +11444,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'cloudy-redirect-app');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(110,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%cloudy-redirect-app%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%cloudy-redirect-app%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12558,12 +11476,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'cloudy-redirect-app');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(111,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%cloudy-redirect-app%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%cloudy-redirect-app%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12595,12 +11508,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'cloudy-redirect-app');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(112,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%cloudy-redirect-app%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%cloudy-redirect-app%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12632,12 +11540,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'cloudy-redirect-app');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(113,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%openapi-doc-util%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%openapi-doc-util%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12669,12 +11572,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'openapi-doc-util');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(114,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%openapi-doc-util%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%openapi-doc-util%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12706,12 +11604,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'openapi-doc-util');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(115,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%openapi-doc-util%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%openapi-doc-util%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12743,12 +11636,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'openapi-doc-util');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(116,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%openapi-doc-util%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%openapi-doc-util%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12780,12 +11668,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'openapi-doc-util');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(117,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-jupyter-google-okta-iam%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-jupyter-google-okta-iam%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12817,12 +11700,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-jupyter-google-okta-iam');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(118,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-jupyter-google-okta-iam%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-jupyter-google-okta-iam%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12854,12 +11732,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-jupyter-google-okta-iam');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(119,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-jupyter-google-okta-iam%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-jupyter-google-okta-iam%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12891,12 +11764,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-jupyter-google-okta-iam');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(120,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-jupyter-google-okta-iam%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-jupyter-google-okta-iam%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12928,12 +11796,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-jupyter-google-okta-iam');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(121,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-gcp-foundations%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-gcp-foundations%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -12965,12 +11828,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-gcp-foundations');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(122,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-gcp-foundations%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-gcp-foundations%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13002,12 +11860,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-gcp-foundations');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(123,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-gcp-foundations%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-gcp-foundations%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13039,12 +11892,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-gcp-foundations');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(124,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-gcp-foundations%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-gcp-foundations%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13076,12 +11924,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-gcp-foundations');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(125,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-demo%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-demo%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13113,12 +11956,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-demo');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(126,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-demo%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-demo%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13150,12 +11988,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-demo');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(127,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-demo%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-demo%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13187,12 +12020,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-demo');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(128,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-demo%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-demo%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13224,12 +12052,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-demo');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(129,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%registry.stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%registry.stackql.io%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13261,12 +12084,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'registry.stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(130,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%registry.stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%registry.stackql.io%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13298,12 +12116,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'registry.stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(131,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%registry.stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%registry.stackql.io%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13335,12 +12148,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'registry.stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(132,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%registry.stackql.io%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%registry.stackql.io%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13372,12 +12180,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'registry.stackql.io');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(133,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-docs%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-docs%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13409,12 +12212,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-docs');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(134,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-docs%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-docs%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13446,12 +12244,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-docs');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(135,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-docs%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-docs%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13483,12 +12276,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-docs');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(136,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-docs%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-docs%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13520,12 +12308,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-docs');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(137,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-provider-doc-generator%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-provider-doc-generator%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13557,12 +12340,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-provider-doc-generator');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(138,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-provider-doc-generator%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-provider-doc-generator%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13594,12 +12372,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-provider-doc-generator');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(139,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-provider-doc-generator%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-provider-doc-generator%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13631,12 +12404,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-provider-doc-generator');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(140,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-provider-doc-generator%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-provider-doc-generator%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13668,12 +12436,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-provider-doc-generator');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(141,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%google-discovery-to-openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%google-discovery-to-openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13705,12 +12468,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'google-discovery-to-openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(142,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%google-discovery-to-openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%google-discovery-to-openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13742,12 +12500,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'google-discovery-to-openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(143,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%google-discovery-to-openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%google-discovery-to-openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13779,12 +12532,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'google-discovery-to-openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(144,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%google-discovery-to-openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%google-discovery-to-openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13816,12 +12564,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'google-discovery-to-openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(145,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-azure-openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-azure-openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13853,12 +12596,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-azure-openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(146,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-azure-openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-azure-openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13890,12 +12628,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-azure-openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(147,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-azure-openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-azure-openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13927,12 +12660,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-azure-openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(148,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-azure-openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-azure-openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -13964,12 +12692,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-azure-openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(149,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%aws2openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%aws2openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -14001,12 +12724,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'aws2openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(150,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%aws2openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%aws2openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -14038,12 +12756,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'aws2openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(151,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%aws2openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%aws2openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -14075,12 +12788,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'aws2openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(152,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%aws2openapi%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%aws2openapi%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -14112,12 +12820,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'aws2openapi');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(153,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-middleware%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-middleware%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -14149,12 +12852,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-middleware');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(154,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-middleware%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-middleware%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -14186,12 +12884,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-middleware');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(155,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-middleware%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-middleware%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -14223,13 +12916,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-middleware');
-INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES(
-156,
-1,
-3,
-2,
-2,
-'%path%owner%stackql%%path%repo%stackql-middleware%%region%region%%',
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" VALUES('%path%owner%stackql%%path%repo%stackql-middleware%%region%region%%',
 
  CURRENT_TIMESTAMP,
 
@@ -14269,13 +12956,5 @@ NULL,
 -- INSERT INTO sqlite_sequence VALUES('stackql_analytics_github.repos.collaborators',
 -- 156);
 
-CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_generation_id" on "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  ( "iql_generation_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_session_id" on "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  ( "iql_session_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_txn_id" on "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  ( "iql_txn_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_insert_id" on "stackql_raw"."stackql_analytics_github.repos.repos.minimal-repository"  ( "iql_insert_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_generation_id" on "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" ( "iql_generation_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_session_id" on "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" ( "iql_session_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_txn_id" on "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" ( "iql_txn_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_insert_id" on "stackql_raw"."stackql_analytics_github.repos.collaborators.collaborator" ( "iql_insert_id" ) ;
 
 COMMIT;

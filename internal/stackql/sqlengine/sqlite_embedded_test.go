@@ -14,7 +14,7 @@ import (
 
 func newTestEngine(t *testing.T, dsn string) *sqLiteEmbeddedEngine {
 	t.Helper()
-	eng, err := newSQLiteEmbeddedEngine(Config{DSN: dsn}, nil)
+	eng, err := newSQLiteEmbeddedEngine(Config{DSN: dsn})
 	if err != nil {
 		t.Fatalf("cannot construct embedded engine for dsn %q: %v", dsn, err)
 	}

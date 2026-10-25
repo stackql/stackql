@@ -660,7 +660,7 @@ def get_variables(
   SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLES_EXPECTED = [("read committed",)]
   SELECT_HSTORE_DETAILS_TUPLES_EXPECTED = []
 
-  SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED = ("__iql__.control.gc.rings",)
+  SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED = ("__iql__.views",)
 
 
   _JSONNET_PLUS_ENV_VARS_QUERY_FILE = os.path.join(REPOSITORY_ROOT_UNIX, 'test', 'assets', 'input', 'env-var-input', 'env-var-input.iql')

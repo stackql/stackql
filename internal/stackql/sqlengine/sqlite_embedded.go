@@ -13,7 +13,6 @@ import (
 	"sync"
 
 	"github.com/stackql/stackql/internal/stackql/logging"
-	sqlcontrol "github.com/stackql/stackql/internal/stackql/sqlengine/control"
 	"github.com/stackql/stackql/internal/stackql/sqlengine/internal/sqlfuncs"
 
 	sqlite "modernc.org/sqlite"
@@ -56,12 +55,11 @@ var (
 )
 
 type sqLiteEmbeddedEngine struct {
-	db                *sql.DB
-	dsn               string
-	controlAttributes sqlcontrol.ControlAttributes
-	ctrlMutex         *sync.Mutex
-	sessionMutex      *sync.Mutex
-	discoveryMutex    *sync.Mutex
+	db             *sql.DB
+	dsn            string
+	ctrlMutex      *sync.Mutex
+	sessionMutex   *sync.Mutex
+	discoveryMutex *sync.Mutex
 }
 
 func (se *sqLiteEmbeddedEngine) IsMemory() bool {
@@ -78,15 +76,13 @@ func (se *sqLiteEmbeddedEngine) GetTx() (*sql.Tx, error) {
 
 func newSQLiteEmbeddedEngine(
 	cfg Config,
-	controlAttributes sqlcontrol.ControlAttributes,
 ) (*sqLiteEmbeddedEngine, error) {
 	dsn, expectedPragmas, err := buildDSN(cfg.DSN)
 	eng := &sqLiteEmbeddedEngine{
-		dsn:               dsn,
-		controlAttributes: controlAttributes,
-		ctrlMutex:         &sync.Mutex{},
-		sessionMutex:      &sync.Mutex{},
-		discoveryMutex:    &sync.Mutex{},
+		dsn:            dsn,
+		ctrlMutex:      &sync.Mutex{},
+		sessionMutex:   &sync.Mutex{},
+		discoveryMutex: &sync.Mutex{},
 	}
 	if err != nil {
 		return eng, err
