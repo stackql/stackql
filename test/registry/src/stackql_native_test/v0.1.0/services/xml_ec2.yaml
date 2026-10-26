@@ -82,7 +82,7 @@ components:
           operation:
             $ref: '#/paths/~1xml~1ec2~1volumes/get'
           response:
-            mediaType: application/json
+            mediaType: application/xml
             openAPIDocKey: '200'
             overrideMediaType: application/json
             objectKey: volumeSet

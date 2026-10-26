@@ -473,7 +473,9 @@ func stagedColumns(names []string, first [][]any) []omnistaging.Column {
 			if row[i] == nil {
 				continue
 			}
-			if isNumber(row[i]) {
+			if _, boolean := row[i].(bool); boolean {
+				relationalType = "boolean"
+			} else if isNumber(row[i]) {
 				relationalType = stagedNumericType
 			}
 			break
@@ -500,7 +502,7 @@ func stagedValue(value any) any {
 		return int64(typed)
 	case int32:
 		return int64(typed)
-	case int64, float64:
+	case bool, int64, float64:
 		return typed
 	case float32:
 		return float64(typed)
@@ -572,7 +574,7 @@ func readStagedResult(
 ) (internaldto.ExecutorOutput, error) {
 	var err error
 	rowMap := make(map[string]map[string]interface{})
-	numeric, err := numericSQLColumns(result)
+	numeric, boolean, err := sqlColumnKinds(result)
 	if err != nil {
 		return nil, err
 	}
@@ -594,6 +596,7 @@ func readStagedResult(
 		}
 		row := make(map[string]interface{}, len(columnOrder))
 		for j, name := range columnOrder {
+			values[j] = nativeSQLValue(values[j], numeric[j], boolean[j])
 			row[name] = outputValue(values[j])
 			if isNumber(values[j]) {
 				columnOIDs[j] = oid.T_numeric
