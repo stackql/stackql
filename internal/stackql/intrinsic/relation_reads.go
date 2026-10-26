@@ -214,7 +214,7 @@ func materializeSQLRows(
 	defer result.Close()
 	var err error
 	var rows []omnisdk.Row
-	numeric, err := numericSQLColumns(result)
+	numeric, boolean, err := sqlColumnKinds(result)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func materializeSQLRows(
 		}
 		row := omnisdk.Row{}
 		for i, name := range names {
-			row[name] = nativeSQLValue(values[i], numeric[i])
+			row[name] = nativeSQLValue(values[i], numeric[i], boolean[i])
 		}
 		rows = append(rows, row)
 	}
@@ -429,25 +429,33 @@ func planBackendRead(ctx queryContext, node *sqlparser.Select) ([]string, derive
 	return names, open, nil
 }
 
-func numericSQLColumns(rows *sql.Rows) ([]bool, error) {
+func sqlColumnKinds(rows *sql.Rows) ([]bool, []bool, error) {
 	types, err := rows.ColumnTypes()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	numeric := make([]bool, len(types))
+	boolean := make([]bool, len(types))
 	for i, column := range types {
 		switch strings.ToLower(column.DatabaseTypeName()) {
+		case "bool", "boolean":
+			boolean[i] = true
 		case "numeric", "decimal", "integer", "int", "int2", "int4", "int8", "bigint", "smallint",
 			"float4", "float8", "real", "double precision":
 			numeric[i] = true
 		}
 	}
-	return numeric, nil
+	return numeric, boolean, nil
 }
 
-// Database drivers may return NUMERIC as bytes or text; retain its numeric
-// identity when rows cross back into Omni for a parent query.
-func nativeSQLValue(value any, numeric bool) any {
+// Restore declared SQL types at the database boundary: SQLite returns booleans
+// as integers, and drivers may return NUMERIC as bytes or text.
+func nativeSQLValue(value any, numeric, boolean bool) any {
+	if boolean {
+		if n, ok := value.(int64); ok {
+			return n != 0
+		}
+	}
 	if raw, ok := value.([]byte); ok {
 		value = string(raw)
 	}

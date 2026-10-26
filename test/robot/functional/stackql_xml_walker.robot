@@ -36,6 +36,21 @@ Schema Driven Xml Ec2 Projects Boolean And Integer Types
     ...    select size, encrypted from stackql_native_test.xml_ec2.volumes where state \= 'in-use';
     ...    false
 
+Schema Driven Xml Boolean Predicates Preserve Values
+    FOR    ${predicate}    ${expected}    IN    TRUE    true    FALSE    false
+        FOR    ${ordering}    IN    ${EMPTY}    ORDER BY size
+            ${output} =    Run Stackql Exec Command No Errors
+            ...    ${STACKQL_EXE}    ${OKTA_SECRET_STR}    ${GITHUB_SECRET_STR}    ${K8S_SECRET_STR}
+            ...    ${REGISTRY_NO_VERIFY_CFG_STR}    ${AUTH_CFG_STR}    ${SQL_BACKEND_CFG_STR_CANONICAL}
+            ...    SELECT encrypted, 0 AS integer_zero, 1 AS integer_one FROM stackql_native_test.xml_ec2.volumes WHERE encrypted \= ${predicate} ${ordering};
+            ...    stackql_output=csv
+            ${stderr} =    Application Stderr    ${output.stderr}
+            Should Be Empty    ${stderr}
+            ${actual} =    Strip String    ${output.stdout}
+            Should Be Equal    ${actual}    encrypted,integer_zero,integer_one\n${expected},0,1
+        END
+    END
+
 Schema Driven Xml Snake Aliases Multi Word Column Value
     [Documentation]    snake_case_aliases renames wire cidrBlock -> cidr_block; the VALUE now
     ...    projects via GetWireName (issue 108) instead of NULL.
