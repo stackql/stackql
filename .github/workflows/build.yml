@@ -57,6 +57,7 @@ env:
   # Override this repository variable when the stable trunk changes.
   STABLE_BRANCH: ${{ vars.STABLE_BRANCH || 'stable/v0.13' }}
   MAIN_DOCKER_TAG_SUFFIX: ${{ vars.MAIN_DOCKER_TAG_SUFFIX || '-rc' }}
+  DOCKER_PYTHON_VERSION: '3.13'
   GOTESTCMD: "go test -timeout 1200s -v ./..."
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
@@ -1766,12 +1767,42 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         outputs: type=image,"name=${{ env.STACKQL_IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
 
+    # Reuses the builder/integration layers from the standard build above.
+    - name: Build Python runtime image with buildx
+      uses: docker/build-push-action@v7.4.0
+      id: img_python_build
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      with:
+        context: .
+        build-args: |
+          BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
+          BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
+          BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
+          RUNTIME_IMAGE=python:${{ env.DOCKER_PYTHON_VERSION }}-slim-trixie
+        platforms: ${{ matrix.platform }}
+        target: app
+        labels: ${{ steps.meta.outputs.labels }}
+        outputs: type=image,"name=${{ env.STACKQL_IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
+
+    - name: Verify Python runtime image
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      run: |
+        docker run --rm --entrypoint /bin/sh \
+          "${{ env.STACKQL_IMAGE_NAME }}@${{ steps.img_python_build.outputs.digest }}" -ec '
+            python3 -c "import sys; assert sys.version.startswith(sys.argv[1])" "${{ env.DOCKER_PYTHON_VERSION }}."
+            python3 -m pip --version
+            stackql --version
+            stackql_mcp_client --help >/dev/null
+          '
+
     - name: Export digest
       if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
-        mkdir -p ${{ runner.temp }}/digests
+        mkdir -p ${{ runner.temp }}/digests ${{ runner.temp }}/python-digests
         digest="${{ steps.img_build.outputs.digest }}"
-        touch "${{ runner.temp }}/digests/${digest#sha256:}"        
+        touch "${{ runner.temp }}/digests/${digest#sha256:}"
+        python_digest="${{ steps.img_python_build.outputs.digest }}"
+        touch "${{ runner.temp }}/python-digests/${python_digest#sha256:}"
 
     - name: Upload digest
       if: env.BUILD_IMAGE_REQUIRED == 'true'
@@ -1781,7 +1812,14 @@ jobs:
         path: ${{ runner.temp }}/digests/*
         if-no-files-found: error
 
-  
+    - name: Upload Python digest
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      uses: actions/upload-artifact@v7.0.1
+      with:
+        name: digests-python-${{ env.PLATFORM_PAIR }}
+        path: ${{ runner.temp }}/python-digests/*
+        if-no-files-found: error
+
   dockertest:
     env:
       IS_DOCKER: 'true'
@@ -1825,6 +1863,16 @@ jobs:
           - job_name: Docker Test (linux/arm64, sqlite)
             platform: linux/arm64
             db_backend: sqlite
+            run_integration: false
+          - job_name: Docker Python Test (linux/amd64, sqlite)
+            platform: linux/amd64
+            db_backend: sqlite
+            image_variant: python
+            run_integration: false
+          - job_name: Docker Python Test (linux/arm64, sqlite)
+            platform: linux/arm64
+            db_backend: sqlite
+            image_variant: python
             run_integration: false
     steps:
     - name: Prepare
@@ -1883,7 +1931,7 @@ jobs:
       if: env.BUILD_IMAGE_REQUIRED == 'true'
       with:
         path: ${{ runner.temp }}/digests
-        name: digests-${{ env.PLATFORM_PAIR }}
+        name: digests-${{ matrix.image_variant == 'python' && 'python-' || '' }}${{ env.PLATFORM_PAIR }}
 
     - name: Prepare digest information
       if: env.BUILD_IMAGE_REQUIRED == 'true'
@@ -2036,13 +2084,13 @@ jobs:
         cat ./test/robot/reports/output.xml
 
     # Consumed by dockertestverify, which asserts that the shards of each
-    # (platform, db backend) group together ran every functional test.
+    # (platform, db backend, image variant) group together ran every functional test.
     # Unsharded legs upload as shard 1 of 1.
     - name: Upload robot output for shard verification
       if: always() && env.CI_IS_EXPRESS != 'true' && env.BUILD_IMAGE_REQUIRED == 'true'
       uses: actions/upload-artifact@v7.0.1
       with:
-        name: robot-output-${{ env.PLATFORM_PAIR }}-${{ matrix.db_backend }}-shard-${{ matrix.robot_shard_index || 1 }}-of-${{ matrix.robot_shard_count || 1 }}
+        name: robot-output-${{ env.PLATFORM_PAIR }}-${{ matrix.db_backend }}${{ matrix.image_variant == 'python' && '-python' || '' }}-shard-${{ matrix.robot_shard_index || 1 }}-of-${{ matrix.robot_shard_count || 1 }}
         path: test/robot/reports/output.xml
         if-no-files-found: error
 
@@ -2064,7 +2112,7 @@ jobs:
 
   ## Sharding splits one robot run across several dockertest legs, so no single
   ## leg can attest that the whole suite ran.  This job runs once all legs have
-  ## concluded and fails unless, for each (platform, db backend) group, the
+  ## concluded and fails unless, for each (platform, db backend, image variant) group, the
   ## shards together account for every functional test exactly once: both the
   ## total count and each individual test are checked against the test source,
   ## parsed independently of the shard modifier.  Anything that prevents the
@@ -2122,10 +2170,17 @@ jobs:
           --reports-dir "${{ runner.temp }}/robot-outputs" \
           --expected-group linux-amd64-sqlite \
           --expected-group linux-amd64-postgres_tcp \
-          --expected-group linux-arm64-sqlite
+          --expected-group linux-arm64-sqlite \
+          --expected-group linux-amd64-sqlite-python \
+          --expected-group linux-arm64-sqlite-python
 
   dockermerge:
+    name: Docker merge (${{ matrix.variant }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [standard, python]
     needs:
       - dockerbuild
       - dockertest
@@ -2170,7 +2225,7 @@ jobs:
         if: env.PUSH_IMAGE_REQUIRED == 'true'
         with:
           path: ${{ runner.temp }}/digests
-          pattern: digests-*
+          pattern: ${{ matrix.variant == 'python' && 'digests-python-*' || 'digests-linux-*' }}
           merge-multiple: true
       
       - name: Login to Docker Hub
@@ -2239,7 +2294,7 @@ jobs:
           # Apply the testing suffix to every main tag in one place.
           flavor: |
             latest=false
-            suffix=${{ github.ref_type == 'branch' && github.ref_name == 'main' && env.MAIN_DOCKER_TAG_SUFFIX || '' }}
+            suffix=${{ matrix.variant == 'python' && format('-python{0}', env.DOCKER_PYTHON_VERSION) || '' }}${{ github.ref_type == 'branch' && github.ref_name == 'main' && env.MAIN_DOCKER_TAG_SUFFIX || '' }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -2251,10 +2306,20 @@ jobs:
       - name: Create manifest list and push
         if: env.PUSH_IMAGE_REQUIRED == 'true'
         working-directory: ${{ runner.temp }}/digests
+        env:
+          PYTHON_SUFFIX: ${{ matrix.variant == 'python' && format('-python{0}', env.DOCKER_PYTHON_VERSION) || '' }}${{ matrix.variant == 'python' && github.ref_type == 'branch' && github.ref_name == 'main' && env.MAIN_DOCKER_TAG_SUFFIX || '' }}
+          PYTHON_ALIAS: ${{ matrix.variant == 'python' && '-python3' || '' }}${{ matrix.variant == 'python' && github.ref_type == 'branch' && github.ref_name == 'main' && env.MAIN_DOCKER_TAG_SUFFIX || '' }}
         run: |
-          # shellcheck disable=SC2046
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.STACKQL_IMAGE_NAME }}@sha256:%s ' *)
+          # Both Python tag forms are attached to the same multi-platform manifest.
+          mapfile -t tags < <(jq -r --arg suffix "$PYTHON_SUFFIX" --arg alias "$PYTHON_ALIAS" '
+            .tags | if $suffix != "" then . + map(rtrimstr($suffix) + $alias) else . end
+            | unique | .[] | "-t", .
+          ' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          images=()
+          for digest in *; do
+            images+=("${STACKQL_IMAGE_NAME}@sha256:${digest}")
+          done
+          docker buildx imagetools create "${tags[@]}" "${images[@]}"
 
       - name: Inspect image
         if: env.PUSH_IMAGE_REQUIRED == 'true'
