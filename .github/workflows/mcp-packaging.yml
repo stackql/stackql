@@ -4,8 +4,9 @@
 # (Authenticode-signed exe, notarised .pkg) are signed outside CI, so a
 # release event fires before they exist.  Flow:
 # push tag -> create release -> attach signed assets -> dispatch.
-# The npm / PyPI wrappers need interactive (2FA) credentials and are
-# published from a local clone - see step 7 of docs/stackql_release_process.md.
+# The npm wrapper is published by the npm-publish job (npm trusted publishing,
+# OIDC). The PyPI wrapper needs interactive (2FA) credentials and is published
+# from a local clone - see step 8 of docs/stackql_release_process.md.
 # The three embedded SDK wrappers (cargo, go, dotnet) are validated here on
 # every packaging PR (against the latest release, smoke tests fed the freshly
 # built bundle via STACKQL_MCP_BUNDLE) and, on dispatch, validated with real
@@ -439,3 +440,25 @@ jobs:
       - env:
           SDK_MIRROR_TOKEN: ${{ secrets.SDK_MIRROR_TOKEN }}
         run: make go-publish VERSION=${{ needs.version.outputs.version }}
+
+  # npm Trusted Publishing (OIDC): the npmjs.com trusted publisher on
+  # @stackql/mcp-server (owner stackql, repo stackql/stackql, workflow
+  # mcp-packaging.yml) exchanges this job's GitHub OIDC token for a
+  # short-lived publish token; npm attaches provenance. No stored secret.
+  # NODE_AUTH_TOKEN / NPM_TOKEN must NOT be set anywhere in this job.
+  npm-publish:
+    name: publish npm (@stackql/mcp-server)
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, sdk]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          # October 2026 security release: TLS hostname CVEs, Brotli RCE, eMudhra CA removal
+          node-version: '24.22.1'
+          registry-url: 'https://registry.npmjs.org'
+      - run: make npm-publish VERSION=${{ needs.version.outputs.version }}
