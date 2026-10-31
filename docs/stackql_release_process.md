@@ -92,9 +92,9 @@ It also creates `stackql-mcp-multiplatform.mcpb`, containing all five platform b
 - smoke-tests the bundles and wrappers, including native Windows ARM64 on `windows-11-arm`
 - attaches all six `.mcpb` bundles and their `.mcpb.sha256` files to the release
 - pushes the multi-arch OCI image to Docker Hub
-- publishes packages to crates.io (rust), nuget (dotnet), and the go mirror
+- publishes packages to crates.io (rust), nuget (dotnet), the go mirror, and npm (`@stackql/mcp-server`)
 
-Required repository secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `CARGO_REGISTRY_TOKEN`, and `SDK_MIRROR_TOKEN`. NuGet uses Trusted Publishing (OIDC); the manual fallback below uses `NUGET_API_KEY`.
+Required repository secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `CARGO_REGISTRY_TOKEN`, and `SDK_MIRROR_TOKEN`. NuGet uses Trusted Publishing (OIDC); the manual fallback below uses `NUGET_API_KEY`. npm (`@stackql/mcp-server`) uses npm Trusted Publishing (OIDC) from `mcp-packaging.yml`; no secret.
 
 manual fallback:
 
@@ -115,13 +115,21 @@ Push a tag to [releases.stackql.io](https://github.com/stackql/releases.stackql.
 git tag v0.12.778 && git push origin v0.12.778
 ```
 
-### 8. Publish the MCP wrapper packages (manual last mile)
+### 8. Publish the PyPI wrapper (manual last mile)
 
-Export the environment variables from `packaging/mcpb/.env` first. Run these steps after all five platform bundles and their checksums are published. The manifests pin the published checksums, including `windows-arm64`; npm and PyPI select the matching bundle for the runtime architecture.
+The npm wrapper is now published by `mcp-packaging` (see 8a); only the PyPI wrapper remains a manual step. Export the environment variables from `packaging/mcpb/.env` first. Run these steps after all five platform bundles and their checksums are published. The manifests pin the published checksums, including `windows-arm64`; npm and PyPI select the matching bundle for the runtime architecture.
 
-#### 8a. npm (`@stackql/mcp-server`)
+#### 8a. npm (`@stackql/mcp-server`) - published by `mcp-packaging`
 
-Requires an `npm login` session as a user with publish rights on the `@stackql` scope; the publish prompts for an OTP.
+The `npm-publish` job publishes `@stackql/mcp-server@X.Y.Z` with npm trusted publishing (GitHub Actions OIDC) after the sdk slices pass; no `npm login`, OTP or token is involved, and npm attaches a provenance attestation. The trusted publisher configuration on npmjs.com (owner `stackql`, repo `stackql`, workflow `mcp-packaging.yml`, `npm publish` allowed) is permanent once validated by its first publish.
+
+Verify:
+
+```bash
+npm view @stackql/mcp-server@X.Y.Z version dist.attestations.url
+```
+
+Manual fallback (publish rights on the `@stackql` scope; prompts for an OTP):
 
 ```bash
 cd packaging/mcpb
@@ -145,7 +153,7 @@ python -m twine upload pypi/dist/*
 
 ### 9. Official MCP Registry (`io.github.stackql/stackql-mcp`) - dispatch last
 
-Run [mcp-registry-publish](https://github.com/stackql/stackql/actions/workflows/mcp-registry-publish.yml) from `main` with the same version without `v`. The five platform MCPB packages (including `windows-arm64`), OCI image, npm package, and PyPI package must already be published at that version. The registry entry pins each platform bundle's published checksum.
+Run [mcp-registry-publish](https://github.com/stackql/stackql/actions/workflows/mcp-registry-publish.yml) from `main` with the same version without `v`. The five platform MCPB packages (including `windows-arm64`), OCI image, npm package (published by `mcp-packaging`), and PyPI package must already be published at that version. The registry entry pins each platform bundle's published checksum.
 
 Manual fallback (if the workflow fails or an out-of-band publish is needed):
 
@@ -174,7 +182,7 @@ make registry-publish VERSION=X.Y.Z
 
 ### 10. Commit the ChatGPT/Codex stdio plugin bump
 
-`make npm-pack` in 8a also stamped the plugin: `version` in `packaging/openai-plugin/plugins/stackql/.codex-plugin/plugin.json` and the pinned `@stackql/mcp-server@X.Y.Z` in `packaging/openai-plugin/plugins/stackql/bin/stackql-mcp.js` (`make openai-plugin-manifest VERSION=X.Y.Z` stamps just those two). After 8a confirms `@stackql/mcp-server@X.Y.Z` is live, verify and commit them together with the `package.json` / `pyproject.toml` bumps; the plugin validator fails when the pin and `packaging/mcpb/npm/package.json` disagree:
+Run `make npm-manifest VERSION=X.Y.Z` locally after the release; it stamps `packaging/mcpb/npm/package.json`, `packaging/openai-plugin/plugins/stackql/.codex-plugin/plugin.json` and the pinned `@stackql/mcp-server@X.Y.Z` in `packaging/openai-plugin/plugins/stackql/bin/stackql-mcp.js` (the `npm-publish` job's stamp lives only on the runner and is discarded; `make openai-plugin-manifest VERSION=X.Y.Z` stamps just the two plugin files). After 8a confirms `@stackql/mcp-server@X.Y.Z` is live, verify and commit them together with the `package.json` / `pyproject.toml` bumps; the plugin validator fails when the pin and `packaging/mcpb/npm/package.json` disagree:
 
 ```bash
 npm view @stackql/mcp-server@X.Y.Z version
