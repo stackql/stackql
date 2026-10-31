@@ -130,7 +130,7 @@ Two more vectors ship from the same pipeline:
 
 - **OCI image** (`docker.io/stackql/stackql-mcp`): built and smoke-tested in PR CI; pushed multi-arch (amd64 + arm64) by the publish workflow when the `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` secrets are set (soft-skips otherwise). The image carries the `io.modelcontextprotocol.server.name` label the MCP Registry requires for oci package validation.
 - **PyPI wrapper** (`stackql-mcp-server`): same launcher pattern in stdlib-only Python (uvx/pip), sharing the npm wrapper's binary cache. PR CI smoke-tests it; the publish workflow builds sdist+wheel as a run artifact. Publishing is manual (2FA): `make pypi-build VERSION=X.Y.Z` then `python -m twine upload pypi/dist/*`. The registry validates pypi packages via the `mcp-name:` marker in the README.
-- **npm wrapper** (`@stackql/mcp-server`): an npx-able launcher that downloads the platform's published `.mcpb` (sha256-verified against pins baked into the package) and spawns the binary. PR CI tests the wrapper against a locally built bundle; the publish workflow renders the real pins from the published assets and uploads the tarball as a run artifact. Publishing to npmjs is deliberately manual (2FA): download the artifact or run `make npm-pack VERSION=X.Y.Z` locally, then `cd npm && npm publish --access public`. The package carries the `mcpName` field the MCP Registry requires for npm package validation.
+- **npm wrapper** (`@stackql/mcp-server`): an npx-able launcher that downloads the platform's published `.mcpb` (sha256-verified against pins baked into the package) and spawns the binary. PR CI tests the wrapper against a locally built bundle; on dispatch the `npm-publish` job renders the real pins from the published assets and publishes the package. Published by the `npm-publish` job in `mcp-packaging` via npm trusted publishing (OIDC, provenance attached). Local fallback: `make npm-pack VERSION=X.Y.Z` then `cd npm && npm publish --access public` (prompts for 2FA). The package carries the `mcpName` field the MCP Registry requires for npm package validation.
 
 A GitHub Action consumes these published bundles for CI: **[stackql/setup-stackql-mcp](https://github.com/stackql/setup-stackql-mcp)** installs the signed binary (sha256-verified at runtime against the release checksums) and emits an `mcpServers` config for agentic workflows (e.g. `anthropics/claude-code-action`). It lives in its own repo and tracks no version - `version: latest` by default, pin with `version: X.Y.Z` - so this packaging repo no longer carries the action source.
 
@@ -332,8 +332,10 @@ This is interactive (PIN prompt), so it is a local flow, not a CI step. Requires
 
 ## Publishing the wrapper packages (npm, PyPI, OCI)
 
-Explicit command sequences for the three downstream package vectors. All are
-manual publishes (2FA / tokens). The `make` targets are convenience wrappers;
+Explicit command sequences for the three downstream package vectors. PyPI and
+OCI are manual publishes (2FA / tokens); npm is published by the `npm-publish`
+job in `mcp-packaging` (trusted publishing), so its sequence below is the
+manual fallback. The `make` targets are convenience wrappers;
 the raw commands below are what they run, useful on machines without `make`
 (e.g. Git Bash / WSL on Windows). Run every command FROM THE REPO ROOT unless
 a `cd` says otherwise.
@@ -342,7 +344,11 @@ Ordering rule for all three: the manifest/pin render steps fetch the canonical
 `.sha256` files from the PUBLISHED GitHub release, so they must run AFTER the
 `.mcpb` assets for the version are published. Never pin locally built hashes.
 
-### npm (`@stackql/mcp-server`)
+### npm (`@stackql/mcp-server`) - manual fallback
+
+CI publishes this package from the `npm-publish` job in `mcp-packaging`
+(npm trusted publishing, OIDC, provenance attached). Use the sequence below
+only if that job fails or an out-of-band publish is needed.
 
 ```bash
 # auth: browser-based login; account must have publish rights on @stackql
@@ -352,7 +358,7 @@ npm login
 bash scripts/render-npm-manifest.sh --version X.Y.Z
 cd npm && npm install --no-audit --no-fund
 npm publish --dry-run --access public      # confirm: 4 files, name, version, mcpName
-npm publish --access public                # the real publish (prompts for 2FA)
+npm publish --access public                # fallback manual publish (prompts for 2FA)
 cd ..
 
 # verify from a clean cache (forces download + sha256 verify of the bundle)
@@ -459,8 +465,10 @@ make sign                       envelope-sign dist/*.mcpb in place and regenerat
 make oci VERSION=X.Y.Z          build the stackql/stackql-mcp image locally (amd64)
 make oci-push VERSION=X.Y.Z     multi-arch image build + push (needs docker login)
 make npm-manifest VERSION=X.Y.Z render npm/platforms.json from PUBLISHED .sha256s
-make npm-pack VERSION=X.Y.Z     build the @stackql/mcp-server tarball (publish is
-                                manual: cd npm && npm publish --access public)
+make npm-pack VERSION=X.Y.Z     build the @stackql/mcp-server tarball (local
+                                fallback: cd npm && npm publish --access public)
+make npm-publish VERSION=X.Y.Z  CI only: publish @stackql/mcp-server via npm
+                                trusted publishing (OIDC); skips if version exists
 make openai-plugin-manifest VERSION=X.Y.Z   stamp the ChatGPT/Codex plugin pin
                                 (also runs as part of npm-manifest)
 make pypi-manifest VERSION=X.Y.Z render pypi platforms.json from PUBLISHED .sha256s

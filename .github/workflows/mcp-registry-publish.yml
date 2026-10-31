@@ -2,9 +2,9 @@
 # for a released version.  This is the FINAL publish step of a release: the
 # registry validates every package entry in server.json against its upstream
 # registry at the exact version, so the .mcpb release assets, the OCI image
-# (mcp-packaging), and the npm + PyPI wrappers (manual, 2FA) must ALL be live
-# before this runs.  Dispatch it after steps 7a/7b of
-# docs/stackql_release_process.md.
+# (mcp-packaging), the npm wrapper (mcp-packaging) and the PyPI wrapper
+# (manual, 2FA) must ALL be live before this runs.  Dispatch it after step 8b
+# of docs/stackql_release_process.md.
 #
 # Auth is GitHub Actions OIDC: the registry grants io.github.<owner>/* to
 # OIDC tokens from this repo's workflows, so no secret is required.
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: stackql release version without the leading v (e.g. 0.10.559); the .mcpb assets, OCI image, npm and PyPI wrappers must already be published
+        description: stackql release version without the leading v (e.g. 0.10.559); the .mcpb assets, OCI image and npm wrapper (mcp-packaging) and the PyPI wrapper (manual) must already be published
         required: true
         type: string
 
