@@ -1,10 +1,13 @@
 package intrinsic //nolint:testpackage // tests unexported iac state resolution
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 )
 
 func TestResolveStateDirDefaultsToRoot(t *testing.T) {
@@ -94,5 +97,70 @@ func TestInitReadsIaCStateRoot(t *testing.T) {
 	Init(`{"unstable": true, "iacStateRoot": " /srv/stackql/iac "}`)
 	if got := previewCfg.getIaCStateRoot(); got != "/srv/stackql/iac" {
 		t.Errorf("getIaCStateRoot() = %q, want %q", got, "/srv/stackql/iac")
+	}
+}
+
+func TestIaCBindingsPreserveNumbersAndLiteralStrings(t *testing.T) {
+	params := map[string]string{
+		"inputs":      `{"large":9007199254740993,"literal":"${not_a_template}"}`,
+		"environment": `{"flag":true}`, "region": "east",
+	}
+	inputs, environment, err := iacBindings(params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if number, ok := inputs["large"].(json.Number); !ok || number.String() != "9007199254740993" {
+		t.Fatal(inputs)
+	}
+	if inputs["literal"] != "${not_a_template}" || environment["flag"] != true || len(params) != 1 {
+		t.Fatal("binding conversion changed values or scope")
+	}
+	for _, invalid := range []string{`null`, `[]`, `{} {}`, `{"x":`} {
+		if _, _, err := iacBindings(map[string]string{"inputs": invalid}); err == nil {
+			t.Fatalf("accepted %s", invalid)
+		}
+	}
+}
+
+func TestIaCResourcesRetainSDKBindingsAndRejectRetiredFields(t *testing.T) {
+	resources, err := specResources(`[{"key":"one","provider":"demo","address":"service.items","write_once":{"name":{"from":"env","attribute":"NAME"}},"desired":{}}]`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	names, err := omnisdk.ResourceEnvironmentVariables(resources)
+	if err != nil || len(names) != 1 || names[0] != "NAME" {
+		t.Fatalf("bindings lost: %v, %v", names, err)
+	}
+	for _, invalid := range []string{
+		`[{"key":"one","params":{}}]`, `[{"key":"one","correlationParam":"tag"}]`,
+		`[{"key":"one"},{"key":"one"}]`,
+	} {
+		if _, err := specResources(invalid); err == nil {
+			t.Fatalf("accepted retired or duplicate specification: %s", invalid)
+		}
+	}
+}
+
+func TestIaCReportedOutcomesAreApplicationFailures(t *testing.T) {
+	for _, row := range []omnisdk.Row{
+		{"key": "one", "status": "failed", "error": "upstream failure"},
+		{"key": "one", "status": "outstanding"},
+		{"key": "one", "status": "applied", "outstanding": []string{"two"}},
+	} {
+		cursor := &iacRows{Rows: &fakeRows{rows: []omnisdk.Row{row}}}
+		if !cursor.Next() || cursor.Row()["key"] != "one" {
+			t.Fatal("diagnostic row lost")
+		}
+		for cursor.Next() {
+		}
+		if cursor.Err() == nil {
+			t.Fatalf("unsuccessful outcome accepted: %v", row)
+		}
+	}
+	cursor := &iacRows{Rows: &fakeRows{rows: []omnisdk.Row{{"status": "applied"}}}}
+	for cursor.Next() {
+	}
+	if err := cursor.Err(); err != nil {
+		t.Fatal(err)
 	}
 }

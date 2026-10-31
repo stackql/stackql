@@ -52,6 +52,9 @@ func hasExternalRelations(relations map[string]omnisdk.Relation) bool {
 func (r *storedResolver) registerExternal(
 	table *sqlparser.AliasedTableExpr, name sqlparser.TableName, source sql_datasource.SQLDataSource,
 ) error {
+	if err := checkHost(r.ctx, "host/backend", "read"); err != nil {
+		return err
+	}
 	reader, ok := source.(sql_datasource.ContextQuerier)
 	if !ok {
 		return fmt.Errorf("external source %s does not support cancellable reads", name.QualifierSecond.GetRawVal())
@@ -61,7 +64,7 @@ func (r *storedResolver) registerExternal(
 	}
 	// SQL identifiers are parsed names and escaped individually; connection names never enter SQL.
 	actual := quoteRelationIdentifier(name.Qualifier.GetRawVal()) + "." + quoteRelationIdentifier(name.Name.GetRawVal())
-	discovery, cancel := context.WithTimeout(context.Background(), omnisdk.DefaultRequestTimeout)
+	discovery, cancel := context.WithTimeout(executionContext(r.ctx), omnisdk.DefaultRequestTimeout)
 	defer cancel()
 	//nolint:gosec // Only individually quoted SQL identifiers enter this metadata query.
 	metadata, err := reader.QueryContext(discovery, "SELECT * FROM "+actual+" WHERE 1=0")

@@ -111,7 +111,7 @@ func (orc *standardOrchestrator) processQuery(
 			internaldto.NewNopEmptyExecutorOutput([]string{"OK"}),
 		}, true
 	} else if transactStatement.IsCommit() {
-		commitCoDomain := orc.txnCoordinator.Commit()
+		commitCoDomain := orc.txnCoordinator.Commit(handlerCtx)
 		commitErr, commitErrExists := commitCoDomain.GetError()
 		if commitErrExists {
 			retVal := []internaldto.ExecutorOutput{

@@ -77,7 +77,7 @@ func (se *sqLiteEmbeddedEngine) GetTx() (*sql.Tx, error) {
 func newSQLiteEmbeddedEngine(
 	cfg Config,
 ) (*sqLiteEmbeddedEngine, error) {
-	dsn, expectedPragmas, err := buildDSN(cfg.DSN)
+	dsn, expectedPragmas, err := buildDSNConfig(cfg)
 	eng := &sqLiteEmbeddedEngine{
 		dsn:            dsn,
 		ctrlMutex:      &sync.Mutex{},
@@ -408,9 +408,11 @@ var pragmaNamePattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 // injects the 5000ms legacy busy_timeout default when unset. An empty dsn
 // selects the default shared in-memory database. The returned map records
 // every pragma the DSN sets, for the startup assertion.
-//
-//nolint:gocognit,funlen // Preserve the migrated DSN translation rules during backend relocation.
-func buildDSN(dsn string) (string, map[string]string, error) {
+func buildDSN(dsn string) (string, map[string]string, error) { return buildDSNConfig(Config{DSN: dsn}) }
+
+//nolint:gocognit,funlen // Preserve the central DSN translation rules and host-required pragmas.
+func buildDSNConfig(cfg Config) (string, map[string]string, error) {
+	dsn := cfg.DSN
 	if dsn == "" {
 		dsn = sqliteDefaultDSN
 	}
@@ -484,6 +486,25 @@ func buildDSN(dsn string) (string, map[string]string, error) {
 		directives = append(directives, fmt.Sprintf("%s(%s)", name, translatedPragmas[name]))
 	}
 	directives = append(directives, outParams["_pragma"]...)
+	if cfg.RequireForeignKeys {
+		// modernc sorts pragmas, so remove conflicting directives instead of relying on append order.
+		filtered := directives[:0]
+		for _, directive := range directives {
+			name, _, _ := strings.Cut(directive, "(")
+			name, _, _ = strings.Cut(name, "=")
+			if !strings.EqualFold(strings.TrimSpace(name), "foreign_keys") {
+				filtered = append(filtered, directive)
+			}
+		}
+		filtered = append(filtered, "foreign_keys(1)")
+		directives = filtered
+		for name := range expectedPragmas {
+			if strings.EqualFold(name, "foreign_keys") {
+				delete(expectedPragmas, name)
+			}
+		}
+		expectedPragmas["foreign_keys"] = "1"
+	}
 	outParams["_pragma"] = directives
 	return base + "?" + outParams.Encode(), expectedPragmas, nil
 }

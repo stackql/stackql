@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"os"
 	"runtime/pprof"
@@ -103,5 +104,9 @@ func (cr *commandRunnerImpl) RunCommand(handlerCtx handler.HandlerContext) {
 		stackqlDriver.ProcessDryRun(handlerCtx.GetRawQuery())
 		return
 	}
-	stackqlDriver.ProcessQuery(handlerCtx.GetRawQuery())
+	queryErr := stackqlDriver.ProcessQueryWithError(handlerCtx.GetRawQuery())
+	var iacFailure interface{ IaCFailure() bool }
+	if queryErr != nil && (handlerCtx.GetRuntimeContext().AccessConfigFile != "" || errors.As(queryErr, &iacFailure)) {
+		os.Exit(1) // The response handler has already presented the error.
+	}
 }

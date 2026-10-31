@@ -51,7 +51,7 @@ func authRevokeFunc(ctx queryContext, node *sqlparser.AuthRevoke) func() interna
 		if err != nil {
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 		}
-		deadline, cancel := context.WithTimeout(context.Background(), time.Minute)
+		deadline, cancel := context.WithTimeout(executionContext(ctx), time.Minute)
 		defer cancel()
 		err = omnisdk.NewCredential(node.Provider, *dto.OmniAuth(configured)).Revoke(deadline)
 		if err == nil {

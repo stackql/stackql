@@ -11,7 +11,6 @@ package intrinsic
 // the registry's curation behind them.
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -132,9 +131,12 @@ func streamPlan(
 	relation string,
 	exprs sqlparser.SelectExprs,
 ) internaldto.ExecutorOutput {
-	rows, openErr := plan.Open(context.Background())
+	rows, openErr := plan.Open(executionContext(ctx))
 	if openErr != nil {
 		return internaldto.NewErroneousExecutorOutput(openErr)
+	}
+	if relation == convergeRelation || relation == destroyRelation {
+		rows = &iacRows{Rows: rows}
 	}
 	input := previewCfg
 	stream := &rowStream{
@@ -188,6 +190,9 @@ func previewArgs(ctx queryContext, cloud string, params map[string]string) (omni
 			RequestTimeout: apiRequestTimeout(ctx),
 			PageLimit:      ctx.GetRuntimeContext().HTTPPageLimit,
 		},
+	}
+	if err = configureCaller(ctx, &args); err != nil {
+		return omnisdk.Args{}, err
 	}
 	return args, nil
 }

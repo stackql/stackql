@@ -43,7 +43,8 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling auth: %w", err)
 	}
-	se, err := buildSQLEngine(sqlCfg)
+
+	se, err := buildSQLEngine(sqlCfg, runtimeCtx.AccessConfigFile != "")
 	if err != nil {
 		return nil, err
 	}
@@ -143,11 +144,12 @@ func initNamespaces(
 }
 
 func buildSQLEngine(
-	sqlCfg dto.SQLBackendCfg,
+	sqlCfg dto.SQLBackendCfg, requireForeignKeys bool,
 ) (sqlengine.SQLEngine, error) {
 	return sqlengine.NewSQLEngine(sqlengine.Config{
 		DBEngine: sqlCfg.DBEngine, DSN: sqlCfg.GetDSN(), DbInitFilePath: sqlCfg.DbInitFilePath,
-		InitMaxRetries: sqlCfg.InitMaxRetries, InitRetryInitialDelay: sqlCfg.InitRetryInitialDelay,
+		RequireForeignKeys: requireForeignKeys,
+		InitMaxRetries:     sqlCfg.InitMaxRetries, InitRetryInitialDelay: sqlCfg.InitRetryInitialDelay,
 	})
 }
 

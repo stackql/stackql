@@ -120,6 +120,9 @@ func (c *legacyNamespaceCache) requestEncoding(canonical string, key rowcache.Ke
 }
 
 func configureLegacyReadCache(ctx queryContext, q query.Unresolved, args *omnisdk.Args) {
+	if ctx.GetRuntimeContext().AccessConfigFile != "" {
+		return
+	}
 	cache := legacyCache(ctx)
 	if cache == nil {
 		return

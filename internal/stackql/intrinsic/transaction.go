@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
+	"github.com/stackql-labs/omnisdk/public/authorization"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -156,7 +157,7 @@ func executeDeclaredInverse(
 		if e != nil {
 			return internaldto.NewErroneousExecutorOutput(e)
 		}
-		cursor, e := p.Open(context.Background())
+		cursor, e := p.Open(executionContext(ctx))
 		if e != nil {
 			return internaldto.NewErroneousExecutorOutput(e)
 		}
@@ -216,4 +217,14 @@ func mutationHTTPFailure(ctx queryContext, verb string, err error) error {
 		"%s over HTTP error: %d %s", verb, response.StatusCode(), strings.ToUpper(http.StatusText(response.StatusCode())),
 	)
 	return mutationPresentationError{cause: err, message: message}
+}
+
+func (c observedQueryContext) GetCaller() authorization.Session {
+	if host, ok := c.queryContext.(interface{ GetCaller() authorization.Session }); ok {
+		return host.GetCaller()
+	}
+	return nil
+}
+func (c observedQueryContext) GetExecutionContext() context.Context {
+	return executionContext(c.queryContext)
 }

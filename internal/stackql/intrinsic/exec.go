@@ -100,7 +100,7 @@ func execFunc(ctx queryContext, node *sqlparser.Exec) func() internaldto.Executo
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
 		}
-		rows, err := plan.Open(context.Background())
+		rows, err := plan.Open(executionContext(ctx))
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
 		}

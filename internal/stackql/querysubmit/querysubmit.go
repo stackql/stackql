@@ -1,7 +1,11 @@
 package querysubmit
 
 import (
+	"sync"
+
+	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/accessmanagement"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -39,6 +43,7 @@ type basicQuerySubmitter struct {
 	undoHandlerCtx     handler.HandlerContext
 	handlerCtx         handler.HandlerContext
 	transactionContext txn_context.ITransactionContext
+	cancel             func()
 }
 
 func (qs *basicQuerySubmitter) GetRedoLog() (binlog.LogEntry, bool) {
@@ -81,11 +86,31 @@ func (qs *basicQuerySubmitter) WithTransactionContext(
 }
 
 func (qs *basicQuerySubmitter) PrepareQuery(handlerCtx handler.HandlerContext) error {
+	if manager := handlerCtx.GetAccessManager(); manager != nil {
+		caller, runCtx, cancel, err := manager.Establish(handlerCtx.GetExecutionContext())
+		if err != nil {
+			return err
+		}
+		qs.cancel = cancel
+		handlerCtx.SetCaller(caller)
+		handlerCtx.SetExecutionContext(runCtx)
+		statement, err := sqlparser.Parse(handlerCtx.GetQuery())
+		if err == nil {
+			err = accessmanagement.CheckStatement(runCtx, caller, statement)
+		}
+		if err != nil {
+			cancel()
+			return err
+		}
+	}
 	qs.handlerCtx = handlerCtx
 	logging.GetLogger().Debugln("PrepareQuery() invoked...")
 	pb := planbuilder.NewPlanBuilder(qs.transactionContext)
 	plan, err := pb.BuildPlanFromContext(handlerCtx)
 	qs.queryPlan = plan
+	if err != nil && qs.cancel != nil {
+		qs.cancel()
+	}
 	return err
 }
 
@@ -96,7 +121,26 @@ func (qs *basicQuerySubmitter) SubmitQuery() internaldto.ExecutorOutput {
 		qs.handlerCtx.GetOutfile(),
 		qs.handlerCtx.GetOutErrFile(),
 	)
-	return qs.queryPlan.GetInstructions().GetPrimitiveGraph().Execute(pl)
+	result := qs.queryPlan.GetInstructions().GetPrimitiveGraph().Execute(pl)
+	// A cancelled graph must not be reported as a successful empty result.
+	if err := qs.handlerCtx.GetExecutionContext().Err(); err != nil && result.GetError() == nil {
+		if stream := result.GetSQLResult(); stream != nil {
+			_ = stream.Close()
+		}
+		if qs.cancel != nil {
+			qs.cancel()
+		}
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	if qs.cancel != nil && qs.queryPlan.IsReadOnly() {
+		if stream := result.GetSQLResult(); stream != nil {
+			bounded := &callerStream{ISQLResultStream: stream, cancel: qs.cancel}
+			result.SetSQLResultFn(func() sqldata.ISQLResultStream { return bounded })
+		} else {
+			qs.cancel()
+		}
+	}
+	return result
 }
 
 func (qs *basicQuerySubmitter) PrepareUndoQuery(handlerCtx handler.HandlerContext) error {
@@ -117,3 +161,19 @@ func (qs *basicQuerySubmitter) UndoQuery() internaldto.ExecutorOutput {
 	)
 	return qs.queryPlan.GetInstructions().GetInversePrimitiveGraph().Execute(pl)
 }
+
+// Read-only snapshots live through streaming, and release their deadline timer at EOF/close.
+type callerStream struct {
+	sqldata.ISQLResultStream
+	cancel func()
+	once   sync.Once
+}
+
+func (s *callerStream) Read() (sqldata.ISQLResult, error) {
+	row, err := s.ISQLResultStream.Read()
+	if err != nil {
+		s.once.Do(s.cancel)
+	}
+	return row, err
+}
+func (s *callerStream) Close() error { s.once.Do(s.cancel); return s.ISQLResultStream.Close() }

@@ -27,7 +27,7 @@ type Coordinator interface {
 	// Begin a new transaction.
 	Begin() (Coordinator, error)
 	// Commit the current transaction.
-	Commit() acid_dto.CommitCoDomain
+	Commit(handler.HandlerContext) acid_dto.CommitCoDomain
 	// Rollback the current transaction.
 	Rollback() acid_dto.CommitCoDomain
 	// Enqueue a transaction operation.

@@ -108,7 +108,7 @@ func (orc *bestEffortOrchestrator) processQuery(
 			internaldto.NewNopEmptyExecutorOutput([]string{"OK"}),
 		}, true
 	} else if transactStatement.IsCommit() {
-		commitCoDomain := orc.txnCoordinator.Commit()
+		commitCoDomain := orc.txnCoordinator.Commit(handlerCtx)
 		commitErr, commitErrExists := commitCoDomain.GetError()
 		if commitErrExists {
 			return orc.undo([]string{

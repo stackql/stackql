@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/accessmanagement"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/earlyanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -42,6 +43,16 @@ func (pb *standardPlanBuilder) BuildUndoPlanFromContext(_ handler.HandlerContext
 
 //nolint:funlen,gocognit,errcheck,gocyclo,cyclop // no big deal
 func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error) {
+	if handlerCtx.GetAccessManager() != nil {
+		statement, err := sqlparser.Parse(handlerCtx.GetQuery())
+		if err != nil {
+			return nil, err
+		}
+		if err = accessmanagement.CheckStatement(
+			handlerCtx.GetExecutionContext(), handlerCtx.GetCaller(), statement); err != nil {
+			return nil, err
+		}
+	}
 	tcc, err := internaldto.NewTxnControlCounters(handlerCtx.GetTxnCounterMgr())
 	handlerCtx.GetTxnStore().Put(tcc.GetTxnID())
 	defer handlerCtx.GetTxnStore().Del(tcc.GetTxnID())
@@ -50,7 +61,8 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		return nil, err
 	}
 	planKey := handlerCtx.GetQuery()
-	if qp, ok := handlerCtx.GetLRUCache().Get(planKey); ok && isPlanCacheEnabled() {
+	useCache := handlerCtx.GetAccessManager() == nil && isPlanCacheEnabled()
+	if qp, ok := handlerCtx.GetLRUCache().Get(planKey); ok && useCache {
 		logging.GetLogger().Infoln("retrieving query plan from cache")
 		pl, plOk := qp.(plan.Plan)
 		if plOk {
@@ -140,6 +152,9 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		return qPlan, nil
 	}
 
+	if handlerCtx.GetAccessManager() != nil {
+		return nil, fmt.Errorf("caller access: legacy execution is not authorized")
+	}
 	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(
 		statement, handlerCtx, pGBuilder.getPlanGraphHolder())
 

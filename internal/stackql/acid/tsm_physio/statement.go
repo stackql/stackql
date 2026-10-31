@@ -124,3 +124,15 @@ func (st *basicStatement) GetAST() (sqlparser.Statement, bool) {
 func (st *basicStatement) GetPrimitiveGraphHolder() (primitivegraph.PrimitiveGraphHolder, bool) {
 	return st.querySubmitter.GetPrimitiveGraphHolder()
 }
+
+// Deferred work runs under the COMMIT request, rather than the already completed
+// request that queued it. Replanning also refreshes caller authorization.
+func executeQueuedStatement(stmt Statement, commitCtx handler.HandlerContext) internaldto.ExecutorOutput {
+	if queued, ok := stmt.(*basicStatement); ok && commitCtx != nil && !queued.IsExecuted() {
+		queued.handlerCtx.SetExecutionContext(commitCtx.GetExecutionContext())
+		if err := queued.Prepare(); err != nil {
+			return internaldto.NewErroneousExecutorOutput(err)
+		}
+	}
+	return stmt.Execute()
+}

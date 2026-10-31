@@ -1436,11 +1436,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       *args,
       **cfg
     )
-    se = result.stderr
-    if self._execution_platform == 'docker':
-      se_split = se.split('\n')
-      if len(se_split) > 1:
-        se = se_split[-1]
+    se = self.application_stderr(result.stderr)
     return self.should_be_equal(se, expected_output, collapse_spaces=True, formatter='ascii', strip_spaces=True)
 
   
@@ -1471,11 +1467,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       *args,
       **cfg
     )
-    se = result.stderr
-    if self._execution_platform == 'docker':
-      se_split = se.split('\n')
-      if len(se_split) > 1:
-        se = se_split[-1]
+    se = self.application_stderr(result.stderr)
     return self.should_contain(se, expected_output, collapse_spaces=True, strip_spaces=True)
 
 

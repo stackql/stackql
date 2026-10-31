@@ -88,7 +88,17 @@ var otelConfigRaw string
 //
 //nolint:gochecknoglobals // global vars are a pattern for this lib
 var rootCmd = &cobra.Command{
-	Use:   "stackql",
+	Use: "stackql",
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		if runtimeCtx.AccessConfigFile == "" {
+			return nil
+		}
+		switch cmd.Name() {
+		case "stackql", "exec", "shell", "srv", "mcp", "version":
+			return nil
+		}
+		return fmt.Errorf("caller access: this command is not integrated with caller authorization")
+	},
 	Short: "Cloud asset management and automation using SQL",
 	Long: `
          __             __         __
@@ -150,6 +160,7 @@ func vcsBuildDate() string {
 
 //nolint:lll,funlen,gochecknoinits,mnd // init is a pattern for this lib
 func init() {
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.AccessConfigFile, "access.config", "", "Caller access configuration: JSON {\"path\":\"/path/to/access.json\"}; token credentials use STACKQL_CALLER_TOKEN locally")
 	buildDate := BuildDate
 	if buildDate == "" {
 		buildDate = vcsBuildDate()

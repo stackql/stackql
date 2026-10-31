@@ -322,8 +322,8 @@ func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input dto.QueryJSO
 	return b.runPreprocessedQueryJSON(ctx, q, input.RowLimit)
 }
 
-func (b *stackqlMCPService) runPreprocessedQueryJSON(_ context.Context, query string, rowLimit int) ([]map[string]interface{}, error) {
-	results, extractErr := b.extractQueryResults(query, rowLimit)
+func (b *stackqlMCPService) runPreprocessedQueryJSON(ctx context.Context, query string, rowLimit int) ([]map[string]interface{}, error) {
+	results, extractErr := b.withContext(ctx).extractQueryResults(query, rowLimit)
 	if extractErr != nil {
 		return nil, extractErr
 	}
@@ -414,8 +414,8 @@ func classifyBackendError(err error, providerName string) error {
 // returns a different shape ({timestamp, rows_affected?, last_insert_id?})
 // because it goes through database/sql Exec instead of the orchestrator.
 // Robot assertions that target both backends must rely only on `timestamp`.
-func (b *stackqlMCPService) ExecQuery(_ context.Context, query string) (map[string]any, error) {
-	return b.execQuery(query)
+func (b *stackqlMCPService) ExecQuery(ctx context.Context, query string) (map[string]any, error) {
+	return b.withContext(ctx).execQuery(query)
 }
 
 func (b *stackqlMCPService) ValidateQuery(ctx context.Context, query string) ([]map[string]any, error) {
@@ -585,4 +585,11 @@ func (b *stackqlMCPService) PullProvider(ctx context.Context, input dto.Registry
 		return nil, qErr
 	}
 	return b.ExecQuery(ctx, q)
+}
+
+func (b *stackqlMCPService) withContext(ctx context.Context) *stackqlMCPService {
+	cloned := *b
+	cloned.handlerCtx = b.handlerCtx.Clone()
+	cloned.handlerCtx.SetExecutionContext(ctx)
+	return &cloned
 }

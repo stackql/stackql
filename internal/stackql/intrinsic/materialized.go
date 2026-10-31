@@ -1,7 +1,6 @@
 package intrinsic
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -57,7 +56,7 @@ func materialize(
 	if err != nil {
 		return err
 	}
-	bg := context.Background()
+	bg := executionContext(ctx)
 	rows, err := open(bg, nil)
 	if err != nil {
 		return err

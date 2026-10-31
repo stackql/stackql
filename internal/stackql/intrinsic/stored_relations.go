@@ -128,6 +128,9 @@ func validateDerivedDepth(table *sqlparser.AliasedTableExpr, maximum, depth int)
 }
 
 func (r *storedResolver) selectNode(node *sqlparser.Select, depth int) (*sqlparser.Select, error) {
+	if err := checkSQLNodes(r.ctx, node); err != nil {
+		return nil, err
+	}
 	if depth >= derivedRelationMaxDepth {
 		return nil, fmt.Errorf("stored relation expansion exceeds nesting bound")
 	}
@@ -273,6 +276,9 @@ func (r *storedResolver) named(table *sqlparser.AliasedTableExpr, name sqlparser
 func (r *storedResolver) register(
 	table *sqlparser.AliasedTableExpr, name sqlparser.TableName, metadata internaldto.RelationDTO,
 ) error {
+	if err := checkHost(r.ctx, "host/backend", "read"); err != nil {
+		return err
+	}
 	handleName := fmt.Sprintf("stored%d", len(r.relations))
 	handle := UnstablePrefix + "omni_relations.sources." + handleName
 	columns := map[string]omnisdk.ColumnType{}
