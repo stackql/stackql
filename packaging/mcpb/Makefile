@@ -62,7 +62,7 @@ OCI_STAGE := .oci-stage
 .PHONY: all check-version check-target download package combined one signed sign publish \
         server-json registry-publish check-published clean clean-bin \
         linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal \
-        oci-stage oci oci-push npm-manifest npm-pack pypi-manifest pypi-build \
+        oci-stage oci oci-push npm-manifest npm-pack npm-publish pypi-manifest pypi-build \
         openai-plugin-manifest \
         list help
 
@@ -243,11 +243,22 @@ oci-push: oci-stage
 npm-manifest: check-version openai-plugin-manifest
 	bash scripts/render-npm-manifest.sh --version $(VERSION)
 
-# Build the publishable tarball. Publishing stays manual (npm 2FA):
+# Build the publishable tarball. This is the LOCAL FALLBACK: CI publishes via
+# 'npm-publish' (trusted publishing). To publish by hand (npm 2FA):
 #   cd npm && npm publish --access public
 npm-pack: npm-manifest
 	cd npm && npm pack
 	@echo "tarball ready under npm/ - publish manually with: cd npm && npm publish --access public"
+
+# Publish from CI via npm trusted publishing (GitHub Actions OIDC; no token).
+# Provenance is attached automatically. Idempotent: skips if the version exists.
+npm-publish: npm-manifest
+	@if curl -fsSL "https://registry.npmjs.org/@stackql/mcp-server/$(VERSION)" >/dev/null 2>&1; then \
+	  echo "npm already has @stackql/mcp-server@$(VERSION) - skipping"; \
+	else \
+	  cd npm && npm publish --dry-run --access public && npm publish --access public \
+	    && echo "published https://www.npmjs.com/package/@stackql/mcp-server/v/$(VERSION)"; \
+	fi
 
 # --- ChatGPT/Codex stdio plugin -------------------------------------------------
 # Stamp packaging/openai-plugin (plugin.json version + the @stackql/mcp-server
