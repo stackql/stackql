@@ -1,7 +1,6 @@
 package intrinsic
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -73,7 +72,7 @@ func storedInsertSelectFunc(ctx queryContext, stmt sqlparser.Statement) (func() 
 }
 
 func runStoredInsert(ctx queryContext, staged stagedSelect, prefix string) internaldto.ExecutorOutput {
-	bg := context.Background()
+	bg := executionContext(ctx)
 	manager, err := getStagingManager(ctx)
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)

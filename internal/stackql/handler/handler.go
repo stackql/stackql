@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/stackql-labs/omnisdk/public/authorization"
+	"github.com/stackql/stackql/internal/stackql/accessmanagement"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
@@ -46,6 +50,11 @@ var (
 
 type HandlerContext interface { //nolint:revive // don't mind stuttering this one
 	Clone() HandlerContext
+	GetExecutionContext() context.Context
+	SetExecutionContext(context.Context)
+	GetAccessManager() accessmanagement.Manager
+	GetCaller() authorization.Session
+	SetCaller(authorization.Session)
 	//
 	GetStacqklSemver() string
 	GetASTFormatter() sqlparser.NodeFormatter
@@ -122,6 +131,9 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 }
 
 type standardHandlerContext struct {
+	executionContext context.Context
+	accessManager    accessmanagement.Manager
+	caller           authorization.Session
 	// mutex to protect auth context map
 	// must be a pointer dure to clonability
 	authMapMutex        *sync.Mutex
@@ -593,6 +605,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 	hc.sessionCtxMutex.Lock()
 	defer hc.sessionCtxMutex.Unlock()
 	rv := standardHandlerContext{
+		executionContext: hc.executionContext, accessManager: hc.accessManager, caller: hc.caller,
 		authMapMutex:         hc.authMapMutex,
 		sessionCtxMutex:      hc.sessionCtxMutex,
 		providersMapMutex:    hc.providersMapMutex,
@@ -647,6 +660,10 @@ func NewHandlerCtx(
 	inputBundle bundle.Bundle,
 	stackqlSemver string,
 ) (HandlerContext, error) {
+	accessManager, err := accessmanagement.NewManager(runtimeCtx.AccessConfigFile, inputBundle.GetSQLEngine())
+	if err != nil {
+		return nil, err
+	}
 	reg, err := getRegistry(runtimeCtx)
 	if err != nil {
 		return nil, err
@@ -699,6 +716,7 @@ func NewHandlerCtx(
 		txnCoordinatorCtx:   inputBundle.GetTxnCoordinatorContext(),
 		typCfg:              inputBundle.GetTypingConfig(),
 		sessionContext:      inputBundle.GetSessionContext(),
+		accessManager:       accessManager,
 		exportNamespace:     runtimeCtx.ExportAlias,
 		outfile:             outWriter,
 		outErrFile:          outErrWriter,
@@ -722,3 +740,16 @@ func transformOpenapiStackqlAuthToLocal(auth *omnisdk.ProviderAuth) *dto.AuthCtx
 	}
 	return &dto.AuthCtx{AuthConfig: auth.AuthConfig, Successor: transformOpenapiStackqlAuthToLocal(auth.Successor)}
 }
+
+func (hc *standardHandlerContext) GetExecutionContext() context.Context {
+	if hc.executionContext == nil {
+		return context.Background()
+	}
+	return hc.executionContext
+}
+func (hc *standardHandlerContext) SetExecutionContext(ctx context.Context) { hc.executionContext = ctx }
+func (hc *standardHandlerContext) GetAccessManager() accessmanagement.Manager {
+	return hc.accessManager
+}
+func (hc *standardHandlerContext) GetCaller() authorization.Session       { return hc.caller }
+func (hc *standardHandlerContext) SetCaller(caller authorization.Session) { hc.caller = caller }

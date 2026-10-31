@@ -184,10 +184,9 @@ func TestSpecResourcesMapsOntoSDK(t *testing.T) {
 		"provider": "aws",
 		"address": "ec2.vpcs",
 		"desired": {"CidrBlock": "10.42.0.0/16"},
-		"params": {"TagSpecification.1.ResourceType": "vpc"},
+		"write_once": {"TagSpecification.1.ResourceType": "vpc"},
 		"identity": "line_items.VpcId",
-		"addressedBy": "VpcId",
-		"correlationParam": "TagSpecification.1.Tag.1.Value"
+		"addressedBy": "VpcId"
 	}, {
 		"key": "aws/ec2/subnet",
 		"provider": "aws",
@@ -211,9 +210,7 @@ func TestSpecResourcesMapsOntoSDK(t *testing.T) {
 	if vpc.Identity() != "line_items.VpcId" || vpc.AddressedBy() != "VpcId" {
 		t.Errorf("vpc identity = %q, addressedBy = %q", vpc.Identity(), vpc.AddressedBy())
 	}
-	if vpc.CorrelationParam() != "TagSpecification.1.Tag.1.Value" {
-		t.Errorf("vpc correlation = %q", vpc.CorrelationParam())
-	}
+
 	// Desired is opaque: nothing between the predicate and the wire parses it,
 	// so it must arrive as the bytes the caller wrote.
 	if string(vpc.Desired()) != `{"CidrBlock": "10.42.0.0/16"}` {

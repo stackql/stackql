@@ -1,7 +1,6 @@
 package intrinsic
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
-func sleepFunc(node *sqlparser.Sleep) func() internaldto.ExecutorOutput {
+func sleepFunc(ctx queryContext, node *sqlparser.Sleep) func() internaldto.ExecutorOutput {
 	return func() internaldto.ExecutorOutput {
 		duration, err := parserutil.ExtractSleepDuration(node)
 		if err != nil {
@@ -21,7 +20,7 @@ func sleepFunc(node *sqlparser.Sleep) func() internaldto.ExecutorOutput {
 		if err != nil {
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 		}
-		rows, err := planned.Open(context.Background())
+		rows, err := planned.Open(executionContext(ctx))
 		if err != nil {
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 		}

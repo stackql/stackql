@@ -191,7 +191,7 @@ func openStagedRelation(ctx queryContext, staged stagedSelect, runCtx context.Co
 		return nil, err
 	}
 	rows, readErr := materializeStagedRelation(ctx, manager, id, staged, runCtx)
-	if releaseErr := manager.Release(context.Background(), id); releaseErr != nil && readErr == nil {
+	if releaseErr := manager.Release(context.WithoutCancel(runCtx), id); releaseErr != nil && readErr == nil {
 		return nil, releaseErr
 	}
 	return rows, readErr

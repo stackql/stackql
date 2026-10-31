@@ -2013,6 +2013,13 @@ jobs:
             ca-certificates \
             openssl
 
+    # Signature fixtures are generated on the runner, outside the tested image.
+    - name: Set up Go for signature fixtures
+      uses: actions/setup-go@v7.0.0
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      with:
+        go-version-file: go.mod
+
     - name: Setup Python
       uses: actions/setup-python@v7.0.0
       with:

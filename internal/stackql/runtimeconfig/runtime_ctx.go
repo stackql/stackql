@@ -3,6 +3,7 @@ package dto
 import "strconv"
 
 type RuntimeCtx struct {
+	AccessConfigFile             string
 	APIRequestTimeout            int
 	AuthRaw                      string
 	CABundle                     string
@@ -220,6 +221,7 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 
 func (rc RuntimeCtx) Copy() RuntimeCtx {
 	return RuntimeCtx{
+		AccessConfigFile:             rc.AccessConfigFile,
 		APIRequestTimeout:            rc.APIRequestTimeout,
 		AuthRaw:                      rc.AuthRaw,
 		CABundle:                     rc.CABundle,

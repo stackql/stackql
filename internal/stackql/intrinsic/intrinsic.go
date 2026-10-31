@@ -65,7 +65,7 @@ func GeneratePrimitiveFunc(
 	case *sqlparser.AuthRevoke:
 		return authRevokeFunc(ctx, node), true
 	case *sqlparser.Sleep:
-		return sleepFunc(node), true
+		return sleepFunc(ctx, node), true
 	case *sqlparser.Use:
 		return useFunc(ctx, node)
 	case *sqlparser.Show:
@@ -97,7 +97,14 @@ func GenerateStreamFunc(
 		return execute, true
 	}
 	if node, isSelect := stmt.(*sqlparser.Select); isSelect {
-		return selectFunc(ctx, node, ctx.GetCurrentProvider())
+		if action, handled := identitySelect(ctx, node); handled {
+			return action, true
+		}
+		action, handled := selectFunc(ctx, node, ctx.GetCurrentProvider())
+		if !handled && ctx.GetRuntimeContext().AccessConfigFile != "" && backendOnlySelect(node) {
+			return statementReadFunc(ctx, node), true
+		}
+		return action, handled
 	}
 	if action, handled := storedInsertSelectFunc(ctx, stmt); handled {
 		return action, true

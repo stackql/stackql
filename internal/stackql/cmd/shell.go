@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -179,6 +180,11 @@ var shellCmd = &cobra.Command{
 			HistoryFile:          config.GetReadlineFilePath(handlerCtx.GetRuntimeContext()),
 			HistorySearchFold:    true,
 			HistoryExternalWrite: true,
+		}
+
+		// Windows readline defaults to console events, which cannot read redirected stdin.
+		if !readline.IsTerminal(int(os.Stdin.Fd())) {
+			readlineCfg.Stdin = readline.NewCancelableStdin(os.Stdin)
 		}
 
 		sessionRunnerInstance, sessionErr := newSessionRunner(

@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stackql-labs/omnisdk/public/authentication"
 	"github.com/stackql/psql-wire/pkg/sqldata"
+	"github.com/stackql/stackql/internal/stackql/accessmanagement"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -108,6 +110,7 @@ type StackQLDriver interface {
 	sqlbackend.ISQLBackend
 	ProcessDryRun(string)
 	ProcessQuery(string)
+	ProcessQueryWithError(string) error
 }
 
 func (dr *basicStackQLDriver) ProcessDryRun(query string) {
@@ -123,16 +126,22 @@ func (dr *basicStackQLDriver) ProcessDryRun(query string) {
 	responsehandler.HandleResponse(dr.handlerCtx, response) //nolint:errcheck // TODO: investigate
 }
 
-func (dr *basicStackQLDriver) ProcessQuery(query string) {
+func (dr *basicStackQLDriver) ProcessQuery(query string) { _ = dr.ProcessQueryWithError(query) }
+
+func (dr *basicStackQLDriver) ProcessQueryWithError(query string) error {
 	clonedCtx := dr.handlerCtx.Clone()
 	clonedCtx.SetRawQuery(query)
 	clonedCtx.SetQueryStartTime(time.Now())
 	responses, ok := dr.processQueryOrQueries(clonedCtx)
+	var firstErr error
 	if ok {
 		for _, r := range responses {
-			responsehandler.HandleResponse(clonedCtx, r) //nolint:errcheck // TODO: investigate
+			if err := responsehandler.HandleResponse(clonedCtx, r); err != nil && firstErr == nil {
+				firstErr = err
+			}
 		}
 	}
+	return firstErr
 }
 
 type stmtMeta struct {
@@ -170,6 +179,7 @@ func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {
 
 //nolint:revive // TODO: review
 func (dr *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
+	dr.handlerCtx.SetExecutionContext(accessmanagement.WithEvidence(ctx, authentication.Evidence{}))
 	dr.handlerCtx.SetRawQuery(query)
 	if isEmptyStatement(query) {
 		// Mirrors PostgreSQL's EmptyQueryResponse: a statement containing only

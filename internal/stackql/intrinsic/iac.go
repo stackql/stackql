@@ -6,15 +6,22 @@ package intrinsic
 // compensation are the SDK's problem, not stackql's.
 
 import (
+	"bytes"
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
+	"github.com/stackql-labs/omnisdk/public/authorization"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -32,29 +39,6 @@ var errStateEscapesRoot = errors.New("must name a directory inside the iac state
 // runIDLayout stamps a run that names no run id, as omnisdk's Converge always has.
 const runIDLayout = "20060102T150405Z"
 
-// resourceDTO is the wire shape of one entry in the 'resources' predicate. It
-// is omnisdk's ManagedResource with the interface flattened into data.
-type resourceDTO struct {
-	Key              string            `json:"key"`
-	Provider         string            `json:"provider"`
-	Address          string            `json:"address"`
-	Desired          json.RawMessage   `json:"desired"`
-	Params           map[string]string `json:"params"`
-	Inbound          []arrivalDTO      `json:"inbound"`
-	ViaType          string            `json:"viaType"`
-	ViaProgram       string            `json:"viaProgram"`
-	Identity         string            `json:"identity"`
-	AddressedBy      string            `json:"addressedBy"`
-	CorrelationParam string            `json:"correlationParam"`
-}
-
-// arrivalDTO is one value reaching a resource from a sibling in the same
-// collection.
-type arrivalDTO struct {
-	From string `json:"from"`
-	As   string `json:"as"`
-}
-
 // iacSelectFunc routes a SELECT over stackql_preview.iac. Opening the plan
 // performs the run, so a select over the converge relation is a mutation in
 // every sense except its syntax.
@@ -63,21 +47,30 @@ func iacSelectFunc(
 	node *sqlparser.Select,
 	resource string,
 ) (func() internaldto.ExecutorOutput, bool) {
+	var action func() internaldto.ExecutorOutput
 	switch {
 	case strings.EqualFold(resource, convergeRelation):
-		return convergeSelectFunc(ctx, node)
+		action = convergeSelectFunc(ctx, node)
 	case strings.EqualFold(resource, destroyRelation):
-		return destroySelectFunc(ctx, node)
+		action = destroySelectFunc(ctx, node)
+	default:
+		action = blueprintSelectFunc(resource)
 	}
-	return blueprintSelectFunc(resource)
+	return func() internaldto.ExecutorOutput {
+		output := action()
+		if err := output.GetError(); err != nil {
+			return internaldto.NewErroneousExecutorOutput(iacOutcomeError{cause: err})
+		}
+		return output
+	}, true
 }
 
 // convergeSelectFunc routes a SELECT over the converge relation.
-func convergeSelectFunc(ctx queryContext, node *sqlparser.Select) (func() internaldto.ExecutorOutput, bool) {
+func convergeSelectFunc(ctx queryContext, node *sqlparser.Select) func() internaldto.ExecutorOutput {
 	relation := relationAddress(iacService, convergeRelation)
 	params, ledger, refusal := ledgerPredicates(ctx, node, relation)
 	if refusal != nil {
-		return refusal, true
+		return refusal
 	}
 	handle := popPredicate(params, blueprintPredicate)
 	spec := popPredicate(params, resourcesPredicate)
@@ -86,9 +79,13 @@ func convergeSelectFunc(ctx queryContext, node *sqlparser.Select) (func() intern
 		return refuse(fmt.Errorf(
 			"relation '%s' needs exactly one of '%s', '%s' or '%s'; "+
 				"a blueprint renders the resources, a specification or a file states them",
-			relation, blueprintPredicate, resourcesPredicate, resourcesFilePredicate)), true
+			relation, blueprintPredicate, resourcesPredicate, resourcesFilePredicate))
 	}
 	return func() internaldto.ExecutorOutput {
+		inputs, environment, err := iacBindings(params)
+		if err != nil {
+			return internaldto.NewErroneousExecutorOutput(err)
+		}
 		resources, err := convergeResources(handle, spec, file, params)
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
@@ -97,35 +94,49 @@ func convergeSelectFunc(ctx queryContext, node *sqlparser.Select) (func() intern
 		if argsErr != nil {
 			return internaldto.NewErroneousExecutorOutput(argsErr)
 		}
+		args.Inputs, args.Environment = inputs, environment
 		plan, planErr := omnisdk.Prepare(registryRoot(ctx), omnisdk.DesiredState(resources), ledger, args)
 		if planErr != nil {
 			return internaldto.NewErroneousExecutorOutput(planErr)
 		}
 		return streamPlan(ctx, plan, convergeRelation, node.SelectExprs)
-	}, true
+	}
 }
 
 // destroySelectFunc routes a SELECT over the destroy relation. What the collection holds comes
 // from its ledger alone, so the remaining predicates are only the scope the deletes run in. With
 // no resources to name a provider, credentials come from each cloud's canonical environment
 // variables.
-func destroySelectFunc(ctx queryContext, node *sqlparser.Select) (func() internaldto.ExecutorOutput, bool) {
+func destroySelectFunc(ctx queryContext, node *sqlparser.Select) func() internaldto.ExecutorOutput {
 	relation := relationAddress(iacService, destroyRelation)
 	params, ledger, refusal := ledgerPredicates(ctx, node, relation)
 	if refusal != nil {
-		return refusal, true
+		return refusal
+	}
+	selection, selected := params["keys"]
+	delete(params, "keys")
+	var keys []string
+	if selected {
+		if err := json.Unmarshal([]byte(selection), &keys); err != nil || len(keys) == 0 {
+			return refuse(errors.New("partial destroy requires a nonempty JSON array of keys"))
+		}
+		for _, key := range keys {
+			if strings.TrimSpace(key) == "" {
+				return refuse(errors.New("partial destroy requires nonempty keys"))
+			}
+		}
 	}
 	return func() internaldto.ExecutorOutput {
 		args, argsErr := previewArgs(ctx, "", params)
 		if argsErr != nil {
 			return internaldto.NewErroneousExecutorOutput(argsErr)
 		}
-		plan, planErr := omnisdk.Prepare(registryRoot(ctx), omnisdk.Destroy(), ledger, args)
+		plan, planErr := omnisdk.Prepare(registryRoot(ctx), omnisdk.Destroy(keys...), ledger, args)
 		if planErr != nil {
 			return internaldto.NewErroneousExecutorOutput(planErr)
 		}
 		return streamPlan(ctx, plan, destroyRelation, node.SelectExprs)
-	}, true
+	}
 }
 
 // ledgerPredicates reads the predicates every ledger backed relation takes: the collection it
@@ -152,13 +163,25 @@ func ledgerPredicates(
 	if root == "" {
 		root = filepath.Join(ctx.GetRuntimeContext().ApplicationFilesRootPath, stateDirName)
 	}
+	if ctx.GetRuntimeContext().AccessConfigFile != "" {
+		host, ok := ctx.(interface{ GetCaller() authorization.Session })
+		if !ok || host.GetCaller() == nil {
+			return nil, nil, refuse(errors.New("authenticated caller required for IaC state"))
+		}
+		principal := host.GetCaller().Principal()
+		owner := "principal:" + principal.ID()
+		if tenant := principal.Attributes()["tenant"]; tenant != "" {
+			owner = "tenant:" + tenant
+		}
+		root = filepath.Join(root, fmt.Sprintf("%x", sha256.Sum256([]byte(owner))))
+	}
 	state, stateErr := resolveStateDir(root, popPredicate(params, statePredicate))
 	if stateErr != nil {
 		return nil, nil, refuse(fmt.Errorf("relation '%s': '%s' %w", relation, statePredicate, stateErr))
 	}
 	runID := popPredicate(params, runIDPredicate)
 	if runID == "" {
-		runID = time.Now().UTC().Format(runIDLayout)
+		runID = time.Now().UTC().Format(runIDLayout) + "-" + rand.Text()
 	}
 	return params, omnisdk.NewLedger(collection, state, runID), nil
 }
@@ -233,7 +256,11 @@ func convergeResources(
 	case handle != "":
 		return blueprintResources(handle, params)
 	case file != "":
-		return omnisdk.LoadResources(file)
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+		return specResources(string(data))
 	}
 	return specResources(spec)
 }
@@ -259,28 +286,22 @@ func blueprintResources(handle string, params map[string]string) ([]omnisdk.Mana
 
 // specResources reads the 'resources' predicate.
 func specResources(spec string) ([]omnisdk.ManagedResource, error) {
-	var specs []resourceDTO
-	if err := json.Unmarshal([]byte(spec), &specs); err != nil {
-		return nil, fmt.Errorf(
-			"intrinsic: '%s' is not a valid resource specification: %w", resourcesPredicate, err)
+	resources, err := omnisdk.ParseResources([]byte(spec))
+	if err != nil {
+		return nil, fmt.Errorf("intrinsic: invalid resource specification: %w", err)
 	}
-	out := make([]omnisdk.ManagedResource, 0, len(specs))
-	for _, resource := range specs {
-		arrivals := make([]omnisdk.Arrival, 0, len(resource.Inbound))
-		for _, arrival := range resource.Inbound {
-			arrivals = append(arrivals, omnisdk.Arrival{From: arrival.From, As: arrival.As})
+	seen := map[string]bool{}
+	for _, resource := range resources {
+		if seen[resource.Key()] {
+			return nil, fmt.Errorf("duplicate resource key %q", resource.Key())
 		}
-		out = append(out, omnisdk.NewResource(
-			resource.Key, resource.Provider, resource.Address, resource.Desired, resource.Params,
-			arrivals, resource.ViaType, resource.ViaProgram,
-			resource.Identity, resource.AddressedBy, resource.CorrelationParam))
+		seen[resource.Key()] = true
 	}
-	return out, nil
+	return resources, nil
 }
 
-// convergeCloud is the cloud whose credential a run uses. omnisdk takes one
-// credential per run, so a collection spanning two clouds carries the first
-// resource's and leaves the rest to the canonical environment variables.
+// convergeCloud selects the initial provider credential. Additional providers
+// currently use SDK credential resolution from their canonical environment.
 func convergeCloud(resources []omnisdk.ManagedResource) string {
 	if len(resources) == 0 {
 		return ""
@@ -345,16 +366,92 @@ func blueprintColumns(blueprint omnisdk.Blueprint) []column {
 // blueprintSelectFunc refuses a select over a blueprint relation. A blueprint is
 // a way of building a resource set, not a thing to read: naming it in a converge
 // run is how it is applied.
-func blueprintSelectFunc(resource string) (func() internaldto.ExecutorOutput, bool) {
+func blueprintSelectFunc(resource string) func() internaldto.ExecutorOutput {
 	if _, ok := blueprintFor(resource); !ok {
 		return refuse(fmt.Errorf(
 			"'%s.%s' has no relation '%s'; run SHOW RESOURCES IN %s.%s to list them",
-			ProviderName, iacService, resource, ProviderName, iacService)), true
+			ProviderName, iacService, resource, ProviderName, iacService))
 	}
 	return refuse(fmt.Errorf(
 		"'%s' renders a deployment rather than rows; "+
 			"apply it with SELECT ... FROM %s WHERE %s = '%s' AND %s = '<name>'",
 		relationAddress(iacService, resource),
 		relationAddress(iacService, convergeRelation),
-		blueprintPredicate, resource, collectionPredicate)), true
+		blueprintPredicate, resource, collectionPredicate))
 }
+
+// iacBindings keeps typed values separate from provider execution scope.
+func iacBindings(params map[string]string) (map[string]any, map[string]any, error) {
+	var maps [2]map[string]any
+	for index, name := range []string{"inputs", "environment"} {
+		raw := popPredicate(params, name)
+		if raw == "" {
+			continue
+		}
+		decoder := json.NewDecoder(bytes.NewBufferString(raw))
+		decoder.UseNumber()
+		if err := decoder.Decode(&maps[index]); err != nil {
+			return nil, nil, fmt.Errorf("%s must be a JSON object: %w", name, err)
+		}
+		if maps[index] == nil {
+			return nil, nil, fmt.Errorf("%s must be a JSON object", name)
+		}
+		var extra any
+		if err := decoder.Decode(&extra); err != io.EOF {
+			return nil, nil, fmt.Errorf("%s must contain one JSON object", name)
+		}
+	}
+	return maps[0], maps[1], nil
+}
+
+// iacRows preserves diagnostic rows while turning unsuccessful outcomes into SQL errors.
+type iacRows struct {
+	omnisdk.Rows
+	mu      sync.Mutex
+	failure error
+}
+
+func (r *iacRows) Next() bool {
+	if !r.Rows.Next() {
+		return false
+	}
+	row := r.Rows.Row()
+	status, _ := row["status"].(string)
+	failed := strings.Contains(strings.ToLower(status), "fail") || strings.Contains(strings.ToLower(status), "outstanding")
+	if value := row["error"]; value != nil && fmt.Sprint(value) != "" {
+		failed = true
+	}
+	if value := row["outstanding"]; value != nil && fmt.Sprint(value) != "[]" && fmt.Sprint(value) != "" {
+		failed = true
+	}
+	if failed {
+		r.mu.Lock()
+		r.failure = iacOutcomeError{key: fmt.Sprint(row["key"]), status: status}
+		r.mu.Unlock()
+	}
+	return true
+}
+func (r *iacRows) Err() error {
+	if err := r.Rows.Err(); err != nil {
+		return iacOutcomeError{cause: err}
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.failure
+}
+
+type iacOutcomeError struct {
+	key, status string
+	cause       error
+}
+
+func (e iacOutcomeError) Error() string {
+	if e.cause != nil {
+		return e.cause.Error()
+	}
+	return fmt.Sprintf("IaC operation did not complete successfully for key %s (status %s); inspect the journal",
+		e.key, e.status)
+}
+func (iacOutcomeError) IaCFailure() bool { return true }
+
+func (e iacOutcomeError) Unwrap() error { return e.cause }

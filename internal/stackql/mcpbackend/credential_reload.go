@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/stackql-labs/omnisdk/public/authorization"
+
 	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 
 	"github.com/stackql/stackql/internal/stackql/envfile"
@@ -155,9 +157,19 @@ func (b *stackqlMCPService) providerCredentialRow(providerName, priorFingerprint
 // against the now-current environment.  With no env file configured it
 // degrades to a pure status probe.
 func (b *stackqlMCPService) ReloadCredentials(
-	_ context.Context,
+	ctx context.Context,
 	input mcp_dto.CredentialsReloadInput,
 ) (mcp_dto.CredentialsReloadDTO, error) {
+	if manager := b.handlerCtx.GetAccessManager(); manager != nil {
+		_, protected, cancel, err := manager.Establish(ctx)
+		if err != nil {
+			return mcp_dto.CredentialsReloadDTO{}, err
+		}
+		defer cancel()
+		if err = authorization.Check(protected, "host/credentials", "reload"); err != nil {
+			return mcp_dto.CredentialsReloadDTO{}, err
+		}
+	}
 	rv := mcp_dto.CredentialsReloadDTO{
 		EnvFile:   b.envFile,
 		Providers: []mcp_dto.ProviderCredentialStatusDTO{},

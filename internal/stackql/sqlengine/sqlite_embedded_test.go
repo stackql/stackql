@@ -1,6 +1,7 @@
 package sqlengine //nolint:testpackage // Exercises private driver and DSN helpers.
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -448,5 +449,43 @@ func TestSQLiteErrorPredicates(t *testing.T) {
 	plain := errors.New("not a sqlite error")
 	if isBusy(plain) || isConstraintViolation(plain) {
 		t.Fatal("non-driver errors must not classify as sqlite errors")
+	}
+}
+
+func TestCallerDirectoryForeignKeysOnEveryConnection(t *testing.T) {
+	engine, err := newSQLiteEmbeddedEngine(Config{
+		DSN:                filepath.Join(t.TempDir(), "directory.db") + "?_foreign_keys=off",
+		RequireForeignKeys: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = engine.db.Close() })
+	engine.db.SetMaxOpenConns(2)
+	ctx := context.Background()
+	first, err := engine.db.Conn(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer first.Close()
+	second, err := engine.db.Conn(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer second.Close()
+	for _, conn := range []*sql.Conn{first, second} {
+		var enabled int
+		if err = conn.QueryRowContext(ctx, "PRAGMA foreign_keys").Scan(&enabled); err != nil || enabled != 1 {
+			t.Fatalf("foreign keys not enforced on pooled connection: %d, %v", enabled, err)
+		}
+	}
+	if _, err = first.ExecContext(ctx, "CREATE TABLE principals (id TEXT PRIMARY KEY)"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = first.ExecContext(ctx, "CREATE TABLE memberships (principal TEXT REFERENCES principals(id))"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = second.ExecContext(ctx, "INSERT INTO memberships VALUES ('unknown')"); err == nil {
+		t.Fatal("second connection accepted an orphan membership")
 	}
 }

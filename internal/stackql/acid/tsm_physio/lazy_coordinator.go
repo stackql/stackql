@@ -7,6 +7,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/acid/acid_dto"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
+	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 )
@@ -110,7 +111,7 @@ func (m *basicLazyTransactionCoordinator) Prepare() error {
 
 // This is an approximation of 2PC.
 func (m *basicLazyTransactionCoordinator) Execute() internaldto.ExecutorOutput {
-	outputs, err := m.votingPhase()
+	outputs, err := m.votingPhase(nil)
 	m.outputs = outputs
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
@@ -128,13 +129,15 @@ func (m *basicLazyTransactionCoordinator) IsExecuted() bool {
 	return m.outputs != nil
 }
 
-func (m *basicLazyTransactionCoordinator) votingPhase() ([]internaldto.ExecutorOutput, error) {
+func (m *basicLazyTransactionCoordinator) votingPhase(
+	commitCtx handler.HandlerContext,
+) ([]internaldto.ExecutorOutput, error) {
 	defer func() {
 		m.isExecuted = true
 	}()
 	var rv []internaldto.ExecutorOutput
 	for _, stmt := range m.statementSequence {
-		coDomain := stmt.Execute()
+		coDomain := executeQueuedStatement(stmt, commitCtx)
 		rv = append(rv, coDomain)
 		err := coDomain.GetError()
 		undoLog, undoLogExists := coDomain.GetUndoLog()
@@ -167,8 +170,8 @@ func (m *basicLazyTransactionCoordinator) Begin() (Coordinator, error) {
 	return newBasicLazyTransactionCoordinator(m.tsmInstance, m, m.maxTxnDepth), nil
 }
 
-func (m *basicLazyTransactionCoordinator) Commit() acid_dto.CommitCoDomain {
-	rv, err := m.votingPhase()
+func (m *basicLazyTransactionCoordinator) Commit(commitCtx handler.HandlerContext) acid_dto.CommitCoDomain {
+	rv, err := m.votingPhase(commitCtx)
 	if err != nil {
 		return acid_dto.NewCommitCoDomain(rv, err, nil)
 	}

@@ -60,7 +60,7 @@ func getStagingManager(ctx queryContext) (omnistaging.Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return omnistaging.NewManager(context.Background(), db, dialect)
+	return omnistaging.NewManager(executionContext(ctx), db, dialect)
 }
 
 // needsStaging reports whether a SELECT carries SQL omnisdk leaves unapplied.
@@ -378,7 +378,7 @@ func rowCount(expr sqlparser.Expr) (int, error) {
 // it and releases the table. There is no result cache, so the table is
 // released as soon as the outer result has been read.
 func runStagedSelect(ctx queryContext, staged stagedSelect) internaldto.ExecutorOutput {
-	return runStagedSelectIn(ctx, staged, context.Background())
+	return runStagedSelectIn(ctx, staged, executionContext(ctx))
 }
 
 func runStagedSelectIn(ctx queryContext, staged stagedSelect, runCtx context.Context) internaldto.ExecutorOutput {
@@ -391,7 +391,7 @@ func runStagedSelectIn(ctx queryContext, staged stagedSelect, runCtx context.Con
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
 	output, runErr := stageAndQueryIn(ctx, manager, id, staged, runCtx)
-	if releaseErr := manager.Release(context.Background(), id); releaseErr != nil && runErr == nil {
+	if releaseErr := manager.Release(context.WithoutCancel(runCtx), id); releaseErr != nil && runErr == nil {
 		runErr = releaseErr
 	}
 	if runErr != nil {

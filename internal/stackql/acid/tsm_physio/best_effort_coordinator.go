@@ -125,7 +125,7 @@ func (m *basicBestEffortTransactionCoordinator) Prepare() error {
 
 // This is an approximation of 2PC.
 func (m *basicBestEffortTransactionCoordinator) Execute() internaldto.ExecutorOutput {
-	outputs, err := m.votingPhase()
+	outputs, err := m.votingPhase(nil)
 	m.outputs = outputs
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
@@ -143,13 +143,15 @@ func (m *basicBestEffortTransactionCoordinator) IsExecuted() bool {
 	return m.outputs != nil
 }
 
-func (m *basicBestEffortTransactionCoordinator) votingPhase() ([]internaldto.ExecutorOutput, error) {
+func (m *basicBestEffortTransactionCoordinator) votingPhase(
+	commitCtx handler.HandlerContext,
+) ([]internaldto.ExecutorOutput, error) {
 	defer func() {
 		m.isExecuted = true
 	}()
 	var rv []internaldto.ExecutorOutput
 	for _, stmt := range m.statementSequence {
-		coDomain := stmt.Execute()
+		coDomain := executeQueuedStatement(stmt, commitCtx)
 		rv = append(rv, coDomain)
 		err := coDomain.GetError()
 		undoLog, undoLogExists := coDomain.GetUndoLog()
@@ -178,8 +180,8 @@ func (m *basicBestEffortTransactionCoordinator) Begin() (Coordinator, error) {
 	return newBasicBestEffortTransactionCoordinator(m.tsmInstance, m.handlerCtx, m, m.maxTxnDepth), nil
 }
 
-func (m *basicBestEffortTransactionCoordinator) Commit() acid_dto.CommitCoDomain {
-	rv, err := m.votingPhase()
+func (m *basicBestEffortTransactionCoordinator) Commit(commitCtx handler.HandlerContext) acid_dto.CommitCoDomain {
+	rv, err := m.votingPhase(commitCtx)
 	if err != nil {
 		return acid_dto.NewCommitCoDomain(rv, err, nil)
 	}

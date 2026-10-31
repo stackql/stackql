@@ -30,6 +30,10 @@ type SimpleWireServer struct {
 
 //nolint:gocognit,nestif,nolintlint
 func MakeWireServer(sbe sqlbackend.SQLBackendFactory, cfg dto.RuntimeCtx) (IWireServer, error) {
+	if cfg.AccessConfigFile != "" {
+		return nil, fmt.Errorf("caller access: PostgreSQL wire transport cannot yet supply verified caller evidence; " +
+			"use local CLI or HTTPS MCP")
+	}
 	logger := logging.GetLogger()
 
 	var tlsCfg dto.PgTLSCfg

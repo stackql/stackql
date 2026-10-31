@@ -161,6 +161,7 @@ func loadMCPConfig() (*mcp_server.Config, error) {
 }
 
 func runMCPServer(handlerCtx handler.HandlerContext, config *mcp_server.Config) {
+	iqlerror.PrintErrorAndExitOneIfError(configureCallerMCP(handlerCtx, config))
 	defer func() {
 		if r := recover(); r != nil {
 			mcpDiagf("panic: %v\n%s", r, debug.Stack())

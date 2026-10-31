@@ -8,6 +8,7 @@ require (
 	github.com/PaesslerAG/gval v1.0.0
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/go-jsonnet v0.17.0
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
@@ -22,7 +23,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.10.1
-	github.com/stackql-labs/omnisdk v0.1.8-alpha02
+	github.com/stackql-labs/omnisdk v0.1.9-alpha06
 	github.com/stackql/go-suffix-map v0.0.1-alpha02
 	github.com/stackql/psql-wire v0.1.2-beta02
 	github.com/stackql/stackql-parser v0.0.16-beta01
@@ -69,6 +70,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.23.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.6 // indirect
 	github.com/aws/smithy-go v1.24.2 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
+	github.com/casbin/casbin/v2 v2.135.0 // indirect
+	github.com/casbin/govaluate v1.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect
@@ -84,7 +88,6 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/glog v1.2.5 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/flatbuffers v24.12.23+incompatible // indirect

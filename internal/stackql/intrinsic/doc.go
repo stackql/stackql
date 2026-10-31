@@ -293,7 +293,7 @@ const mutationSuccessMessage = "The operation was despatched successfully"
 // openDocQuery describes each relation, resolves the query and opens its
 // cursor, returning it with the alias of the relation it reports.
 func openDocQuery(ctx queryContext, translated docQuery) (omnisdk.Rows, string, error) {
-	return openDocQueryIn(ctx, translated, context.Background())
+	return openDocQueryIn(ctx, translated, executionContext(ctx))
 }
 
 func openDocQueryIn(ctx queryContext, translated docQuery, runCtx context.Context) (omnisdk.Rows, string, error) {

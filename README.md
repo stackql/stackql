@@ -309,6 +309,9 @@ docker pull stackql/stackql
 
 ## Usage
 
+Caller authentication and permissions: [configuration](docs/access_management.md) and
+[four tested walkthroughs](docs/examples/access-management/README.md).
+
 StackQL can be used via the interactive REPL shell, or via the `exec` command or ran as a server using the [Postgres wire protocol](https://www.postgresql.org/docs/current/protocol.html).  
 
 > ℹ️ StackQL does not require or install a database.

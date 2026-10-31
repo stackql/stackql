@@ -96,7 +96,7 @@ func openUnionRead(
 		if beginErr != nil {
 			return nil, beginErr
 		}
-		defer manager.Release(context.Background(), id) //nolint:errcheck // Preserve the query outcome.
+		defer manager.Release(context.WithoutCancel(runCtx), id) //nolint:errcheck // Preserve the query outcome.
 		rows, openErr := open(runCtx, nil)
 		if openErr != nil {
 			return nil, openErr
@@ -143,7 +143,7 @@ func statementReadFunc(ctx queryContext, stmt sqlparser.SelectStatement) func() 
 		return refuse(err)
 	}
 	return func() internaldto.ExecutorOutput {
-		rows, openErr := open(context.Background(), nil)
+		rows, openErr := open(executionContext(ctx), nil)
 		if openErr != nil {
 			return internaldto.NewErroneousExecutorOutput(openErr)
 		}

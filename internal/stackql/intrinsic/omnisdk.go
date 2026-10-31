@@ -1,7 +1,6 @@
 package intrinsic
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -171,11 +170,14 @@ func openStream(
 		InsecureSkipTLSVerify: input.getInsecureSkipTLSVerify() || ctx.GetRuntimeContext().AllowInsecure,
 		Tuning:                omnisdk.Tuning{RequestTimeout: apiRequestTimeout(ctx)},
 	}
+	if err = configureCaller(ctx, &args); err != nil {
+		return nil, err
+	}
 	plan, err := omnisdk.Default().New(method.Path, args)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := plan.Open(context.Background())
+	rows, err := plan.Open(executionContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -277,6 +279,7 @@ func (rs *rowStream) startProducer() {
 		rs.produced = make(chan omnisdk.Row)
 		go func() {
 			defer close(rs.produced)
+			defer rs.rows.Close()
 			for rs.rows.Next() {
 				rs.produced <- rs.rows.Row()
 			}
