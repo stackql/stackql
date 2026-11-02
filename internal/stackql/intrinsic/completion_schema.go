@@ -56,12 +56,17 @@ func (m *completedMethod) ServerEnvironmentBindings() map[string]string {
 }
 
 func describeMutationTable(
-	registry string, target query.Target, await bool, opts ...stackqldoc.Option) (omnisdk.Table, error) {
-	table, err := omnisdk.DescribeMutation(registry, target.Resource().Handle(), target.Verb().String(), opts...)
+	ctx queryContext, registry string, target query.Target, await bool, opts ...stackqldoc.Option) (omnisdk.Table, error) {
+	address := target.Resource().Handle()
+	canonical := providerAddress(ctx, address)
+	table, err := omnisdk.DescribeMutation(registry, canonical, target.Verb().String(), opts...)
+	if err == nil && canonical != address {
+		table = aliasedProviderTable{Table: table, address: address}
+	}
 	if err != nil || !await {
 		return table, err
 	}
-	resource, err := omnisdk.DescribeTable(registry, target.Resource().Handle())
+	resource, err := omnisdk.DescribeTable(registry, canonical, opts...)
 	if err != nil {
 		return nil, err
 	}

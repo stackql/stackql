@@ -224,21 +224,58 @@ func (pgb *standardPlanGraphBuilder) handleExplain(pbi planbuilderinput.PlanBuil
 	return buildErr
 }
 
+//nolint:exhaustive // Unsupported literal kinds are explicitly rejected by the default branch.
 func setLogic(pbi planbuilderinput.PlanBuilderInput, setExpr *sqlparser.SetExpr) error {
-	lhsRaw := setExpr.Name.GetRawVal()
-	lhsTrimmed := strings.TrimPrefix(lhsRaw, "$.")
-	if lhsTrimmed == lhsRaw {
-		return nil
+	lhsTrimmed := setExpr.Name.GetRawVal()
+	config := strings.HasPrefix(lhsTrimmed, "$")
+	if config {
+		lhsTrimmed = strings.TrimPrefix(strings.TrimPrefix(lhsTrimmed, "$"), ".")
+		root, _, _ := strings.Cut(lhsTrimmed, ".")
+		switch root {
+		case "auth", "providers", "secret_store", "secrets":
+		default:
+			return fmt.Errorf("unknown intrinsic session configuration %q", lhsTrimmed)
+		}
+	} else if !strings.HasPrefix(lhsTrimmed, "variables.") {
+		lhsTrimmed = "variables." + lhsTrimmed
 	}
-	exprStr := strings.Trim(sqlparser.String(setExpr.Expr), "'")
-	exprObj := map[string]interface{}{}
-	deserErr := json.Unmarshal([]byte(exprStr), &exprObj)
-	if deserErr != nil {
-		rawRv := pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprStr, setExpr.Scope)
-		return rawRv
+	if _, reset := setExpr.Expr.(*sqlparser.Default); reset {
+		return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, nil, setExpr.Scope)
 	}
-	rv := pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprObj, setExpr.Scope)
-	return rv
+	if !config {
+		var raw json.RawMessage
+		switch value := setExpr.Expr.(type) {
+		case *sqlparser.NullVal:
+			raw = json.RawMessage("null")
+		case sqlparser.BoolVal:
+			raw = json.RawMessage(fmt.Sprint(bool(value)))
+		case *sqlparser.SQLVal:
+			switch value.Type {
+			case sqlparser.StrVal:
+				raw, _ = json.Marshal(string(value.Val))
+			case sqlparser.IntVal, sqlparser.FloatVal:
+				raw = json.RawMessage(value.Val)
+			default:
+				return fmt.Errorf("variables accepts scalar literals only")
+			}
+		default:
+			return fmt.Errorf("variables accepts scalar literals only")
+		}
+		return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, raw, setExpr.Scope)
+	}
+	value, ok := setExpr.Expr.(*sqlparser.SQLVal)
+	if !ok || value.Type != sqlparser.StrVal {
+		return fmt.Errorf("session configuration requires a string literal or DEFAULT")
+	}
+	exprStr := string(value.Val)
+	if strings.HasPrefix(lhsTrimmed, "secrets.") {
+		return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprStr, setExpr.Scope)
+	}
+	var exprObj map[string]interface{}
+	if err := json.Unmarshal([]byte(exprStr), &exprObj); err == nil && exprObj != nil {
+		return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprObj, setExpr.Scope)
+	}
+	return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprStr, setExpr.Scope)
 }
 
 func (pgb *standardPlanGraphBuilder) handleSet(pbi planbuilderinput.PlanBuilderInput) error {
@@ -257,8 +294,14 @@ func (pgb *standardPlanGraphBuilder) handleSet(pbi planbuilderinput.PlanBuilderI
 	pr := primitive.NewLocalPrimitive(
 		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-			err = setLogic(pbi, setStmt.Exprs[0])
-			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
+			var setErr error
+			for _, assignment := range setStmt.Exprs {
+				if setErr = setLogic(pbi, assignment); setErr != nil {
+					setErr = fmt.Errorf("%w: %w", handler.ErrSessionConfiguration, setErr)
+					break
+				}
+			}
+			return internaldto.NewExecutorOutput(nil, nil, nil, nil, setErr)
 		})
 	pgb.planGraphHolder.GetPrimitiveGraph().CreatePrimitiveNode(pr)
 	return nil

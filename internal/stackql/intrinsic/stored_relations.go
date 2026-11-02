@@ -491,7 +491,7 @@ func bindStoredViewInputs(ctx queryContext, view *sqlparser.Select, where *sqlpa
 		return err
 	}
 	address := UnstablePrefix + bundle + "." + name.Qualifier.GetRawVal() + "." + name.Name.GetRawVal()
-	declared, err := omnisdk.DescribeTable(registryRoot(ctx), address, options...)
+	declared, err := describeProviderTable(ctx, registryRoot(ctx), address, options...)
 	if err != nil {
 		return err
 	}

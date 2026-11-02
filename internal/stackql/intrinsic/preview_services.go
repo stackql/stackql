@@ -172,24 +172,26 @@ func previewArgs(ctx queryContext, cloud string, params map[string]string) (omni
 		return omnisdk.Args{}, err
 	}
 	policy := newReadErrorPolicy(ctx, upstream.HTTP)
-	args := omnisdk.Args{
-		DocumentVerifier:         verifier,
-		Params:                   params,
-		AuthByProvider:           providerAuthByProvider(ctx, cloud),
-		Endpoint:                 input.getEndpoint(),
-		InsecureSkipTLSVerify:    input.getInsecureSkipTLSVerify() || ctx.GetRuntimeContext().AllowInsecure,
-		Dialect:                  dialect.catalogue(),
-		ResponseSelectionErrors:  policy,
-		HTTPObserver:             newHTTPDiagnostics(policy.writer, ctx.GetRuntimeContext().HTTPLogEnabled),
-		LegacyPagination:         true,
-		LegacyXMLValues:          true,
-		LegacyResponseTransforms: true,
-		HTTPReadErrors:           policy,
-		StrictResponseSelection:  true,
-		Tuning: omnisdk.Tuning{
-			RequestTimeout: apiRequestTimeout(ctx),
-			PageLimit:      ctx.GetRuntimeContext().HTTPPageLimit,
-		},
+	args, err := providerSessionArgs(ctx)
+	if err != nil {
+		return omnisdk.Args{}, err
+	}
+	args.DocumentVerifier = verifier
+	args.Params = params
+	args.AuthByProvider = providerAuthByProvider(ctx, cloud)
+	args.Endpoint = input.getEndpoint()
+	args.InsecureSkipTLSVerify = input.getInsecureSkipTLSVerify() || ctx.GetRuntimeContext().AllowInsecure
+	args.Dialect = dialect.catalogue()
+	args.ResponseSelectionErrors = policy
+	args.HTTPObserver = newHTTPDiagnostics(policy.writer, ctx.GetRuntimeContext().HTTPLogEnabled)
+	args.LegacyPagination = true
+	args.LegacyXMLValues = true
+	args.LegacyResponseTransforms = true
+	args.HTTPReadErrors = policy
+	args.StrictResponseSelection = true
+	args.Tuning = omnisdk.Tuning{
+		RequestTimeout: apiRequestTimeout(ctx),
+		PageLimit:      ctx.GetRuntimeContext().HTTPPageLimit,
 	}
 	if err = configureCaller(ctx, &args); err != nil {
 		return omnisdk.Args{}, err

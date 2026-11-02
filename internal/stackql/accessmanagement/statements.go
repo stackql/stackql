@@ -75,7 +75,7 @@ func checkFunction(ctx context.Context, n *sqlparser.FuncExpr) error {
 	const pure = "|whoami|groups|count|sum|avg|min|max|coalesce|ifnull|nullif|lower|upper|length|trim|ltrim|rtrim|" +
 		"substr|substring|replace|abs|round|ceil|floor|strftime|datetime|date|time|julianday|unixepoch|json|" +
 		"json_extract|json_array|json_object|json_type|json_valid|json_array_length|split_part|regexp_like|" +
-		"regexp_substr|regexp_replace|json_equal|aws_policy_equal|"
+		"regexp_substr|regexp_replace|json_equal|aws_policy_equal|md5|identifier|"
 	if !n.Qualifier.IsEmpty() || !strings.Contains(pure, "|"+name+"|") {
 		return authorization.Check(ctx, "host/function/"+name, "execute")
 	}

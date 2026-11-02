@@ -1,8 +1,10 @@
 package sqlfuncs
 
 import (
+	"crypto/md5" //nolint:gosec // SQL digest compatibility, not credential security.
 	"database/sql/driver"
 	"errors"
+	"fmt"
 
 	sqlite "modernc.org/sqlite"
 )
@@ -19,6 +21,13 @@ func Register(drv *sqlite.Driver) error {
 		nArgs int32
 		impl  func(args []driver.Value) (driver.Value, error)
 	}{
+		{"md5", 1, func(args []driver.Value) (driver.Value, error) {
+			text, valid := valueText(args[0])
+			if !valid {
+				return nil, nil //nolint:nilnil // SQL NULL propagates as a successful null value.
+			}
+			return fmt.Sprintf("%x", md5.Sum([]byte(text))), nil //nolint:gosec // Nonsecurity SQL digest.
+		}},
 		{"split_part", 3, func(args []driver.Value) (driver.Value, error) {
 			return SplitPart(args[0], args[1], args[2])
 		}},

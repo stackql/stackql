@@ -81,6 +81,7 @@ func localDocRoot(runtimeCtx dto.RuntimeCtx) string {
 // root is addressed as "<provider>.<service>.<resource>" and a provider whose
 // name carries a dot ("googleapis.com") cannot be named that way.
 func docRoot(ctx queryContext, bundle string) (string, error) {
+	bundle = strings.TrimPrefix(providerAddress(ctx, bundle), UnstablePrefix)
 	runtime := ctx.GetRuntimeContext()
 	prefix := "src"
 	var registryCfg omnisdk.RegistryConfig
@@ -109,7 +110,7 @@ func docResourceTables(ctx queryContext, bundle, service string) ([]table, error
 	if err != nil {
 		return nil, err
 	}
-	resources, err := omnisdk.DocResources(dir, bundle, service, opts...)
+	resources, err := omnisdk.DocResources(dir, providerBundle(ctx, bundle), service, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +132,7 @@ func docMethods(ctx queryContext, bundle, service, resource string) ([]relationM
 	if err != nil {
 		return nil, err
 	}
-	methods, err := omnisdk.DocMethods(dir, bundle, service, resource, opts...)
+	methods, err := omnisdk.DocMethods(dir, providerBundle(ctx, bundle), service, resource, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +141,7 @@ func docMethods(ctx queryContext, bundle, service, resource string) ([]relationM
 		required := unresolvedServerParams(method)
 		if method.Name != "__view__" {
 			signature, describeErr := omnisdk.DescribeMethod(
-				registryRoot(ctx), UnstablePrefix+bundle+"."+service+"."+resource, method.Name, opts...)
+				registryRoot(ctx), providerAddress(ctx, UnstablePrefix+bundle+"."+service+"."+resource), method.Name, opts...)
 			if describeErr != nil {
 				return nil, describeErr
 			}
@@ -165,13 +166,13 @@ func describeDocument(
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
-	address := UnstablePrefix + bundle + "." + service + "." + resource
+	address := providerAddress(ctx, UnstablePrefix+bundle+"."+service+"."+resource)
 	if method == "" {
 		root, rootErr := docRoot(ctx, bundle)
 		if rootErr != nil {
 			return internaldto.NewErroneousExecutorOutput(rootErr)
 		}
-		view, exists, viewErr := omnisdk.DocView(root, bundle, service, resource, opts...)
+		view, exists, viewErr := omnisdk.DocView(root, providerBundle(ctx, bundle), service, resource, opts...)
 		if viewErr != nil {
 			return internaldto.NewErroneousExecutorOutput(viewErr)
 		}
@@ -181,10 +182,10 @@ func describeDocument(
 	}
 	var signature omnisdk.MethodSignature
 	if method != "" {
-		signature, err = omnisdk.DescribeMethod(registryRoot(ctx), address, method, opts...)
+		signature, err = omnisdk.DescribeMethod(registryRoot(ctx), providerAddress(ctx, address), method, opts...)
 	} else {
 		var declared omnisdk.Table
-		declared, err = omnisdk.DescribeTable(registryRoot(ctx), address, opts...)
+		declared, err = describeProviderTable(ctx, registryRoot(ctx), address, opts...)
 		if err == nil && len(declared.Methods()) > 0 {
 			signature = declared.Methods()[0]
 		}
@@ -324,7 +325,7 @@ func planDocQuery(ctx queryContext, translated docQuery) (omnisdk.Plan, string, 
 		if relation, ok := relations[join.Resource().Handle()]; ok {
 			tbl = relation
 		} else {
-			tbl, describeErr = omnisdk.DescribeTable(registry, join.Resource().Handle(), opts...)
+			tbl, describeErr = describeProviderTable(ctx, registry, join.Resource().Handle(), opts...)
 		}
 		if describeErr != nil {
 			return nil, "", describeErr
@@ -333,7 +334,7 @@ func planDocQuery(ctx queryContext, translated docQuery) (omnisdk.Plan, string, 
 	}
 	var relation string
 	if target := q.Target(); target != nil {
-		tbl, describeErr := describeMutationTable(registry, target, queryAwaitsMutation(translated), opts...)
+		tbl, describeErr := describeMutationTable(ctx, registry, target, queryAwaitsMutation(translated), opts...)
 		if describeErr != nil {
 			return nil, "", describeErr
 		}
@@ -347,6 +348,10 @@ func planDocQuery(ctx queryContext, translated docQuery) (omnisdk.Plan, string, 
 		return nil, "", dialectErr
 	}
 	q, environmentErr := bindReadPageSize(q, tables, ctx.GetRuntimeContext().HTTPMaxResults)
+	if environmentErr != nil {
+		return nil, "", environmentErr
+	}
+	q, environmentErr = bindProviderDefaults(ctx, q, tables)
 	if environmentErr != nil {
 		return nil, "", environmentErr
 	}
@@ -387,6 +392,9 @@ func planDocQuery(ctx queryContext, translated docQuery) (omnisdk.Plan, string, 
 func queryProviderAuth(ctx queryContext, bundles []string) (map[string]*omnisdk.Auth, error) {
 	credentials := map[string]*omnisdk.Auth{}
 	for _, bundle := range bundles {
+		if providerAddress(ctx, bundle) != bundle {
+			continue
+		}
 		auth := providerAuthContext(ctx, bundle)
 		if auth != nil && (auth.KeyFilePath != "" || auth.KeyFilePathEnvVar != "" || auth.KeyEnvVar != "") {
 			if _, err := auth.GetCredentialsBytes(); err != nil {
@@ -506,7 +514,7 @@ func showDocServices(
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
-	services, err := omnisdk.DocServices(dir, bundle, opts...)
+	services, err := omnisdk.DocServices(dir, providerBundle(ctx, bundle), opts...)
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
@@ -582,7 +590,7 @@ func showDocMethods(
 }
 
 func inlineMutation(ctx queryContext, address, verb string) bool {
-	table, err := omnisdk.DescribeMutation(registryRoot(ctx), address, verb)
+	table, err := omnisdk.DescribeMutation(registryRoot(ctx), providerAddress(ctx, address), verb)
 	if err != nil {
 		return false
 	}

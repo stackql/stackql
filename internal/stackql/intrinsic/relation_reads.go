@@ -365,7 +365,7 @@ func declaredRelationColumns(
 		if err != nil {
 			return nil, err
 		}
-		table, err = omnisdk.DescribeTable(registryRoot(ctx), handle, opts...)
+		table, err = describeProviderTable(ctx, registryRoot(ctx), handle, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -401,11 +401,23 @@ func backendOnlySelect(node *sqlparser.Select) bool {
 	return isName && name.Name.GetRawVal() == "dual" && name.Qualifier.IsEmpty() && name.QualifierSecond.IsEmpty()
 }
 func planBackendRead(ctx queryContext, node *sqlparser.Select) ([]string, derivedOpener, error) {
-	_, names, err := selectOutputs(node.SelectExprs)
-	if err != nil {
-		return nil, nil, err
+	// Backend expressions need output names, not translation into provider operators.
+	names := make([]string, 0, len(node.SelectExprs))
+	for i, projection := range node.SelectExprs {
+		aliased, ok := projection.(*sqlparser.AliasedExpr)
+		if !ok {
+			return nil, nil, fmt.Errorf("backend expression must name an output")
+		}
+		name, err := projectionName(aliased)
+		if err != nil {
+			return nil, nil, err
+		}
+		if name == "" {
+			name = fmt.Sprintf("col_%d", i+1)
+		}
+		names = append(names, name)
 	}
-	formatter := sqlparser.NewTrackedBuffer(ctx.GetASTFormatter())
+	formatter := sqlparser.NewTrackedBuffer(backendExpressionFormatter(ctx.GetASTFormatter()))
 	if node.With != nil {
 		formatter.Myprintf("%v ", node.With)
 	}
@@ -427,6 +439,27 @@ func planBackendRead(ctx queryContext, node *sqlparser.Select) ([]string, derive
 		return materializeSQLRows(runCtx, result, names, nil)
 	}
 	return names, open, nil
+}
+
+// Backend SQL uses SQL-standard quoting, rather than the parser's MySQL escapes.
+func backendExpressionFormatter(inner sqlparser.NodeFormatter) sqlparser.NodeFormatter {
+	return func(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
+		switch value := node.(type) {
+		case *sqlparser.SQLVal:
+			if value.Type == sqlparser.StrVal {
+				buf.Myprintf("'%s'", strings.ReplaceAll(string(value.Val), "'", "''"))
+				return
+			}
+		case sqlparser.ColIdent:
+			buf.Myprintf(`"%s"`, strings.ReplaceAll(value.GetRawVal(), `"`, `""`))
+			return
+		}
+		if inner == nil {
+			node.Format(buf)
+		} else {
+			inner(buf, node)
+		}
+	}
 }
 
 func sqlColumnKinds(rows *sql.Rows) ([]bool, []bool, error) {

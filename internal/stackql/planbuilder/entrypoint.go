@@ -2,6 +2,7 @@ package planbuilder
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/accessmanagement"
@@ -61,7 +62,8 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		return nil, err
 	}
 	planKey := handlerCtx.GetQuery()
-	useCache := handlerCtx.GetAccessManager() == nil && isPlanCacheEnabled()
+	useCache := handlerCtx.GetAccessManager() == nil && isPlanCacheEnabled() && !strings.Contains(planKey, "$") &&
+		sqlparser.Preview(planKey) != sqlparser.StmtSet
 	if qp, ok := handlerCtx.GetLRUCache().Get(planKey); ok && useCache {
 		logging.GetLogger().Infoln("retrieving query plan from cache")
 		pl, plOk := qp.(plan.Plan)
@@ -87,6 +89,15 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	statement, err := sqlParser.ParseQuery(handlerCtx.GetQuery())
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
+	}
+	if err = handlerCtx.ResolveVariables(statement); err != nil {
+		return createErroneousPlan(handlerCtx, qPlan, rowSort, fmt.Errorf("%w: %w", handler.ErrSessionConfiguration, err))
+	}
+	if handlerCtx.GetAccessManager() != nil {
+		if err = accessmanagement.CheckStatement(
+			handlerCtx.GetExecutionContext(), handlerCtx.GetCaller(), statement); err != nil {
+			return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
+		}
 	}
 	//nolint:gocritic // acceptable
 	switch stmt := statement.(type) {
@@ -245,7 +256,7 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		if err != nil {
 			return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 		}
-		if qPlan.IsCacheable() {
+		if useCache && qPlan.IsCacheable() {
 			handlerCtx.GetLRUCache().Set(planKey, qPlan)
 		}
 	}

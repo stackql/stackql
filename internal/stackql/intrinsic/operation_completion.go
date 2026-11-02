@@ -68,7 +68,8 @@ func newLinkedOperationCompletion(
 func newOperationCompletion(
 	ctx queryContext, address string, resourceNeeded ...bool,
 ) (omnisdk.MutationCompletion, error) {
-	parts := strings.Split(address, ".")
+	runtimeProvider, _, _ := strings.Cut(address, ".")
+	parts := strings.Split(providerAddress(ctx, address), ".")
 	if len(parts) != 3 || strings.TrimPrefix(parts[0], UnstablePrefix) != "google" || parts[1] != "compute" {
 		return nil, fmt.Errorf("AWAIT completion is not supported for %s", address)
 	}
@@ -86,7 +87,7 @@ func newOperationCompletion(
 		writer = output.GetOutErrFile()
 	}
 	read := func(runCtx context.Context, link string, original map[string]any) (omnisdk.Row, error) {
-		return readCompletionLink(ctx, runCtx, root, bundle, parts[1], catalogue, link, original)
+		return readCompletionLink(ctx, runCtx, root, runtimeProvider, parts[1], catalogue, link, original)
 	}
 	wait := func(runCtx context.Context, duration time.Duration) error {
 		timer := time.NewTimer(duration)
@@ -188,6 +189,11 @@ func readCompletionLink(
 	if err = checkCompletionScope(params, original); err != nil {
 		return nil, err
 	}
+	_, rest, found := strings.Cut(address, ".")
+	if !found {
+		return nil, fmt.Errorf("completion resource has no provider address")
+	}
+	address = UnstablePrefix + strings.TrimPrefix(bundle, UnstablePrefix) + "." + rest
 	args, err := previewArgs(ctx, bundle, params)
 	if err != nil {
 		return nil, err

@@ -101,12 +101,15 @@ func GenerateStreamFunc(
 			return action, true
 		}
 		action, handled := selectFunc(ctx, node, ctx.GetCurrentProvider())
-		if !handled && ctx.GetRuntimeContext().AccessConfigFile != "" && backendOnlySelect(node) {
+		if !handled && backendOnlySelect(node) {
 			return statementReadFunc(ctx, node), true
 		}
 		return action, handled
 	}
 	if action, handled := storedInsertSelectFunc(ctx, stmt); handled {
+		return action, true
+	}
+	if action, handled := storedMutationFunc(ctx, stmt); handled {
 		return action, true
 	}
 	return docMutationFunc(ctx, stmt, ctx.GetCurrentProvider())

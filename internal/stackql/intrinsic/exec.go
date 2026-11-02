@@ -26,7 +26,7 @@ func execPlan(ctx queryContext, node *sqlparser.Exec) (omnisdk.Plan, omnisdk.Met
 	if err != nil {
 		return nil, nil, err
 	}
-	signature, err := omnisdk.DescribeMethod(registryRoot(ctx), address, method, opts...)
+	signature, err := omnisdk.DescribeMethod(registryRoot(ctx), providerAddress(ctx, address), method, opts...)
 	if err != nil {
 		return nil, nil, err
 	}

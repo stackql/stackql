@@ -40,7 +40,11 @@ func authFunc(ctx queryContext, node *sqlparser.Auth) func() internaldto.Executo
 		if principal, principalErr := credential.Principal(); principalErr == nil {
 			candidate.ID = principal
 		}
-		*configured = *candidate
+		if host, ok := ctx.(interface{ ReplaceAuthContext(string, *dto.AuthCtx) }); ok {
+			host.ReplaceAuthContext(node.Provider, candidate)
+		} else {
+			*configured = *candidate
+		}
 		return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
 	}
 }
@@ -56,6 +60,9 @@ func authRevokeFunc(ctx queryContext, node *sqlparser.AuthRevoke) func() interna
 		err = omnisdk.NewCredential(node.Provider, *dto.OmniAuth(configured)).Revoke(deadline)
 		if err == nil {
 			configured.Active, configured.ID = false, ""
+			if host, ok := ctx.(interface{ ReplaceAuthContext(string, *dto.AuthCtx) }); ok {
+				host.ReplaceAuthContext(node.Provider, configured)
+			}
 		}
 		return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 	}
