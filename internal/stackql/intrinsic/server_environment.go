@@ -1,7 +1,6 @@
 package intrinsic
 
 import (
-	"fmt"
 	"maps"
 	"os"
 	"slices"
@@ -10,35 +9,38 @@ import (
 	"github.com/stackql-labs/omnisdk/pkg/query"
 )
 
-// Environment resolution is host policy, limited to explicit document annotations.
-// SQL parameters take precedence. The SDK receives ordinary explicit bindings.
 func bindServerEnvironment(q query.Unresolved, tables map[string]omnisdk.Table) (query.Unresolved, error) {
-	where := slices.Clone(q.Where())
-	for _, alias := range slices.Sorted(maps.Keys(tables)) {
-		declared := map[string]string{}
-		for _, method := range tables[alias].Methods() {
-			if metadata, ok := method.(omnisdk.ServerEnvironmentBindings); ok {
-				for name, environment := range metadata.ServerEnvironmentBindings() {
-					declared[name] = environment
-				}
-			}
-		}
-		for _, name := range slices.Sorted(maps.Keys(declared)) {
-			if explicitServerBinding(q, alias, name) {
-				continue
-			}
-			value, exists := os.LookupEnv(declared[name])
-			if !exists || value == "" {
-				return nil, fmt.Errorf("cannot find any viable servers: %s requires %s", alias, name)
-			}
-			where = append(where, query.NewEq(query.NewColumn(alias, name), query.NewLiteral(value)))
-		}
+	return omnisdk.BindServerInputs(q, tables, os.LookupEnv)
+}
+
+func unresolvedServerParams(method omnisdk.DocMethod, defaults map[string]string) ([]string, error) {
+	return omnisdk.NewDocMethodInputResolver(method, defaults, os.LookupEnv).Required(method.RequiredParams, nil)
+}
+
+func sessionParameterDefaults(ctx queryContext, address string) map[string]string {
+	if host, ok := ctx.(interface {
+		ProviderBindingParams(string) map[string]string
+	}); ok {
+		return host.ProviderBindingParams(address)
 	}
-	bound, err := queryWithWhere(q, where)
+	return nil
+}
+
+func bindExecServerInputs(
+	ctx queryContext, address string, signature omnisdk.MethodSignature, params map[string]string,
+) error {
+	resolver := omnisdk.NewMethodInputResolver(
+		[]omnisdk.MethodSignature{signature}, sessionParameterDefaults(ctx, address), os.LookupEnv,
+	)
+	bindings, err := resolver.Resolve(func(name string) bool {
+		_, exists := params[name]
+		return exists
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return bindServerTransport(bound, tables)
+	maps.Copy(params, bindings)
+	return nil
 }
 
 func explicitServerBinding(q query.Unresolved, alias, name string) bool {
@@ -69,22 +71,6 @@ func explicitServerBinding(q query.Unresolved, alias, name string) bool {
 	return slices.ContainsFunc(target.Set(), func(assignment query.Assignment) bool { return assignment.Column() == name })
 }
 
-func unresolvedServerParams(method omnisdk.DocMethod) []string {
-	required := make([]string, 0, len(method.RequiredParams))
-	for _, name := range method.RequiredParams {
-		if method.TransportDefaults[name] != "" {
-			continue
-		}
-		if environment := method.ServerEnvironment[name]; environment != "" {
-			if value, exists := os.LookupEnv(environment); exists && value != "" {
-				continue
-			}
-		}
-		required = append(required, name)
-	}
-	return required
-}
-
 // bindReadPageSize retains the CLI's request size independently of a SQL LIMIT.
 // Only declared query parameters are supplied, and explicit SQL bindings win.
 func bindReadPageSize(q query.Unresolved, tables map[string]omnisdk.Table, size int) (query.Unresolved, error) {
@@ -107,4 +93,11 @@ func bindReadPageSize(q query.Unresolved, tables map[string]omnisdk.Table, size 
 		}
 	}
 	return queryWithWhere(q, where)
+}
+
+func queryWithWhere(q query.Unresolved, where []query.Predicate) (query.Unresolved, error) {
+	if target := q.Target(); target != nil {
+		return query.NewMutation(target, q.From(), where, q.Select())
+	}
+	return query.New(q.From(), where, q.Select())
 }

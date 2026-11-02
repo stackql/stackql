@@ -138,14 +138,18 @@ func docMethods(ctx queryContext, bundle, service, resource string) ([]relationM
 	}
 	out := make([]relationMethod, 0, len(methods))
 	for _, method := range methods {
-		required := unresolvedServerParams(method)
+		defaults := sessionParameterDefaults(ctx, UnstablePrefix+bundle+"."+service+"."+resource)
+		required, resolutionErr := unresolvedServerParams(method, defaults)
+		if resolutionErr != nil {
+			return nil, resolutionErr
+		}
 		if method.Name != "__view__" {
 			signature, describeErr := omnisdk.DescribeMethod(
 				registryRoot(ctx), providerAddress(ctx, UnstablePrefix+bundle+"."+service+"."+resource), method.Name, opts...)
 			if describeErr != nil {
 				return nil, describeErr
 			}
-			required = requiredMethodInputs(method, signature)
+			required = requiredMethodInputs(required, signature)
 		}
 		out = append(out, relationMethod{
 			requiredParams: required,
@@ -610,8 +614,8 @@ func configureReadHints(translated docQuery, args *omnisdk.Args) {
 	}
 }
 
-func requiredMethodInputs(method omnisdk.DocMethod, signature omnisdk.MethodSignature) []string {
-	required := unresolvedServerParams(method)
+func requiredMethodInputs(required []string, signature omnisdk.MethodSignature) []string {
+	required = slices.Clone(required)
 	metadata, ok := signature.(omnisdk.RequestMetadata)
 	if !ok || metadata.RequestBodySchema() == nil {
 		return required

@@ -281,3 +281,38 @@ Future use cases for `UPDATE RETURNING`, `REPLACE RETURNING` and `DELETE RETURNI
 Provider aliases, session SET/UNSET and secret storage are described in
 [Provider sessions and secrets](provider_sessions.md), including SQL examples, permissions and parser
 release sequencing.
+
+## Opt-in endpoint selectors
+
+Omni owns endpoint resolution through `ServerInputResolver`: selector evaluation, precedence,
+conflicts, transport defaults and required-input reporting. StackQL supplies SQL inputs, session
+alias defaults and `os.LookupEnv`, then consumes Omni's resolved bindings.
+SELECT and mutations, SHOW METHODS required-input reporting, and EXEC follow the same order:
+
+1. Explicit SQL input, including an EXEC argument.
+2. Session provider-alias parameter default.
+3. Non-empty `x-stackQL-envVar` override.
+4. The selector's environment choice.
+5. The selector's declared default key.
+6. Unresolved: retain the required input; execution fails without it.
+
+Unknown selector values and invalid selector defaults are errors rather than fallback choices.
+Environment choices are case-sensitive after whitespace trimming; resolved endpoint values lose
+trailing slashes. An unresolved legacy environment annotation stays required. Resolved variables
+do not appear in SHOW METHODS' RequiredParams. Conflicting method endpoint choices require an
+explicit input instead of selecting one arbitrarily.
+
+Query binding calls `omnisdk.BindServerInputs`; EXEC uses `NewMethodInputResolver`, and
+SHOW METHODS uses `NewDocMethodInputResolver`. All three share the same resolution policy. `completedMethod` retains the same metadata for awaited mutations.
+Session alias parameters do not implicitly change OAuth token endpoints: use the alias's explicit
+`auth.token_url` for a per-tenant authority. Document OAuth variables use the same annotations in
+`config.auth.variables`, resolved by Omni before its existing environment-template expansion.
+
+The companion requires an Omni release containing this API. Release/tag Omni, then update StackQL's
+pinned module version before normal CI; no repository module replacement is supplied. The temporary
+workspace used to verify coordinated source changes is outside both repositories.
+
+`stackql_endpoint_selectors.robot` checks default selection, environment/direct overrides, explicit
+SQL and alias precedence, SHOW METHODS, EXEC, mutations, token endpoints and pre-request errors.
+It reuses the existing isolated native/Docker and SQLite/Postgres test harness; its new fixtures do
+not change existing provider files or Robot inputs.

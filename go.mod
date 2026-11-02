@@ -23,7 +23,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.10.1
-	github.com/stackql-labs/omnisdk v0.1.9-beta05
+	github.com/stackql-labs/omnisdk v0.1.10-alpha04
 	github.com/stackql/go-suffix-map v0.0.1-alpha02
 	github.com/stackql/psql-wire v0.1.2-beta02
 	github.com/stackql/stackql-parser v0.0.17-alpha05

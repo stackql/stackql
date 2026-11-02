@@ -39,6 +39,9 @@ func execPlan(ctx queryContext, node *sqlparser.Exec) (omnisdk.Plan, omnisdk.Met
 		name := execInputName(signature, variable.ColIdent.GetRawVal())
 		params[name] = fmt.Sprint(textValue(value))
 	}
+	if err = bindExecServerInputs(ctx, address, signature, params); err != nil {
+		return nil, nil, err
+	}
 	body, err := execPayload(node.OptExecPayload, signature)
 	if err != nil {
 		return nil, nil, err
