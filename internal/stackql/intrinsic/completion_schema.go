@@ -48,6 +48,13 @@ func newCompletedMethod(
 }
 func (m *completedMethod) Columns() []string                          { return slices.Clone(m.columns) }
 func (m *completedMethod) ColumnTypes() map[string]omnisdk.ColumnType { return maps.Clone(m.types) }
+func (m *completedMethod) ServerVariableSpecs() map[string]omnisdk.ServerVariableSpec {
+	if metadata, ok := m.MethodSignature.(omnisdk.ServerVariableSpecs); ok {
+		return metadata.ServerVariableSpecs()
+	}
+	return nil
+}
+
 func (m *completedMethod) ServerEnvironmentBindings() map[string]string {
 	if metadata, ok := m.MethodSignature.(omnisdk.ServerEnvironmentBindings); ok {
 		return metadata.ServerEnvironmentBindings()

@@ -75,7 +75,7 @@ components:
 			t.Fatalf("binding=%v want=%v", got, expected)
 		}
 	}
-	if got := unresolvedServerParams(methods[0]); len(got) != 0 {
+	if got := serverRequiredParams(t, methods[0]); len(got) != 0 {
 		t.Fatalf("env-resolved required=%v", got)
 	}
 	t.Setenv("OMNI_EXPLICIT_TEST_DEPLOYMENT", "")
@@ -86,7 +86,16 @@ components:
 	if _, err := bindServerEnvironment(original, tables); err == nil {
 		t.Fatal("missing environment silently used document default")
 	}
-	if got := unresolvedServerParams(methods[0]); len(got) != 1 || got[0] != "deployment" {
+	if got := serverRequiredParams(t, methods[0]); len(got) != 1 || got[0] != "deployment" {
 		t.Fatalf("unresolved required=%v", got)
 	}
+}
+
+func serverRequiredParams(t *testing.T, method omnisdk.DocMethod) []string {
+	t.Helper()
+	required, err := unresolvedServerParams(method, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return required
 }

@@ -85,7 +85,7 @@ components:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := unresolvedServerParams(methods[0]); !reflect.DeepEqual(got, []string{"host", "region"}) {
+	if got := serverRequiredParams(t, methods[0]); !reflect.DeepEqual(got, []string{"host", "region"}) {
 		t.Fatalf("required=%v", got)
 	}
 }

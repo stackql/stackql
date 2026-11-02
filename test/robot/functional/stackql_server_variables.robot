@@ -47,7 +47,7 @@ Server Variable Unset Env Var Fails Server Resolution
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name, deployment from stackql_native_test.srvvar.items;
-    ...    cannot find any viable servers
+    ...    server variable "deployment" requires an input or its declared environment configuration
 
 Server Variable Where Clause Satisfies Requirement With Env Unset
     Remove Environment Variable    STACKQL_NATIVE_TEST_DEPLOYMENT
