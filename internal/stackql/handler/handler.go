@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -44,12 +45,16 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// ErrSessionConfiguration identifies a rejected session mutation at CLI boundaries.
+var ErrSessionConfiguration = errors.New("session configuration failed")
+
 var (
 	_ HandlerContext = &standardHandlerContext{}
 )
 
 type HandlerContext interface { //nolint:revive // don't mind stuttering this one
 	Clone() HandlerContext
+	NewClientContext() HandlerContext
 	GetExecutionContext() context.Context
 	SetExecutionContext(context.Context)
 	GetAccessManager() accessmanagement.Manager
@@ -116,6 +121,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetDataFlowCfg() dto.DataFlowCfg
 
 	//
+	ResolveVariables(sqlparser.Statement) error
 	SetConfigAtPath(path string, rhs interface{}, scope string) error
 
 	// Upstream (provider HTTP) error strictness.  When true, data
@@ -136,6 +142,7 @@ type standardHandlerContext struct {
 	caller           authorization.Session
 	// mutex to protect auth context map
 	// must be a pointer dure to clonability
+	providerSession     *providerSessionState
 	authMapMutex        *sync.Mutex
 	sessionCtxMutex     *sync.Mutex
 	providersMapMutex   *sync.Mutex
@@ -251,7 +258,7 @@ func (hc *standardHandlerContext) GetCurrentProvider() string                  {
 func (hc *standardHandlerContext) GetAuthContexts() dto.AuthContexts {
 	hc.authMapMutex.Lock()
 	defer hc.authMapMutex.Unlock()
-	return hc.authContexts
+	return hc.authContexts.Clone()
 }
 
 func (hc *standardHandlerContext) GetRegistry() registry.RegistryAPI { return hc.registry }
@@ -467,6 +474,9 @@ func (hc *standardHandlerContext) GetAuthContext(providerName string) (*dto.Auth
 	}
 	hc.authMapMutex.Lock()
 	authCtx, ok := hc.authContexts[providerName]
+	if ok {
+		authCtx = authCtx.Clone()
+	}
 	hc.authMapMutex.Unlock()
 	if ok {
 		return authCtx, nil
@@ -478,7 +488,7 @@ func (hc *standardHandlerContext) GetAuthContext(providerName string) (*dto.Auth
 	hc.authMapMutex.Lock()
 	defer hc.authMapMutex.Unlock()
 	if authCtx, ok = hc.authContexts[providerName]; ok {
-		return authCtx, nil
+		return authCtx.Clone(), nil
 	}
 	return nil, fmt.Errorf("cannot find AUTH context for provider = '%s'", providerName)
 }
@@ -538,6 +548,23 @@ func (hc *standardHandlerContext) InvalidateAuthContexts(providerName string) {
 }
 
 func (hc *standardHandlerContext) SetConfigAtPath(path string, rhs interface{}, scope string) error {
+	if hc.runtimeContext.AccessConfigFile != "" {
+		if err := authorization.Check(hc.GetExecutionContext(), "session/config", "write"); err != nil {
+			return err
+		}
+	}
+	if scope != "" && scope != "session" {
+		return fmt.Errorf("configuration scope %q is not supported; use SESSION", scope)
+	}
+	if hc.lRUCache != nil {
+		hc.lRUCache.Clear()
+	}
+	if strings.HasPrefix(path, "variables.") {
+		return hc.setSessionVariable(path, rhs)
+	}
+	if handled, err := hc.setProviderSessionConfig(path, rhs, scope); handled {
+		return err
+	}
 	return hc.setConfigAtPath(path, rhs, scope)
 }
 
@@ -556,20 +583,57 @@ func (hc *standardHandlerContext) setConfigAtPath(path string, rhs interface{}, 
 	}
 }
 
+//nolint:nestif // Whole-object replacement and field reset intentionally have distinct semantics.
 func (hc *standardHandlerContext) setAuthContextAtPath(path string, rhs interface{}, scope string) error {
 	hc.authMapMutex.Lock()
 	defer hc.authMapMutex.Unlock()
-	// TODO: review
+	parts, err := jsonpath.SplitSearchPath(path)
+	if err != nil {
+		return err
+	}
+	if len(parts) == 0 {
+		return fmt.Errorf("auth requires a provider")
+	}
+	candidate := hc.authContexts[parts[0]].Clone()
+	if candidate == nil {
+		candidate = &dto.AuthCtx{}
+	}
+	raw, err := json.Marshal(candidate)
+	if err != nil {
+		return err
+	}
+	var fields map[string]interface{}
+	if err = json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+	if len(parts) == 1 {
+		if rhs == nil {
+			fields = map[string]interface{}{}
+		} else {
+			var ok bool
+			fields, ok = rhs.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("auth configuration must be an object")
+			}
+		}
+	} else {
+		if err = updateSessionField(fields, parts[1:], rhs); err != nil {
+			return err
+		}
+	}
+	var updated dto.AuthCtx
+	if err = decodeSessionObject(fields, &updated); err != nil {
+		return err
+	}
 	if scope == "local" {
 		hc.authContexts = hc.authContexts.Clone()
 	}
-	searchPath, searchPathErr := composeSystemSearchPath(path)
-	if searchPathErr != nil {
-		return searchPathErr
+	if hc.authContexts == nil {
+		hc.authContexts = dto.AuthContexts{}
 	}
-	authCtx := hc.authContexts[searchPath.GetSystem()]
-	rv := jsonpath.Set(authCtx, searchPath.GetRemainder(), rhs)
-	return rv
+	hc.authContexts[parts[0]] = &updated
+	delete(hc.docAuthProviders, parts[0])
+	return nil
 }
 
 func (hc *standardHandlerContext) GetNamespaceCollection() tablenamespace.Collection {
@@ -604,7 +668,11 @@ func getRegistry(runtimeCtx dto.RuntimeCtx) (registry.RegistryAPI, error) {
 func (hc *standardHandlerContext) Clone() HandlerContext {
 	hc.sessionCtxMutex.Lock()
 	defer hc.sessionCtxMutex.Unlock()
+	if hc.providerSession == nil {
+		hc.providerSession = newProviderSessionState(hc.runtimeContext.APIRequestTimeout, hc.runtimeContext.HTTPPageLimit)
+	}
 	rv := standardHandlerContext{
+		providerSession:  hc.providerSession,
 		executionContext: hc.executionContext, accessManager: hc.accessManager, caller: hc.caller,
 		authMapMutex:         hc.authMapMutex,
 		sessionCtxMutex:      hc.sessionCtxMutex,

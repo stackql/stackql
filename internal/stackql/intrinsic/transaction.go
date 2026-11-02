@@ -172,7 +172,7 @@ func executeDeclaredInverse(
 func inverseParameters(
 	ctx queryContext, address, method string, original map[string]string,
 ) (map[string]string, error) {
-	table, err := omnisdk.DescribeMutation(registryRoot(ctx), address, "delete")
+	table, err := omnisdk.DescribeMutation(registryRoot(ctx), providerAddress(ctx, address), "delete")
 	if err != nil {
 		return nil, err
 	}

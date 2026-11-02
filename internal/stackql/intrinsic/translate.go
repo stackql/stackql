@@ -656,6 +656,12 @@ func expression(expr sqlparser.Expr) (query.Expr, error) {
 		return query.NewCollection(items...), nil
 	case *sqlparser.CaseExpr:
 		return caseExpression(node)
+	case *sqlparser.ConvertExpr:
+		value, err := expression(node.Expr)
+		if err != nil {
+			return nil, err
+		}
+		return query.NewCall("cast", value, query.NewLiteral(sqlparser.String(node.Type))), nil
 	case *sqlparser.FuncExpr:
 		return functionExpression(node)
 	default:

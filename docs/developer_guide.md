@@ -277,3 +277,7 @@ https://docs.aws.amazon.com/sdk-for-go/api/aws/signer/v4/
 - Asynchronous responses, such as [`google.compute.instances`](https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert) and [`google.compute.networks`](https://cloud.google.com/compute/docs/reference/rest/v1/networks/insert).  The returning clause is a projection on the reponse body **after** the await flow has concluded.
 
 Future use cases for `UPDATE RETURNING`, `REPLACE RETURNING` and `DELETE RETURNING` will function the same observable fashion.
+
+Provider aliases, session SET/UNSET and secret storage are described in
+[Provider sessions and secrets](provider_sessions.md), including SQL examples, permissions and parser
+release sequencing.

@@ -19,7 +19,7 @@ func showDocInsert(ctx queryContext, node *sqlparser.Show, bundle string) intern
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
 	address := UnstablePrefix + bundle + "." + node.OnTable.Qualifier.GetRawVal() + "." + node.OnTable.Name.GetRawVal()
-	table, err := omnisdk.DescribeMutation(registryRoot(ctx), address, "insert", opts...)
+	table, err := omnisdk.DescribeMutation(registryRoot(ctx), providerAddress(ctx, address), "insert", opts...)
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}

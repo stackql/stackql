@@ -2,7 +2,6 @@ package dbmsinternal
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -158,13 +157,9 @@ func (pgr *standardDBMSInternalRouter) analyzeShow(node *sqlparser.Show) (consta
 	return pgr.negative()
 }
 
-func (pgr *standardDBMSInternalRouter) analyzeSet(node *sqlparser.Set) (constants.BackendQueryType, bool) {
-	for _, n := range node.Exprs {
-		if strings.HasPrefix(n.Name.GetRawVal(), "$") {
-			return pgr.negative()
-		}
-	}
-	return pgr.affirmativeExec()
+func (pgr *standardDBMSInternalRouter) analyzeSet(_ *sqlparser.Set) (constants.BackendQueryType, bool) {
+	// SET owns host session state and must never send variable/credential values to the backend.
+	return pgr.negative()
 }
 
 func (pgr *standardDBMSInternalRouter) ExprIsRoutable(node sqlparser.SQLNode) bool {

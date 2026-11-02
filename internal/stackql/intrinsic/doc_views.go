@@ -52,7 +52,7 @@ func expandDocumentViews(
 		if err != nil {
 			return nil, err
 		}
-		view, exists, err := omnisdk.DocView(root, bundle, service, resource, opts...)
+		view, exists, err := omnisdk.DocView(root, providerBundle(ctx, bundle), service, resource, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -79,6 +79,9 @@ func expandDocumentViews(
 		projection, ok := stmt.(*sqlparser.Select)
 		if !ok {
 			return nil, fmt.Errorf("view %s must declare a SELECT", key)
+		}
+		if canonical := providerBundle(ctx, bundle); canonical != bundle {
+			projection = scopeProviderView(projection, bundle, canonical)
 		}
 		if len(projection.GroupBy) > 0 || projection.Having != nil || projection.Distinct ||
 			projection.Limit != nil || len(projection.OrderBy) > 0 {
@@ -258,4 +261,20 @@ func describeDocumentView(ctx queryContext, view aot.View, extended bool) intern
 		columns = append(columns, column{name: name, dataType: typ})
 	}
 	return describeDocumentColumns(ctx, columns, extended)
+}
+
+func scopeProviderView(view *sqlparser.Select, alias, canonical string) *sqlparser.Select {
+	//nolint:errcheck // Root SELECT type is preserved.
+	return sqlparser.Rewrite(view, func(cursor *sqlparser.Cursor) bool {
+		table, ok := cursor.Node().(sqlparser.TableName)
+		if !ok || table.Qualifier.IsEmpty() {
+			return true
+		}
+		provider := strings.TrimPrefix(table.QualifierSecond.GetRawVal(), UnstablePrefix)
+		if provider == "" || provider == canonical {
+			table.QualifierSecond = sqlparser.NewTableIdent(UnstablePrefix + alias)
+			cursor.Replace(table)
+		}
+		return true
+	}, nil).(*sqlparser.Select)
 }

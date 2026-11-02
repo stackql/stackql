@@ -503,3 +503,14 @@ func TestValidateStatementDoesNotDispatchRequests(t *testing.T) {
 		}
 	}
 }
+
+func TestBackendExpressionQuoting(t *testing.T) {
+	for _, formatter := range []sqlparser.NodeFormatter{astformat.SQLiteSelectExprsFormatter, astformat.PostgresSelectExprsFormatter} {
+		buf := sqlparser.NewTrackedBuffer(backendExpressionFormatter(formatter))
+		buf.Myprintf("select %v as %v", sqlparser.NewStrVal([]byte(`{"name":"O'Reilly","path":"C:\\tmp"}`)), sqlparser.NewColIdent(`1"quoted`))
+		want := `select '{"name":"O''Reilly","path":"C:\\tmp"}' as "1""quoted"`
+		if buf.String() != want {
+			t.Fatalf("got %s, want %s", buf.String(), want)
+		}
+	}
+}

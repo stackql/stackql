@@ -79,7 +79,7 @@ func formatColIdent(node sqlparser.ColIdent, buf *sqlparser.TrackedBuffer) {
 		sqlparser.FormatID(buf, node.String(), node.Lowered(), node.AtCount())
 		return
 	}
-	buf.WriteString(fmt.Sprintf(`"%s"`, node.String()))
+	buf.WriteString(fmt.Sprintf(`"%s"`, strings.ReplaceAll(node.String(), `"`, `""`)))
 }
 
 func isSqliteKeyword(term string) bool {
@@ -92,8 +92,10 @@ func formatColIdentCaseInsensitive(node sqlparser.ColIdent, buf *sqlparser.Track
 		sqlparser.FormatID(buf, node.String(), node.Lowered(), node.AtCount())
 		return
 	}
-	if isSqliteKeyword(node.String()) {
-		buf.WriteString(fmt.Sprintf(`"%s"`, node.String()))
+	if isSqliteKeyword(node.String()) || strings.IndexFunc(node.String(), func(r rune) bool {
+		return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '_')
+	}) >= 0 {
+		buf.WriteString(fmt.Sprintf(`"%s"`, strings.ReplaceAll(node.String(), `"`, `""`)))
 		return
 	}
 	buf.WriteString(node.String())
@@ -102,7 +104,7 @@ func formatColIdentCaseInsensitive(node sqlparser.ColIdent, buf *sqlparser.Track
 func formatColName(node *sqlparser.ColName, buf *sqlparser.TrackedBuffer) {
 	tableNameStr := node.Qualifier.GetRawVal()
 	if tableNameStr != "" {
-		buf.WriteString(fmt.Sprintf(`"%s".`, tableNameStr))
+		buf.WriteString(fmt.Sprintf(`"%s".`, strings.ReplaceAll(tableNameStr, `"`, `""`)))
 	}
 	formatColIdent(node.Name, buf)
 }

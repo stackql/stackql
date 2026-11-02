@@ -53,7 +53,8 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 	if err != nil {
 		return nil, err
 	}
-	txnOrchestrator, orcErr := tsm_physio.NewOrchestrator(sdf.handlerCtx)
+	clonedCtx := sdf.handlerCtx.NewClientContext()
+	txnOrchestrator, orcErr := tsm_physio.NewOrchestrator(clonedCtx)
 	if orcErr != nil {
 		return nil, orcErr
 	}
@@ -62,7 +63,6 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 		return nil, walError
 	}
 	sdf.handlerCtx.SetTSM(tsmInstance)
-	clonedCtx := sdf.handlerCtx.Clone()
 	clonedCtx.SetTxnCounterMgr(txCtr)
 	buf := bytes.NewBuffer([]byte{})
 	if sdf.isCaptureDebug {
@@ -173,7 +173,7 @@ func (dr *basicStackQLDriver) GetDebugStr() string {
 
 func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {
 	return &basicStackQLDriver{
-		handlerCtx: dr.handlerCtx.Clone(),
+		handlerCtx: dr.handlerCtx.NewClientContext(),
 	}
 }
 

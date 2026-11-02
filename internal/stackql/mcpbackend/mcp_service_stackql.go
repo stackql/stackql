@@ -453,6 +453,10 @@ func (h strictHandlerContext) Clone() handler.HandlerContext {
 	return strictHandlerContext{h.HandlerContext.Clone()}
 }
 
+func (h strictHandlerContext) NewClientContext() handler.HandlerContext {
+	return strictHandlerContext{h.HandlerContext.NewClientContext()}
+}
+
 func (b *stackqlMCPService) getUpdatedHandlerCtx(query string) (handler.HandlerContext, error) {
 	clonedCtx := b.handlerCtx.Clone()
 	clonedCtx.SetRawQuery(query)
@@ -589,7 +593,7 @@ func (b *stackqlMCPService) PullProvider(ctx context.Context, input dto.Registry
 
 func (b *stackqlMCPService) withContext(ctx context.Context) *stackqlMCPService {
 	cloned := *b
-	cloned.handlerCtx = b.handlerCtx.Clone()
+	cloned.handlerCtx = b.handlerCtx.NewClientContext()
 	cloned.handlerCtx.SetExecutionContext(ctx)
 	return &cloned
 }

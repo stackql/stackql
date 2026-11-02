@@ -67,7 +67,7 @@ func starTables(
 			tables[resource.Alias()] = relation
 			continue
 		}
-		table, err := omnisdk.DescribeTable(registryRoot(ctx), resource.Handle())
+		table, err := describeProviderTable(ctx, registryRoot(ctx), resource.Handle())
 		if err != nil {
 			return nil, err
 		}
