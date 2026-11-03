@@ -1,8 +1,12 @@
 package registry_test
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
@@ -70,5 +74,46 @@ func TestLatestVersionUsesSemanticOrdering(t *testing.T) {
 	latest, err := registry.LatestVersion([]string{"v0.13.9", "v0.13.100", "v0.13.10"})
 	if err != nil || latest != "v0.13.100" {
 		t.Fatalf("latest=%q err=%v", latest, err)
+	}
+}
+
+func newErrorStatusRegistry(t *testing.T, status int) registry.RegistryAPI {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte("<html>error page</html>"))
+	}))
+	t.Cleanup(srv.Close)
+	reg, err := registry.NewRegistry(omnisdk.RegistryConfig{
+		RegistryURL:      srv.URL,
+		LocalDocRoot:     t.TempDir(),
+		AllowSrcDownload: true,
+		VerifyConfig:     &pqsig.VerifierConfig{NopVerify: true},
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return reg
+}
+
+func TestRemoteErrorStatusIsReported(t *testing.T) {
+	for _, status := range []int{http.StatusNotFound, http.StatusInternalServerError} {
+		want := fmt.Sprintf("HTTP %d", status)
+		t.Run(want, func(t *testing.T) {
+			reg := newErrorStatusRegistry(t, status)
+
+			if _, err := reg.ListAllAvailableProviders(); err == nil || !strings.Contains(err.Error(), want) {
+				t.Errorf("ListAllAvailableProviders error = %v, want it to mention %q", err, want)
+			}
+			if _, err := reg.ListAllProviderVersions("demo"); err == nil || !strings.Contains(err.Error(), want) {
+				t.Errorf("ListAllProviderVersions error = %v, want it to mention %q", err, want)
+			}
+			if err := reg.PullAndPersistProviderArchive("demo", "v1.0.0"); err == nil || !strings.Contains(err.Error(), want) {
+				t.Errorf("PullAndPersistProviderArchive error = %v, want it to mention %q", err, want)
+			}
+			if _, err := reg.GetDocBytes("demo/v1.0.0/provider.yaml"); err == nil || !strings.Contains(err.Error(), want) {
+				t.Errorf("GetDocBytes error = %v, want it to mention %q", err, want)
+			}
+		})
 	}
 }

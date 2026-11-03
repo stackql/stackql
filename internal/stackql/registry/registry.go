@@ -182,6 +182,7 @@ func (r *standardRegistry) ListAllAvailableProviders() (map[string]ProviderDescr
 	if err != nil {
 		return nil, err
 	}
+	defer rc.Close()
 	b, err := io.ReadAll(rc)
 	if err != nil {
 		return nil, err
@@ -210,6 +211,7 @@ func (r *standardRegistry) listAllProviderVersions(prov string) (map[string]Prov
 	if err != nil {
 		return nil, err
 	}
+	defer rc.Close()
 	b, err := io.ReadAll(rc)
 	if err != nil {
 		return nil, err
@@ -292,6 +294,22 @@ func (r *standardRegistry) pullArchive(archivePath string) (io.ReadCloser, error
 	return r.getUnVerifiedArchive(archivePath)
 }
 
+// checkRemoteResponse returns the response body only for a 2xx status.
+// Otherwise the body is closed and an error naming the status is returned,
+// so callers never parse an error page as registry content.
+func checkRemoteResponse(response *http.Response) (io.ReadCloser, error) {
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		if response.Body != nil {
+			_ = response.Body.Close()
+		}
+		return nil, fmt.Errorf("registry request to %s failed: HTTP %d", response.Request.URL, response.StatusCode)
+	}
+	if response.Body == nil {
+		return nil, fmt.Errorf("no response body from remote")
+	}
+	return response.Body, nil
+}
+
 func (r *standardRegistry) getRemoteDoc(docPath string) (io.ReadCloser, error) {
 	cl := &http.Client{}
 	if r.transport != nil {
@@ -301,10 +319,7 @@ func (r *standardRegistry) getRemoteDoc(docPath string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	if response.Body == nil {
-		return nil, fmt.Errorf("no response body from remote")
-	}
-	return response.Body, nil
+	return checkRemoteResponse(response)
 }
 
 func (r *standardRegistry) getRemoteArchive(docPath string) (io.ReadCloser, error) {
@@ -316,10 +331,7 @@ func (r *standardRegistry) getRemoteArchive(docPath string) (io.ReadCloser, erro
 	if err != nil {
 		return nil, err
 	}
-	if response.Body == nil {
-		return nil, fmt.Errorf("no response body from remote")
-	}
-	return response.Body, nil
+	return checkRemoteResponse(response)
 }
 
 func (r *standardRegistry) getRemoteProviderList() (io.ReadCloser, error) {
@@ -331,10 +343,7 @@ func (r *standardRegistry) getRemoteProviderList() (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	if response.Body == nil {
-		return nil, fmt.Errorf("no response body from remote")
-	}
-	return response.Body, nil
+	return checkRemoteResponse(response)
 }
 
 func (r *standardRegistry) GetLocalDocTrunk() string {
