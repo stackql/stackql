@@ -26,6 +26,7 @@ _PG_SCHEMA_INTEL = "stackql_intel"
 _BUILD_MAJOR_VERSION = os.environ.get('BUILDMAJORVERSION', '1')
 _BUILD_MINOR_VERSION = os.environ.get('BUILDMINORVERSION', '1')
 _BUILD_PATCH_VERSION = os.environ.get('BUILDPATCHVERSION', '1')
+_BUILD_PRERELEASE_SUFFIX = os.environ.get('BUILDPRERELEASESUFFIX', '')
 
 def get_shell_welcome_stdout(env: str) -> str:
   return ''
@@ -906,7 +907,7 @@ def get_variables(
     'BUILDMAJORVERSION':                              _BUILD_MAJOR_VERSION,
     'BUILDMINORVERSION':                              _BUILD_MINOR_VERSION,
     'BUILDPATCHVERSION':                              _BUILD_PATCH_VERSION,
-    'EXPECTED_SEMVER':                                f"{_BUILD_MAJOR_VERSION}.{_BUILD_MINOR_VERSION}.{_BUILD_PATCH_VERSION}",
+    'EXPECTED_SEMVER':                                f"{_BUILD_MAJOR_VERSION}.{_BUILD_MINOR_VERSION}.{_BUILD_PATCH_VERSION}{_BUILD_PRERELEASE_SUFFIX}",
     'DB_INTERNAL_CFG_LAX':                            DB_INTERNAL_CFG_LAX,
     'DB_SETUP_SRC':                                   get_db_setup_src(sql_backend_str),
     'DIGITALOCEAN_SECRET_STR':                        DIGITALOCEAN_SECRET_STR,

@@ -96,8 +96,7 @@ The configured SQLite or PostgreSQL backend stores:
 - `stackql_access_groups`: group IDs.
 - `stackql_access_memberships`: principal/group bindings.
 
-Schema creation is explicit: `accessmanagement.InitializeSchema(ctx, engine)` is an administration
-API, not an authentication side effect. Provision tables, identities and memberships through a
+Provision tables, identities and memberships through a
 trusted database administration path before serving protected queries. Unknown identities, absent
 schema, malformed data and directory outages deny access. Ordinary protected SQL cannot address
 directory tables. SQLite runtime connections enable foreign keys. Protect the database file and

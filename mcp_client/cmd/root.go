@@ -31,13 +31,14 @@ var (
 
 //nolint:revive,gochecknoglobals // explicit preferred
 var (
-	BuildMajorVersion   string = ""
-	BuildMinorVersion   string = ""
-	BuildPatchVersion   string = ""
-	BuildCommitSHA      string = ""
-	BuildShortCommitSHA string = ""
-	BuildDate           string = ""
-	BuildPlatform       string = ""
+	BuildMajorVersion     string = ""
+	BuildMinorVersion     string = ""
+	BuildPatchVersion     string = ""
+	BuildPreReleaseSuffix string = ""
+	BuildCommitSHA        string = ""
+	BuildShortCommitSHA   string = ""
+	BuildDate             string = ""
+	BuildPlatform         string = ""
 )
 
 // rootCmd represents the base command when called without any subcommands.

@@ -14,14 +14,6 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-func GetHeirarchyIDsFromParserNode(
-	handlerCtx handler.HandlerContext,
-	node sqlparser.SQLNode,
-) (internaldto.HeirarchyIdentifiers, error) {
-	return GetHIDs(
-		handlerCtx, node, parserutil.NewParameterMap(), false)
-}
-
 // resolveInitialHIDs dispatches on the supplied AST node to derive
 // hierarchy identifiers, returning either:
 //   - (hIDs, nil, nil) when further view/materialized-view/physical-table
@@ -150,10 +142,6 @@ func GetAliasFromStatement(node sqlparser.SQLNode) string {
 	default:
 		return ""
 	}
-}
-
-func GetUpdateTargetTableName(node *sqlparser.Update) (string, error) {
-	return getUpdateTargetTableName(node)
 }
 
 func getUpdateTargetTableName(node *sqlparser.Update) (string, error) {

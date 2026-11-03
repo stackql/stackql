@@ -32,10 +32,6 @@ type MapStream interface {
 	MapWriter
 }
 
-func NewstandardMapStream() MapStream {
-	return &standardMapStream{}
-}
-
 func (ss *standardMapStream) Write(input []map[string]interface{}) error {
 	ss.store = append(ss.store, input...)
 	return nil

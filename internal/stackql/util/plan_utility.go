@@ -333,23 +333,6 @@ func DefaultRowSort(rowMap map[string]map[string]interface{}) []string {
 	return []string{}
 }
 
-func GenerateSimpleErroneousOutput(
-	err error,
-	typCfg typing.Config,
-) internaldto.ExecutorOutput {
-	return PrepareResultSet(
-		internaldto.NewPrepareResultSetDTO(
-			nil,
-			nil,
-			nil,
-			nil,
-			err,
-			nil,
-			typCfg,
-		),
-	)
-}
-
 //nolint:funlen,gocognit // not overly complex
 func PrepareResultSet(
 	payload internaldto.PrepareResultSetDTO,

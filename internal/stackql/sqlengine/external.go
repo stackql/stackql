@@ -3,28 +3,9 @@ package sqlengine
 import "gopkg.in/yaml.v3"
 
 var (
-	_ SQLExternalConnection = standardSQLExternalConnection{}
-	_ SQLExternalTable      = standardSQLExternalTable{}
-	_ SQLExternalColumn     = standardSQLExternalColumn{}
+	_ SQLExternalTable  = standardSQLExternalTable{}
+	_ SQLExternalColumn = standardSQLExternalColumn{}
 )
-
-type SQLExternalConnection interface {
-	GetConnectionName() string
-	GetTables() map[string]SQLExternalTable
-}
-
-type standardSQLExternalConnection struct {
-	ConnectionName string                      `json:"alias" yaml:"alias"`
-	Tables         map[string]SQLExternalTable `json:"tables" yaml:"tables"`
-}
-
-func (c standardSQLExternalConnection) GetConnectionName() string {
-	return c.ConnectionName
-}
-
-func (c standardSQLExternalConnection) GetTables() map[string]SQLExternalTable {
-	return c.Tables
-}
 
 type SQLExternalTable interface {
 	GetCatalogName() string

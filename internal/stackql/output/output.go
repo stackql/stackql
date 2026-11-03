@@ -30,18 +30,6 @@ type IOutputWriter interface {
 	WriteError(error, string) error
 }
 
-type IColumnOrderer interface {
-	GetColumnOrder() []string
-}
-
-type BasicColumnOrderer struct {
-	ordering []string
-}
-
-func (bco *BasicColumnOrderer) GetColumnOrder() []string {
-	return bco.ordering
-}
-
 func writeStderrError(writer io.Writer, err error) error {
 	_, e := fmt.Fprintln(writer, err.Error())
 	return e

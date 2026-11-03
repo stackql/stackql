@@ -1,8 +1,6 @@
 package operation
 
 import (
-	"fmt"
-
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -10,7 +8,6 @@ import (
 
 var (
 	_ Operation = &reversibleOperation{}
-	_ Operation = &irreversibleOperation{}
 )
 
 // The Operation is an abstract
@@ -83,48 +80,6 @@ func (op *reversibleOperation) GetRedoLog() (binlog.LogEntry, bool) {
 
 func (op *reversibleOperation) GetUndoLog() (binlog.LogEntry, bool) {
 	return op.pr.GetUndoLog()
-}
-
-type irreversibleOperation struct {
-	pr primitive.IPrimitive
-}
-
-func (op *irreversibleOperation) Execute(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-	res := op.pr.Execute(pc)
-	return res
-}
-
-func (op *irreversibleOperation) IncidentData(id int64, ou internaldto.ExecutorOutput) error {
-	return op.pr.IncidentData(id, ou)
-}
-
-func (op *irreversibleOperation) SetTxnID(id int) {
-	op.pr.SetTxnID(id)
-}
-
-func (op *irreversibleOperation) SetInputAlias(alias string, id int64) error {
-	return op.pr.SetInputAlias(alias, id)
-}
-
-func (op *irreversibleOperation) Undo() error {
-	return fmt.Errorf("irreversible operation cannot be undone")
-}
-
-func (op *irreversibleOperation) Redo() error {
-	return nil
-}
-
-// TODO: interrogate the primitive
-func (op *irreversibleOperation) IsReadOnly() bool {
-	return op.pr.IsReadOnly()
-}
-
-func (op *irreversibleOperation) GetRedoLog() (binlog.LogEntry, bool) {
-	return op.pr.GetRedoLog()
-}
-
-func (op *irreversibleOperation) GetUndoLog() (binlog.LogEntry, bool) {
-	return nil, false
 }
 
 func NewReversibleOperation(pr primitive.IPrimitive) Operation {

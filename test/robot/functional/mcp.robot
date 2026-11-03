@@ -451,7 +451,7 @@ MCP HTTP Server Info Includes Version
     Should Contain       ${result.stdout}       sql_backend
     Should Contain       ${result.stdout}       provider_registry
     Should Contain       ${result.stdout}       mode
-    Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+
+    Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+%{BUILDPRERELEASESUFFIX=}(?![\\w.-])
     Should Be Equal As Integers    ${result.rc}    0
 
 PG Server Show Version
@@ -469,7 +469,7 @@ PG Server Show Version
     ...                  stdout=${CURDIR}${/}tmp${/}PG-Server-Show-Version-psql.txt
     ...                  stderr=${CURDIR}${/}tmp${/}PG-Server-Show-Version-psql-stderr.txt
     Should Contain       ${psql_client_result.stdout}       version
-    Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+
+    Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+%{BUILDPRERELEASESUFFIX=}(?![\\w.-])
     Should Be Equal As Integers    ${psql_client_result.rc}    0
 
 PG Server Show Version Extended
@@ -490,7 +490,7 @@ PG Server Show Version Extended
     Should Contain       ${psql_client_result.stdout}       commit
     Should Contain       ${psql_client_result.stdout}       build_date
     Should Contain       ${psql_client_result.stdout}       platform
-    Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+
+    Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+%{BUILDPRERELEASESUFFIX=}(?![\\w.-])
     Should Be Equal As Integers    ${psql_client_result.rc}    0
 
 PG Server Show Contributors
@@ -851,7 +851,7 @@ MCP HTTP Server Restricted Tools Allowlist
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-server-info-stderr.txt
     Should Be Equal As Integers    ${info_result.rc}    0
     Should Contain    ${info_result.stdout}    version
-    Should Match Regexp    ${info_result.stdout}    \\d+\\.\\d+\\.\\d+
+    Should Match Regexp    ${info_result.stdout}    \\d+\\.\\d+\\.\\d+%{BUILDPRERELEASESUFFIX=}(?![\\w.-])
     ${denied_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
     ...                  \-\-client\-type\=http

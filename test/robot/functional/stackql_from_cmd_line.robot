@@ -763,7 +763,7 @@ Show Insert Google BQ Datasets
 
 Show Version
     [Documentation]    Verify the SHOW VERSION column header is rendered and that
-    ...                the value matches a generic semver shape. A literal patch
+    ...                the value has the expected build suffix. A literal patch
     ...                check is intentionally avoided because the patch component
     ...                is the CI run number and changes on every build.
     Should StackQL Exec Contain
@@ -771,12 +771,12 @@ Show Version
     ...    version
     ...    stdout=${CURDIR}/tmp/Show-Version.tmp
     ${captured}=    Get File    ${CURDIR}/tmp/Show-Version.tmp
-    Should Match Regexp    ${captured}    \\d+\\.\\d+\\.\\d+
+    Should Match Regexp    ${captured}    \\|\\s*\\d+\\.\\d+\\.\\d+%{BUILDPRERELEASESUFFIX=}\\s*\\|
 
 Show Version Extended
     [Documentation]    Verify the SHOW EXTENDED VERSION column headers are
     ...                rendered and that the version cell matches a generic
-    ...                semver shape (patch component varies per CI run).
+    ...                semver with the expected suffix (patch varies per CI run).
     Should StackQL Exec Contain
     ...    SHOW EXTENDED VERSION;
     ...    version
@@ -794,7 +794,20 @@ Show Version Extended
     ...    platform
     ...    stdout=${CURDIR}/tmp/Show-Version-Extended-Platform.tmp
     ${captured}=    Get File    ${CURDIR}/tmp/Show-Version-Extended.tmp
-    Should Match Regexp    ${captured}    \\d+\\.\\d+\\.\\d+
+    Should Match Regexp    ${captured}    \\|\\s*\\d+\\.\\d+\\.\\d+%{BUILDPRERELEASESUFFIX=}\\s*\\|
+
+Reported Version Includes Expected Prerelease Suffix
+    [Documentation]    Check the exact complete version value, rejecting missing or unexpected suffixes.
+    FOR    ${query}    IN    SHOW VERSION;    SHOW EXTENDED VERSION;
+        Should StackQL Exec Contain JSON output
+        ...    ${query}
+        ...    version
+        ...    stdout=${CURDIR}/tmp/Expected-Prerelease-Version.json
+        ${captured}=    Get File    ${CURDIR}/tmp/Expected-Prerelease-Version.json
+        ${rows}=    Evaluate    json.loads($captured)    modules=json
+        Length Should Be    ${rows}    1
+        Should Match Regexp    ${rows}[0][version]    ^\\d+\\.\\d+\\.\\d+%{BUILDPRERELEASESUFFIX=}$
+    END
 
 Show Contributors
     [Documentation]    Issue #320: SHOW CONTRIBUTORS renders the embedded

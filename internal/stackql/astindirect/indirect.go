@@ -16,7 +16,6 @@ var (
 	_ Indirect = &View{}
 	_ Indirect = &Subquery{}
 	_ Indirect = &MaterializedView{}
-	_ Indirect = &CTE{}
 )
 
 type IndirectType int
@@ -62,15 +61,6 @@ func NewInsertRowsIndirect(insertObj *sqlparser.Insert, selCtx drm.PreparedState
 	rv := &parserSelectionIndirect{
 		selCtx:                selCtx,
 		insertObj:             insertObj,
-		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
-	}
-	return rv, nil
-}
-
-func NewParserExecIndirect(execObj *sqlparser.Exec, selCtx drm.PreparedStatementCtx) (Indirect, error) {
-	rv := &parserSelectionIndirect{
-		selCtx:                selCtx,
-		execObj:               execObj,
 		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
 	}
 	return rv, nil

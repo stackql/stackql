@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"time"
 )
 
 type HTTPContext interface {
@@ -75,21 +74,6 @@ func getRoundTripper(httpCtx HTTPContext, existingTransport http.RoundTripper) h
 		rt = tr
 	}
 	return rt
-}
-
-func GetHTTPClient(httpCtx HTTPContext, existingClient *http.Client) *http.Client {
-	return getHTTPClient(httpCtx, existingClient)
-}
-
-func getHTTPClient(httpCtx HTTPContext, existingClient *http.Client) *http.Client {
-	var rt http.RoundTripper
-	if existingClient != nil && existingClient.Transport != nil {
-		rt = existingClient.Transport
-	}
-	return &http.Client{
-		Timeout:   time.Second * time.Duration(httpCtx.GetAPIRequestTimeout()),
-		Transport: getRoundTripper(httpCtx, rt),
-	}
 }
 
 func getCertPool(localCaBundlePath string) (*x509.CertPool, error) {

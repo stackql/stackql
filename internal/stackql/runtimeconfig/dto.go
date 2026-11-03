@@ -71,10 +71,3 @@ const (
 	ViperCfgFileNameKey             string = "viperconfigfilename"
 	WorkOfflineKey                  string = "offline"
 )
-
-func inferKeyFileType(keyFileType string) string {
-	if keyFileType == "" {
-		return AuthServiceAccountStr
-	}
-	return keyFileType
-}

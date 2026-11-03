@@ -9,7 +9,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/streaming"
-	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
 
@@ -52,33 +51,30 @@ type BuilderInput interface {
 	SetIsTargetPhysicalTable(isPhysical bool)
 	SetTxnCtrlCtrs(internaldto.TxnControlCounters)
 	GetTxnCtrlCtrs() (internaldto.TxnControlCounters, bool)
-	GetTableInsertionContainer() (tableinsertioncontainer.TableInsertionContainer, bool)
-	SetTableInsertionContainer(tableinsertioncontainer.TableInsertionContainer)
 	SetInsertCtx(insertCtx drm.PreparedStatementCtx)
 	GetInsertCtx() (drm.PreparedStatementCtx, bool)
 }
 
 type builderInput struct {
-	graphHolder             primitivegraph.PrimitiveGraphHolder
-	handlerCtx              handler.HandlerContext
-	paramMap                map[int]map[string]interface{}
-	tbl                     tablemetadata.ExtendedTableMetadata
-	dependencyNode          primitivegraph.PrimitiveNode
-	commentDirectives       sqlparser.CommentDirectives
-	isAwait                 bool
-	isReturning             bool
-	verb                    string
-	inputAlias              string
-	isUndo                  bool
-	node                    sqlparser.SQLNode
-	paramMapStream          streaming.MapStream
-	prov                    provider.IProvider
-	annotatedAst            annotatedast.AnnotatedAst
-	isTargetPhysical        bool
-	txnCtrlCtrs             internaldto.TxnControlCounters
-	tableInsertionContainer tableinsertioncontainer.TableInsertionContainer
-	insertCtx               drm.PreparedStatementCtx
-	requiredDataRequestKey  string
+	graphHolder            primitivegraph.PrimitiveGraphHolder
+	handlerCtx             handler.HandlerContext
+	paramMap               map[int]map[string]interface{}
+	tbl                    tablemetadata.ExtendedTableMetadata
+	dependencyNode         primitivegraph.PrimitiveNode
+	commentDirectives      sqlparser.CommentDirectives
+	isAwait                bool
+	isReturning            bool
+	verb                   string
+	inputAlias             string
+	isUndo                 bool
+	node                   sqlparser.SQLNode
+	paramMapStream         streaming.MapStream
+	prov                   provider.IProvider
+	annotatedAst           annotatedast.AnnotatedAst
+	isTargetPhysical       bool
+	txnCtrlCtrs            internaldto.TxnControlCounters
+	insertCtx              drm.PreparedStatementCtx
+	requiredDataRequestKey string
 }
 
 func NewBuilderInput(
@@ -120,14 +116,6 @@ func (bi *builderInput) IsReturning() bool {
 
 func (bi *builderInput) SetIsReturning(isReturning bool) {
 	bi.isReturning = isReturning
-}
-
-func (bi *builderInput) GetTableInsertionContainer() (tableinsertioncontainer.TableInsertionContainer, bool) {
-	return bi.tableInsertionContainer, bi.tableInsertionContainer != nil
-}
-
-func (bi *builderInput) SetTableInsertionContainer(ti tableinsertioncontainer.TableInsertionContainer) {
-	bi.tableInsertionContainer = ti
 }
 
 func (bi *builderInput) SetTxnCtrlCtrs(tcc internaldto.TxnControlCounters) {

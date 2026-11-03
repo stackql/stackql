@@ -2,8 +2,6 @@ package drm
 
 import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/sql_system"
-	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
@@ -28,24 +26,16 @@ type PreparedStatementCtx interface {
 }
 
 type standardPreparedStatementCtx struct {
-	query                   string
-	kind                    string // string annotation applicable only in some cases eg UNION [ALL]
-	genIDControlColName     string
-	sessionIDControlColName string
-	TableNames              []string
-	txnIDControlColName     string
-	insIDControlColName     string
-	insEncodedColName       string
-	nonControlColumns       []typing.ColumnMetadata
-	ctrlColumnRepeats       int
-	txnCtrlCtrs             internaldto.TxnControlCounters
-	selectTxnCtrlCtrs       []internaldto.TxnControlCounters
-	namespaceCollection     tablenamespace.Collection
-	sqlSystem               sql_system.SQLSystem
-	indirectContexts        []PreparedStatementCtx
-	parameters              map[string]interface{}
-	aliasToTccMap           map[string][]internaldto.TxnControlCounters
-	aliasOrdering           []string
+	query             string
+	kind              string // string annotation applicable only in some cases eg UNION [ALL]
+	TableNames        []string
+	nonControlColumns []typing.ColumnMetadata
+	ctrlColumnRepeats int
+	txnCtrlCtrs       internaldto.TxnControlCounters
+	selectTxnCtrlCtrs []internaldto.TxnControlCounters
+	indirectContexts  []PreparedStatementCtx
+	aliasToTccMap     map[string][]internaldto.TxnControlCounters
+	aliasOrdering     []string
 }
 
 func (ps *standardPreparedStatementCtx) GetOrderedTccs() []internaldto.TxnControlCounters {
@@ -108,42 +98,6 @@ func (ps *standardPreparedStatementCtx) GetAllCtrlCtrs() []internaldto.TxnContro
 	rv = append(rv, ps.txnCtrlCtrs)
 	rv = append(rv, ps.selectTxnCtrlCtrs...)
 	return rv
-}
-
-func NewPreparedStatementCtx(
-	query string,
-	kind string,
-	genIDControlColName string,
-	sessionIDControlColName string,
-	tableNames []string,
-	txnIDControlColName string,
-	insIDControlColName string,
-	insEncodedColName string,
-	nonControlColumns []typing.ColumnMetadata,
-	ctrlColumnRepeats int,
-	txnCtrlCtrs internaldto.TxnControlCounters,
-	secondaryCtrs []internaldto.TxnControlCounters,
-	namespaceCollection tablenamespace.Collection,
-	sqlSystem sql_system.SQLSystem,
-	parameters map[string]interface{},
-) PreparedStatementCtx {
-	return &standardPreparedStatementCtx{
-		query:                   query,
-		kind:                    kind,
-		genIDControlColName:     genIDControlColName,
-		sessionIDControlColName: sessionIDControlColName,
-		TableNames:              tableNames,
-		txnIDControlColName:     txnIDControlColName,
-		insIDControlColName:     insIDControlColName,
-		insEncodedColName:       insEncodedColName,
-		nonControlColumns:       nonControlColumns,
-		ctrlColumnRepeats:       ctrlColumnRepeats,
-		txnCtrlCtrs:             txnCtrlCtrs,
-		selectTxnCtrlCtrs:       secondaryCtrs,
-		namespaceCollection:     namespaceCollection,
-		sqlSystem:               sqlSystem,
-		parameters:              parameters,
-	}
 }
 
 func NewQueryOnlyPreparedStatementCtx(query string, nonControlCols []typing.ColumnMetadata) PreparedStatementCtx {
