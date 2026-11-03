@@ -55,8 +55,8 @@ on:
       - '.github/workflows/contributors.yml'
 env:
   # Override this repository variable when the stable trunk changes.
-  STABLE_BRANCH: ${{ vars.STABLE_BRANCH || 'stable/v0.13' }}
-  MAIN_DOCKER_TAG_SUFFIX: ${{ vars.MAIN_DOCKER_TAG_SUFFIX || '-rc' }}
+  LIVE_BRANCH: ${{ vars.LIVE_BRANCH || 'stable/v0.13' }}
+  BUILD_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
   DOCKER_PYTHON_VERSION: '3.13'
   GOTESTCMD: "go test -timeout 1200s -v ./..."
   GOPRIVATE: github.com/stackql/*
@@ -242,6 +242,8 @@ jobs:
         GOOS: windows
         GOARCH: ${{matrix.isa}}
       run: |
+        $env:BUILDPRERELEASESUFFIX = python cicd/python/prerelease_suffix.py "$env:BUILD_SOURCE_BRANCH" "$env:LIVE_BRANCH"
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
         $Version = convertfrom-stringdata (get-content ./cicd/version.txt -raw)
         $BuildMajorVersion = $Version.'MajorVersion'
@@ -251,6 +253,7 @@ jobs:
         $env:BUILDMINORVERSION = $BuildMinorVersion
         # ISO-8601 UTC, matching the Linux/macOS jobs (issue #704).
         $env:BUILDDATE = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        echo "BUILDPRERELEASESUFFIX: $env:BUILDPRERELEASESUFFIX"
         
         echo "BUILDMAJORVERSION=$env:BUILDMAJORVERSION" >> $GITHUB_ENV
         echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
@@ -429,6 +432,8 @@ jobs:
         BUILDPATCHVERSION: ${{github.run_number}}
         CGO_ENABLED: 0
       run: |
+        BUILDPRERELEASESUFFIX="$(python cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH")"
+        export BUILDPRERELEASESUFFIX
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
         export BUILDMINORVERSION="$MinorVersion"
@@ -444,6 +449,7 @@ jobs:
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDPRERELEASESUFFIX: ${BUILDPRERELEASESUFFIX}"
         echo "BUILDBRANCH: ${BUILDBRANCH}"
         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
@@ -565,10 +571,6 @@ jobs:
           ./*.deb
 
   linuxtest:
-    # env:
-    #   COMPOSE_BAKE: '0'
-    #   DOCKER_BUILDKIT: '0'
-    #   COMPOSE_DOCKER_CLI_BUILD: '0'
 
     name: Linux Test
     needs:
@@ -665,6 +667,8 @@ jobs:
         BUILDPATCHVERSION: ${{github.run_number}}
         CGO_ENABLED: 0
       run: |
+        BUILDPRERELEASESUFFIX="$(python cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH")"
+        export BUILDPRERELEASESUFFIX
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
         export BUILDMINORVERSION="$MinorVersion"
@@ -680,6 +684,7 @@ jobs:
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDPRERELEASESUFFIX: ${BUILDPRERELEASESUFFIX}"
         echo "BUILDBRANCH: ${BUILDBRANCH}"
         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
@@ -1053,6 +1058,8 @@ jobs:
         BUILDPATCHVERSION: ${{github.run_number}}
         CGO_ENABLED: 0
       run: |
+        BUILDPRERELEASESUFFIX="$(python cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH")"
+        export BUILDPRERELEASESUFFIX
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
         export BUILDMINORVERSION="$MinorVersion"
@@ -1068,6 +1075,7 @@ jobs:
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDPRERELEASESUFFIX: ${BUILDPRERELEASESUFFIX}"
         echo "BUILDBRANCH: ${BUILDBRANCH}"
         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
@@ -1375,8 +1383,12 @@ jobs:
 
     - shell: wsl-bash {0}
       name: Run robot mocked functional tests
+      env:
+        WSLENV: BUILD_SOURCE_BRANCH:LIVE_BRANCH:GITHUB_REF_TYPE
       run: |
           cd /tmp/stackql-wsl-tests
+          BUILDPRERELEASESUFFIX="$(python3 cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH")"
+          export BUILDPRERELEASESUFFIX
           . cicd/version.txt
           export BUILDBRANCH="${{github.ref}}"
           export BUILDPATCHVERSION="${{github.run_number}}"
@@ -1386,6 +1398,7 @@ jobs:
           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+          echo "BUILDPRERELEASESUFFIX=$BUILDPRERELEASESUFFIX"
           if [[ ! "$BUILDBRANCH" == "*develop" ]]
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
@@ -1406,9 +1419,12 @@ jobs:
       # This is a hack because if cannot directly access secrets
       if: env.AZURE_CLIENT_SECRET != ''
       env:
+        WSLENV: BUILD_SOURCE_BRANCH:LIVE_BRANCH:GITHUB_REF_TYPE
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       run: |
           cd /tmp/stackql-wsl-tests
+          BUILDPRERELEASESUFFIX="$(python3 cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH")"
+          export BUILDPRERELEASESUFFIX
           . cicd/version.txt
           export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
           export AZURE_CLIENT_SECRET='${{ secrets.AZURE_CLIENT_SECRET }}'
@@ -1422,6 +1438,7 @@ jobs:
           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+          echo "BUILDPRERELEASESUFFIX=$BUILDPRERELEASESUFFIX"
           if [[ ! "$BUILDBRANCH" == "*develop" ]]
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
@@ -1518,6 +1535,8 @@ jobs:
         GOOS: darwin
         GOARCH: ${{ matrix.arch }}
       run: |
+        BUILDPRERELEASESUFFIX="$(python cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH")"
+        export BUILDPRERELEASESUFFIX
         source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
         export BUILDMINORVERSION="$MinorVersion"
@@ -1533,6 +1552,7 @@ jobs:
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDPRERELEASESUFFIX: ${BUILDPRERELEASESUFFIX}"
         echo "BUILDBRANCH: ${BUILDBRANCH}"
         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
@@ -1675,7 +1695,7 @@ jobs:
                 [ "${{ github.ref_type }}" = "branch" ] \
                 && ( \
                   [ "${{ github.ref_name }}" = "main" ] \
-                  || [[ "${{ github.ref_name }}" =~ ^version.* ]] \
+                  || [[ "$GITHUB_REF_NAME" == stable/* ]] \
                 ) \
                 && [ "${{ github.event_name }}" = "push" ] \
             ) \
@@ -1701,6 +1721,8 @@ jobs:
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
       run: |
+        BUILDPRERELEASESUFFIX="$(python cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH")"
+        export BUILDPRERELEASESUFFIX
         source cicd/version.txt
         BUILDMAJORVERSION=${MajorVersion}
         BUILDMINORVERSION=${MinorVersion}
@@ -1714,6 +1736,7 @@ jobs:
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDPRERELEASESUFFIX: ${BUILDPRERELEASESUFFIX}"
         echo "BUILDBRANCH: ${BUILDBRANCH}"
         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
@@ -1728,15 +1751,30 @@ jobs:
           echo "GID=${GID}"
         } >> "${GITHUB_ENV}"
 
+
     - name: Pull Docker base images for cache purposes
       if: env.BUILD_IMAGE_REQUIRED == 'true'
+      env:
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       run: |
+        if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+          printf '%s' "$DOCKERHUB_TOKEN" | docker login docker.io --username "$DOCKERHUB_USERNAME" --password-stdin \
+            || echo "Docker Hub login failed; attempting pull anyway."
+        fi
         docker pull --platform ${{ matrix.platform }} golang:1.27.3-bookworm || echo 'could not pull image for cache purposes'
         docker pull --platform ${{ matrix.platform }} ubuntu:22.04 || echo 'could not pull image for cache purposes'
 
     - name: Pull Docker image for cache purposes
       if: env.BUILD_IMAGE_REQUIRED == 'true'
+      env:
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       run: |
+        if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+          printf '%s' "$DOCKERHUB_TOKEN" | docker login docker.io --username "$DOCKERHUB_USERNAME" --password-stdin \
+            || echo "Docker Hub login failed; attempting pull anyway."
+        fi
         docker pull --platform ${{ matrix.platform }} stackql/stackql:latest || echo 'could not pull image for cache purposes'
 
     - name: Build image precursors
@@ -1762,6 +1800,7 @@ jobs:
           BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
           BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
+          BUILDPRERELEASESUFFIX=${{env.BUILDPRERELEASESUFFIX}}
         platforms: ${{ matrix.platform }}
         target: app
         labels: ${{ steps.meta.outputs.labels }}
@@ -1778,6 +1817,7 @@ jobs:
           BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
           BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
+          BUILDPRERELEASESUFFIX=${{env.BUILDPRERELEASESUFFIX}}
           RUNTIME_IMAGE=python:${{ env.DOCKER_PYTHON_VERSION }}-slim-trixie
         platforms: ${{ matrix.platform }}
         target: app
@@ -1902,7 +1942,7 @@ jobs:
                 [ "${{ github.ref_type }}" = "branch" ] \
                 &&  ( \
                   [ "${{ github.ref_name }}" = "main" ] \
-                  || [[ "${{ github.ref_name }}" =~ ^version.* ]] \
+                  || [[ "$GITHUB_REF_NAME" == stable/* ]] \
                 ) \
                 && [ "${{ github.event_name }}" = "push" ] \
             ) \
@@ -1933,6 +1973,10 @@ jobs:
         path: ${{ runner.temp }}/digests
         name: digests-${{ matrix.image_variant == 'python' && 'python-' || '' }}${{ env.PLATFORM_PAIR }}
 
+    - name: Set expected prerelease suffix
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      run: python cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH"
+
     - name: Prepare digest information
       if: env.BUILD_IMAGE_REQUIRED == 'true'
       working-directory: ${{ runner.temp }}/digests
@@ -1955,16 +1999,17 @@ jobs:
         } >> "${GITHUB_ENV}"
            
       
-    - name: Login to Docker Hub
-      uses: docker/login-action@v4.6.0
-      if: env.BUILD_IMAGE_REQUIRED == 'true'
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
       
     - name: Pull by digest
       if: env.BUILD_IMAGE_REQUIRED == 'true'
+      env:
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       run: |
+        if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+          printf '%s' "$DOCKERHUB_TOKEN" | docker login docker.io --username "$DOCKERHUB_USERNAME" --password-stdin \
+            || echo "Docker Hub login failed; attempting pull anyway."
+        fi
         docker pull --platform ${{ matrix.platform }} ${{ env.STACKQL_IMAGE_NAME }}@sha256:${{ env.THIS_STACKQL_DIGEST }}
         docker tag ${{ env.STACKQL_IMAGE_NAME }}@sha256:${{ env.THIS_STACKQL_DIGEST }} ${{ env.STACKQL_IMAGE_NAME }}:latest
 
@@ -2049,22 +2094,34 @@ jobs:
 
     - name: Run robot mocked functional tests
       env:
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'sqlite'
       timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
       run: |
+        if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+          printf '%s' "$DOCKERHUB_TOKEN" | docker login docker.io --username "$DOCKERHUB_USERNAME" --password-stdin \
+            || echo "Docker Hub login failed; attempting tests anyway."
+        fi
         sudo rm -rf test/tmp || true
         mkdir -p test/tmp
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
     - name: Run POSTGRES BACKEND robot mocked functional tests
       env:
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'postgres_tcp'
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
+        if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+          printf '%s' "$DOCKERHUB_TOKEN" | docker login docker.io --username "$DOCKERHUB_USERNAME" --password-stdin \
+            || echo "Docker Hub login failed; attempting tests anyway."
+        fi
         sudo rm -rf test/tmp || true
         mkdir -p test/tmp
         echo "## Stray flask apps to be killed before robot tests ##"
@@ -2211,8 +2268,8 @@ jobs:
                   [ "${{ github.ref_type }}" = "branch" ] \
                   &&  ( \
                     [ "${{ github.ref_name }}" = "main" ] \
-                    || [ "${{ github.ref_name }}" = "$STABLE_BRANCH" ] \
-                    || [[ "${{ github.ref_name }}" =~ ^version.* ]] \
+                    || [ "${{ github.ref_name }}" = "$LIVE_BRANCH" ] \
+                    || [[ "$GITHUB_REF_NAME" == stable/* ]] \
                   ) \
                   && [ "${{ github.event_name }}" = "push" ] \
               ) \
@@ -2256,6 +2313,8 @@ jobs:
           BUILDPLATFORM: ${{runner.os}}
           BUILDPATCHVERSION: ${{github.run_number}}
         run: |
+          BUILDPRERELEASESUFFIX="$(python cicd/python/prerelease_suffix.py "$BUILD_SOURCE_BRANCH" "$LIVE_BRANCH")"
+          export BUILDPRERELEASESUFFIX
           source cicd/version.txt
           BUILDMAJORVERSION=${MajorVersion}
           BUILDMINORVERSION=${MinorVersion}
@@ -2265,7 +2324,7 @@ jobs:
           fi
           if \
             [ "${{ github.ref_type }}" = "branch" ] \
-            && [ "${{ github.ref_name }}" = "$STABLE_BRANCH" ] \
+            && [ "${{ github.ref_name }}" = "$LIVE_BRANCH" ] \
           ; then
             SHORTHAND_DOCKER_TAG="latest"
           else
@@ -2277,6 +2336,7 @@ jobs:
           echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
           echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
           echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+          echo "BUILDPRERELEASESUFFIX: ${BUILDPRERELEASESUFFIX}"
           echo "BUILDBRANCH: ${BUILDBRANCH}"
           echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
           echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
@@ -2298,10 +2358,10 @@ jobs:
         with:
           images: |
             ${{ env.STACKQL_IMAGE_NAME }}   
-          # Apply the testing suffix to every main tag in one place.
+          # Apply the shared branch suffix after the optional Python image suffix.
           flavor: |
             latest=false
-            suffix=${{ matrix.variant == 'python' && format('-python{0}', env.DOCKER_PYTHON_VERSION) || '' }}${{ github.ref_type == 'branch' && github.ref_name == 'main' && env.MAIN_DOCKER_TAG_SUFFIX || '' }}
+            suffix=${{ matrix.variant == 'python' && format('-python{0}', env.DOCKER_PYTHON_VERSION) || '' }}${{ env.BUILDPRERELEASESUFFIX }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -2314,8 +2374,8 @@ jobs:
         if: env.PUSH_IMAGE_REQUIRED == 'true'
         working-directory: ${{ runner.temp }}/digests
         env:
-          PYTHON_SUFFIX: ${{ matrix.variant == 'python' && format('-python{0}', env.DOCKER_PYTHON_VERSION) || '' }}${{ matrix.variant == 'python' && github.ref_type == 'branch' && github.ref_name == 'main' && env.MAIN_DOCKER_TAG_SUFFIX || '' }}
-          PYTHON_ALIAS: ${{ matrix.variant == 'python' && '-python3' || '' }}${{ matrix.variant == 'python' && github.ref_type == 'branch' && github.ref_name == 'main' && env.MAIN_DOCKER_TAG_SUFFIX || '' }}
+          PYTHON_SUFFIX: ${{ matrix.variant == 'python' && format('-python{0}', env.DOCKER_PYTHON_VERSION) || '' }}${{ matrix.variant == 'python' && env.BUILDPRERELEASESUFFIX || '' }}
+          PYTHON_ALIAS: ${{ matrix.variant == 'python' && '-python3' || '' }}${{ matrix.variant == 'python' && env.BUILDPRERELEASESUFFIX || '' }}
         run: |
           # Both Python tag forms are attached to the same multi-platform manifest.
           mapfile -t tags < <(jq -r --arg suffix "$PYTHON_SUFFIX" --arg alias "$PYTHON_ALIAS" '

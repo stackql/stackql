@@ -61,10 +61,6 @@ func GetDefaultViperConfigFileName() string {
 	return defaultConfigFileName
 }
 
-func GetDefaultKeyFilePath() string {
-	return ""
-}
-
 func GetDefaultProviderCacheDirFileMode() uint32 {
 	if runtime.GOOS == "windows" {
 		return defaultWindowsConfigCacheDirFileMode

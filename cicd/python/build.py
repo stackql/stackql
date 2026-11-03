@@ -36,6 +36,7 @@ def build_stackql(verbose :bool) -> int:
         f'go build {"-x -v" if verbose else ""} -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={os.environ.get("BUILDMAJORVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={os.environ.get("BUILDMINORVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={os.environ.get("BUILDPATCHVERSION")} '
+        f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildPreReleaseSuffix={os.environ.get("BUILDPRERELEASESUFFIX", "")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={os.environ.get("BUILDCOMMITSHA", "")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={os.environ.get("BUILDCOMMITSHA", "")[0:7 or None]} '
         f"-X 'github.com/stackql/stackql/internal/stackql/cmd.BuildDate={os.environ.get('BUILDDATE', '')}' "

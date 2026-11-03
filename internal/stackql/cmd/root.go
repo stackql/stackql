@@ -48,13 +48,14 @@ import (
 //
 //nolint:revive,gochecknoglobals // populated by -ldflags at build time
 var (
-	BuildMajorVersion   string = ""
-	BuildMinorVersion   string = ""
-	BuildPatchVersion   string = ""
-	BuildCommitSHA      string = ""
-	BuildShortCommitSHA string = ""
-	BuildDate           string = ""
-	BuildPlatform       string = ""
+	BuildMajorVersion     string = ""
+	BuildMinorVersion     string = ""
+	BuildPatchVersion     string = ""
+	BuildPreReleaseSuffix string = ""
+	BuildCommitSHA        string = ""
+	BuildShortCommitSHA   string = ""
+	BuildDate             string = ""
+	BuildPlatform         string = ""
 )
 
 func getSemver() string {
@@ -173,6 +174,7 @@ func init() {
 		BuildMajorVersion,
 		BuildMinorVersion,
 		BuildPatchVersion,
+		BuildPreReleaseSuffix,
 		BuildCommitSHA,
 		BuildShortCommitSHA,
 		buildDate,

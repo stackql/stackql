@@ -16,20 +16,6 @@ const (
 	FloatBitSize int = 64
 )
 
-func hasAwaitComment(comments sqlparser.Comments) bool {
-	if comments != nil {
-		commentDirectives := sqlparser.ExtractCommentDirectives(comments)
-		if commentDirectives.IsSet("AWAIT") {
-			return true
-		}
-	}
-	return false
-}
-
-func IsAwait(comments sqlparser.Comments) bool {
-	return hasAwaitComment(comments)
-}
-
 //nolint:gocritic,staticcheck // TODO: clean up this and other tech debt
 func ExtractLHSTable(sqlFunc *sqlparser.FuncExpr) (*sqlparser.ColName, bool) {
 	if sqlFunc == nil {
@@ -49,11 +35,6 @@ func ExtractLHSTable(sqlFunc *sqlparser.FuncExpr) (*sqlparser.ColName, bool) {
 	return nil, false
 }
 
-// These null "dual" tables are some vitess artifact.
-func IsNullTable(node sqlparser.TableExpr) bool {
-	return isNullTable(node)
-}
-
 //nolint:gocritic // TODO: review
 func isNullTable(node sqlparser.TableExpr) bool {
 	switch node := node.(type) {
@@ -66,22 +47,6 @@ func isNullTable(node sqlparser.TableExpr) bool {
 		}
 	}
 	return false
-}
-
-//nolint:gocritic // TODO: review
-func GetTableNameFromTableExpr(node sqlparser.TableExpr) (sqlparser.TableName, error) {
-	switch tt := node.(type) {
-	case *sqlparser.AliasedTableExpr:
-		tn, ok := tt.Expr.(sqlparser.TableName)
-		if ok {
-			return tn, nil
-		}
-	}
-	return sqlparser.TableName{}, fmt.Errorf("table expression too complex")
-}
-
-func NewUnaliasedColumnHandle(name string) ColumnHandle {
-	return ColumnHandle{Name: name}
 }
 
 func ExtractSelectColumnNames(selStmt *sqlparser.Select, formatter sqlparser.NodeFormatter) ([]ColumnHandle, error) {
@@ -97,88 +62,6 @@ func ExtractSelectColumnNames(selStmt *sqlparser.Select, formatter sqlparser.Nod
 			colNames = append(colNames, cn)
 		case *sqlparser.StarExpr:
 		}
-	}
-	return colNames, err
-}
-
-func ExtractInsertReturningColumnNames(
-	insertStmt *sqlparser.Insert,
-	starColumns []string,
-	formatter sqlparser.NodeFormatter,
-) ([]ColumnHandle, error) {
-	return extractInsertReturningColumnNames(
-		insertStmt.SelectExprs,
-		starColumns,
-		formatter,
-	)
-}
-
-func extractInsertReturningColumnNames(
-	returningExprs sqlparser.SelectExprs,
-	starColumns []string,
-	formatter sqlparser.NodeFormatter,
-) ([]ColumnHandle, error) {
-	var colNames []ColumnHandle
-	var err error
-	for _, node := range returningExprs {
-		switch node := node.(type) {
-		case *sqlparser.AliasedExpr:
-			cn, cErr := inferColNameFromExpr(node.Expr, formatter, node.As.GetRawVal())
-			if cErr != nil {
-				return nil, cErr
-			}
-			colNames = append(colNames, cn)
-		case *sqlparser.StarExpr:
-			if len(starColumns) == 0 {
-				return nil, fmt.Errorf("no star columns provided for insert returning of star")
-			}
-			prefix := node.TableName.GetRawVal()
-			for _, colName := range starColumns {
-				if prefix != "" {
-					colName = prefix + "." + colName
-				}
-				colNames = append(colNames, ColumnHandle{
-					Name:  colName,
-					Alias: colName,
-				})
-			}
-		default:
-			err = fmt.Errorf("cannot use SelectExpr of type '%T' as a raw value", node)
-			return nil, err
-		}
-	}
-	return colNames, err
-}
-
-func ExtractDeleteReturningColumnNames(
-	deleteStmt *sqlparser.Delete,
-	starColumns []string,
-	formatter sqlparser.NodeFormatter,
-) ([]ColumnHandle, error) {
-	return extractInsertReturningColumnNames(
-		deleteStmt.SelectExprs,
-		starColumns,
-		formatter,
-	)
-}
-
-func ExtractUpdateReturningColumnNames(
-	updateStmt *sqlparser.Update,
-	starColumns []string,
-	formatter sqlparser.NodeFormatter,
-) ([]ColumnHandle, error) {
-	return extractInsertReturningColumnNames(
-		updateStmt.SelectExprs,
-		starColumns,
-		formatter,
-	)
-}
-
-func ExtractInsertColumnNames(insertStmt *sqlparser.Insert) ([]string, error) {
-	var colNames []string
-	var err error
-	for _, node := range insertStmt.Columns {
-		colNames = append(colNames, node.GetRawVal())
 	}
 	return colNames, err
 }
@@ -422,46 +305,6 @@ func extractUpdateValColumns(
 	return retVal, nonValCols, nil
 }
 
-//nolint:gocritic // TODO: review
-func ExtractWhereColNames(statement *sqlparser.Where) ([]string, error) {
-	var whereNames []string
-	var err error
-	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
-		switch node := node.(type) {
-		case *sqlparser.ColName:
-			whereNames = append(whereNames, node.Name.String())
-		}
-		return true, err
-	}, statement)
-	return whereNames, err
-}
-
-//nolint:gocritic // TODO: review
-func ExtractShowColNames(statement *sqlparser.ShowTablesOpt) ([]string, error) {
-	var whereNames []string
-	var err error
-	if statement == nil || statement.Filter == nil {
-		return whereNames, err
-	}
-	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
-		switch node := node.(type) {
-		case *sqlparser.ColName:
-			whereNames = append(whereNames, node.Name.String())
-		}
-		return true, err
-	}, statement.Filter)
-	return whereNames, err
-}
-
-func ExtractShowColUsage(statement *sqlparser.ShowTablesOpt) ([]ColumnUsageMetadata, error) {
-	var colUsageSlice []ColumnUsageMetadata
-	var err error
-	if statement == nil || statement.Filter == nil {
-		return colUsageSlice, err
-	}
-	return GetColumnUsageTypes(statement.Filter.Filter)
-}
-
 //nolint:gocritic,exhaustive // TODO: review
 func ExtractSleepDuration(statement *sqlparser.Sleep) (int, error) {
 	var retVal int
@@ -473,47 +316,6 @@ func ExtractSleepDuration(statement *sqlparser.Sleep) (int, error) {
 		return strconv.Atoi(string(statement.Duration.Val))
 	}
 	return retVal, fmt.Errorf("sleep definition inadequate")
-}
-
-//nolint:gocritic // TODO: review
-func GetColumnUsageTypes(statement sqlparser.Expr) ([]ColumnUsageMetadata, error) {
-	var colMetaSlice []ColumnUsageMetadata
-	var err error
-	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
-		switch node := node.(type) {
-		case *sqlparser.ComparisonExpr:
-			colMeta := ColumnUsageMetadata{}
-			switch lhs := node.Left.(type) {
-			case *sqlparser.ColName:
-				colMeta.ColName = lhs
-			}
-			switch rhs := node.Right.(type) {
-			case *sqlparser.SQLVal:
-				colMeta.ColVal = rhs
-			}
-			if colMeta.ColName != nil && colMeta.ColVal != nil {
-				colMetaSlice = append(colMetaSlice, colMeta)
-			}
-		}
-		return true, nil
-	}, statement)
-	return colMetaSlice, err
-}
-
-func GetColumnUsageTypesForExec(exec *sqlparser.Exec) ([]ColumnUsageMetadata, error) {
-	var colMetaSlice []ColumnUsageMetadata
-	for _, execVarDef := range exec.ExecVarDefs {
-		colMeta := ColumnUsageMetadata{}
-		colMeta.ColName = &sqlparser.ColName{Name: execVarDef.ColIdent}
-		switch rhs := execVarDef.Val.(type) {
-		case *sqlparser.SQLVal:
-			colMeta.ColVal = rhs
-		default:
-			return nil, fmt.Errorf("EXEC param not supplied as valid SQLVal")
-		}
-		colMetaSlice = append(colMetaSlice, colMeta)
-	}
-	return colMetaSlice, nil
 }
 
 func InferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeFormatter) (ColumnHandle, error) {
@@ -546,10 +348,6 @@ type simpleAggSQLCol struct {
 
 func (s simpleAggSQLCol) getReturnType() sqlparser.ValType {
 	return s.returnType
-}
-
-func (s simpleAggSQLCol) getName() string {
-	return s.name
 }
 
 func inferAggregatedCol(funcNameLowered string) (aggregatedCol, bool) {
@@ -800,36 +598,6 @@ func getDecoratedColRendition(baseDecoratedColumn, alias string) string {
 	return baseDecoratedColumn
 }
 
-//nolint:mnd // TODO: remove this
-func CheckSQLParserTypeVsColumn(colUsage ColumnUsageMetadata, verifyCallback func(string, interface{}) bool) error {
-	switch colUsage.ColVal.Type {
-	case sqlparser.StrVal:
-		cn := colUsage.ColName.Name.String()
-		if !verifyCallback(cn, "") {
-			return fmt.Errorf("SHOW key = '%s' does NOT match SQL type '%s'", colUsage.ColName.Name.String(), "StrVal")
-		}
-	case sqlparser.IntVal:
-		if !verifyCallback(colUsage.ColName.Name.String(), 11) {
-			return fmt.Errorf("SHOW key = '%s' does NOT match SQL type '%s'", colUsage.ColName.Name.String(), "IntVal")
-		}
-	case sqlparser.FloatVal:
-		if !verifyCallback(colUsage.ColName.Name.String(), 3.33) {
-			return fmt.Errorf("SHOW key = '%s' does NOT match SQL type '%s'", colUsage.ColName.Name.String(), "FloatVal")
-		}
-	case sqlparser.HexNum:
-		if !verifyCallback(colUsage.ColName.Name.String(), 0x11) {
-			return fmt.Errorf("SHOW key = '%s' does NOT match SQL type '%s'", colUsage.ColName.Name.String(), "HexNum")
-		}
-	case sqlparser.HexVal:
-		return fmt.Errorf("SHOW key = '%s' does NOT match SQL type '%s'", colUsage.ColName.Name.String(), "HexVal")
-	case sqlparser.ValArg:
-		return fmt.Errorf("SHOW key = '%s' does NOT match SQL type '%s'", colUsage.ColName.Name.String(), "ValArg")
-	case sqlparser.BitVal:
-		return fmt.Errorf("SHOW key = '%s' does NOT match SQL type '%s'", colUsage.ColName.Name.String(), "BitVal")
-	}
-	return nil
-}
-
 func ExtractTableNameFromTableExpr(tableExpr sqlparser.TableExpr) (*sqlparser.TableName, error) {
 	switch table := tableExpr.(type) {
 	case *sqlparser.AliasedTableExpr:
@@ -865,27 +633,6 @@ func TableFromSelectNode(sel *sqlparser.Select) (sqlparser.TableName, error) {
 		return sqlparser.TableName{}, fmt.Errorf("table expression is complex")
 	}
 	return tableName, nil
-}
-
-func IsFromExprSimple(from sqlparser.TableExprs) bool {
-	for i, node := range from {
-		if i == 0 {
-			switch node.(type) {
-			case *sqlparser.JoinTableExpr, *sqlparser.AliasedTableExpr:
-				continue
-			default:
-				return false
-			}
-		} else {
-			switch node.(type) {
-			case *sqlparser.TableValuedFuncTableExpr:
-				continue
-			default:
-				return false
-			}
-		}
-	}
-	return true
 }
 
 func IsCreateMaterializedView(stmt sqlparser.Statement) bool {
@@ -1037,4 +784,8 @@ func ExtractSelectStatmentFromDDL(stmt sqlparser.Statement) (sqlparser.SelectSta
 		}
 	}
 	return nil, false
+}
+
+func (s simpleAggSQLCol) getName() string {
+	return s.name
 }

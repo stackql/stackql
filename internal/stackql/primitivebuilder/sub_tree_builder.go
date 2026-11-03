@@ -6,12 +6,6 @@ type SubTreeBuilder struct {
 	children []Builder
 }
 
-func NewSubTreeBuilder(children []Builder) Builder {
-	return &SubTreeBuilder{
-		children: children,
-	}
-}
-
 func (st *SubTreeBuilder) Build() error {
 	for _, child := range st.children {
 		err := child.Build()

@@ -358,17 +358,3 @@ func (ac *AuthCtx) GetCredentialsSourceDescriptorString() string {
 	}
 	return fmt.Sprintf("credentialsfilepath:%s", ac.KeyFilePath)
 }
-
-func GetAuthCtx(scopes []string, keyFilePath string, keyFileType string) *AuthCtx {
-	var authType string
-	if keyFilePath == "" {
-		authType = AuthInteractiveStr
-	} else {
-		authType = inferKeyFileType(keyFileType)
-	}
-	return &AuthCtx{AuthConfig: omnisdk.AuthConfig{Scopes: scopes,
-		Type:        authType,
-		KeyFilePath: keyFilePath,
-		Active:      false},
-	}
-}

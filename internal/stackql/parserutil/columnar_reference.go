@@ -6,6 +6,14 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
+type ParamSourceType int
+
+const (
+	UnknownParam ParamSourceType = iota
+	WhereParam
+	JoinOnParam
+)
+
 // An abstract data type where the
 // underlying datum should in some way
 // represent a column or parameter.
@@ -22,12 +30,12 @@ type ColumnarReference interface {
 	SourceType() ParamSourceType
 }
 
-type StandardColumnarReference struct {
+type standardColumnarReference struct {
 	k          interface{}
 	sourceType ParamSourceType
 }
 
-func (cr StandardColumnarReference) Abbreviate() (string, bool) {
+func (cr standardColumnarReference) Abbreviate() (string, bool) {
 	switch kv := cr.Value().(type) {
 	case *sqlparser.ColName:
 		return kv.Name.GetRawVal(), true
@@ -36,15 +44,15 @@ func (cr StandardColumnarReference) Abbreviate() (string, bool) {
 	}
 }
 
-func (cr StandardColumnarReference) SourceType() ParamSourceType {
+func (cr standardColumnarReference) SourceType() ParamSourceType {
 	return cr.sourceType
 }
 
-func (cr StandardColumnarReference) Value() interface{} {
+func (cr standardColumnarReference) Value() interface{} {
 	return cr.k
 }
 
-func (cr StandardColumnarReference) Alias() string {
+func (cr standardColumnarReference) Alias() string {
 	switch t := cr.k.(type) {
 	case *sqlparser.ColName:
 		return t.Qualifier.GetRawVal()
@@ -55,7 +63,7 @@ func (cr StandardColumnarReference) Alias() string {
 	}
 }
 
-func (cr StandardColumnarReference) Name() string {
+func (cr standardColumnarReference) Name() string {
 	switch t := cr.k.(type) {
 	case *sqlparser.ColName:
 		return t.Name.GetRawVal()
@@ -66,7 +74,7 @@ func (cr StandardColumnarReference) Name() string {
 	}
 }
 
-func (cr StandardColumnarReference) String() string {
+func (cr standardColumnarReference) String() string {
 	switch t := cr.k.(type) {
 	case *sqlparser.ColName:
 		return t.GetRawVal()
@@ -77,30 +85,26 @@ func (cr StandardColumnarReference) String() string {
 	}
 }
 
-func (cr StandardColumnarReference) iColumnarReference() {}
+func (cr standardColumnarReference) iColumnarReference() {}
 
 func NewUnknownTypeColumnarReference(k interface{}) (ColumnarReference, error) {
 	return newColumnarReference(k, UnknownParam)
-}
-
-func NewColumnarReference(k interface{}, sourceType ParamSourceType) (ColumnarReference, error) {
-	return newColumnarReference(k, sourceType)
 }
 
 // Enforces supported underlying data invariant.
 func newColumnarReference(k interface{}, sourceType ParamSourceType) (ColumnarReference, error) {
 	switch k := k.(type) {
 	case *sqlparser.ColName:
-		return StandardColumnarReference{k: k, sourceType: sourceType}, nil
+		return standardColumnarReference{k: k, sourceType: sourceType}, nil
 	case sqlparser.ColIdent:
 		kp := &k
-		return StandardColumnarReference{k: kp, sourceType: sourceType}, nil
+		return standardColumnarReference{k: kp, sourceType: sourceType}, nil
 	default:
 		return nil, fmt.Errorf("cannot accomodate columnar reference for type = '%T'", k)
 	}
 }
 
-func (cr StandardColumnarReference) GetStringKey() string {
+func (cr standardColumnarReference) GetStringKey() string {
 	switch k := cr.k.(type) {
 	case *sqlparser.ColName:
 		return k.GetRawVal()

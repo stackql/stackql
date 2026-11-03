@@ -34,18 +34,6 @@ func newDirectory(db *sql.DB) (principal.Directory, error) {
 	return directory{db}, nil
 }
 
-// InitializeSchema is an explicit administration operation, not part of identity resolution.
-// The statements are shared by SQLite and PostgreSQL; table names never come from caller input.
-func InitializeSchema(ctx context.Context, engine sqlengine.SQLEngine) error {
-	if engine == nil {
-		return errors.New("access directory requires the configured SQL engine")
-	}
-	db, err := engine.GetDB()
-	if err != nil {
-		return err
-	}
-	return initializeSchema(ctx, db)
-}
 func initializeSchema(ctx context.Context, db *sql.DB) error {
 	if db == nil {
 		return errors.New("access directory requires a database")

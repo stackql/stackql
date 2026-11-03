@@ -56,6 +56,7 @@ env CGO_ENABLED=0 PLANCACHEENABLED=false go build \
   -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION:-1} \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildPreReleaseSuffix=${BUILDPRERELEASESUFFIX} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BUILDSHORTCOMMITSHA \
   -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
@@ -316,3 +317,19 @@ workspace used to verify coordinated source changes is outside both repositories
 SQL and alias precedence, SHOW METHODS, EXEC, mutations, token endpoints and pre-request errors.
 It reuses the existing isolated native/Docker and SQLite/Postgres test harness; its new fixtures do
 not change existing provider files or Robot inputs.
+
+## CI prerelease suffix policy
+
+`cicd/python/prerelease_suffix.py <branch> <live-branch>` selects the shared
+`BUILDPRERELEASESUFFIX`: empty for the live branch and all `stable/**` branches,
+`-rc` for non-live `main`, and `-alpha` for other branches. Tag-triggered builds
+use `-beta`, since a tag does not establish its source branch; the script reads
+`GITHUB_REF_TYPE` or accepts an explicit `--ref-type tag`. Set the repository
+variable `LIVE_BRANCH` to change the live branch (default `stable/v0.13`). PR builds
+use the source branch name. The script prints the suffix for the current build step
+and appends it to `GITHUB_ENV` for later steps.
+
+Native build flags, Docker build arguments and published Docker tags use this same
+suffix. Python image tags place it after `-python3.13` and the `-python3` alias.
+All `stable/**` branches can publish Docker tags; only the live branch publishes
+`latest`. Existing publication rules for other branches and release tags remain.
