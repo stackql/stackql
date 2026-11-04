@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# render-platforms.sh - the one renderer for every wrapper/SDK vector.
+# render-platforms.sh - the one renderer for every wrapper/SDK/plugin vector.
 #
 # Fetches the five canonical .mcpb.sha256 files from the published GitHub
 # release, writes platforms.json (bundle names + sha256 pins + proxy baseUrl)
@@ -19,7 +19,15 @@
 #   cargo   cargo/platforms.json                               cargo/Cargo.toml [package] version
 #   go      go/embed/platforms.json                            (module version is the git tag)
 #   dotnet  dotnet/src/StackQL.Mcp/platforms.json              dotnet/Directory.Build.props <Version>
-#   openai-plugin  (none - it launches the npm wrapper)        ../openai-plugin/plugins/stackql: .codex-plugin/plugin.json "version" + bin/stackql-mcp.js pin
+#   openai-plugin  ../openai-plugin/plugins/stackql: plugin payload (below) + plugin.json
+#                  "version"; .codex-plugin/plugin.json is DERIVED from plugin.json
+#   claude-plugin  ../claude-plugin: plugin payload (below) + .claude-plugin/plugin.json "version"
+#
+# The plugin payload is identical for both plugin vectors and is committed
+# (the directories read the plugin from git): server/bin/stackql-mcp.js (the
+# npm launcher, verbatim - it is dependency-free for this reason),
+# server/platforms.json, LICENSE, the icon and skills/stackql-setup/SKILL.md.
+# The validators assert byte-equality against these sources.
 #
 # Usage:
 #   scripts/render-platforms.sh --version 0.10.601            # all vectors
@@ -35,6 +43,7 @@ CARGO_DIR="${CARGO_DIR:-$ROOT_DIR/cargo}"
 GO_DIR="${GO_DIR:-$ROOT_DIR/go}"
 DOTNET_DIR="${DOTNET_DIR:-$ROOT_DIR/dotnet}"
 PLUGIN_DIR="${PLUGIN_DIR:-$ROOT_DIR/../openai-plugin/plugins/stackql}"
+CLAUDE_PLUGIN_DIR="${CLAUDE_PLUGIN_DIR:-$ROOT_DIR/../claude-plugin}"
 # Canonical source for the .sha256 pins - always the GitHub release, the source
 # of truth. Overridable for testing but normally left alone.
 RELEASE_BASE="${RELEASE_BASE:-https://github.com/stackql/stackql/releases/download}"
@@ -45,7 +54,7 @@ DOWNLOAD_BASE="${DOWNLOAD_BASE:-https://releases.stackql.io/stackql}"
 # PR validation only; publishing always uses the release checksums.
 CHECKSUM_DIR="${CHECKSUM_DIR:-}"
 
-ALL_VECTORS="npm pypi cargo go dotnet openai-plugin"
+ALL_VECTORS="npm pypi cargo go dotnet openai-plugin claude-plugin"
 
 VERSION="${VERSION:-}"
 VECTOR="all"
@@ -55,7 +64,7 @@ while [ $# -gt 0 ]; do
     --version=*) VERSION="${1#*=}"; shift ;;
     --vector)    VECTOR="$2"; shift 2 ;;
     --vector=*)  VECTOR="${1#*=}"; shift ;;
-    -h|--help)   sed -n '2,27p' "$0"; exit 0 ;;
+    -h|--help)   sed -n '2,36p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -116,20 +125,27 @@ sed_inplace() {
   sed -e "$expr" "$file" > "$file.tmp" && mv "$file.tmp" "$file"
 }
 
-render_npm() {
-  write_platforms_json "$NPM_DIR/platforms.json"
-  # stamp the package version to match (cygpath: MSYS paths confuse Windows node)
-  local pkg_json="$NPM_DIR/package.json"
-  if command -v cygpath >/dev/null 2>&1; then
-    pkg_json="$(cygpath -m "$pkg_json")"
-  fi
-  PKG_JSON="$pkg_json" NEW_VERSION="$VERSION" node -e "
+# Windows-safe path for node (MSYS paths confuse Windows node).
+node_path() {
+  if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi
+}
+
+# Stamp "version" in a JSON manifest, preserving the rest of the document.
+stamp_json_version() {
+  local file
+  file="$(node_path "$1")"
+  PKG_JSON="$file" NEW_VERSION="$VERSION" node -e "
 const fs = require('fs');
 const p = process.env.PKG_JSON;
 const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
 pkg.version = process.env.NEW_VERSION;
 fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\n');
 "
+}
+
+render_npm() {
+  write_platforms_json "$NPM_DIR/platforms.json"
+  stamp_json_version "$NPM_DIR/package.json"
 }
 
 render_pypi() {
@@ -157,26 +173,60 @@ render_dotnet() {
   sed_inplace "s#<Version>[^<]*</Version>#<Version>$VERSION</Version>#" "$props"
 }
 
+# The shared plugin payload: the npm launcher verbatim in the npm package
+# layout (server/bin/stackql-mcp.js next to server/platforms.json, which the
+# launcher resolves as ../platforms.json), the licence, the icon and the
+# onboarding skill. No package.json, lockfile or node_modules: the launcher
+# needs only Node.js built-ins, and both directory validators hold a plugin
+# for review when it ships a package install.
+render_plugin_payload() {
+  local dir="$1" icon_dest="$2"
+  mkdir -p "$dir/server/bin" "$dir/skills/stackql-setup" "$(dirname "$dir/$icon_dest")"
+  cp -p "$NPM_DIR/bin/stackql-mcp.js" "$dir/server/bin/stackql-mcp.js"
+  write_platforms_json "$dir/server/platforms.json"
+  cp -p "$ROOT_DIR/LICENSE" "$dir/LICENSE"
+  cp -p "$ROOT_DIR/assets/icon.png" "$dir/$icon_dest"
+  cp -p "$ROOT_DIR/skills/stackql-setup/SKILL.md" "$dir/skills/stackql-setup/SKILL.md"
+}
+
 render_openai_plugin() {
-  # No platforms.json: the plugin launches the npm wrapper and inherits its
-  # pins. Stamp the manifest version and the @stackql/mcp-server pin so the
-  # plugin tracks the wrapper release (the plugin validator enforces parity
-  # with npm/package.json).
-  local manifest="$PLUGIN_DIR/.codex-plugin/plugin.json" launcher="$PLUGIN_DIR/bin/stackql-mcp.js"
-  grep -q '"@stackql/mcp-server@[0-9][0-9.]*"' "$launcher" || {
-    echo "error: $launcher has no @stackql/mcp-server pin to stamp" >&2; exit 1; }
-  sed_inplace "s#\"@stackql/mcp-server@[0-9][0-9.]*\"#\"@stackql/mcp-server@$VERSION\"#" "$launcher"
-  if command -v cygpath >/dev/null 2>&1; then
-    manifest="$(cygpath -m "$manifest")"
-  fi
-  PKG_JSON="$manifest" NEW_VERSION="$VERSION" node -e "
+  render_plugin_payload "$PLUGIN_DIR" "assets/icon.png"
+  stamp_json_version "$PLUGIN_DIR/plugin.json"
+  # Derive the Codex compatibility overlay (.codex-plugin/plugin.json) from
+  # the portable manifest so the two cannot drift: root fields carried over,
+  # the Codex-only skills/mcpServers paths, requires_local_executor and
+  # interface hoisted to the top level, and the remaining com.openai settings
+  # (onboardingSkill, review, publication) kept under extensions.
+  mkdir -p "$PLUGIN_DIR/.codex-plugin"
+  SRC="$(node_path "$PLUGIN_DIR/plugin.json")" DST="$(node_path "$PLUGIN_DIR/.codex-plugin/plugin.json")" node -e "
 const fs = require('fs');
-const p = process.env.PKG_JSON;
-const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
-pkg.version = process.env.NEW_VERSION;
-fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\n');
+const portable = JSON.parse(fs.readFileSync(process.env.SRC, 'utf8'));
+const openai = (portable.extensions && portable.extensions['com.openai']) || {};
+const { interface: iface, requires_local_executor, ...rest } = openai;
+const overlay = {
+  name: portable.name,
+  version: portable.version,
+  description: portable.description,
+  author: portable.author,
+  homepage: portable.homepage,
+  repository: portable.repository,
+  license: portable.license,
+  keywords: portable.keywords,
+  skills: './skills/',
+  mcpServers: './.mcp.json',
+};
+if (requires_local_executor !== undefined) overlay.requires_local_executor = requires_local_executor;
+overlay.interface = iface;
+overlay.extensions = { 'com.openai': rest };
+fs.writeFileSync(process.env.DST, JSON.stringify(overlay, null, 2) + '\n');
 "
   echo "stamped $PLUGIN_DIR (version $VERSION)"
+}
+
+render_claude_plugin() {
+  render_plugin_payload "$CLAUDE_PLUGIN_DIR" "icon.png"
+  stamp_json_version "$CLAUDE_PLUGIN_DIR/.claude-plugin/plugin.json"
+  echo "stamped $CLAUDE_PLUGIN_DIR (version $VERSION)"
 }
 
 if [ "$VECTOR" = "all" ]; then

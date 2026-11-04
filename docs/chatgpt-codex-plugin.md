@@ -6,8 +6,9 @@ remain on the user's machine.
 
 Supported clients:
 
-- ChatGPT desktop app
-- Codex CLI
+- ChatGPT desktop app, from the plugin directory (Desktop only badge) or the
+  repository marketplace
+- Codex CLI, from the repository marketplace
 
 ChatGPT web cannot run a local stdio server. Plugins are not available in the
 Codex IDE extension.
@@ -21,7 +22,16 @@ reproduced on desktop builds through 26.924. Codex threads in the desktop app
 and Codex CLI are unaffected. If a Chat session reports that no StackQL tools
 are available, start a Codex thread instead.
 
-## Install
+## Install from the ChatGPT plugin directory
+
+In the ChatGPT desktop app, search the plugin directory for StackQL and
+install it. The listing carries a Desktop only badge: the plugin installs only
+from the desktop app, and its tools are available in threads that run on your
+computer. Node.js 24.22.1 or later must be installed (see the next section).
+After installing, run the plugin's setup; the bundled `stackql-setup` skill
+walks through credentials and a first query.
+
+## Install from the repository marketplace (Codex)
 
 Install Node.js 24.22.1 or later (22.23.4 or 26.12.1 on those release lines; these are the [October 2026 security releases](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases)), then run:
 
@@ -33,9 +43,10 @@ codex plugin add stackql@stackql
 Restart ChatGPT desktop or Codex. In Codex CLI, use `/plugins` to confirm the
 plugin is installed and `/mcp` to confirm that the `stackql` server is active.
 
-The plugin launches a pinned `@stackql/mcp-server` package. On first use, the
-package downloads the matching StackQL binary, verifies the published SHA-256,
-and caches it under `~/.stackql/mcp-server-bin`.
+The plugin ships the StackQL launcher (the same file as the `@stackql/mcp-server`
+npm package; it needs only Node.js). On first use it downloads the pinned
+StackQL binary for your platform, verifies the published SHA-256, and caches
+it under `~/.stackql/mcp-server-bin`.
 
 ## Hello world
 

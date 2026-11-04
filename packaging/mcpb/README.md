@@ -1,14 +1,14 @@
 # MCPB packaging (packaging/mcpb)
 
-Packages the StackQL MCP server into per-platform [MCPB](https://github.com/anthropics/mcpb) bundles (`.mcpb`), publishes them to the matching `stackql/stackql` GitHub release, and pushes the metadata to the Official MCP Registry. Listings on aggregators and the Anthropic Desktop Extensions directory flow from there.
+Packages the StackQL MCP server into per-platform [MCPB](https://github.com/anthropics/mcpb) bundles (`.mcpb`), publishes them to the matching `stackql/stackql` GitHub release, and pushes the metadata to the Official MCP Registry. Listings on aggregators flow from there; the Anthropic and OpenAI directories take the plugin packages under `packaging/claude-plugin` and `packaging/openai-plugin`, which vendor this directory's npm launcher.
 
 This directory was imported (with full history) from the standalone `stackql/stackql-mcpb-packaging` repo. In-repo, the version pin (`release.yaml`) and the cross-repo release token are gone: the packaging workflow at [.github/workflows/mcp-packaging.yml](/.github/workflows/mcp-packaging.yml) validates `packaging/**` PRs against the latest published release, and publishing is a MANUAL `workflow_dispatch` with the target version. Manual by design: the consumed release assets include the Authenticode-signed Windows exe and the Apple-notarised darwin `.pkg`, both signed outside CI, so the flow is push tag -> create release -> attach the signed assets -> dispatch the workflow. Bundle upload is same-repo via the default `GITHUB_TOKEN`. Local `make` targets are unchanged but now require an explicit `VERSION=X.Y.Z`.
 
 This is a scripted post-release step. It does not build or sign the stackql binaries - that happens upstream in the normal stackql build, code-signing, and notarisation process. Here the already-signed release artefacts are pulled, packaged, and shipped.
 
-In addition to the five per-platform bundles, `make combined VERSION=X.Y.Z` builds `stackql-mcp-multiplatform.mcpb` - a single artefact carrying all platform binaries (selected at install via `mcp_config.platform_overrides`, with architecture shims selecting the native Linux and Windows binaries). It exists for single-artefact venues, principally the Anthropic MCP Directory listing (see [docs/anthropic-submission.md](docs/anthropic-submission.md)); per-platform bundles remain the recommended path everywhere else (direct download, npm/PyPI wrappers, OCI, registry). It sources binaries from the already-built per-platform bundles - byte-identical, signatures preserved - and hard-fails unless all five are present.
+In addition to the five per-platform bundles, `make combined VERSION=X.Y.Z` builds `stackql-mcp-multiplatform.mcpb` - a single artefact carrying all platform binaries (selected at install via `mcp_config.platform_overrides`, with architecture shims selecting the native Linux and Windows binaries). It exists for single-artefact venues (it was built for the Anthropic Desktop Extensions listing, which the directory has since deprecated in favour of plugin bundles; one file for every platform remains useful for manual Claude Desktop installs); per-platform bundles remain the recommended path everywhere else (direct download, npm/PyPI wrappers, OCI, registry). It sources binaries from the already-built per-platform bundles - byte-identical, signatures preserved - and hard-fails unless all five are present.
 
-The end-user install story is in [docs/install.md](docs/install.md). The marketplace submission checklist is in [docs/anthropic-submission.md](docs/anthropic-submission.md). The broader list of registries and aggregators is in [listings.md](listings.md).
+The end-user install story is in [docs/install.md](docs/install.md). The Anthropic directory submission checklist (Claude plugin bundle) is in [docs/anthropic-submission.md](docs/anthropic-submission.md). The broader list of registries and aggregators is in [listings.md](listings.md).
 
 ## Table of contents
 
@@ -61,13 +61,15 @@ stackql-mcpb-packaging/
   scripts/render-platforms.sh       # THE renderer: platforms.json + version stamp for every vector
   scripts/render-npm-manifest.sh    # thin wrapper: render-platforms.sh --vector npm
   scripts/render-pypi-manifest.sh   # thin wrapper: render-platforms.sh --vector pypi
-  scripts/publish-mirror.sh         # push go/ to its mirror repo + tag v<version>
+  scripts/publish-mirror.sh         # push go/ or ../claude-plugin to its mirror repo + tag v<version>
+  scripts/validate-claude-plugin.py # Anthropic directory rules + vendoring contract for ../claude-plugin
   scripts/sign.sh                   # envelope-sign dist/*.mcpb + regen .sha256
   scripts/append-signature.py       # frame an externally-produced CMS signature
   scripts/smoke-test.py             # deterministic MCP smoke test (stdlib only)
   scripts/gemini-smoke.py           # optional Gemini Flash agent smoke test
   docs/install.md                   # end-user install guide
-  docs/anthropic-submission.md      # Desktop Extensions submission checklist
+  docs/anthropic-submission.md      # Anthropic directory (Claude plugin bundle) checklist
+  skills/stackql-setup/SKILL.md     # onboarding skill vendored into both plugin packages
   listings.md                       # registers and aggregators worth listing on
   Makefile                          # operator entry point
   bin/                              # downloaded release artefacts (gitignored)
@@ -248,14 +250,15 @@ Several aggregators **auto-ingest** from the Official MCP Registry. After Step 3
 
 The rest are **self-submit** and are tracked in [listings.md](listings.md):
 
-- **Anthropic Desktop Extensions directory** - the high-trust UI signal. See [docs/anthropic-submission.md](docs/anthropic-submission.md) for the full checklist. Submit once; re-submit only on material listing changes (privacy policy, scope, maintainer contact).
+- **Anthropic directory (Claude plugin bundle)** - the high-trust signal in Claude Code and Cowork. See [docs/anthropic-submission.md](docs/anthropic-submission.md); after the first submission the listing tracks the `stackql/stackql-claude-plugin` mirror, pushed per release by `make claude-plugin-mirror`.
+- **OpenAI plugin directory (ChatGPT desktop)** - the ZIP from `make openai-plugin-zip`, uploaded per release; docs/stackql_release_process.md step 11.
 - **mcp.so** - largest aggregator, self-submit on the site.
 - **Smithery.ai** - `smithery mcp publish` with our `.mcpb` bundle.
 - **Glama.ai/mcp** - GitHub auto-discovery; claim the listing for a verified badge.
 - **Cursor / VS Code MCP / Cline** - in-client directories; submission paths in [listings.md](listings.md).
 - **awesome-mcp-servers**, **mpak.dev**, others as listed.
 
-These are one-shot submissions; routine version bumps don't require resubmission as long as you keep the listing pointing at `releases/latest/`.
+The aggregator entries are one-shot; the two vendor directories take a per-release update (docs/stackql_release_process.md steps 11 and 12).
 
 ## Batch commands (the short version)
 
@@ -289,7 +292,7 @@ gh release download v0.10.500 --repo stackql/stackql \
 | `make server-json`                              | all five `dist/*.sha256` files                                 | files on disk                 | Step 3.1 fetches the darwin one from the release page. |
 | `make registry-publish`                         | `mcp-publisher login github` for an account on the stackql org | token in `mcp-publisher` config | Browser-flow OAuth; refresh annually.                  |
 | CI publish (`publish.yml`)                      | `STACKQL_RELEASE_TOKEN` repo secret                            | fine-grained PAT              | `contents:write` on `stackql/stackql`. Default `GITHUB_TOKEN` cannot upload cross-repo. |
-| Anthropic Desktop Extensions submission        | privacy policy, logo, screenshots, contacts                    | filled into web form          | See [docs/anthropic-submission.md](docs/anthropic-submission.md). |
+| Anthropic directory submission (plugin bundle)  | paid claude.ai plan; GitHub account connected on claude.ai with push access to the mirror repo | developer portal              | See [docs/anthropic-submission.md](docs/anthropic-submission.md). |
 
 No secrets are passed via env vars in the build/publish commands themselves - tokens live in the per-tool config of `gh` and `mcp-publisher`. The one exception is `GEMINI_API_KEY` for the optional Gemini soft check.
 
@@ -300,7 +303,7 @@ Layers in place today:
 1. **Embedded platform signatures on the bundled binary.** Windows: Authenticode-signed `stackql.exe` (upstream, EV cert on YubiKey). macOS: Developer ID Application signature + Apple notarisation keyed to the binary's cdhash (upstream, via the notarised `.pkg`). Linux: no platform signing by convention.
 2. **SHA-256 on the bundle envelope**, written next to every `.mcpb` and published alongside the release assets. Pinned in the Official MCP Registry `server.json`.
 3. **Official MCP Registry entry** with verified namespace (`io.github.stackql`). Several aggregators auto-ingest from here.
-4. **Anthropic Desktop Extensions directory listing** - the editorial "vetted by Claude" signal users see in Claude Desktop.
+4. **Anthropic directory listing (Claude plugin bundle)** - Anthropic's validation, security scan and reviewer sign-off on every version of the plugin that vendors this launcher.
 
 Dormant, intentionally:
 
@@ -425,28 +428,33 @@ python3 scripts/smoke-test.py --docker stackql/stackql-mcp:X.Y.Z
 For future tagged releases, set the `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`
 repo secrets and the publish workflow pushes the image automatically.
 
-## Updating the ChatGPT/Codex stdio plugin
+## Updating the local stdio plugins (ChatGPT/Codex, Claude)
 
-The local plugin under `packaging/openai-plugin` is an addendum to this release
-flow. It launches the npm wrapper over stdio and does not change the MCPB,
-Anthropic submission, PyPI, OCI, or MCP Registry artifacts.
-
-`make npm-manifest` (and therefore `make npm-pack`) stamps the plugin's
-`version` and the pinned `@stackql/mcp-server@X.Y.Z` in the launcher; to stamp
-only the plugin run `make openai-plugin-manifest VERSION=X.Y.Z`. The plugin
-validator fails when the pin and `npm/package.json` disagree, so commit the
-plugin files together with the npm manifest. Once `@stackql/mcp-server@X.Y.Z`
-is published, from the repository root run:
+The two plugin packages, `packaging/openai-plugin` (ChatGPT desktop and Codex)
+and `packaging/claude-plugin` (Claude Code and Cowork), vendor this directory's
+npm launcher verbatim plus `server/platforms.json`, LICENSE, the icon and
+`skills/stackql-setup/SKILL.md`. `scripts/render-platforms.sh` copies and
+stamps them (`make openai-plugin-manifest`, `make claude-plugin-manifest`;
+both run by `make npm-manifest`). Unlike the wrappers' gitignored
+`platforms.json`, the plugin copies are committed: both directories read the
+plugin from git. The validators fail when the vendored files or versions
+drift from `npm/`, which is also why the launcher must stay dependency-free.
+Once `@stackql/mcp-server@X.Y.Z` is published, from the repository root:
 
 ```bash
 npm view @stackql/mcp-server@X.Y.Z version
 python3 packaging/openai-plugin/scripts/validate.py
+python3 packaging/mcpb/scripts/validate-claude-plugin.py
 python3 packaging/openai-plugin/scripts/smoke-test.py
+python3 packaging/openai-plugin/scripts/smoke-test.py --launcher packaging/claude-plugin/server/bin/stackql-mcp.js
 ```
 
-The plugin workflow repeats validation and the stdio smoke test on Linux,
-macOS, and Windows. The marketplace entry is version-independent and should
-not change for a routine StackQL release.
+The `stdio-plugins` workflow repeats validation and the stdio smoke test on
+Linux, macOS, Windows x64 and Windows ARM64, re-renders both plugins from the
+published checksums to prove the committed pins, runs `claude plugin validate
+--strict`, and builds the ChatGPT directory ZIP (`make openai-plugin-zip`).
+Directory submission is manual: docs/stackql_release_process.md steps 11
+and 12.
 
 ## Makefile reference
 
