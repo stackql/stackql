@@ -55,7 +55,7 @@ on:
       - '.github/workflows/contributors.yml'
 env:
   # Override this repository variable when the stable trunk changes.
-  STABLE_BRANCH: ${{ vars.STABLE_BRANCH || 'stable/v0.13' }}
+  STABLE_BRANCH: ${{ vars.STABLE_BRANCH || 'main' }}
   GOTESTCMD: "go test -timeout 1200s -v ./..."
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
