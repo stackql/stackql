@@ -579,7 +579,10 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest rolled to 26.04 on 2026-11-04, where this job's nginx
+    # apt-key import fails (gpg: /home/runner/.gnupg does not exist) and the
+    # nginx.org apt repository has no 26.04 (resolute) suite yet.
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         registry:
