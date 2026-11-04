@@ -9,6 +9,9 @@ Suite Teardown    Stop Endpoint Selectors
 Default Selector Matches Query Show And Exec
     Default Selector Matches Query Show And Exec
 
+Document Auth Applies Token URL Variables
+    Document Auth Applies Token URL Variables
+
 Selector And Direct Override Apply To Exec
     Selector And Direct Override Apply To Exec
 

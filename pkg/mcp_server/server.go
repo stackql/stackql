@@ -521,9 +521,15 @@ func registerTools(
 		},
 	))
 
+	runSelectGate := queryGate("run_select_query")
+	runSelectGate.readsOnly = true
 	errs = append(errs, addToolWithGate(
-		server, cfg, auditSink, approvals, descriptions, queryGate("run_select_query"),
-		&mcp.Tool{Name: "run_select_query"},
+		server, cfg, auditSink, approvals, descriptions, runSelectGate,
+		&mcp.Tool{
+			Name: "run_select_query",
+			// SQL-carrying tools never claim read-only; the gate refuses write-class statements.
+			Annotations: &mcp.ToolAnnotations{DestructiveHint: boolPtr(false)},
+		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
 			logger.Debugf("run_select_query: %s", args.SQL)
 			format, formatErr := resolveRenderFormat(cfg, args.Format)

@@ -460,9 +460,9 @@ func TestTools_AnnotationsDerivedFromGate(t *testing.T) {
 			t.Errorf("%s should carry ReadOnlyHint, got %+v", name, a)
 		}
 	}
-	// SQL-carrying tools make no read-only claim; effect depends on the SQL.
-	if a := annotationsFor("run_select_query"); a != nil && a.ReadOnlyHint {
-		t.Errorf("run_select_query must not claim read-only, got %+v", a)
+	// SQL-carrying tools make no read-only claim; run_select_query refuses writes.
+	if a := annotationsFor("run_select_query"); a == nil || a.ReadOnlyHint || a.DestructiveHint == nil || *a.DestructiveHint {
+		t.Errorf("run_select_query must be non-read-only and non-destructive, got %+v", a)
 	}
 	// Mutation/lifecycle tools are explicitly destructive.
 	for _, name := range []string{"run_mutation_query", "run_lifecycle_operation"} {
@@ -477,6 +477,52 @@ func TestTools_AnnotationsDerivedFromGate(t *testing.T) {
 		if a == nil || a.ReadOnlyHint || !a.IdempotentHint || a.DestructiveHint == nil || *a.DestructiveHint {
 			t.Errorf("%s should be non-read-only, idempotent, non-destructive; got %+v", name, a)
 		}
+	}
+}
+
+// TestTools_PublishTitleAndAllHints pins the directory requirement that every
+// tool carries a title and readOnly/destructive/openWorld hints.
+func TestTools_PublishTitleAndAllHints(t *testing.T) {
+	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	tools, err := cs.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools: %v", err)
+	}
+	openWorld := map[string]bool{
+		"list_registry": true, "pull_provider": true, "run_select_query": true,
+		"run_mutation_query": true, "run_lifecycle_operation": true,
+	}
+	// Every published tool carries a title and all three directory-required hints.
+	for _, tool := range tools.Tools {
+		a := tool.Annotations
+		if tool.Title == "" || a == nil || a.DestructiveHint == nil || a.OpenWorldHint == nil {
+			t.Errorf("%s must carry a title and explicit hints, got title=%q %+v", tool.Name, tool.Title, a)
+			continue
+		}
+		if *a.OpenWorldHint != openWorld[tool.Name] {
+			t.Errorf("%s openWorldHint = %v, want %v", tool.Name, *a.OpenWorldHint, openWorld[tool.Name])
+		}
+	}
+}
+
+func TestTool_RunSelectQuery_RefusesWritesInFullAccess(t *testing.T) {
+	be := &testBackend{}
+	cs := connectInProcess(t, fullAccessConfig(), be)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	for _, sql := range []string{"delete from x", "insert into x values (1)", "select 1; EXEC x.y.z"} {
+		res, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "run_select_query", Arguments: map[string]any{"sql": sql}})
+		if err != nil {
+			t.Fatalf("CallTool: %v", err)
+		}
+		if !res.IsError {
+			t.Errorf("%q: expected refusal", sql)
+		}
+	}
+	if be.lastQueryJSON.SQL != "" {
+		t.Errorf("backend should not have been called: %q", be.lastQueryJSON.SQL)
 	}
 }
 

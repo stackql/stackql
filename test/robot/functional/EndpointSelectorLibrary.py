@@ -57,6 +57,7 @@ class EndpointSelectorLibrary(ProviderSessionLibrary):
         version = self.root / "registry/src/widgets/v00.00.00000"
         provider = json.loads((version / "provider.yaml").read_text())
         provider["config"]["auth"] = {"type": "oauth2", "grant_type": "client_credentials", "token_url": "http://{account_host}/token",
+                                        "client_id_env_var": "STACKQL_SELECTOR_CLIENT_ID", "client_secret_env_var": "STACKQL_SELECTOR_CLIENT_SECRET",
                                         "variables": {"account_host": self.selector_variable}}
         doc = json.loads((version / "services/things.yaml").read_text())
         doc["servers"] = [{"url": "http://{account_host}", "variables": {"account_host": self.selector_variable}}]
@@ -73,13 +74,16 @@ class EndpointSelectorLibrary(ProviderSessionLibrary):
         self.selector_auth = {"widgets": {"type": "client_credentials", "client_id": "dummy-client", "client_secret": "dummy-secret"}}
 
     def execute_selector_sql(self, sql, cloud="", direct="", auth=None, expected=()):
-        env = dict(self.env, STACKQL_SELECTOR_CLOUD=cloud, STACKQL_SELECTOR_DIRECT=direct)
+        client = {"STACKQL_SELECTOR_CLIENT_ID": "dummy-client", "STACKQL_SELECTOR_CLIENT_SECRET": "dummy-secret"}
+        env = dict(self.env, STACKQL_SELECTOR_CLOUD=cloud, STACKQL_SELECTOR_DIRECT=direct, **client)
         prefix = list(self.prefix)
         if self.execution_platform == "docker":
             position = prefix.index("--entrypoint")
-            prefix[position:position] = ["-e", "STACKQL_SELECTOR_CLOUD=" + cloud, "-e", "STACKQL_SELECTOR_DIRECT=" + direct]
+            prefix[position:position] = ["-e", "STACKQL_SELECTOR_CLOUD=" + cloud, "-e", "STACKQL_SELECTOR_DIRECT=" + direct,
+                                         *[arg for name, value in client.items() for arg in ("-e", name + "=" + value)]]
+        auth_flags = [] if auth is False else ["--auth", json.dumps(auth or self.selector_auth)]
         before = len(self.selector_calls)
-        result = subprocess.run(prefix + ["exec", sql] + self.flags + ["--auth", json.dumps(auth or self.selector_auth)],
+        result = subprocess.run(prefix + ["exec", sql] + self.flags + auth_flags,
                                 text=True, capture_output=True, env=env, timeout=30)
         assert result.returncode == 0 and all(line == "The operation was despatched successfully" for line in result.stderr.splitlines()), (result.stdout, result.stderr)
         assert self.selector_calls[before:] == list(expected), (self.selector_calls[before:], result.stdout, result.stderr)
@@ -92,6 +96,11 @@ class EndpointSelectorLibrary(ProviderSessionLibrary):
         assert methods and all(row["RequiredParams"] == "" for row in methods), result.stdout
         self.execute_selector_sql("SELECT id FROM widgets.things.widgets;", expected=[("aws", "POST", "/token"), ("aws", "GET", "/widgets")])
         self.execute_selector_sql("EXEC widgets.things.widgets.fetch;", expected=[("aws", "POST", "/token"), ("aws", "GET", "/widgets")])
+
+    def document_auth_applies_token_url_variables(self):
+        self.execute_selector_sql("SELECT id FROM widgets.things.widgets;", auth=False, expected=[("aws", "POST", "/token"), ("aws", "GET", "/widgets")])
+        self.execute_selector_sql("SELECT id FROM widgets.things.widgets;", "azure", auth=False,
+                                  expected=[("azure", "POST", "/token"), ("azure", "GET", "/widgets")])
 
     def selector_and_direct_override_apply_to_exec(self):
         for cloud, direct in [(" azure ", ""), ("invalid", " " + self.selector_hosts["azure"] + "/// ")]:

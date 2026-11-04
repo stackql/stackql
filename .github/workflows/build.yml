@@ -55,7 +55,7 @@ on:
       - '.github/workflows/contributors.yml'
 env:
   # Override this repository variable when the stable trunk changes.
-  LIVE_BRANCH: ${{ vars.LIVE_BRANCH || 'stable/v0.13' }}
+  LIVE_BRANCH: ${{ vars.LIVE_BRANCH || 'main' }}
   BUILD_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
   DOCKER_PYTHON_VERSION: '3.13'
   GOTESTCMD: "go test -timeout 1200s -v ./..."

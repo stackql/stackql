@@ -36,6 +36,8 @@ type toolGate struct {
 	// audit event.  For hierarchy tools this carries the hierarchy fields;
 	// for query tools it carries SQL + row_limit.
 	extractArgs func(any) map[string]any
+	// readsOnly refuses mutation, delete and lifecycle statements in every mode.
+	readsOnly bool
 }
 
 // extractSQLFromQueryInput returns args.SQL for the dto.QueryJSONInput shape.
@@ -115,8 +117,50 @@ func boolPtr(v bool) *bool { return &v }
 // explicit Annotations value on the tool always wins.
 func deriveToolAnnotations(gate toolGate) *mcp.ToolAnnotations {
 	if gate.defaultClass == policy.QueryClassSelect && gate.extractSQL == nil {
-		return &mcp.ToolAnnotations{ReadOnlyHint: true}
+		return &mcp.ToolAnnotations{ReadOnlyHint: true, DestructiveHint: boolPtr(false)}
 	}
+	return nil
+}
+
+func isWriteClass(class policy.QueryClass) bool {
+	return class == policy.QueryClassMutationCreate || class == policy.QueryClassMutationDelete ||
+		class == policy.QueryClassLifecycle
+}
+
+type refusedPolicy struct {
+	policy.Policy
+	reason string
+}
+
+func (p refusedPolicy) Decision() policy.Decision { return policy.DecisionRefuseImmediate }
+func (p refusedPolicy) Reason() string            { return p.reason }
+
+// gatePolicy applies the mode policy, then refuses write-class SQL on read-only tools in every mode.
+func gatePolicy(gate toolGate, mode, sql string) policy.Policy {
+	p := policy.NewPolicy(mode, sql, gate.defaultClass)
+	if gate.readsOnly && isWriteClass(p.Class()) && p.Decision() != policy.DecisionRefuseImmediate {
+		return refusedPolicy{Policy: p, reason: p.Class().String() +
+			" statements run through run_mutation_query or run_lifecycle_operation"}
+	}
+	return p
+}
+
+// applyToolMetadata attaches the description, title and the full hint set mastered under content/tools.
+func applyToolMetadata(t *mcp.Tool, descriptions toolDescriptions, gate toolGate) error {
+	description, hasDescription := descriptions.describe(t.Name)
+	if !hasDescription {
+		return fmt.Errorf("tool %q has no description under %s", t.Name, embeddedToolsDir)
+	}
+	t.Description = description
+	t.Title = descriptions.title(t.Name)
+	if t.Annotations == nil {
+		t.Annotations = deriveToolAnnotations(gate)
+	}
+	// Directory validators require every hint as an explicit boolean.
+	if t.Annotations == nil || t.Annotations.DestructiveHint == nil {
+		return fmt.Errorf("tool %q must declare destructiveHint", t.Name)
+	}
+	t.Annotations.OpenWorldHint = boolPtr(descriptions.openWorld(t.Name))
 	return nil
 }
 
@@ -137,13 +181,8 @@ func addToolWithGate[In, Out any](
 	if !cfg.IsToolEnabled(t.Name) {
 		return nil
 	}
-	description, hasDescription := descriptions.describe(t.Name)
-	if !hasDescription {
-		return fmt.Errorf("tool %q has no description under %s", t.Name, embeddedToolsDir)
-	}
-	t.Description = description
-	if t.Annotations == nil {
-		t.Annotations = deriveToolAnnotations(gate)
+	if err := applyToolMetadata(t, descriptions, gate); err != nil {
+		return err
 	}
 	wrapped := func(ctx context.Context, req *mcp.CallToolRequest, args In) (*mcp.CallToolResult, Out, error) {
 		var zero Out
@@ -155,7 +194,7 @@ func addToolWithGate[In, Out any](
 		if gate.extractSQL != nil {
 			sql = gate.extractSQL(args)
 		}
-		p := policy.NewPolicy(mode, sql, gate.defaultClass)
+		p := gatePolicy(gate, mode, sql)
 		auditDecision := audit.DecisionAllow
 
 		switch p.Decision() {
