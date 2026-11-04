@@ -35,7 +35,7 @@ serde_json = "1"
 sha2 = "0.10"
 tokio = { version = "1", features = ["process", "io-util", "rt"] }
 ureq = { version = "3", optional = true }
-zip = { version = "8", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
 
 [build-dependencies]
 serde_json = "1"
