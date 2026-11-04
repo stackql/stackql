@@ -209,28 +209,42 @@ type resourceFrontmatter struct {
 // toolFrontmatter is the YAML wire form of a tool description file header;
 // the body is the description prose.
 type toolFrontmatter struct {
-	Name string `yaml:"name"`
+	Name      string `yaml:"name"`
+	Title     string `yaml:"title"`
+	OpenWorld *bool  `yaml:"open_world"`
 }
 
 // toolDescriptions carries the tool descriptions mastered under
 // content/tools, one file per tool, keyed by tool name.
 type toolDescriptions interface {
 	describe(name string) (string, bool)
+	title(name string) string
+	openWorld(name string) bool
 	names() []string
 }
 
-type standardToolDescriptions struct {
-	byName map[string]string
+type toolDoc struct {
+	description string
+	title       string
+	openWorld   bool
 }
 
-func newToolDescriptions(byName map[string]string) toolDescriptions {
+type standardToolDescriptions struct {
+	byName map[string]toolDoc
+}
+
+func newToolDescriptions(byName map[string]toolDoc) toolDescriptions {
 	return &standardToolDescriptions{byName: byName}
 }
 
 func (d *standardToolDescriptions) describe(name string) (string, bool) {
 	rv, ok := d.byName[name]
-	return rv, ok
+	return rv.description, ok
 }
+
+func (d *standardToolDescriptions) title(name string) string { return d.byName[name].title }
+
+func (d *standardToolDescriptions) openWorld(name string) bool { return d.byName[name].openWorld }
 
 func (d *standardToolDescriptions) names() []string {
 	rv := make([]string, 0, len(d.byName))
@@ -356,13 +370,14 @@ func loadResourcesFrom(fsys fs.FS, dir string) ([]embeddedResource, error) {
 }
 
 // loadToolDescriptionsFrom parses every tool description file; the
-// frontmatter name must match the file stem and the body must be non-empty.
+// frontmatter name must match the file stem, title and open_world are
+// required and the body must be non-empty.
 func loadToolDescriptionsFrom(fsys fs.FS, dir string) (toolDescriptions, error) {
 	names, err := listMarkdownFiles(fsys, dir)
 	if err != nil {
 		return nil, err
 	}
-	byName := make(map[string]string, len(names))
+	byName := make(map[string]toolDoc, len(names))
 	for _, name := range names {
 		raw, readErr := fs.ReadFile(fsys, dir+"/"+name)
 		if readErr != nil {
@@ -379,11 +394,14 @@ func loadToolDescriptionsFrom(fsys fs.FS, dir string) (toolDescriptions, error) 
 		if fm.Name != strings.TrimSuffix(name, ".md") {
 			return nil, fmt.Errorf("tool file %s: name %q must match the file stem", name, fm.Name)
 		}
+		if fm.Title == "" || fm.OpenWorld == nil {
+			return nil, fmt.Errorf("tool file %s: title and open_world are required", name)
+		}
 		description := collapseProse(body)
 		if description == "" {
 			return nil, fmt.Errorf("tool file %s: description body is empty", name)
 		}
-		byName[fm.Name] = description
+		byName[fm.Name] = toolDoc{description: description, title: fm.Title, openWorld: *fm.OpenWorld}
 	}
 	return newToolDescriptions(byName), nil
 }

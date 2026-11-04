@@ -806,7 +806,10 @@ func transformOpenapiStackqlAuthToLocal(auth *omnisdk.ProviderAuth) *dto.AuthCtx
 	if auth == nil {
 		return nil
 	}
-	return &dto.AuthCtx{AuthConfig: auth.AuthConfig, Successor: transformOpenapiStackqlAuthToLocal(auth.Successor)}
+	cfg := auth.AuthConfig
+	// A runtime token URL bypasses the document's token URL variables; omnisdk overlays the document's own.
+	cfg.TokenURL = ""
+	return &dto.AuthCtx{AuthConfig: cfg, Successor: transformOpenapiStackqlAuthToLocal(auth.Successor)}
 }
 
 func (hc *standardHandlerContext) GetExecutionContext() context.Context {

@@ -115,7 +115,7 @@ func TestToolDescriptions_MarkdownProseIsPublished(t *testing.T) {
 
 func TestLoadToolDescriptionsFrom_ValidatesAndCollapsesProse(t *testing.T) {
 	fsys := fstest.MapFS{
-		"tools/alpha.md": {Data: []byte("---\nname: alpha\n---\nFirst line\nsecond line.\n\nSecond paragraph.\n")},
+		"tools/alpha.md": {Data: []byte("---\nname: alpha\ntitle: Alpha\nopen_world: false\n---\nFirst line\nsecond line.\n\nSecond paragraph.\n")},
 	}
 	descriptions, err := loadToolDescriptionsFrom(fsys, "tools")
 	if err != nil {
@@ -125,14 +125,23 @@ func TestLoadToolDescriptionsFrom_ValidatesAndCollapsesProse(t *testing.T) {
 	if !ok || got != "First line second line.\n\nSecond paragraph." {
 		t.Errorf("unexpected description %q (ok=%v)", got, ok)
 	}
+	if descriptions.title("alpha") != "Alpha" {
+		t.Errorf("unexpected title %q", descriptions.title("alpha"))
+	}
+	missing := fstest.MapFS{
+		"tools/alpha.md": {Data: []byte("---\nname: alpha\ntitle: Alpha\n---\nbody\n")},
+	}
+	if _, err := loadToolDescriptionsFrom(missing, "tools"); err == nil || !strings.Contains(err.Error(), "open_world") {
+		t.Errorf("expected missing open_world error, got %v", err)
+	}
 	mismatch := fstest.MapFS{
-		"tools/alpha.md": {Data: []byte("---\nname: beta\n---\nbody\n")},
+		"tools/alpha.md": {Data: []byte("---\nname: beta\ntitle: Beta\nopen_world: false\n---\nbody\n")},
 	}
 	if _, err := loadToolDescriptionsFrom(mismatch, "tools"); err == nil || !strings.Contains(err.Error(), "file stem") {
 		t.Errorf("expected file stem mismatch error, got %v", err)
 	}
 	empty := fstest.MapFS{
-		"tools/alpha.md": {Data: []byte("---\nname: alpha\n---\n   \n")},
+		"tools/alpha.md": {Data: []byte("---\nname: alpha\ntitle: Alpha\nopen_world: false\n---\n   \n")},
 	}
 	if _, err := loadToolDescriptionsFrom(empty, "tools"); err == nil || !strings.Contains(err.Error(), "empty") {
 		t.Errorf("expected empty body error, got %v", err)
