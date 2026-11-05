@@ -9,7 +9,7 @@
     "url": "https://stackql.io"
   },
   "homepage": "https://stackql.io",
-  "documentation": "https://stackql.io/docs",
+  "documentation": "https://stackql.io/getting-started",
   "license": "MIT",
   "server": {
     "type": "binary",

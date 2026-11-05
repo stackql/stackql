@@ -175,7 +175,7 @@ git commit -m "vX.Y.Z"
 git push origin main
 ```
 
-`publish-prep.ps1` downloads both MSIs from `https://releases.stackql.io/stackql/X.Y.Z/`, checks their `ProductVersion` (nothing is installed) and rewrites `chocolatey\tools\chocolateyinstall.ps1` (URLs and SHA256 checksums) and `chocolatey\stackql.nuspec` (version, release notes). The push to `main` runs that repo's `chocolatey-publish` workflow, which packs, test-installs and pushes the package to chocolatey.org with the `CHOCOLATEY_API_KEY` secret; a push without a version bump is a no-op. Verify with `choco info stackql` or that repo's `chocolatey-smoke` workflow.
+`publish-prep.ps1` downloads both MSIs from `https://releases.stackql.io/stackql/X.Y.Z/`, checks their `ProductVersion` (nothing is installed) and rewrites `chocolatey\tools\chocolateyinstall.ps1` (URLs and SHA256 checksums) and `chocolatey\stackql.nuspec` (version, release notes). The push to `main` runs that repo's `chocolatey-publish` workflow, which packs, test-installs and pushes the package to chocolatey.org with the `CHOCOLATEY_API_KEY` secret; a push without a version bump is a no-op. Verify with `choco info stackql` or that repo's `chocolatey-smoke` workflow. `stackql` is a trusted Chocolatey package: moderation emails "Submitted for Moderation Review" on the push, the automated checks typically finish within 1 to 2 hours, and the version is listed without human moderation once they pass.
 
 ### 8. Publish the PyPI wrapper (manual last mile)
 
@@ -270,7 +270,7 @@ What the render changes, all of which is committed:
 
 Both plugins read the plugin from git, so their `platforms.json` is committed, unlike the wrappers'. The validators fail when any vendored file or version disagrees with `packaging/mcpb/npm`. Open a PR (`chore/pins-X.Y.Z`); the `stdio-plugins` workflow repeats validation and the smoke tests on four platforms, re-renders both plugins from the published checksums and fails if the committed payload differs, runs `claude plugin validate --strict`, and builds the ChatGPT directory ZIP as a run artifact. Merge it. The Codex repo marketplace (`codex plugin marketplace add stackql/stackql --sparse .agents/plugins --sparse packaging/openai-plugin`) serves the new pin as soon as the merge lands; nothing else to do for it.
 
-Branch from `main`, not from a fix branch used during the release. Because the PR changes `packaging/**`, the full `Build` matrix and the `mcp-packaging` validation run as well as `stdio-plugins` (about an hour); that is expected.
+Branch from `main`, not from a fix branch used during the release. `packaging/**` is in the Build workflow's `paths-ignore`, so the PR runs `stdio-plugins`, the `mcp-packaging` validation, Lint and CodeQL only (about 25 minutes); the full Build matrix does not run.
 
 This step does not change the MCPB, PyPI, OCI or MCP Registry artefacts.
 
@@ -280,7 +280,8 @@ Manual, from the merged pin PR. The listing is a Skills-only upload of the plugi
 
 One-time setup (tracked in stackql#893 and stackql.io#305):
 
-- The submitting organization is allowlisted for local MCP submissions by the OpenAI representative (send the platform organization ID). Business verification completed; submitters other than owners hold **Apps Management Write**.
+- The submitting organization is allowlisted for local MCP submissions by the OpenAI representative: send them the platform organization ID (platform.openai.com > Settings > Organization > General, the `org-` value; sent 2026-11-05). Business verification is completed by an owner on the same page (Verify organization); submitters other than owners hold **Apps Management Write** (Settings > Organization > Members).
+- Upload the first ZIP as soon as the allowlist lands, before the recording exists, to read the validator: `mcp_configuration_excluded` on the MCPs tab means the organization is not allowlisted yet (wait, do not strip the MCP configuration); the demo recording warning is expected until it is set.
 - `https://stackql.io/terms` and `https://stackql.io/support` are live alongside `/privacy` and `/docs`; the manifest points at all four.
 - `review.demo_recording_url` in `packaging/openai-plugin/plugins/stackql/plugin.json` points at a reviewer-accessible recording of the eight test cases (`validate.py` warns while it is unset); the five positive and three negative cases are already in the manifest.
 - If the portal asks for domain verification, host the exact token at `https://stackql.io/.well-known/openai-apps-challenge` as plain text.
@@ -305,7 +306,7 @@ cd packaging/mcpb
 make claude-plugin-mirror VERSION=X.Y.Z   # validates, then pushes packaging/claude-plugin to the mirror's main and tags vX.Y.Z
 ```
 
-The push is idempotent and immutable: an existing `vX.Y.Z` tag with a different tree fails (cut the next release instead). The directory picks up the commit through the GitHub push webhook (or its scheduled check), validates and scans it, and the version goes live per the plugin's auto-publish setting; if a reviewer publishes each version, select **Publish** on the plugin's page at https://claude.ai/directory/manage. A version held for a reviewer is not a rejection; the expected hold (credentials read from the user's machine) is documented in the submission checklist.
+The push is idempotent and immutable: an existing `vX.Y.Z` tag with a different tree fails (cut the next release instead). The directory picks up the commit through the GitHub push webhook (or its scheduled check), validates and scans it, and the version goes live per the plugin's auto-publish setting; if a reviewer publishes each version, select **Publish** on the plugin's page at https://claude.ai/directory/manage. A version held for a reviewer is not a rejection; the expected holds (the node launcher the validator cannot follow, and credentials read from the user's machine) and the warnings that are by design are documented in the submission checklist, together with the answers given on 2026-11-05 (listed on Claude Code and Cowork only, data handling, compliance contact). Auto-publish is on and the push webhook is configured on the mirror, so after the first version is published by us or the reviewer, each `make claude-plugin-mirror` push is scanned within minutes and goes live on its own (the directory also polls `main` about every 6 hours).
 
 ### 13. Assurance
 

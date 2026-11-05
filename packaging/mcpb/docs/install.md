@@ -83,7 +83,7 @@ The server picks up provider credentials through stackql's normal `--auth` flag.
 }
 ```
 
-See https://stackql.io/docs for the full provider auth catalogue.
+See https://stackql.io/providers for the full provider auth catalogue.
 
 ## 4. npx (any stdio MCP client, no install)
 

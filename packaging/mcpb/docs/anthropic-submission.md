@@ -64,6 +64,7 @@ All enforced by `python packaging/mcpb/scripts/validate-claude-plugin.py` and
 A hold is not a rejection; an Anthropic reviewer reads the version before it
 goes live, and the same hold can recur on later versions:
 
+- "Scripts the validator couldn't follow": the node launcher, see above.
 - "Uses a credential from the user's machine": the server reads
   `~/.stackql/.env` and sends provider credentials to the provider APIs. The
   README states it; the reviewer confirms the behaviour matches.
@@ -74,40 +75,73 @@ goes live, and the same hold can recur on later versions:
   from the StackQL registry, queries go to the providers the user queries,
   nothing goes to StackQL Studios.
 
+## What the validator reports, and what to leave alone
+
+The 2026-11-05 validation of `stackql/stackql-claude-plugin` at `main` passed its
+seven checks with five warnings and one policy hold. None of them is a defect:
+
+- Policy hold, "Scripts the validator couldn't follow" on
+  `server/bin/stackql-mcp.js`: inherent to a node launcher. The validator follows
+  only plain shell scripts, and a file a shell wrapper runs in turn is not
+  followed either, so a wrapper would not remove it. The portal says leaving
+  the script and waiting for the review is fine. Expect it on every version.
+- "Unrecognized field in plugin.json" for `documentationUrl`, `supportUrl`,
+  `privacyPolicyUrl` and `termsOfServiceUrl`, and "Field from another tool's
+  manifest" for `icon`: these are the directory listing fields. Claude Code
+  ignores them at load time and the directory reads them for the listing; the
+  portal marks each "No action needed". Removing them would drop the links
+  and the icon from the listing.
+- "Local MCP server: not on claude.ai" and "Images and fonts passed without a
+  code check" (`icon.png`): informational.
+- "Local MCP servers accepted only from Verified organizations": not refused
+  today, but the directory intends to accept servers that run on the user's
+  computer only from Verified organizations, and StackQL Studios is not one.
+  The docs describe no application ("Anthropic decides during review");
+  directory@anthropic.com was asked on 2026-11-05 how to become one.
+- `classification` is filled in by the directory after submission. The portal
+  mentions a `classification` block in `plugin.json` but the manifest reference
+  does not document one, so it is left to the automatic fill.
+
 ## Outside the repository
 
 One-time:
 
-- [ ] The June 2026 Desktop Extension listing: look for it at
-      claude.ai/directory/manage and at platform.claude.com/plugins/submissions.
-      If it shows **Withdraw**, withdraw it. If it is there without that
-      button, or not there at all, email directory@anthropic.com asking what
-      happens to the MCPB listing and to attach the plugin submission to the
-      same organization. Until it is withdrawn or moved the portal can refuse
-      **Submit for review** with "Already submitted by another organization".
-- [ ] Submit from the organization that should own the listing long term, on
-      a paid plan (Pro, Max, Ultra: your own account; Team or Enterprise: an
-      Owner, or a member granted the **Directory** permission), with the
-      GitHub account connected on claude.ai that has push access to
-      `stackql/stackql-claude-plugin`. The repository must be public before
-      the listing goes live.
-- [ ] stackql.io `/terms` and `/support` live (stackql/stackql.io#305); the
-      manifest already points at them. `/privacy` and `/docs` are live.
-- [ ] Create the mirror and push the first render:
-      `gh repo create stackql/stackql-claude-plugin --public --description "StackQL plugin for Claude (mirror of packaging/claude-plugin in stackql/stackql)"`
-      then `make claude-plugin-mirror VERSION=X.Y.Z` from `packaging/mcpb`.
-- [ ] Portal: **Submit new** > **Plugin bundle**; repository
+- [x] The June 2026 Desktop Extension listing was made through the submission
+      Google Form and appears in neither claude.ai/directory/manage nor
+      platform.claude.com/plugins/submissions, so there is nothing to withdraw.
+      Email directory@anthropic.com only if **Submit for review** is refused
+      with "Already submitted by another organization" (it was not).
+- [x] Submitted 2026-11-05 from the StackQL Studios owner's claude.ai account
+      (paid plan, GitHub account with push access to the mirror connected).
+      Keep submitting from that account; the listing belongs to it.
+- [x] stackql.io `/terms`, `/support`, `/privacy` live (2026-11-05). `/docs`
+      redirects to the homepage, so the manifest links point at `/getting-started`.
+- [x] Mirror created 2026-11-05 (`gh repo create stackql/stackql-claude-plugin --public`)
+      and `make claude-plugin-mirror VERSION=1.0.888` pushed the root plugin to
+      `main` with tag `v1.0.888`.
+- [x] Portal submission 2026-11-05: **Submit new** > **Plugin bundle**, repository
       `stackql/stackql-claude-plugin`, plugin path empty, branch `main`;
-      **Validate**, fix anything marked Blocking, re-validate; check the
-      listing details (read from `plugin.json` and the README); data handling
-      answers (the plugin stores no personal data; data goes to the cloud
-      providers the user queries and to GitHub releases for the binary
-      download; no retention; not intended for people under 18); the four
-      compliance acknowledgements and a monitored contact email; choose
-      **GitHub push webhook** and set it up (needs repository admin); submit.
-- [ ] After the first version passes, select **Publish**; a reviewer
-      publishes it. Then turn on **Publish new versions automatically** on the
-      plugin's Settings tab if offered.
+      **Validate** (see the section above). Listing details are read from
+      `plugin.json` and the README; **Listed on** was set to Claude Code and
+      Cowork only, because the local server does not run in the Claude apps and
+      the setup skill alone would mislead there. Data handling answers: personal
+      data **Reads only** (queries return whatever the user's own tenancy holds,
+      such as IAM or directory users; nothing is stored beyond the local session),
+      skills send data elsewhere **No** (the binary and provider downloads are the
+      server's and are declared in the README), retention **Not retained**
+      (StackQL Studios runs no service that receives data from Claude), under 18
+      **No**. Compliance: four acknowledgements, contact javen@stackql.io.
+      **Auto-publish passing versions** on. New versions: **GitHub push webhook**.
+- [x] Webhook configured 2026-11-05 on the mirror (Settings > Webhooks: the
+      payload URL and secret the portal issued after submission, content type
+      `application/json`, SSL verification on, push event only; the ping
+      delivery returned 200). It is a repository webhook, not an Actions
+      secret. The directory also polls `main` about every 6 hours.
+- [ ] Reviewer decision on the launcher hold: shows on the plugin's page at
+      claude.ai/directory/manage. The first version is published by us or the
+      reviewer; later versions go live automatically (auto-publish is on).
+- [ ] Verified organization: reply from directory@anthropic.com (asked
+      2026-11-05) and whatever it requires, before local servers are gated on it.
 
 Per release: docs/stackql_release_process.md step 12. In short, after the
 pin PR for `X.Y.Z` merges, `make claude-plugin-mirror VERSION=X.Y.Z`; the

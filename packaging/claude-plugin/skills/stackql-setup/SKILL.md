@@ -57,7 +57,7 @@ AWS_SECRET_ACCESS_KEY=...
 To find the variable names another provider expects, call
 `reload_credentials` after pulling the provider: the report lists every
 installed provider with the variables it looks for. The provider pages at
-https://stackql.io/docs document every option.
+https://stackql.io/providers document every option.
 
 After the user edits the file, call `reload_credentials` (optionally with the
 provider name). It re-sources the file and reports, per provider, a status of

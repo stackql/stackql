@@ -69,7 +69,7 @@
     "io.modelcontextprotocol.registry/publisher-provided": {
       "tool": "stackql-mcpb-packaging",
       "homepage": "https://stackql.io",
-      "documentation": "https://stackql.io/docs"
+      "documentation": "https://stackql.io/getting-started"
     }
   }
 }

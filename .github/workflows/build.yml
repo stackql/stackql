@@ -22,6 +22,8 @@ on:
       - 'CLAUDE.md'
       - 'glama.json'
       - 'get-app/**'
+      - 'cicd/python/attach_build_artifacts.py'
+      - 'cicd/python/test_attach_build_artifacts.py'
       - 'test-get-app.ps1'
       - 'test-get-app.sh'
       - 'packaging/**'
@@ -47,6 +49,8 @@ on:
       - 'CLAUDE.md'
       - 'glama.json'
       - 'get-app/**'
+      - 'cicd/python/attach_build_artifacts.py'
+      - 'cicd/python/test_attach_build_artifacts.py'
       - 'test-get-app.ps1'
       - 'test-get-app.sh'
       - 'packaging/**'
@@ -2251,6 +2255,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # One manifest push at a time: the two variants in parallel have hit
+      # Docker Hub 429s on the manifest reads (2026-11-05, twice).
+      max-parallel: 1
       matrix:
         variant: [standard, python]
     needs:

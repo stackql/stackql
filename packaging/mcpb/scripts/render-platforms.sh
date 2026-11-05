@@ -143,9 +143,25 @@ fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\n');
 "
 }
 
+# package-lock.json carries the version twice (top level and packages[""]);
+# keep both equal to package.json so the lockfile never lags a release.
+stamp_lockfile_version() {
+  local file
+  file="$(node_path "$1")"
+  PKG_JSON="$file" NEW_VERSION="$VERSION" node -e "
+const fs = require('fs');
+const p = process.env.PKG_JSON;
+const lock = JSON.parse(fs.readFileSync(p, 'utf8'));
+lock.version = process.env.NEW_VERSION;
+if (lock.packages && lock.packages['']) lock.packages[''].version = process.env.NEW_VERSION;
+fs.writeFileSync(p, JSON.stringify(lock, null, 2) + '\n');
+"
+}
+
 render_npm() {
   write_platforms_json "$NPM_DIR/platforms.json"
   stamp_json_version "$NPM_DIR/package.json"
+  stamp_lockfile_version "$NPM_DIR/package-lock.json"
 }
 
 render_pypi() {

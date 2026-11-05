@@ -24,11 +24,15 @@ import tempfile
 import threading
 import time
 import zipfile
+from collections import deque
 from pathlib import Path
 
 GITHUB_AUTH = json.dumps({"github": {"type": "null_auth"}})
 INIT_TIMEOUT_S = 30
 CALL_TIMEOUT_S = 90
+# Last lines the launcher wrote to stderr, printed when it dies before answering
+# (the dotnet launcher once exited with an unhandled exception and no trace).
+STDERR_TAIL: deque[str] = deque(maxlen=40)
 
 
 def log(msg: str) -> None:
@@ -37,6 +41,10 @@ def log(msg: str) -> None:
 
 def fail(msg: str) -> "Never":  # type: ignore[name-defined]
     print(f"[smoke] FAIL: {msg}", flush=True)
+    if STDERR_TAIL:
+        print("[smoke] launcher stderr (last lines):", flush=True)
+        for line in STDERR_TAIL:
+            print(f"[smoke]   {line}", flush=True)
     sys.exit(1)
 
 
@@ -108,6 +116,8 @@ class JsonRpcClient:
         self._responses: dict[int, dict] = {}
         self._reader = threading.Thread(target=self._read_loop, daemon=True)
         self._reader.start()
+        self._err_reader = threading.Thread(target=self._stderr_loop, daemon=True)
+        self._err_reader.start()
 
     def _read_loop(self) -> None:
         assert self.proc.stdout is not None
@@ -122,6 +132,11 @@ class JsonRpcClient:
             if isinstance(msg, dict) and "id" in msg:
                 with self._lock:
                     self._responses[msg["id"]] = msg
+
+    def _stderr_loop(self) -> None:
+        assert self.proc.stderr is not None
+        for raw in self.proc.stderr:
+            STDERR_TAIL.append(raw.decode("utf-8", errors="replace").rstrip())
 
     def send(self, method: str, params: dict | None = None, *, id_: int | None = None) -> None:
         msg: dict = {"jsonrpc": "2.0", "method": method}
@@ -141,6 +156,7 @@ class JsonRpcClient:
                 if id_ in self._responses:
                     return self._responses.pop(id_)
             if self.proc.poll() is not None:
+                self._err_reader.join(timeout=1.0)
                 fail(f"server exited (rc={self.proc.returncode}) before responding to id={id_}")
             time.sleep(0.05)
         fail(f"timed out waiting for response id={id_} after {timeout}s")
