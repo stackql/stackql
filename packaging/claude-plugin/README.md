@@ -57,7 +57,7 @@ apply its own permission rules on top.
 
 ## Links
 
-- Documentation: https://stackql.io/docs
+- Documentation: https://stackql.io/getting-started
 - Source: https://github.com/stackql/stackql
 - Privacy policy: https://stackql.io/privacy
 - Support: https://stackql.io/support

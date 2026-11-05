@@ -63,6 +63,6 @@ override (later flags win).
 
 ## Links
 
-- Docs: https://stackql.io/docs
+- Docs: https://stackql.io/getting-started
 - MCP Registry: `io.github.stackql/stackql-mcp`
 - Source: https://github.com/stackql/stackql

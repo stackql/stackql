@@ -8,7 +8,7 @@
     "email": "info@stackql.io",
     "url": "https://stackql.io"
   },
-  "homepage": "https://stackql.io/docs",
+  "homepage": "https://stackql.io/getting-started",
   "repository": "https://github.com/stackql/stackql",
   "license": "MIT",
   "keywords": [

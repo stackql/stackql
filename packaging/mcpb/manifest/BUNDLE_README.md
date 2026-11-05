@@ -32,7 +32,7 @@ mode:
 
 Credentials are read locally (from environment variables or files you nominate)
 and used only to sign requests to the relevant provider's API. They are never
-transmitted anywhere else. See https://stackql.io/docs for the full provider
+transmitted anywhere else. See https://stackql.io/getting-started for the full provider
 auth catalogue.
 
 ## Data and configuration root
@@ -68,7 +68,7 @@ handled.
 
 ## Links
 
-- Documentation: https://stackql.io/docs
+- Documentation: https://stackql.io/getting-started
 - Source: https://github.com/stackql/stackql
 - Official MCP Registry: `io.github.stackql/stackql-mcp`
 - License: MIT (see LICENSE in this bundle)
