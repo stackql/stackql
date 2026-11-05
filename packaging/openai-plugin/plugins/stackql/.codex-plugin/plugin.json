@@ -1,6 +1,6 @@
 {
   "name": "stackql",
-  "version": "0.12.824",
+  "version": "1.0.888",
   "description": "Query, provision and deprovision cloud and SaaS resources with SQL through a local StackQL MCP stdio server. Provider credentials stay on the user's machine.",
   "author": {
     "name": "StackQL Studios",

@@ -36,10 +36,12 @@ Exit status: 0 all checks pass, 1 at least one check failed, 2 usage or
 version-resolution error.
 """
 import argparse
+import http.client
 import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -93,15 +95,22 @@ def _headers(url):
 
 def fetch(url, method="GET"):
     """Return (status, body_bytes). HTTP errors are returned, not raised;
-    transport errors surface as status 0 with the error text as body."""
+    transport errors (including a response cut off mid-body, which
+    http.client raises as IncompleteRead, not OSError) surface as status 0
+    with the error text as body, after one retry."""
     req = urllib.request.Request(url, headers=_headers(url), method=method)
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            return resp.status, (b"" if method == "HEAD" else resp.read())
-    except urllib.error.HTTPError as e:
-        return e.code, e.read() if method != "HEAD" else b""
-    except (urllib.error.URLError, OSError) as e:
-        return 0, str(e).encode()
+    error = b""
+    for attempt in range(2):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                return resp.status, (b"" if method == "HEAD" else resp.read())
+        except urllib.error.HTTPError as e:
+            return e.code, e.read() if method != "HEAD" else b""
+        except (urllib.error.URLError, OSError, http.client.HTTPException) as e:
+            error = str(e).encode()
+            if attempt == 0:
+                time.sleep(2)
+    return 0, error
 
 
 def fetch_json(url):

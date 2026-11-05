@@ -1,11 +1,11 @@
 {
-  "version": "0.12.824",
-  "baseUrl": "https://releases.stackql.io/stackql/0.12.824",
+  "version": "1.0.888",
+  "baseUrl": "https://releases.stackql.io/stackql/1.0.888",
   "platforms": {
-    "linux-x64": { "bundle": "stackql-mcp-linux-x64.mcpb", "sha256": "f842da3c2e1912acfdf99b04a8c88eae04842818504e1758678c1e7d77b33d37" },
-    "linux-arm64": { "bundle": "stackql-mcp-linux-arm64.mcpb", "sha256": "65c7f98f88f505ab3c5408e47aff8c0337f3b55b0e41f9d97d75ef575320fe06" },
-    "windows-x64": { "bundle": "stackql-mcp-windows-x64.mcpb", "sha256": "7e09762b6c465705683907d4064d4c20f3c8fb7f340d14d9b9fe944dfa0f96d8" },
-    "windows-arm64": { "bundle": "stackql-mcp-windows-arm64.mcpb", "sha256": "5554af19da54d5e41cddbdd069e5c6486abbb45bceb6e2fc60028698a72fab50" },
-    "darwin-universal": { "bundle": "stackql-mcp-darwin-universal.mcpb", "sha256": "1e864f28b13f2c25be68128853f7804245e95bea7d0b7bd925e203c1ea0925cf" }
+    "linux-x64": { "bundle": "stackql-mcp-linux-x64.mcpb", "sha256": "466159686797ee15955defbb66c0fe5fb140b95959e3699d392696566b8600a7" },
+    "linux-arm64": { "bundle": "stackql-mcp-linux-arm64.mcpb", "sha256": "2ed6ffba00930507aaa4d71e7d916d54760aa53680c84c078398494bcf20ff19" },
+    "windows-x64": { "bundle": "stackql-mcp-windows-x64.mcpb", "sha256": "867c587e85f30b391505a31ac37996f57aec929cf4d5f3a751361a7ee46c1b7e" },
+    "windows-arm64": { "bundle": "stackql-mcp-windows-arm64.mcpb", "sha256": "72dcd52e9318e5b0422f0b67ee0f98a942e95c01d1945988be93842cd49bb953" },
+    "darwin-universal": { "bundle": "stackql-mcp-darwin-universal.mcpb", "sha256": "b20856732903f95e33c86e2627c00f1c2d5fde7ae1781259fb8deade4b0eafae" }
   }
 }
