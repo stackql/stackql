@@ -98,7 +98,11 @@ def sha256_file(path: str) -> str:
 
 
 def gh(*args: str) -> str:
-    completed = subprocess.run(['gh', *args], capture_output=True, text=True)
+    # gh writes UTF-8 whatever the console code page. Decoding with the Windows
+    # default (cp1252) crashes the reader thread on any byte cp1252 cannot map,
+    # which leaves stdout as None.
+    completed = subprocess.run(['gh', *args], capture_output=True, text=True,
+                               encoding='utf-8', errors='replace')
     if completed.returncode != 0:
         detail = completed.stderr.strip() or completed.stdout.strip()
         raise ReleaseError(f"gh {' '.join(args)} failed: {detail}")
@@ -141,7 +145,9 @@ def get_run(repo: str, run_id: int) -> dict:
 
 
 def tag_commit(repo: str, tag: str) -> str:
-    return gh_json('api', f'repos/{repo}/commits/{tag}')['sha']
+    # Only the sha is needed; unfiltered, the commit endpoint also returns the
+    # whole diff of the tagged commit.
+    return gh('api', f'repos/{repo}/commits/{tag}', '--jq', '.sha').strip()
 
 
 def run_artifacts(repo: str, run_id: int) -> Dict[str, dict]:
