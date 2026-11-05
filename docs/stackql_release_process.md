@@ -14,6 +14,7 @@ Throughout, `X.Y.Z` is the release version without the leading `v` (for example 
 | crates.io, NuGet, Go mirror | SDK wrappers | `mcp-packaging` dispatch | 6 |
 | npm `@stackql/mcp-server` | launcher package | `mcp-packaging` dispatch (trusted publishing) | 6 |
 | releases.stackql.io | download proxy for the release assets | manual tag push | 7 |
+| Chocolatey `stackql` | package pinned to the signed MSIs via the proxy | `publish-prep.ps1` + push in `stackql-windows-installer` | 7a |
 | PyPI `stackql-mcp-server` | launcher package | manual (API token) | 8 |
 | Official MCP Registry | `server.json` | `mcp-registry-publish` dispatch | 9 |
 | Version pins in git | npm, PyPI, both plugin packages | `make npm-manifest` + `make pypi-manifest`, PR | 10 |
@@ -24,6 +25,14 @@ Throughout, `X.Y.Z` is the release version without the leading `v` (for example 
 | Assurance | `make check-published` | manual, read-only | 13 |
 
 Other listings (aggregators, IDE directories, awesome lists) ingest from the Official MCP Registry or are one-shot submissions tracked in `packaging/mcpb/listings.md`; nothing per release.
+
+### Pre-flight
+
+Before step 1, confirm:
+
+- `X.Y` comes from `cicd/version.txt` (`MajorVersion`, `MinorVersion`) and `Z` is the run number of the `Build` workflow run on `main` for the commit being released. The run must be green (rerun a flaky job first; every later step pins that run) and its `Linux Build` job must log an empty `BUILDPRERELEASESUFFIX`; `main` is the live branch unless the `LIVE_BRANCH` repository variable says otherwise, and a suffixed build would release as `X.Y.Z-rc`. The run's artifacts must not have expired.
+- `gh auth status` succeeds, the trusted publisher configuration for `@stackql/mcp-server` exists on npmjs.com (step 8a), and the Windows signing token and the MacInCloud session are available for steps 4 and 5.
+- Release notes are drafted from `git log vPREV..<commit> --oneline` and the merged PR descriptions; step 1 attaches them.
 
 ### 1. Push a tag and create a release
 
@@ -36,7 +45,13 @@ git tag v0.12.778
 git push origin v0.12.778
 ```
 
-Create a release from the tag (set to latest).
+Create a release from the tag (set to latest):
+
+```bash
+gh release create v0.12.778 --verify-tag --latest --title "v0.12.778" --notes-file release-notes.md
+```
+
+Pushing a `v*` tag does not start a build; `build.yml` only reacts to `build*` tags, so nothing is rebuilt by this step.
 
 ### 2. Attach the Linux build artifacts to the release
 
@@ -121,6 +136,8 @@ Required repository secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `CARGO_REG
 
 The version stamps the workflow renders (`package.json`, `pyproject.toml`, `Cargo.toml`, `Directory.Build.props`) live only on the runners and are discarded; step 10 commits the ones that matter.
 
+If a job fails, read its log before anything else. The Windows ARM64 launcher smoke tests have failed transiently (the dotnet launcher exited before answering the first request) and passed on a rerun. **Re-run failed jobs** is safe at any point: successful jobs are not repeated, and every publish target skips a version that already exists (npm, crates.io, NuGet with `--skip-duplicate`, the Go mirror tag). The four publish jobs run only after every sdk check passes, so one failed check holds back all of them until the rerun.
+
 Manual fallback:
 
 ```bash
@@ -138,7 +155,27 @@ Manual. Push a tag to [releases.stackql.io](https://github.com/stackql/releases.
 git tag v0.12.778 && git push origin v0.12.778
 ```
 
-The npm, PyPI, SDK and plugin launchers download the `.mcpb` bundles through `https://releases.stackql.io/stackql/X.Y.Z/`, so nothing downstream of here works until this tag is live.
+The npm, PyPI, SDK and plugin launchers download the `.mcpb` bundles through `https://releases.stackql.io/stackql/X.Y.Z/`. Explicit versions are proxied as soon as the assets are on the GitHub release; the tag push runs that repo's `promote-latest` workflow, which checks that the GitHub release exists and then moves the Cloudflare KV `latest` pointer, which the installers and `make check-published` rely on. Verify:
+
+```bash
+curl -s https://releases.stackql.io/stackql/latest/stackql-mcp-windows-arm64.mcpb.sha256
+curl -s https://releases.stackql.io/stackql/X.Y.Z/stackql-mcp-windows-arm64.mcpb.sha256
+```
+
+Both must print the same digest.
+
+#### 7a. Chocolatey package (`choco install stackql`)
+
+Semi-automatic, after step 7, from the [stackql/stackql-windows-installer](https://github.com/stackql/stackql-windows-installer) repo (its README steps 3 and 4). From that repo's root:
+
+```powershell
+.\publish-prep.ps1 X.Y.Z
+git add chocolatey
+git commit -m "vX.Y.Z"
+git push origin main
+```
+
+`publish-prep.ps1` downloads both MSIs from `https://releases.stackql.io/stackql/X.Y.Z/`, checks their `ProductVersion` (nothing is installed) and rewrites `chocolatey\tools\chocolateyinstall.ps1` (URLs and SHA256 checksums) and `chocolatey\stackql.nuspec` (version, release notes). The push to `main` runs that repo's `chocolatey-publish` workflow, which packs, test-installs and pushes the package to chocolatey.org with the `CHOCOLATEY_API_KEY` secret; a push without a version bump is a no-op. Verify with `choco info stackql` or that repo's `chocolatey-smoke` workflow.
 
 ### 8. Publish the PyPI wrapper (manual last mile)
 
@@ -146,13 +183,15 @@ The npm wrapper is published by `mcp-packaging` (see 8a); only the PyPI wrapper 
 
 #### 8a. npm (`@stackql/mcp-server`) - published by `mcp-packaging`
 
-The `npm-publish` job publishes `@stackql/mcp-server@X.Y.Z` with npm trusted publishing (GitHub Actions OIDC) after the sdk slices pass; no `npm login`, OTP or token is involved, and npm attaches a provenance attestation. The trusted publisher configuration on npmjs.com (owner `stackql`, repo `stackql`, workflow `mcp-packaging.yml`, `npm publish` allowed) is permanent once validated by its first publish.
+The `npm-publish` job publishes `@stackql/mcp-server@X.Y.Z` with npm trusted publishing (GitHub Actions OIDC) after the sdk slices pass; no `npm login`, OTP or token is involved, and npm attaches a provenance attestation. The credential is the trusted publisher configuration on npmjs.com, validated by the `1.0.888` publish on 2026-11-05 and permanent from then on. If it is ever deleted or has to be recreated: on npmjs.com open the package's Settings, Trusted Publisher, GitHub Actions, with organization `stackql`, repository `stackql`, workflow filename `mcp-packaging.yml`, environment blank, `Allow npm publish` ticked (the job runs `npm publish` directly, not `npm stage publish`) and `Allow npm dist-tag` left unticked. Create it immediately before the dispatch: npm discards a new configuration that has not completed a successful publish within 2 days, and its fields cannot be edited afterwards. A missing or lapsed configuration fails the job with `npm error 404 Not Found - PUT https://registry.npmjs.org/@stackql%2fmcp-server` right after the dry run succeeds; recreate the configuration and rerun the failed job (the target skips the publish when the version is already on npm).
 
 Verify:
 
 ```bash
 npm view @stackql/mcp-server@X.Y.Z version dist.attestations.url
 ```
+
+The job publishes at the end of the run and the local npm cache can hold the previous packument for a few minutes, so wait for the run to complete and add `--prefer-online` if the version is reported missing.
 
 Manual fallback (publish rights on the `@stackql` scope; prompts for an OTP):
 
@@ -175,6 +214,8 @@ make pypi-build VERSION=X.Y.Z
 python -m twine check pypi/dist/*
 python -m twine upload pypi/dist/*
 ```
+
+`make pypi-build` stamps `pypi/pyproject.toml` with `X.Y.Z` in the working tree. Leave that change in place and commit it on the pin branch in step 10.
 
 ### 9. Official MCP Registry (`io.github.stackql/stackql-mcp`) - dispatch last
 
@@ -229,6 +270,8 @@ What the render changes, all of which is committed:
 
 Both plugins read the plugin from git, so their `platforms.json` is committed, unlike the wrappers'. The validators fail when any vendored file or version disagrees with `packaging/mcpb/npm`. Open a PR (`chore/pins-X.Y.Z`); the `stdio-plugins` workflow repeats validation and the smoke tests on four platforms, re-renders both plugins from the published checksums and fails if the committed payload differs, runs `claude plugin validate --strict`, and builds the ChatGPT directory ZIP as a run artifact. Merge it. The Codex repo marketplace (`codex plugin marketplace add stackql/stackql --sparse .agents/plugins --sparse packaging/openai-plugin`) serves the new pin as soon as the merge lands; nothing else to do for it.
 
+Branch from `main`, not from a fix branch used during the release. Because the PR changes `packaging/**`, the full `Build` matrix and the `mcp-packaging` validation run as well as `stdio-plugins` (about an hour); that is expected.
+
 This step does not change the MCPB, PyPI, OCI or MCP Registry artefacts.
 
 ### 11. ChatGPT plugin directory (OpenAI)
@@ -274,7 +317,7 @@ Manual, read-only. To check publication across all MCP distribution targets, inc
 make check-published VERSION=0.12.778
 ```
 
-Use the version being released; omit `VERSION` to check the latest release. The GitHub MCP Registry row can trail the registry publish by up to two hours. The two vendor directories are not probed: confirm them in their portals (platform.openai.com/plugins, claude.ai/directory/manage).
+Use the version being released; omit `VERSION` to check the latest release. The GitHub MCP Registry row can trail the registry publish by up to two hours. The two vendor directories and Chocolatey are not probed: confirm the directories in their portals (platform.openai.com/plugins, claude.ai/directory/manage) and the package with `choco info stackql`.
 
 ### Credentials and access, by step
 
@@ -285,6 +328,8 @@ Use the version being released; omit `VERSION` to check the latest release. The 
 | 5 | Apple Developer ID chain, `stackql-mac-installer` | MacInCloud |
 | 6 | repo secrets `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `CARGO_REGISTRY_TOKEN`, `SDK_MIRROR_TOKEN`; OIDC for npm and NuGet | GitHub Actions |
 | 7 | push rights on `stackql/releases.stackql.io` | local |
+| 7a | push rights on `stackql/stackql-windows-installer`; `CHOCOLATEY_API_KEY` secret in that repo | local, GitHub Actions |
+| 8a | trusted publisher configuration for `@stackql/mcp-server` (package owner) | npmjs.com |
 | 8b | PyPI API token (`__token__`) | `packaging/mcpb/.env`, gitignored |
 | 9 | OIDC (workflow) or `mcp-publisher login github` with a `read:org` PAT | GitHub Actions or local |
 | 10 | push rights on `stackql/stackql` | local |
