@@ -1,84 +1,125 @@
-# Anthropic Desktop Extensions submission checklist
+# Anthropic directory submission (Claude plugin bundle)
 
-This is the editorial review path that puts StackQL in Claude Desktop's "Browse extensions" UI. It is **not** a cryptographic signature - it is Anthropic vetting the listing, and it is the highest-trust user-visible signal we can earn for the bundle.
+This is the checklist for listing StackQL in Anthropic's directory
+(claude.ai/directory), the catalogue people browse from claude.ai, Cowork and
+Claude Code. It replaces the Desktop Extensions checklist that used to live
+here: desktop extension (`.mcpb`) listings are deprecated and the directory no
+longer accepts MCPB submissions. A local stdio server can only be listed inside
+a **plugin bundle**, which is what `packaging/claude-plugin` is.
 
-Submission forms (found June 2026, buried in the Anthropic partner hub; the old "Interest Form: MCP Directory" is deprecated and redirects here):
+Sources (read 2026-11-05): claude.com/docs/directory/publish,
+claude.com/docs/plugins/submit, claude.com/docs/plugins/pre-submission-checklist,
+claude.com/docs/plugins/platform-support, claude.com/docs/connectors/building/submission.
 
-- **Local servers (.mcpb - this is us): https://forms.gle/d8hAM5GJvxehnG4M6**
-- Remote servers (hosted MCP, not applicable): https://forms.gle/fDhN3FQmnLpoY5zm6
+## What we are submitting, in Anthropic's terms
 
-These URLs have changed at least twice - if the local-servers form 404s or shows a deprecation notice, follow its redirect and update this doc.
+- **Plugin bundle**, not MCP connector. The portal's MCP connector kind takes
+  one remote HTTPS server by URL; "a local server can't be submitted on its
+  own; include it in a plugin instead".
+- The plugin is a GitHub repository folder holding `.claude-plugin/plugin.json`,
+  `README.md` (shown as the listing description), `LICENSE`, the onboarding
+  skill under `skills/`, and the local MCP server declared inline as
+  `node ${CLAUDE_PLUGIN_ROOT}/server/bin/stackql-mcp.js`.
+- Where the server runs: Claude Code, and Cowork sessions that run on the
+  user's computer. claude.ai chat and the desktop app's chat ignore local
+  servers; the skill still loads there. Claude Desktop chat keeps using the
+  manually installed `.mcpb` (still supported: double-click, drag and drop, or
+  Settings > Extensions > Advanced settings > Install Extension).
+- Which repository: the directory reads the plugin from GitHub and tracks a
+  branch or tag, and it holds every version of a plugin that lives in a
+  subfolder of its repository for a reviewer (the launcher is a non-shell file
+  the validator cannot follow from a subfolder). So the source of truth stays
+  in `packaging/claude-plugin` here, and `make claude-plugin-mirror
+  VERSION=X.Y.Z` pushes the rendered plugin to the root of
+  `stackql/stackql-claude-plugin`, the repository the listing points at.
 
-## Hard requirements - get these ready before opening the form
+## Hard requirements (validation blocks the submission)
 
-A missing or incomplete privacy policy is the most common single-shot rejection reason. Have all of the following ready before you start.
+All enforced by `python packaging/mcpb/scripts/validate-claude-plugin.py` and
+`claude plugin validate ./packaging/claude-plugin --strict`, both run by the
+`stdio-plugins` workflow:
 
-- [ ] **Published `.mcpb` bundles** attached to the matching `stackql/stackql` GitHub release (`make publish` from the workstation and the Mac), with `.sha256` files alongside.
-- [ ] **Published entry in the Official MCP Registry** at `io.github.stackql/stackql-mcp` (`make registry-publish`). Not strictly mandatory for Anthropic, but it's the canonical hub and several other directories auto-ingest from it - have it done first.
-- [ ] **Public documentation URL** - a page at `https://stackql.io/docs` (or a subpath) that describes the MCP server, its tools, and how to install. Must be live by review date.
-- [ ] **Complete privacy policy URL** - "we don't collect anything" is fine if it's accurate, but the document must explicitly cover: what data the server reads (cloud provider responses), what it sends home (nothing, by default), telemetry posture, and contact for privacy questions. Half-written placeholder pages are auto-rejected.
-- [ ] **Logo** - SVG preferred, square aspect, transparent background. The StackQL Studios mark works. Anthropic re-uses this in the Browse extensions tile.
-- [ ] **Favicon** - 32x32 or 64x64 PNG/ICO. Often the same as the logo.
-- [ ] **Screenshots** - any time the extension shows interactive output to the user. Our case is interesting: we don't have a custom UI, but query results render in Claude's chat. Two or three screenshots of real queries (cloud inventory, resource enumeration, no-auth GitHub) are persuasive even if not strictly required.
-- [ ] **Maintainer contact** - email and GitHub handle that Anthropic can reach for review questions.
-- [ ] **Security contact** - the same or a dedicated `security@stackql.io`-style address. Anthropic asks for a vulnerability-disclosure channel.
-- [ ] **Categories / tags** - choose from Anthropic's taxonomy at submission time. Pick: infrastructure, cloud, database, devops, infrastructure-as-code, observability.
-- [ ] **One-line description** and **longer description**. Reuse the strings already in `manifest/manifest.template.json` and `registry/server.template.json` so all surfaces stay aligned.
+- `.claude-plugin/plugin.json` with `name` (`stackql`), `displayName`,
+  `version` (equals the npm wrapper's), `description`, `author`, `license`,
+  and the listing fields `icon`, `documentationUrl`, `supportUrl`,
+  `privacyPolicyUrl`, `termsOfServiceUrl` (all `https://`).
+- `README.md` of at least 40 words outside code blocks, stating everything
+  the plugin runs, fetches and sends (the security scan compares it with the
+  source). `LICENSE` in the plugin folder.
+- Local server started as `node ${CLAUDE_PLUGIN_ROOT}/<file>` with plain
+  arguments: no shell, no inline program, no `npm run`, no package launcher
+  (`npx`, `uvx`), no `.mcpb` bundle reference.
+- No `package.json` beside a lockfile at the plugin root, no `node_modules`,
+  no `.npmrc`: the launcher is dependency-free for this reason.
+- No top-level `bin/` directory (it stops claude.ai and Cowork from installing
+  the plugin); the launcher lives under `server/bin/`.
+- Every non-image file under 256 KiB, at most 512 files, only text files,
+  images and fonts, no symlinks, no `.DS_Store`.
+- Skill front matter with `name` and a single-string `description`.
+- Repository under 50 MiB archived and 256 MiB unpacked, under 10,000 files,
+  cross-platform file names, no `export-ignore` or `filter` git attributes.
 
-## What Anthropic will check during review
+## Reviewer holds to expect
 
-Roughly, in order of how often each catches submissions:
+A hold is not a rejection; an Anthropic reviewer reads the version before it
+goes live, and the same hold can recur on later versions:
 
-1. Privacy policy is complete (not a placeholder).
-2. Install actually works on a fresh Claude Desktop - they install the `.mcpb` and verify `tools/list` returns sensible tools with non-trivial descriptions.
-3. The server does what the description says - they will run a representative query. For us, "pull a provider, list services" is the obvious thing, which our smoke test exercises.
-4. No unexpected network egress. Our server only talks to the public stackql provider registry and whichever cloud APIs the user explicitly queries. Document this.
-5. Logo / favicon / screenshots are present and not lorem-ipsum.
+- "Uses a credential from the user's machine": the server reads
+  `~/.stackql/.env` and sends provider credentials to the provider APIs. The
+  README states it; the reviewer confirms the behaviour matches.
+- A first submission that fails the security scan is rejected outright, so
+  the README's "What the plugin runs, fetches and sends" section must stay
+  accurate: the launcher downloads and executes the pinned `stackql` binary
+  from `releases.stackql.io` (SHA-256 verified), provider definitions come
+  from the StackQL registry, queries go to the providers the user queries,
+  nothing goes to StackQL Studios.
 
-## The bundle URL: one artefact, stated literally
+## Outside the repository
 
-The directory serves a SINGLE bundle per listing - there is no per-platform artefact
-selection. The listing must point at the multiplatform bundle, stated literally with no
-substitution slot:
+One-time:
 
-```
-https://github.com/stackql/stackql/releases/latest/download/stackql-mcp-multiplatform.mcpb
-```
+- [ ] The June 2026 Desktop Extension listing: look for it at
+      claude.ai/directory/manage and at platform.claude.com/plugins/submissions.
+      If it shows **Withdraw**, withdraw it. If it is there without that
+      button, or not there at all, email directory@anthropic.com asking what
+      happens to the MCPB listing and to attach the plugin submission to the
+      same organization. Until it is withdrawn or moved the portal can refuse
+      **Submit for review** with "Already submitted by another organization".
+- [ ] Submit from the organization that should own the listing long term, on
+      a paid plan (Pro, Max, Ultra: your own account; Team or Enterprise: an
+      Owner, or a member granted the **Directory** permission), with the
+      GitHub account connected on claude.ai that has push access to
+      `stackql/stackql-claude-plugin`. The repository must be public before
+      the listing goes live.
+- [ ] stackql.io `/terms` and `/support` live (stackql/stackql.io#305); the
+      manifest already points at them. `/privacy` and `/docs` are live.
+- [ ] Create the mirror and push the first render:
+      `gh repo create stackql/stackql-claude-plugin --public --description "StackQL plugin for Claude (mirror of packaging/claude-plugin in stackql/stackql)"`
+      then `make claude-plugin-mirror VERSION=X.Y.Z` from `packaging/mcpb`.
+- [ ] Portal: **Submit new** > **Plugin bundle**; repository
+      `stackql/stackql-claude-plugin`, plugin path empty, branch `main`;
+      **Validate**, fix anything marked Blocking, re-validate; check the
+      listing details (read from `plugin.json` and the README); data handling
+      answers (the plugin stores no personal data; data goes to the cloud
+      providers the user queries and to GitHub releases for the binary
+      download; no retention; not intended for people under 18); the four
+      compliance acknowledgements and a monitored contact email; choose
+      **GitHub push webhook** and set it up (needs repository admin); submit.
+- [ ] After the first version passes, select **Publish**; a reviewer
+      publishes it. Then turn on **Publish new versions automatically** on the
+      plugin's Settings tab if offered.
 
-Never submit a per-platform bundle URL. This doc previously gave the pattern
-`.../stackql-mcp-<arch>.mcpb` with `<arch>` unresolved; the form takes one literal URL,
-the placeholder was collapsed to `darwin-universal`, and Windows/Linux users installing
-from the directory received a Mach-O binary that died before the MCP handshake
-(confirmed by hash against the v0.10.500 release asset). The multiplatform bundle
-carries all platform binaries and selects via `mcp_config.platform_overrides`.
-
-## After acceptance: the listing does NOT track releases
-
-Two prior claims in this doc were wrong and are retracted:
-
-- Referencing the latest-release URL does NOT mean new releases are automatically
-  reflected in the directory. The listing does not track the release; it was stale at
-  0.10.500 for roughly a fortnight while 0.10.542 was current. Updating the listing
-  requires an email on the existing Anthropic review thread, per release.
-- There is no self-service path: no public repository where directory listings are
-  defined, and no PR path. Email to the review thread is the only channel. Do not go
-  looking for one.
-
-## Release checklist addition
-
-As part of every release's `make publish` / packaging dispatch:
-
-- [ ] Build and attach `stackql-mcp-multiplatform.mcpb` (+ `.sha256`) alongside the
-      four per-platform bundles (`make combined`).
-- [ ] Email the Anthropic review thread with the new version and the literal
-      multiplatform bundle URL, asking for the listing to be refreshed from that asset.
+Per release: docs/stackql_release_process.md step 12. In short, after the
+pin PR for `X.Y.Z` merges, `make claude-plugin-mirror VERSION=X.Y.Z`; the
+directory scans the new commit, and it goes live per the auto-publish setting
+(or after **Publish** in the portal).
 
 ## Re-submission triggers
 
-You only need to re-open the review form for material changes to the **listing**;
-routine version bumps go via the review-thread email above:
-
-- Changing tool names, behaviour, or descriptions in a way that contradicts the public docs.
-- Changing the privacy policy.
-- Changing the maintainer / security contact.
-- Pivoting from no-auth to requiring credentials by default.
+The directory re-scans every commit on the tracked branch, so nothing needs
+re-submitting for version bumps. Material changes to the listing (privacy
+policy, scope of the tools, publisher identity) still deserve a note to
+directory@anthropic.com with the version that carries them. A metadata-only
+fix (README, listing URLs) ships with the next release: the plugin version is
+the StackQL version, and the directory serves a new version only when the
+version field changes.

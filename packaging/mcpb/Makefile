@@ -26,6 +26,18 @@
 #                                   MCP Registry using mcp-publisher. Requires
 #                                   mcp-publisher installed and 'mcp-publisher
 #                                   login github'.
+#   make openai-plugin-manifest VERSION=X.Y.Z
+#                                   stamp + vendor the ChatGPT/Codex plugin payload
+#                                   (runs as part of npm-manifest)
+#   make claude-plugin-manifest VERSION=X.Y.Z
+#                                   stamp + vendor the Claude plugin payload (runs as
+#                                   part of npm-manifest)
+#   make openai-plugin-zip VERSION=X.Y.Z
+#                                   build the ChatGPT plugin directory ZIP under
+#                                   ../openai-plugin/dist/ (layout and size checked)
+#   make claude-plugin-mirror VERSION=X.Y.Z
+#                                   push ../claude-plugin to the stackql-claude-plugin
+#                                   mirror repo, the one the Anthropic directory tracks
 #   make check-published [VERSION=X.Y.Z]
 #                                   read-only assurance: probe every distribution
 #                                   target (release assets, releases.stackql.io,
@@ -63,7 +75,7 @@ OCI_STAGE := .oci-stage
         server-json registry-publish check-published clean clean-bin \
         linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal \
         oci-stage oci oci-push npm-manifest npm-pack npm-publish pypi-manifest pypi-build \
-        openai-plugin-manifest \
+        openai-plugin-manifest claude-plugin-manifest openai-plugin-zip claude-plugin-mirror \
         list help
 
 all: download package
@@ -92,6 +104,10 @@ help:
 	@echo "  make check-published [VERSION=X.Y.Z]"
 	@echo "                                  read-only: PASS/FAIL every distribution"
 	@echo "                                  target for VERSION (default: latest release)"
+	@echo "  make openai-plugin-manifest VERSION=X.Y.Z   stamp + vendor the ChatGPT/Codex plugin"
+	@echo "  make claude-plugin-manifest VERSION=X.Y.Z   stamp + vendor the Claude plugin"
+	@echo "  make openai-plugin-zip VERSION=X.Y.Z        build the ChatGPT directory ZIP"
+	@echo "  make claude-plugin-mirror VERSION=X.Y.Z     push the Claude plugin to its mirror repo"
 	@echo "  make list                       show artefacts present in $(BIN_DIR)/"
 	@echo "  make clean                      wipe $(DIST_DIR)/"
 	@echo "  make clean-bin                  wipe downloaded artefacts from $(BIN_DIR)/"
@@ -240,7 +256,7 @@ oci-push: oci-stage
 # Render npm/platforms.json (bundle URLs + sha256 pins) and stamp the package
 # version. Run AFTER the .mcpb assets are published - it fetches the canonical
 # .sha256 files from the GitHub release, same rule as 'make server-json'.
-npm-manifest: check-version openai-plugin-manifest
+npm-manifest: check-version openai-plugin-manifest claude-plugin-manifest
 	bash scripts/render-npm-manifest.sh --version $(VERSION)
 
 # Build the publishable tarball. This is the LOCAL FALLBACK: CI publishes via
@@ -260,12 +276,34 @@ npm-publish: npm-manifest
 	    && echo "published https://www.npmjs.com/package/@stackql/mcp-server/v/$(VERSION)"; \
 	fi
 
-# --- ChatGPT/Codex stdio plugin -------------------------------------------------
-# Stamp packaging/openai-plugin (plugin.json version + the @stackql/mcp-server
-# pin in the launcher) so the plugin tracks the npm wrapper. Runs as part of
-# npm-manifest; commit the result together with the package.json bump.
+# --- Local stdio plugins (ChatGPT/Codex, Claude) ------------------------------
+# Both plugins vendor the npm launcher verbatim plus server/platforms.json,
+# LICENSE, the icon and the onboarding skill (scripts/render-platforms.sh),
+# and are stamped with the npm wrapper's version; the plugin validators fail
+# when any of it drifts. Both run as part of npm-manifest; commit the rendered
+# plugin directories together with the package.json bump (the directories
+# read the plugins from git, so platforms.json is committed here, unlike the
+# wrappers' gitignored copies).
 openai-plugin-manifest: check-version
 	bash scripts/render-platforms.sh --version $(VERSION) --vector openai-plugin
+
+claude-plugin-manifest: check-version
+	bash scripts/render-platforms.sh --version $(VERSION) --vector claude-plugin
+
+# ChatGPT plugin directory submission artefact: ../openai-plugin/dist/stackql-plugin-X.Y.Z.zip
+# (plugin contents at the ZIP root; hooks, app references and credentials refused).
+openai-plugin-zip: check-version
+	$(PYTHON) ../openai-plugin/scripts/validate.py
+	$(PYTHON) ../openai-plugin/scripts/build-zip.py --version $(VERSION)
+
+# The Anthropic directory reads a plugin from a GitHub repository and holds
+# every version of a subfolder plugin for a reviewer, so the rendered Claude
+# plugin is mirrored to stackql/stackql-claude-plugin (plugin at the repo root,
+# tag v<version>). Idempotent and immutable like go-publish; auth via
+# SDK_MIRROR_TOKEN or the local git credentials.
+claude-plugin-mirror: check-version
+	$(PYTHON) scripts/validate-claude-plugin.py
+	bash scripts/publish-mirror.sh --vector claude-plugin --version $(VERSION)
 
 # --- PyPI wrapper --------------------------------------------------------------
 # Same ordering rule as npm-manifest: run AFTER the .mcpb assets are published.

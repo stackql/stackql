@@ -4,10 +4,12 @@ There are six ways to get the StackQL MCP server into a client (Claude Desktop, 
 
 ## 1. From a marketplace / directory (recommended once listings are live)
 
-- **Claude Desktop -> Browse extensions** - search for "StackQL". Click install. (Available once the Anthropic Desktop Extensions submission is accepted; see [anthropic-submission.md](anthropic-submission.md).)
+- **Claude Code and Cowork -> Anthropic directory** - add the StackQL plugin from Customize > Plugins > Discover on claude.ai, or `/plugin directory` in Claude Code. The plugin starts the MCP server on your computer, so it works in Claude Code and in Cowork sessions that run locally; claude.ai chat does not start local servers. Available once the plugin bundle submission is published; see [anthropic-submission.md](anthropic-submission.md).
+- **Claude Desktop chat** - desktop extension listings are deprecated, so install the `.mcpb` directly (section 2).
+- **ChatGPT desktop app -> plugin directory** - search for "StackQL" (Desktop only badge; threads that run on your computer). Codex users add the repository marketplace instead; see [docs/chatgpt-codex-plugin.md](/docs/chatgpt-codex-plugin.md).
 - **Cursor / VS Code / Cline marketplaces** - search for "StackQL"; listings auto-ingest from the Official MCP Registry.
 
-These flows are signed by the directory's own review process and verified against the SHA-256 we publish.
+These flows are vetted by each directory's own review process, and the plugin launchers verify the downloaded binary against the SHA-256 we publish.
 
 ## 2. Direct `.mcpb` install (Claude Desktop, manual)
 

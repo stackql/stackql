@@ -3,7 +3,7 @@
     "stackql": {
       "command": "node",
       "args": [
-        "./bin/stackql-mcp.js"
+        "./server/bin/stackql-mcp.js"
       ],
       "cwd": "."
     }

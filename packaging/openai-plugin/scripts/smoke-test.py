@@ -133,7 +133,15 @@ def main() -> None:
     node = shutil.which("node")
     if node is None:
         raise RuntimeError("node is required")
-    launcher = PLUGIN_ROOT / "bin" / "stackql-mcp.js"
+    # Default: the ChatGPT/Codex plugin's vendored launcher. The Claude plugin
+    # vendors the same file, so CI runs this once per plugin with --launcher.
+    launcher = PLUGIN_ROOT / "server" / "bin" / "stackql-mcp.js"
+    if len(sys.argv) == 3 and sys.argv[1] == "--launcher":
+        launcher = Path(sys.argv[2]).resolve()
+    elif len(sys.argv) != 1:
+        raise SystemExit(f"usage: {sys.argv[0]} [--launcher PATH]")
+    if not launcher.is_file():
+        raise RuntimeError(f"launcher not found: {launcher}")
     smoke = load_shared_smoke()
 
     config_dir_var = "STACKQL_PLUGIN_CONFIG_DIR"
@@ -155,7 +163,7 @@ def main() -> None:
         else:
             os.environ[config_dir_var] = original_config_dir
 
-    print("OpenAI stdio plugin smoke test passed")
+    print(f"stdio plugin smoke test passed ({launcher})")
 
 
 if __name__ == "__main__":

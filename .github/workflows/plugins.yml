@@ -1,0 +1,113 @@
+# Validates the two local stdio plugin packages - ChatGPT/Codex under
+# packaging/openai-plugin and Claude under packaging/claude-plugin - on every
+# PR that touches them or their shared sources, and builds the ChatGPT plugin
+# directory ZIP as a run artifact. Both plugins vendor the npm launcher
+# verbatim (packaging/mcpb/npm/bin/stackql-mcp.js) plus the pins, licence,
+# icon and onboarding skill, rendered by packaging/mcpb/scripts/render-platforms.sh;
+# the validators assert byte-equality and the 'package' job re-renders from
+# the published release checksums to prove the committed pins are the real
+# ones. Directory submission itself is manual (see docs/stackql_release_process.md).
+
+name: stdio-plugins
+
+on:
+  pull_request:
+    paths:
+      - '.agents/plugins/marketplace.json'
+      - 'packaging/openai-plugin/**'
+      - 'packaging/claude-plugin/**'
+      - 'packaging/mcpb/npm/**'
+      - 'packaging/mcpb/skills/**'
+      - 'packaging/mcpb/assets/**'
+      - 'packaging/mcpb/LICENSE'
+      - 'packaging/mcpb/Makefile'
+      - 'packaging/mcpb/scripts/render-platforms.sh'
+      - 'packaging/mcpb/scripts/validate-claude-plugin.py'
+      - 'packaging/mcpb/scripts/publish-mirror.sh'
+      - '.github/workflows/plugins.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: stdio smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            python: python3
+            binary: stackql-plugin-smoke
+          - os: macos-latest
+            python: python3
+            binary: stackql-plugin-smoke
+          - os: windows-latest
+            python: python
+            binary: stackql-plugin-smoke.exe
+          - os: windows-11-arm
+            python: python
+            binary: stackql-plugin-smoke.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          # October 2026 security release: TLS hostname CVEs, Brotli RCE, eMudhra CA removal
+          node-version: '24.22.1'
+          check-latest: true
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Build StackQL
+        env:
+          CGO_ENABLED: '0'
+        run: |
+          go generate ./internal/stackql/dependencies
+          go build -o ${{ matrix.binary }} ./stackql
+      - name: Validate the ChatGPT/Codex package
+        run: ${{ matrix.python }} packaging/openai-plugin/scripts/validate.py
+      - name: Validate the Claude plugin
+        run: ${{ matrix.python }} packaging/mcpb/scripts/validate-claude-plugin.py
+      - name: Smoke test the ChatGPT/Codex launcher
+        env:
+          STACKQL_MCP_BIN: ${{ github.workspace }}/${{ matrix.binary }}
+        run: ${{ matrix.python }} packaging/openai-plugin/scripts/smoke-test.py
+      - name: Smoke test the Claude launcher
+        env:
+          STACKQL_MCP_BIN: ${{ github.workspace }}/${{ matrix.binary }}
+        run: ${{ matrix.python }} packaging/openai-plugin/scripts/smoke-test.py --launcher packaging/claude-plugin/server/bin/stackql-mcp.js
+
+  package:
+    name: directory packages (render check, claude validate, zip)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          # October 2026 security release: TLS hostname CVEs, Brotli RCE, eMudhra CA removal
+          node-version: '24.22.1'
+          check-latest: true
+      - name: Resolve the committed plugin version
+        id: version
+        run: echo "version=$(node -p "require('./packaging/mcpb/npm/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Re-render both plugins from the published release checksums
+        working-directory: packaging/mcpb
+        run: |
+          bash scripts/render-platforms.sh --version "${{ steps.version.outputs.version }}" --vector openai-plugin
+          bash scripts/render-platforms.sh --version "${{ steps.version.outputs.version }}" --vector claude-plugin
+      - name: Committed plugin payload matches the render
+        run: git diff --exit-code -- packaging/openai-plugin packaging/claude-plugin
+      - name: claude plugin validate --strict
+        run: npx -y @anthropic-ai/claude-code@2.1.318 plugin validate ./packaging/claude-plugin --strict
+      - name: Build the ChatGPT directory ZIP
+        working-directory: packaging/mcpb
+        run: make openai-plugin-zip VERSION="${{ steps.version.outputs.version }}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: stackql-chatgpt-plugin-${{ steps.version.outputs.version }}
+          path: packaging/openai-plugin/dist/*.zip
+          if-no-files-found: error

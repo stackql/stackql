@@ -11,10 +11,12 @@ others. Do that first, then submit directly to the venues that do not
 auto-ingest (the Anthropic directory, the client/IDE directories, Docker, and
 the awesome lists).
 
-StackQL ships as a local stdio binary packaged as `.mcpb` (via `stackql mcp`).
-That format fits most venues directly. Two exceptions are flagged inline: the
+StackQL ships as a local stdio binary packaged as `.mcpb` (via `stackql mcp`),
+plus two plugin packages that vendor the npm launcher: `packaging/claude-plugin`
+for Anthropic's directory and `packaging/openai-plugin` for OpenAI's. Those
+formats fit most venues directly. Two exceptions are flagged inline: the
 Docker catalogue wants an OCI image, and a few venues (Smithery's URL method,
-the remote side of Anthropic's directory) want a hosted streamable-HTTP
+the MCP connector kind of Anthropic's directory) want a hosted streamable-HTTP
 endpoint. Homebrew and the `.pkg` are install channels, not registries, so they
 are not listed here.
 
@@ -25,8 +27,8 @@ are not listed here.
 | Official MCP Registry | Canonical metadata registry | `mcp-publisher` CLI + `server.json` | ✅ Published | 2026-06-12 | [modelcontextprotocol.io/search](https://registry.modelcontextprotocol.io/v0/servers?search=stackql)<br/>[modelcontextprotocol.io/direct](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.stackql/stackql-mcp) | v0.10.500.2 now advertises all 7 package types (mcpb x4, oci, npm, pypi) | 2026-06-15 |
 | GitHub MCP Registry | GitHub discovery surface | Auto-ingest from official registry | ✅ Published | 2026-06-24 | [github-mcp](https://github.com/mcp?search=stackql)<br/>[api.mcp.github.com](https://api.mcp.github.com/v0/servers) | Listed as `io.github.stackql/stackql-mcp` (entry created 2026-06-24) via auto-ingest from the official registry. Sync is an hourly sweep of the official registry plus ~20 min of read-API caching: 0.11.669 was published to the official registry 2026-09-08 02:54Z, the GitHub entry updated 03:47Z and became visible 04:0xZ, so allow up to 2 hours. `make check-published` reports the advertised version; nothing to do on our side | 2026-09-08 |
 | VS Code MCP Gallery | IDE client gallery (@mcp in Extensions view) | Ingests from GitHub MCP Registry | 🟡 Blocked upstream | 2026-06-16 | [docs](https://code.visualstudio.com/docs/agent-customization/mcp-servers) | Downstream of GitHub MCP Registry - the `@mcp` gallery pulls from it, so this follows automatically once that row lands. No separate submission. Manual `.vscode/mcp.json` with npx works today regardless of gallery listing | 2026-06-16 |
-| Anthropic Connectors / Desktop Extensions Directory | Vendor directory (Claude) | Review form, Anthropic-vetted | 🟡 Pending Review | 2026-06-13 |  | Follow up on submission review ([Google Form](https://docs.google.com/forms/u/0/d/e/1FAIpQLScHtjkiCNjpqnWtFLIQStChXlvVcvX8NPXkMfjtYPDPymgang/viewform?usp=form_confirm)) | 2026-06-13 |
-| OpenAI Plugin directory (ChatGPT + Codex) | Vendor directory (OpenAI) | GitHub marketplace, self-serve (`.agents/plugins/marketplace.json`, see `docs/chatgpt-codex-plugin.md`); public directory via platform.openai.com/plugins needs a remote HTTPS MCP endpoint | 🟡 Marketplace only | 2026-08-04 | `codex plugin marketplace add stackql/stackql --sparse .agents/plugins --sparse packaging/openai-plugin` | Not in the public directory: submission needs a public streamable-HTTP endpoint, OAuth 2.1 and a domain token at `/.well-known/openai-apps-challenge`; a local stdio server is only listable via an OpenAI-contact exception. Desktop Chat may hide local MCP tools (openai/codex#38162); Codex threads and CLI work | 2026-10-05 |
+| Anthropic directory (Claude plugin bundle) | Vendor directory (Claude) | Developer portal at claude.ai/directory/manage, **Plugin bundle** read from the `stackql/stackql-claude-plugin` mirror (`make claude-plugin-mirror`); see [docs/anthropic-submission.md](docs/anthropic-submission.md) | ☐ Resubmission needed | 2026-11-05 |  | The June 2026 Desktop Extension (`.mcpb`) listing path is deprecated: the directory no longer accepts MCPB submissions and takes a local server only inside a plugin bundle (stackql#895). Withdraw or migrate the old listing (email directory@anthropic.com if it shows no Withdraw button), create the mirror repo, then submit; stackql.io `/terms` and `/support` must be live first (stackql.io#305) | 2026-11-05 |
+| OpenAI plugin directory (ChatGPT desktop + Codex) | Vendor directory (OpenAI) | Repo marketplace, self-serve (`.agents/plugins/marketplace.json`, see `docs/chatgpt-codex-plugin.md`); public directory at platform.openai.com/plugins as a **Skills only** upload of the ZIP from `make openai-plugin-zip` (local MCP allowlist granted by the OpenAI representative; docs/stackql_release_process.md step 11) | 🟡 Marketplace live, directory submission in progress | 2026-11-05 | `codex plugin marketplace add stackql/stackql --sparse .agents/plugins --sparse packaging/openai-plugin` | Expedited review invited by OpenAI, target 2026-11-13 (stackql#893). Needs stackql.io `/terms` and `/support` (stackql.io#305), the org allowlisted for local MCP, business verification and `review.demo_recording_url` in `plugin.json`. The listing carries a Desktop only badge; desktop Chat may hide local MCP tools (openai/codex#38162), Codex threads and CLI work | 2026-11-05 |
 | Docker MCP Catalog | Curated infra catalogue | PR to docker/mcp-registry | 🟡 In Progress (upstream PR pending) | 2026-06-15 |  | server.yaml prepared in the stackql/mcp-registry fork (community-image, points at public stackql/stackql-mcp); pending PR to docker/mcp-registry upstream + their review | 2026-06-15 |
 | npm | Package registry | `npm publish` | ✅ Published | 2026-06-15 | [@stackql/mcp-server](https://www.npmjs.com/package/@stackql/mcp-server) | npx launcher | 2026-06-15 |
 | PyPI | Package registry | `twine upload` | ✅ Published | 2026-06-15 | [stackql-mcp-server](https://pypi.org/project/stackql-mcp-server/) | uvx/pip launcher | 2026-06-15 |
@@ -69,24 +71,36 @@ Publishing here is the prerequisite for most of the auto-ingesting venues below.
 
 ## Anthropic / Claude surfaces
 
-Anthropic runs a vetted directory that surfaces servers across Claude, Claude
-Desktop, Claude Mobile, Claude Code, and the API MCP connector. There are two
-on-ramps depending on how the server is delivered.
+Anthropic runs one vetted directory (claude.ai/directory, managed at
+claude.ai/directory/manage) with two submission kinds. Which one applies
+depends on how the server is delivered:
 
-- Desktop Extensions directory: the one-click local-install directory reachable
-  from Claude Desktop under Settings then "Browse extensions". This is the
-  natural home for the local `.mcpb` bundles StackQL produces. Listings are
-  Anthropic-reviewed.
-- Connectors Directory: the review form at
-  `claude.com/docs/connectors/building/submission`. This path is geared toward
-  remote servers (OAuth, HTTPS, Origin-header validation) and applies if you
-  stand up a hosted streamable-HTTP StackQL endpoint. The two are converging
-  into a single software directory covering connectors, skills, and plugins.
+- Plugin bundle: a GitHub repository folder with `.claude-plugin/plugin.json`,
+  a README, a licence, skills and a local MCP server declared by command. This
+  is the only path for a local stdio server: desktop extension (`.mcpb`)
+  listings are deprecated and the directory no longer accepts them. A plugin's
+  local server loads in Claude Code and in Cowork sessions on the user's
+  computer; claude.ai chat ignores it, the skill still loads there. StackQL's
+  plugin lives at `packaging/claude-plugin` and is mirrored to
+  `stackql/stackql-claude-plugin`, the repository the listing tracks. The
+  checklist is in [docs/anthropic-submission.md](docs/anthropic-submission.md).
+- MCP connector: one remote HTTPS MCP server submitted by URL (OAuth, Origin
+  validation). It applies only if a hosted streamable-HTTP StackQL endpoint is
+  stood up; its review criteria still describe what a reviewer checks on the
+  server inside the plugin (tool annotations, read/write separation,
+  actionable errors), and the server meets them.
 
-Review requirements to prepare for either path: a public documentation link by
-publish date, a complete privacy policy (a missing or incomplete one is an
-immediate rejection), a server logo (SVG or URL) and favicon, and, for any
-interactive UI, promotional screenshots. The submission form is always open.
+Manual `.mcpb` install in Claude Desktop (double-click, drag and drop, or
+Settings > Extensions > Advanced settings > Install Extension) is unaffected
+and remains the Claude Desktop chat path, so the bundles keep shipping.
+
+Review requirements for the plugin bundle: a README of at least 40 words that
+states everything the plugin runs, fetches and sends (it doubles as the
+listing description), a licence, https privacy policy, terms, support and
+documentation URLs in the manifest, a dependency-free launcher started as
+`node ${CLAUDE_PLUGIN_ROOT}/<file>`, and no package installs or binaries in
+the plugin folder. Every version is validated and security-scanned; a person
+reviews the first one.
 
 This is the highest-credibility placement for a "built on Claude" infrastructure
 tool, so it is worth meeting the review bar even though it is more work than the
@@ -193,7 +207,9 @@ reuse it:
 - Licence (MIT)
 - Logo (SVG) and favicon
 - Screenshots (required by Anthropic for any interactive UI)
-- Privacy policy URL (mandatory for the Anthropic directory)
+- Privacy policy, terms of service and support URLs (the Anthropic and OpenAI
+  directories read them from the plugin manifests; a missing or incomplete
+  privacy policy is an immediate rejection)
 - Maintainer and security contact
 - A ready-to-paste config snippet for command-based clients, for example:
   `{ "stackql": { "command": "stackql", "args": ["mcp"] } }`
@@ -201,8 +217,9 @@ reuse it:
 ## Suggested order
 
 1. Publish to the Official MCP Registry (propagates to many of the rest).
-2. Submit to the Anthropic directory (Desktop Extensions for the local bundle;
-   Connectors Directory if you host a remote endpoint).
+2. Submit the Claude plugin bundle to the Anthropic directory (the MCP connector
+   kind only if you host a remote endpoint), and upload the ChatGPT plugin ZIP
+   to OpenAI's directory (docs/stackql_release_process.md steps 11 and 12).
 3. Submit directly to mcp.so, Smithery, and Glama.
 4. Add the awesome-list and community-list PRs, and claim the mcp.directory and
    Glama auto-listings.
