@@ -1,6 +1,24 @@
 import unittest
+from unittest import mock
 
 import attach_build_artifacts as attach
+
+
+class GhTests(unittest.TestCase):
+    def test_gh_decodes_output_as_utf8(self):
+        # Regression: on Windows the default cp1252 decoding of gh output crashed
+        # the stdout reader thread on the first non-cp1252 byte.
+        completed = mock.Mock(returncode=0, stdout='{"sha": "f7b4116"}', stderr='')
+        with mock.patch.object(attach.subprocess, 'run', return_value=completed) as run:
+            self.assertEqual(attach.gh('api', 'repos/stackql/stackql/commits/v1.0.888'),
+                             '{"sha": "f7b4116"}')
+        self.assertEqual(run.call_args.kwargs.get('encoding'), 'utf-8')
+        self.assertEqual(run.call_args.kwargs.get('errors'), 'replace')
+
+    def test_tag_commit_requests_only_the_sha(self):
+        with mock.patch.object(attach, 'gh', return_value='f7b41161\n') as gh:
+            self.assertEqual(attach.tag_commit('stackql/stackql', 'v1.0.888'), 'f7b41161')
+        gh.assert_called_once_with('api', 'repos/stackql/stackql/commits/v1.0.888', '--jq', '.sha')
 
 
 class VersionTests(unittest.TestCase):
