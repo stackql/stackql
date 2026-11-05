@@ -146,13 +146,15 @@ The npm wrapper is published by `mcp-packaging` (see 8a); only the PyPI wrapper 
 
 #### 8a. npm (`@stackql/mcp-server`) - published by `mcp-packaging`
 
-The `npm-publish` job publishes `@stackql/mcp-server@X.Y.Z` with npm trusted publishing (GitHub Actions OIDC) after the sdk slices pass; no `npm login`, OTP or token is involved, and npm attaches a provenance attestation. The trusted publisher configuration on npmjs.com (owner `stackql`, repo `stackql`, workflow `mcp-packaging.yml`, `npm publish` allowed) is permanent once validated by its first publish.
+The `npm-publish` job publishes `@stackql/mcp-server@X.Y.Z` with npm trusted publishing (GitHub Actions OIDC) after the sdk slices pass; no `npm login`, OTP or token is involved, and npm attaches a provenance attestation. The credential is the trusted publisher configuration on npmjs.com, validated by the `1.0.888` publish on 2026-11-05 and permanent from then on. If it is ever deleted or has to be recreated: on npmjs.com open the package's Settings, Trusted Publisher, GitHub Actions, with organization `stackql`, repository `stackql`, workflow filename `mcp-packaging.yml`, environment blank, `Allow npm publish` ticked (the job runs `npm publish` directly, not `npm stage publish`) and `Allow npm dist-tag` left unticked. Create it immediately before the dispatch: npm discards a new configuration that has not completed a successful publish within 2 days, and its fields cannot be edited afterwards. A missing or lapsed configuration fails the job with `npm error 404 Not Found - PUT https://registry.npmjs.org/@stackql%2fmcp-server` right after the dry run succeeds; recreate the configuration and rerun the failed job (the target skips the publish when the version is already on npm).
 
 Verify:
 
 ```bash
 npm view @stackql/mcp-server@X.Y.Z version dist.attestations.url
 ```
+
+The job publishes at the end of the run and the local npm cache can hold the previous packument for a few minutes, so wait for the run to complete and add `--prefer-online` if the version is reported missing.
 
 Manual fallback (publish rights on the `@stackql` scope; prompts for an OTP):
 
@@ -285,6 +287,7 @@ Use the version being released; omit `VERSION` to check the latest release. The 
 | 5 | Apple Developer ID chain, `stackql-mac-installer` | MacInCloud |
 | 6 | repo secrets `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `CARGO_REGISTRY_TOKEN`, `SDK_MIRROR_TOKEN`; OIDC for npm and NuGet | GitHub Actions |
 | 7 | push rights on `stackql/releases.stackql.io` | local |
+| 8a | trusted publisher configuration for `@stackql/mcp-server` (package owner) | npmjs.com |
 | 8b | PyPI API token (`__token__`) | `packaging/mcpb/.env`, gitignored |
 | 9 | OIDC (workflow) or `mcp-publisher login github` with a `read:org` PAT | GitHub Actions or local |
 | 10 | push rights on `stackql/stackql` | local |
