@@ -297,6 +297,11 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		serverOpts,
 	)
 
+	requestSemaphore := newRequestSemaphore(config.Server.MaxConcurrentRequests)
+	server.AddReceivingMiddleware(
+		toolCallLimits(requestSemaphore, time.Duration(config.Server.RequestTimeout)),
+	)
+
 	if toolsErr := registerTools(server, config, backend, logger, sink, approvals); toolsErr != nil {
 		return nil, toolsErr
 	}
@@ -314,7 +319,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		auditSink:        sink,
 		approvals:        approvals,
 		server:           server,
-		requestSemaphore: semaphore.NewWeighted(int64(config.Server.MaxConcurrentRequests)),
+		requestSemaphore: requestSemaphore,
 		servers:          make([]io.Closer, 0),
 	}, nil
 }
