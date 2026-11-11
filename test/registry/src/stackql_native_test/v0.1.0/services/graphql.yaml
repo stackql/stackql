@@ -11,6 +11,38 @@ info:
 servers:
   - url: http://localhost:1070
 paths:
+  /graphql/transformed:
+    post:
+      x-stackql-protocol: graphql
+      x-stackQL-graphQL:
+        # Reuse the raw Relay mock; these paths exist only after the transform.
+        url: http://localhost:1070/graphql/pageinfo
+        httpVerb: POST
+        responseSelection:
+          jsonPath: '$.result[*]'
+        cursor:
+          strategy: page_info
+          jsonPath: '$.pagination.endCursor'
+          terminateOnJsonPath: '$.pagination.hasNextPage'
+        query: >
+          query {
+            pthings(first: {{ .limit }}{{ .cursor }}) {
+              edges { node { name rank } cursor }
+              pageInfo { hasNextPage endCursor }
+            }
+          }
+      responses:
+        '200':
+          description: Transformed response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/strategy_thing'
   /graphql:
     post:
       x-stackQL-graphQL:
@@ -219,6 +251,34 @@ components:
         wire_after:
           type: string
   x-stackQL-resources:
+    transformed_things:
+      id: stackql_native_test.graph.transformed_things
+      name: transformed_things
+      title: Things (GraphQL response transform)
+      methods:
+        list:
+          x-stackql-protocol: graphql
+          operation:
+            $ref: '#/paths/~1graphql~1transformed/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: '$.result'
+            transform:
+              type: golang_template_json_v0.3.0
+              body: |
+                {
+                  "result": [
+                    {{- range $i, $edge := (index . "data" "pthings" "edges") }}
+                    {{- if $i }},{{ end }}
+                    {{ toJson (index $edge "node") }}
+                    {{- end }}
+                  ],
+                  "pagination": {{ toJson (index . "data" "pthings" "pageInfo") }}
+                }
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/transformed_things/methods/list'
     things:
       id: stackql_native_test.graph.things
       name: things

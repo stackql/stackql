@@ -7,6 +7,24 @@ Documentation     GraphQL acquire path against the no-auth stackql_native_test m
 ...               wire_after) so wire shape is asserted from STDOUT.
 
 *** Test Cases ***
+GraphQL Response Transform Applies Before Selection And Pagination
+    [Documentation]    Regression for https://github.com/stackql-labs/omnisdk/issues/37.
+    ...    Selection, cursor and termination paths exist only in the transformed reply.
+    ...    Assert every row and the cursors sent on pages two and three; the final
+    ...    non-empty cursor must terminate via the transformed hasNextPage flag.
+    [Timeout]    60 seconds
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, rank, wire_after from stackql_native_test.graph.transformed_things order by rank limit 100;
+    ...    name,rank,wire_after\nred,1,\ngreen,2,\nblue,3,c1\nyellow,4,c1\npurple,5,c3
+    ...    stackql_output=csv
+
 GraphQL Cursor Pagination Returns All Pages
     [Documentation]    The mock serves two things per page; the reader follows endCursor until exhausted.
     Should StackQL Exec Inline Contain
