@@ -75,6 +75,9 @@ func columnTypes(t *testing.T, typeNames ...string) []*sql.ColumnType {
 	if err != nil {
 		t.Fatalf("ColumnTypes: %v", err)
 	}
+	if err = rows.Err(); err != nil {
+		t.Fatalf("rows.Err: %v", err)
+	}
 	return cts
 }
 

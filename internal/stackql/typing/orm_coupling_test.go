@@ -1,4 +1,5 @@
 package typing //nolint:testpackage // tests unexported behaviour in same package for simplicity
+
 import (
 	"reflect"
 	"testing"
