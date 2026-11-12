@@ -197,7 +197,7 @@ func describeDocument(
 		columns = append(columns, column{name: name, dataType: types[name].Type})
 	}
 	if method != "" {
-		return describeDocumentMethod(ctx, signature, columns, extended)
+		return describeDocumentMethod(ctx, signature, extended)
 	}
 	return describeDocumentColumns(ctx, columns, extended)
 }

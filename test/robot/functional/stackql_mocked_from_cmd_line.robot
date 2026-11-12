@@ -10813,7 +10813,7 @@ Preview Show Services Returns Audit Service
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    show services in stackql_preview;
-    ...    id,name,title\naudit:internal,audit,omnisdk audited resources
+    ...    id,name,title\naudit:internal,audit,omnisdk audited resources\nmetadata:internal,metadata,bounded method schema discovery
     ...    \-o\=csv
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Show-Services-Returns-Audit-Service.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Show-Services-Returns-Audit-Service-stderr.tmp
@@ -11847,6 +11847,7 @@ Preview Show Services Includes Dynamic Graph And Iac
     ...    audit:internal,audit,omnisdk audited resources
     ...    dynamic_graph:internal,dynamic_graph,queries wired across several document-declared exchanges
     ...    iac:internal,iac,"idempotent converge runs and destroys, and the blueprints that render a run"
+    ...    metadata:internal,metadata,bounded method schema discovery
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

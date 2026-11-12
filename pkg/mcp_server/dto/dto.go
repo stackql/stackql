@@ -2,6 +2,12 @@ package dto
 
 // HierarchyInput identifies a point in the provider/service/resource/method hierarchy.
 type HierarchyInput struct {
+	Depth         int    `json:"depth,omitempty" yaml:"depth,omitempty" jsonschema:"describe_method expansion depth; default 1, maximum 32"`
+	Path          string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"describe_method subtree path; array items traversed implicitly"`
+	Descriptions  bool   `json:"descriptions,omitempty" yaml:"descriptions,omitempty" jsonschema:"include method field descriptions; default false"`
+	ParamType     string `json:"param_type,omitempty" yaml:"param_type,omitempty" jsonschema:"filter method fields: input, output, input_required or input_optional"`
+	IncludeGlobal bool   `json:"include_global,omitempty" yaml:"include_global,omitempty" jsonschema:"include document-global optional query controls; default false"`
+
 	Provider string `json:"provider,omitempty" yaml:"provider,omitempty"`
 	Service  string `json:"service,omitempty" yaml:"service,omitempty"`
 	Resource string `json:"resource,omitempty" yaml:"resource,omitempty"`
