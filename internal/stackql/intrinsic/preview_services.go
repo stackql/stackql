@@ -37,6 +37,8 @@ const (
 	graphRelation    = "query"
 	convergeRelation = "run"
 	destroyRelation  = "destroy"
+	ledgerRelation   = "ledger"
+	recoverRelation  = "recover"
 )
 
 const (
@@ -55,19 +57,24 @@ const (
 )
 
 // previewService canonicalises one of the extended stackql_preview services, or
-// reports false. They read documents from disk, so they appear only once that
-// was opted into, exactly as the unstable providers do.
+// reports false. Orchestration requires opt-in; read-only discovery does not.
 func previewService(providerName, serviceStr, currentProvider string) (string, bool) {
-	if !previewCfg.getUnstableEnabled() {
-		return "", false
-	}
 	resolved := strings.TrimSpace(resolveProvider(providerName, currentProvider))
 	if !strings.EqualFold(resolved, ProviderName) {
+		return "", false
+	}
+	// Read-only discovery is available to ordinary MCP clients without IaC opt-in.
+	if strings.EqualFold(strings.TrimSpace(serviceStr), "metadata") {
+		return "metadata", true
+	}
+	if !previewCfg.getUnstableEnabled() {
 		return "", false
 	}
 	switch trimmed := strings.TrimSpace(serviceStr); {
 	case strings.EqualFold(trimmed, dynamicGraphService):
 		return dynamicGraphService, true
+	case strings.EqualFold(trimmed, "metadata"):
+		return "metadata", true
 	case strings.EqualFold(trimmed, iacService):
 		return iacService, true
 	default:
@@ -76,16 +83,16 @@ func previewService(providerName, serviceStr, currentProvider string) (string, b
 }
 
 // appendPreviewServices adds the extended services to a SHOW SERVICES listing.
-// It is a no-op without the opt-in, which keeps the catalogue exactly as it was
-// for anyone who has not asked for them.
+// Read-only metadata is always available; orchestration services retain their opt-in.
 func appendPreviewServices(rows map[string]map[string]interface{}, extended bool) {
-	if !previewCfg.getUnstableEnabled() {
-		return
+	services := []struct{ name, title string }{}
+	if previewCfg.getUnstableEnabled() {
+		services = append(services,
+			struct{ name, title string }{dynamicGraphService, dynamicGraphTitle},
+			struct{ name, title string }{iacService, iacTitle})
 	}
-	for i, svc := range []struct{ name, title string }{
-		{dynamicGraphService, dynamicGraphTitle},
-		{iacService, iacTitle},
-	} {
+	services = append(services, struct{ name, title string }{"metadata", "bounded method schema discovery"})
+	for i, svc := range services {
 		row := map[string]interface{}{
 			"id":    fmt.Sprintf("%s:%s", svc.name, ProviderVersion),
 			"name":  svc.name,
@@ -110,7 +117,11 @@ func registryRoot(ctx queryContext) string {
 	if err := yaml.Unmarshal([]byte(runtime.RegistryRaw), &cfg); err == nil && cfg.SrcPrefix != nil {
 		prefix = *cfg.SrcPrefix
 	}
-	return filepath.Join(localDocRoot(runtime), prefix)
+	root := filepath.Join(localDocRoot(runtime), prefix)
+	if host, ok := ctx.(interface{ DocumentRegistry(string) string }); ok {
+		return host.DocumentRegistry(root)
+	}
+	return root
 }
 
 // popPredicate takes a predicate out of the parameter map. What remains after
@@ -205,6 +216,9 @@ func previewSelectFunc(
 	node *sqlparser.Select,
 	service, resource string,
 ) (func() internaldto.ExecutorOutput, bool) {
+	if service == "metadata" {
+		return methodSchemaSelect(ctx, node, resource)
+	}
 	if service == dynamicGraphService {
 		return dynamicSelectFunc(ctx, node, resource)
 	}
@@ -305,6 +319,12 @@ func showPreviewMethods(ctx queryContext, extended bool) internaldto.ExecutorOut
 // the converge and destroy relations alongside the blueprints, because a blueprint
 // is a way of building a run's resources rather than a thing of its own.
 func previewTables(service string) []table {
+	if service == "metadata" {
+		return []table{{
+			service: "metadata", name: "method_fields", isData: true,
+			description: "bounded request and response schema discovery",
+		}}
+	}
 	if service == dynamicGraphService {
 		return []table{{
 			service:     dynamicGraphService,
@@ -324,6 +344,14 @@ func previewTables(service string) []table {
 		isData:      true,
 		description: "every resource a named collection holds, deleted",
 	}}
+	out = append(out, table{
+		service: iacService, name: recoverRelation, isData: true,
+		description: "explicit recovery of an operator-verified pending outcome",
+	})
+	out = append(out, table{
+		service: iacService, name: ledgerRelation, isData: true,
+		description: "read-only resource identities and phases from the collection ledger",
+	})
 	return append(out, blueprintTables()...)
 }
 
@@ -344,7 +372,8 @@ func describePreviewTableFunc(
 	resource := node.Table.Name.GetRawVal()
 	extended := isExtended(node.Extended)
 	if service == iacService && !strings.EqualFold(resource, convergeRelation) &&
-		!strings.EqualFold(resource, destroyRelation) {
+		!strings.EqualFold(resource, destroyRelation) && !strings.EqualFold(resource, ledgerRelation) &&
+		!strings.EqualFold(resource, recoverRelation) {
 		blueprint, ok := blueprintFor(resource)
 		if !ok {
 			return refuse(fmt.Errorf(

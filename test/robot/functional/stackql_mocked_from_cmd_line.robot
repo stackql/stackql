@@ -8979,8 +8979,21 @@ Insert Returning Simple Projection
     ...    stdout=${CURDIR}/tmp/Insert-Returning-Simple-Projection.tmp
     ...    stderr=${CURDIR}/tmp/Insert-Returning-Simple-Projection-stderr.tmp
 
+Google Plain Insert Does Not Inherit IaC Self Read Wait
+    [Documentation]    A plain SQL insert returns on acceptance despite Google's embedded lifecycle default.
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    insert into google.compute.networks(project, data__name, data__autoCreateSubnetworks) select 'mutable-project', 'auto-test-01', false;
+    ...    The operation was despatched successfully
+
 Insert Async Returning Simple Projection
-    [Documentation]    Insert a row into a table and return projected new object values. For **asynchronously** created objects.
+    [Documentation]    AWAIT polls the operation before reading the resource; embedded IaC defaults must not add a self-read first.
     ${inputStr} =    Catenate
     ...    insert /*+ AWAIT */ into google.compute.networks(project, data__name, data__autoCreateSubnetworks) select 'mutable-project', 'auto-test-01', false returning creationTimestamp, name;
     ${outputStr} =    Catenate    SEPARATOR=\n
@@ -10800,7 +10813,7 @@ Preview Show Services Returns Audit Service
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    show services in stackql_preview;
-    ...    id,name,title\naudit:internal,audit,omnisdk audited resources
+    ...    id,name,title\naudit:internal,audit,omnisdk audited resources\nmetadata:internal,metadata,bounded method schema discovery
     ...    \-o\=csv
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Show-Services-Returns-Audit-Service.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Show-Services-Returns-Audit-Service-stderr.tmp
@@ -11834,6 +11847,7 @@ Preview Show Services Includes Dynamic Graph And Iac
     ...    audit:internal,audit,omnisdk audited resources
     ...    dynamic_graph:internal,dynamic_graph,queries wired across several document-declared exchanges
     ...    iac:internal,iac,"idempotent converge runs and destroys, and the blueprints that render a run"
+    ...    metadata:internal,metadata,bounded method schema discovery
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -11875,6 +11889,8 @@ Preview Iac Show Resources Lists Run And Blueprint Handles
     ...    name,id
     ...    run,stackql_preview.iac.run
     ...    destroy,stackql_preview.iac.destroy
+    ...    recover,stackql_preview.iac.recover
+    ...    ledger,stackql_preview.iac.ledger
     ...    aws_vpc_subnet,stackql_preview.iac.aws_vpc_subnet
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}

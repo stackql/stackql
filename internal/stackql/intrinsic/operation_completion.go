@@ -245,7 +245,22 @@ func completionAddress(catalogue aot.Catalog, service, link string) (string, map
 	return "", nil, fmt.Errorf("AWAIT link does not match a declared GET operation in %s", service)
 }
 
+// acceptedMutation preserves plain SQL's return-on-acceptance contract.
+type acceptedMutation struct{}
+
+func (acceptedMutation) Complete(
+	_ context.Context,
+	_,
+	_ string,
+	_ map[string]any,
+	row omnisdk.Row,
+) (omnisdk.Row, error) {
+	return row, nil
+}
+
 func configureMutationCompletion(ctx queryContext, translated docQuery, args *omnisdk.Args) error {
+	// SQL owns AWAIT semantics; managed IaC retains document lifecycle waits.
+	args.MutationCompletion = acceptedMutation{}
 	if !queryAwaitsMutation(translated) {
 		return nil
 	}

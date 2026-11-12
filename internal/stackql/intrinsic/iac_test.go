@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
@@ -156,11 +157,35 @@ func TestIaCReportedOutcomesAreApplicationFailures(t *testing.T) {
 		if cursor.Err() == nil {
 			t.Fatalf("unsuccessful outcome accepted: %v", row)
 		}
+		if detail, ok := row["error"].(string); ok && !strings.Contains(cursor.Err().Error(), detail) {
+			t.Fatalf("underlying failure discarded: %v", cursor.Err())
+		}
 	}
 	cursor := &iacRows{Rows: &fakeRows{rows: []omnisdk.Row{{"status": "applied"}}}}
 	for cursor.Next() {
 	}
 	if err := cursor.Err(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestIaCInputsFile(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "inputs.json")
+	if err := os.WriteFile(file, []byte(`{"large":9007199254740993,"flag":true}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	params := map[string]string{"inputs_file": file, "region": "east"}
+	inputs, _, err := iacBindings(params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inputs["large"] != json.Number("9007199254740993") || inputs["flag"] != true || len(params) != 1 {
+		t.Fatal(inputs, params)
+	}
+	if _, _, err := iacBindings(map[string]string{"inputs_file": file, "inputs": "{}"}); err == nil {
+		t.Fatal("accepted conflicting inputs")
+	}
+	if _, _, err := iacBindings(map[string]string{"inputs_file": file + ".missing"}); err == nil {
+		t.Fatal("accepted missing file")
 	}
 }

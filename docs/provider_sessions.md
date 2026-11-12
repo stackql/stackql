@@ -187,3 +187,18 @@ With caller access management enabled, variable reads require `session/variables
 resets require `session/config:write`. Per-variable/per-secret owner and group grants are not yet
 implemented. Resolved SQL objects are checked before execution; variable substitution grants no
 additional provider/backend permission. Existing credential reload remains a separate mechanism.
+
+## Session document merge
+
+```sql
+SET "$.document_merge" = '{"patches":[{"service":"stackql_unstable_google.compute","merge":{"components":{"x-stackQL-resources":{"networks":{"methods":{"list":{"response":{"objectKey":"$.items"}}}}}}}}]}';
+-- Alternatively, read the same configuration from a server-local file:
+SET "$.document_merge" = '@/absolute/path/merge.json';
+UNSET "$.document_merge";
+```
+
+Requires the document-driven provider/preview integration. Subsequent document descriptions, queries and IaC use the effective view; the base registry is unchanged. Each SET replaces the patch set against the base (include all desired fragments in order). Failed SET preserves the previous view; UNSET restores the base. New client sessions inherit the configured view but later changes are isolated.
+
+The default merge cache is `<approot>/cache/document-views` (normally under `.stackql/`); `doc_cache.dir` overrides it. IaC ledger and run journals already default to `<approot>/iac`.
+
+Keep the base immutable and the cache available while readers use it. `fresh` is rejected; use a new cache directory instead. File paths refer to the StackQL process's filesystem, not a remote SQL client's filesystem. JSON objects may also be supplied through session variables. Inline JSON follows SQL string escaping; use `@file` to avoid escaping embedded programs.

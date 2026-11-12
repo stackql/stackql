@@ -391,6 +391,9 @@ components:
                 if scenario == "policy":
                     for sql in ["DELETE FROM stackql_unstable_accessdemo.service.items;", "INSERT INTO stackql_unstable_accessdemo.service.items (id) VALUES ('new');", "EXEC stackql_unstable_accessdemo.service.items.create;", "SELECT * FROM stackql_preview.iac.run WHERE collection = 'test' AND resources = '[]';", "SELECT * FROM stackql_preview.iac.destroy WHERE collection = 'test';", "SELECT * FROM stackql_access_principals;", "SELECT pg_read_file('/etc/passwd');"]:
                         denied(sql, reader)
+                    # Every IaC relation inherits the AST gate, including new/unclassified commands.
+                    for relation in ["ledger", "recover", "unlock", "not_a_published_operation"]:
+                        denied("SELECT * FROM stackql_preview.iac." + relation + " WHERE collection = 'test';", reader)
                     denied(query, token(subject="denied"))
                     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
                         futures = [executor.submit(success, query, reader, "known-item"), executor.submit(denied, "SELECT 1", token(subject="denied"), True)]
@@ -422,6 +425,11 @@ components:
                     assert all(item.get("name") == label for item in managed.values()), "IaC reported applied without converging desired values"
                 converge("first", ["one", "two"])
                 assert len(managed) == 2, "IaC create did not retain both resources"
+                before = counts.copy()
+                ledger_query = "SELECT identity, phase FROM stackql_preview.iac.ledger WHERE collection = 'acceptance' AND state = 'audit' AND resource_key = 'one';"
+                success(ledger_query, operator, "live")
+                denied(ledger_query, reader)
+                assert counts == before, "ledger authorization triggered provider effects"
                 db.execute("INSERT INTO stackql_access_principals VALUES ('operator2','{}')")
                 db.execute("INSERT INTO stackql_access_identities VALUES ('access-test','operator2','operator2')")
                 db.execute("INSERT INTO stackql_access_memberships VALUES ('operator2','operators')")

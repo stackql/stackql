@@ -232,7 +232,7 @@ func setLogic(pbi planbuilderinput.PlanBuilderInput, setExpr *sqlparser.SetExpr)
 		lhsTrimmed = strings.TrimPrefix(strings.TrimPrefix(lhsTrimmed, "$"), ".")
 		root, _, _ := strings.Cut(lhsTrimmed, ".")
 		switch root {
-		case "auth", "providers", "secret_store", "secrets":
+		case "auth", "providers", "secret_store", "secrets", "document_merge":
 		default:
 			return fmt.Errorf("unknown intrinsic session configuration %q", lhsTrimmed)
 		}

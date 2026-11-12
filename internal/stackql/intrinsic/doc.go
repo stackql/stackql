@@ -82,16 +82,7 @@ func localDocRoot(runtimeCtx dto.RuntimeCtx) string {
 // name carries a dot ("googleapis.com") cannot be named that way.
 func docRoot(ctx queryContext, bundle string) (string, error) {
 	bundle = strings.TrimPrefix(providerAddress(ctx, bundle), UnstablePrefix)
-	runtime := ctx.GetRuntimeContext()
-	prefix := "src"
-	var registryCfg omnisdk.RegistryConfig
-	if err := yaml.Unmarshal([]byte(runtime.RegistryRaw), &registryCfg); err != nil {
-		return "", err
-	}
-	if registryCfg.SrcPrefix != nil {
-		prefix = *registryCfg.SrcPrefix
-	}
-	root := filepath.Join(localDocRoot(runtime), prefix, bundleDir(bundle))
+	root := filepath.Join(registryRoot(ctx), bundleDir(bundle))
 	matches, err := filepath.Glob(filepath.Join(root, "*", "provider.yaml"))
 	if err != nil || len(matches) == 0 {
 		return "", fmt.Errorf("no provider document for '%s%s' under '%s'", UnstablePrefix, bundle, root)
@@ -206,7 +197,7 @@ func describeDocument(
 		columns = append(columns, column{name: name, dataType: types[name].Type})
 	}
 	if method != "" {
-		return describeDocumentMethod(ctx, signature, columns, extended)
+		return describeDocumentMethod(ctx, signature, extended)
 	}
 	return describeDocumentColumns(ctx, columns, extended)
 }

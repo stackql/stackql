@@ -562,6 +562,9 @@ func (hc *standardHandlerContext) SetConfigAtPath(path string, rhs interface{}, 
 	if strings.HasPrefix(path, "variables.") {
 		return hc.setSessionVariable(path, rhs)
 	}
+	if path == "document_merge" {
+		return hc.setDocumentMerge(rhs)
+	}
 	if handled, err := hc.setProviderSessionConfig(path, rhs, scope); handled {
 		return err
 	}

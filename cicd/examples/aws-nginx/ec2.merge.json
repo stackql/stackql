@@ -1,0 +1,2084 @@
+{
+  "components": {
+    "schemas": {
+      "WebHandle": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "WebObservation": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "public_ip": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "State": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "x-stackQL-resources": {
+      "web_association_a": {
+        "id": "aws.ec2.web_association_a",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=AssociateRouteTable&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"AssociateRouteTableResponse\" \"associationId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DisassociateRouteTable&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeRouteTables&Version=2016-11-15&RouteTableId.1={RouteTableId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "items",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ define \"association\" }}{\"id\":{{ toJson (index . \"routeTableAssociationId\") }}}{{ end }}{\"items\":[{{ $r := index . \"DescribeRouteTablesResponse\" }}{{ if index $r \"routeTableSet\" }}{{ $v := index $r \"routeTableSet\" \"item\" }}{{ if index $v \"associationSet\" }}{{ $a := index $v \"associationSet\" \"item\" }}{{ if eq (kindOf $a) \"slice\" }}{{ $sep := separator \",\" }}{{ range $a }}{{ call $sep }}{{ template \"association\" . }}{{ end }}{{ else if eq (kindOf $a) \"map\" }}{{ template \"association\" $a }}{{ end }}{{ end }}{{ end }}]}"
+              }
+            }
+          }
+        },
+        "name": "web_association_a",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_association_a/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_association_a/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_association_a/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_association_b": {
+        "id": "aws.ec2.web_association_b",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=AssociateRouteTable&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"AssociateRouteTableResponse\" \"associationId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DisassociateRouteTable&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeRouteTables&Version=2016-11-15&RouteTableId.1={RouteTableId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "items",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ define \"association\" }}{\"id\":{{ toJson (index . \"routeTableAssociationId\") }}}{{ end }}{\"items\":[{{ $r := index . \"DescribeRouteTablesResponse\" }}{{ if index $r \"routeTableSet\" }}{{ $v := index $r \"routeTableSet\" \"item\" }}{{ if index $v \"associationSet\" }}{{ $a := index $v \"associationSet\" \"item\" }}{{ if eq (kindOf $a) \"slice\" }}{{ $sep := separator \",\" }}{{ range $a }}{{ call $sep }}{{ template \"association\" . }}{{ end }}{{ else if eq (kindOf $a) \"map\" }}{{ template \"association\" $a }}{{ end }}{{ end }}{{ end }}]}"
+              }
+            }
+          }
+        },
+        "name": "web_association_b",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_association_b/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_association_b/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_association_b/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_default_route": {
+        "id": "aws.ec2.web_default_route",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=CreateRoute&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DeleteRoute&Version=2016-11-15/get"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeRouteTables&Version=2016-11-15&RouteTableId.1={RouteTableId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeRouteTablesResponse\" }}{{ if index $r \"routeTableSet\" }}{{ $v := index $r \"routeTableSet\" \"item\" }}{{ $found := false }}{{ if index $v \"routeSet\" }}{{ $routes := index $v \"routeSet\" \"item\" }}{{ if eq (kindOf $routes) \"slice\" }}{{ range $routes }}{{ if eq (index . \"destinationCidrBlock\") \"0.0.0.0/0\" }}{{ $found = true }}{{ end }}{{ end }}{{ else if eq (kindOf $routes) \"map\" }}{{ if eq (index $routes \"destinationCidrBlock\") \"0.0.0.0/0\" }}{{ $found = true }}{{ end }}{{ end }}{{ end }}{{ if $found }}{\"id\":{{ toJson (index $v \"routeTableId\") }}}{{ else }}{}{{ end }}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_default_route",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_default_route/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_default_route/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_default_route/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_gateway": {
+        "id": "aws.ec2.web_gateway",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=CreateInternetGateway&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"CreateInternetGatewayResponse\" \"internetGateway\" \"internetGatewayId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DeleteInternetGateway&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeInternetGateways&Version=2016-11-15&InternetGatewayId.1={InternetGatewayId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeInternetGatewaysResponse\" }}{{ if index $r \"internetGatewaySet\" }}{{ $v := index $r \"internetGatewaySet\" \"item\" }}{\"id\":{{ toJson (index $v \"internetGatewayId\") }}}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_gateway",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_gateway/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_gateway/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_gateway/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_gateway_attachment": {
+        "id": "aws.ec2.web_gateway_attachment",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=AttachInternetGateway&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DetachInternetGateway&Version=2016-11-15/get"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeInternetGateways&Version=2016-11-15&InternetGatewayId.1={InternetGatewayId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeInternetGatewaysResponse\" }}{{ if index $r \"internetGatewaySet\" }}{{ $v := index $r \"internetGatewaySet\" \"item\" }}{{ if index $v \"attachmentSet\" }}{\"id\":{{ toJson (index $v \"internetGatewayId\") }}}{{ else }}{}{{ end }}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_gateway_attachment",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_gateway_attachment/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_gateway_attachment/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_gateway_attachment/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_ingress": {
+        "id": "aws.ec2.web_ingress",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=AuthorizeSecurityGroupIngress&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=RevokeSecurityGroupIngress&Version=2016-11-15/get"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeSecurityGroups&Version=2016-11-15&GroupId.1={GroupId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeSecurityGroupsResponse\" }}{{ if index $r \"securityGroupInfo\" }}{{ $v := index $r \"securityGroupInfo\" \"item\" }}{{ if index $v \"ipPermissions\" }}{\"id\":{{ toJson (index $v \"groupId\") }}}{{ else }}{}{{ end }}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_ingress",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_ingress/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_ingress/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_ingress/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_instance": {
+        "id": "aws.ec2.web_instance",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=RunInstances&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"RunInstancesResponse\" \"instancesSet\" \"item\" \"instanceId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            },
+            "x-stackQL-beta": {
+              "await": {
+                "done": "running",
+                "interval": "2s",
+                "maxAttempts": 120,
+                "statusPath": "state"
+              },
+              "bind": {
+                "InstanceId.1": "id"
+              },
+              "method": {
+                "$ref": "#/components/x-stackQL-resources/web_instance/methods/wait_running"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=TerminateInstances&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"TerminateInstancesResponse\" \"instancesSet\" \"item\" \"instanceId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            },
+            "x-stackQL-beta": {
+              "await": {
+                "done": "terminated",
+                "interval": "2s",
+                "maxAttempts": 120,
+                "statusPath": "state"
+              },
+              "bind": {
+                "InstanceId.1": "id"
+              },
+              "method": {
+                "$ref": "#/components/x-stackQL-resources/web_instance/methods/wait_terminated"
+              }
+            }
+          },
+          "stop": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=StopInstances&Version=2016-11-15&InstanceId.1={InstanceId.1}/get"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"StopInstancesResponse\" \"instancesSet\" \"item\" \"instanceId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            },
+            "x-stackQL-beta": {
+              "await": {
+                "done": "stopped",
+                "interval": "2s",
+                "maxAttempts": 120,
+                "statusPath": "state"
+              },
+              "bind": {
+                "InstanceId.1": "id"
+              },
+              "method": {
+                "$ref": "#/components/x-stackQL-resources/web_instance/methods/wait_stopped"
+              }
+            }
+          },
+          "wait_running": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeInstances&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "transform": {
+                "body": "{{ $r := index . \"DescribeInstancesResponse\" }}{{ if index $r \"reservationSet\" }}{{ $v := index $r \"reservationSet\" \"item\" \"instancesSet\" \"item\" }}{\"id\":{{ toJson (index $v \"instanceId\") }},\"state\":{{ toJson (index $v \"instanceState\" \"name\") }},\"public_ip\":{{ toJson (index $v \"ipAddress\") }}}{{ else }}{\"state\":\"unknown\"}{{ end }}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "wait_stopped": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeInstances&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "transform": {
+                "body": "{{ $r := index . \"DescribeInstancesResponse\" }}{{ if index $r \"reservationSet\" }}{{ $v := index $r \"reservationSet\" \"item\" \"instancesSet\" \"item\" }}{\"id\":{{ toJson (index $v \"instanceId\") }},\"state\":{{ toJson (index $v \"instanceState\" \"name\") }},\"public_ip\":{{ toJson (index $v \"ipAddress\") }}}{{ else }}{\"state\":\"unknown\"}{{ end }}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "wait_terminated": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeInstances&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "transform": {
+                "body": "{{ $r := index . \"DescribeInstancesResponse\" }}{{ if index $r \"reservationSet\" }}{{ $v := index $r \"reservationSet\" \"item\" \"instancesSet\" \"item\" }}{\"id\":{{ toJson (index $v \"instanceId\") }},\"state\":{{ toJson (index $v \"instanceState\" \"name\") }},\"public_ip\":{{ toJson (index $v \"ipAddress\") }}}{{ else }}{\"state\":\"unknown\"}{{ end }}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeInstances&Version=2016-11-15&InstanceId.1={InstanceId.1}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeInstancesResponse\" }}{{ if index $r \"reservationSet\" }}{{ $v := index $r \"reservationSet\" \"item\" }}{{ $v = index $v \"instancesSet\" \"item\" }}{\"id\":{{ toJson (index $v \"instanceId\") }},\"State\":{{ toJson (index $v \"instanceState\" \"name\") }},\"public_ip\":{{ toJson (index $v \"ipAddress\") }}}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_instance",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_instance/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_instance/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_instance/methods/read_self"
+            }
+          ],
+          "update": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_instance/methods/stop"
+            }
+          ]
+        },
+        "updates": [
+          {
+            "priority": 100,
+            "requires": [
+              "State"
+            ],
+            "permits": [
+              "State"
+            ],
+            "target": {
+              "$ref": "#/components/x-stackQL-resources/web_instance/methods/stop"
+            }
+          }
+        ]
+      },
+      "web_key": {
+        "id": "aws.ec2.web_key",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=ImportKeyPair&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"ImportKeyPairResponse\" \"keyName\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DeleteKeyPair&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeKeyPairs&Version=2016-11-15&KeyName.1={KeyName}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeKeyPairsResponse\" }}{{ if index $r \"keySet\" }}{{ $v := index $r \"keySet\" \"item\" }}{\"id\":{{ toJson (index $v \"keyName\") }}}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_key",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_key/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_key/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_key/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_route_table": {
+        "id": "aws.ec2.web_route_table",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=CreateRouteTable&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"CreateRouteTableResponse\" \"routeTable\" \"routeTableId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DeleteRouteTable&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeRouteTables&Version=2016-11-15&RouteTableId.1={RouteTableId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeRouteTablesResponse\" }}{{ if index $r \"routeTableSet\" }}{{ $v := index $r \"routeTableSet\" \"item\" }}{\"id\":{{ toJson (index $v \"routeTableId\") }}}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_route_table",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_route_table/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_route_table/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_route_table/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_security_group": {
+        "id": "aws.ec2.web_security_group",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=CreateSecurityGroup&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"CreateSecurityGroupResponse\" \"groupId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DeleteSecurityGroup&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeSecurityGroups&Version=2016-11-15&GroupId.1={GroupId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeSecurityGroupsResponse\" }}{{ if index $r \"securityGroupInfo\" }}{{ $v := index $r \"securityGroupInfo\" \"item\" }}{\"id\":{{ toJson (index $v \"groupId\") }}}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_security_group",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_security_group/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_security_group/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_security_group/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_subnet_a": {
+        "id": "aws.ec2.web_subnet_a",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=CreateSubnet&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"CreateSubnetResponse\" \"subnet\" \"subnetId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            },
+            "x-stackQL-beta": {
+              "await": {
+                "done": "available",
+                "interval": "2s",
+                "maxAttempts": 120,
+                "statusPath": "state"
+              },
+              "bind": {
+                "SubnetId.1": "id"
+              },
+              "method": {
+                "$ref": "#/components/x-stackQL-resources/web_subnet_a/methods/wait_available"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DeleteSubnet&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "wait_available": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeSubnets&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "transform": {
+                "body": "{{ $v := index . \"DescribeSubnetsResponse\" \"subnetSet\" \"item\" }}{\"id\":{{ toJson (index $v \"subnetId\") }},\"state\":{{ toJson (index $v \"state\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeSubnets&Version=2016-11-15&SubnetId.1={SubnetId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeSubnetsResponse\" }}{{ if index $r \"subnetSet\" }}{{ $v := index $r \"subnetSet\" \"item\" }}{\"id\":{{ toJson (index $v \"subnetId\") }}}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_subnet_a",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_subnet_a/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_subnet_a/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_subnet_a/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_subnet_b": {
+        "id": "aws.ec2.web_subnet_b",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=CreateSubnet&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"CreateSubnetResponse\" \"subnet\" \"subnetId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            },
+            "x-stackQL-beta": {
+              "await": {
+                "done": "available",
+                "interval": "2s",
+                "maxAttempts": 120,
+                "statusPath": "state"
+              },
+              "bind": {
+                "SubnetId.1": "id"
+              },
+              "method": {
+                "$ref": "#/components/x-stackQL-resources/web_subnet_b/methods/wait_available"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DeleteSubnet&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "wait_available": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeSubnets&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "transform": {
+                "body": "{{ $v := index . \"DescribeSubnetsResponse\" \"subnetSet\" \"item\" }}{\"id\":{{ toJson (index $v \"subnetId\") }},\"state\":{{ toJson (index $v \"state\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeSubnets&Version=2016-11-15&SubnetId.1={SubnetId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeSubnetsResponse\" }}{{ if index $r \"subnetSet\" }}{{ $v := index $r \"subnetSet\" \"item\" }}{\"id\":{{ toJson (index $v \"subnetId\") }}}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_subnet_b",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_subnet_b/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_subnet_b/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_subnet_b/methods/read_self"
+            }
+          ]
+        }
+      },
+      "web_vpc": {
+        "id": "aws.ec2.web_vpc",
+        "methods": {
+          "create": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=CreateVpc&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"id\":{{ toJson (index . \"CreateVpcResponse\" \"vpc\" \"vpcId\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            },
+            "x-stackQL-beta": {
+              "await": {
+                "done": "available",
+                "interval": "2s",
+                "maxAttempts": 120,
+                "statusPath": "state"
+              },
+              "bind": {
+                "VpcId.1": "id"
+              },
+              "method": {
+                "$ref": "#/components/x-stackQL-resources/web_vpc/methods/wait_available"
+              }
+            }
+          },
+          "delete": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DeleteVpc&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebHandle"
+              },
+              "transform": {
+                "body": "{\"ok\":true}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "wait_available": {
+            "config": {
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              },
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              }
+            },
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeVpcs&Version=2016-11-15/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "response": {
+              "mediaType": "application/xml",
+              "objectKey": "$",
+              "openAPIDocKey": "200",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "transform": {
+                "body": "{{ $v := index . \"DescribeVpcsResponse\" \"vpcSet\" \"item\" }}{\"id\":{{ toJson (index $v \"vpcId\") }},\"state\":{{ toJson (index $v \"state\") }}}",
+                "type": "golang_template_mxj_v0.1.0"
+              }
+            }
+          },
+          "read_self": {
+            "operation": {
+              "$ref": "#/paths/~1?Action=DescribeVpcs&Version=2016-11-15&VpcId.1={VpcId}/get"
+            },
+            "request": {
+              "nativeCasing": "pascal"
+            },
+            "config": {
+              "requestTranslate": {
+                "algorithm": "get_query_to_post_form_utf_8"
+              },
+              "queryParamTranspose": {
+                "algorithm": "AWSCanonical"
+              }
+            },
+            "response": {
+              "openAPIDocKey": "200",
+              "mediaType": "application/xml",
+              "overrideMediaType": "application/json",
+              "schema_override": {
+                "$ref": "#/components/schemas/WebObservation"
+              },
+              "objectKey": "$",
+              "transform": {
+                "type": "golang_template_mxj_v0.1.0",
+                "body": "{{ $r := index . \"DescribeVpcsResponse\" }}{{ if index $r \"vpcSet\" }}{{ $v := index $r \"vpcSet\" \"item\" }}{\"id\":{{ toJson (index $v \"vpcId\") }}}{{ else }}{}{{ end }}"
+              }
+            }
+          }
+        },
+        "name": "web_vpc",
+        "sqlVerbs": {
+          "delete": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_vpc/methods/delete"
+            }
+          ],
+          "insert": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_vpc/methods/create"
+            }
+          ],
+          "select": [
+            {
+              "$ref": "#/components/x-stackQL-resources/web_vpc/methods/read_self"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "paths": {
+    "/?Action=StopInstances&Version=2016-11-15": {
+      "get": {
+        "parameters": [
+          {
+            "description": "The IDs of the instances.",
+            "in": "query",
+            "name": "InstanceId",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InstanceIdStringList"
+            }
+          },
+          {
+            "description": "Hibernates the instance if the instance was enabled for hibernation at launch. If the instance cannot hibernate successfully, a normal shutdown occurs. For more information, see Hibernate your Amazon EC2 instance in the Amazon EC2 User Guide. Default: false",
+            "in": "query",
+            "name": "Hibernate",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Boolean"
+            }
+          },
+          {
+            "description": "Specifies whether to bypass the graceful OS shutdown process when the instance is stopped. Bypassing the graceful OS shutdown might result in data loss or corruption (for example, memory contents not flushed to disk or loss of in-flight IOs) or skipped shutdown scripts. Default: false",
+            "in": "query",
+            "name": "SkipOsShutdown",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Boolean"
+            }
+          },
+          {
+            "description": "Checks whether you have the required permissions for the operation, without actually making the request, and provides an error response. If you have the required permissions, the error response is DryRunOperation. Otherwise, it is UnauthorizedOperation.",
+            "in": "query",
+            "name": "DryRun",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Boolean"
+            }
+          },
+          {
+            "description": "Forces the instance to stop. The instance will first attempt a graceful shutdown, which includes flushing file system caches and metadata. If the graceful shutdown fails to complete within the timeout period, the instance shuts down forcibly without flushing the file system caches and metadata. After using this option, you must perform file system check and repair procedures. This option is not recommended for Windows instances. For more information, see Troubleshoot Amazon EC2 instance stop issues in the Amazon EC2 User Guide. Default: false",
+            "in": "query",
+            "name": "Force",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "InstanceId.1",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/?Action=TerminateInstances&Version=2016-11-15": {
+      "get": {
+        "parameters": [
+          {
+            "description": "The IDs of the instances. Constraints: Up to 1000 instance IDs. We recommend breaking up this request into smaller batches.",
+            "in": "query",
+            "name": "InstanceId",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InstanceIdStringList"
+            }
+          },
+          {
+            "description": "Forces the instances to terminate. The instance will first attempt a graceful shutdown, which includes flushing file system caches and metadata. If the graceful shutdown fails to complete within the timeout period, the instance shuts down forcibly without flushing the file system caches and metadata.",
+            "in": "query",
+            "name": "Force",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Boolean"
+            }
+          },
+          {
+            "description": "Specifies whether to bypass the graceful OS shutdown process when the instance is terminated. Default: false",
+            "in": "query",
+            "name": "SkipOsShutdown",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Boolean"
+            }
+          },
+          {
+            "description": "Checks whether you have the required permissions for the operation, without actually making the request, and provides an error response. If you have the required permissions, the error response is DryRunOperation. Otherwise, it is UnauthorizedOperation.",
+            "in": "query",
+            "name": "DryRun",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "InstanceId.1",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/?Action=DescribeVpcs&Version=2016-11-15&VpcId.1={VpcId}": {
+      "get": {
+        "operationId": "WebRead_vpc",
+        "parameters": [
+          {
+            "name": "VpcId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read the addressed object"
+          }
+        }
+      }
+    },
+    "/?Action=DescribeSubnets&Version=2016-11-15&SubnetId.1={SubnetId}": {
+      "get": {
+        "operationId": "WebRead_subnet_b",
+        "parameters": [
+          {
+            "name": "SubnetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read the addressed object"
+          }
+        }
+      }
+    },
+    "/?Action=DescribeInternetGateways&Version=2016-11-15&InternetGatewayId.1={InternetGatewayId}": {
+      "get": {
+        "operationId": "WebRead_gateway_attachment",
+        "parameters": [
+          {
+            "name": "InternetGatewayId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read the addressed object"
+          }
+        }
+      }
+    },
+    "/?Action=DescribeRouteTables&Version=2016-11-15&RouteTableId.1={RouteTableId}": {
+      "get": {
+        "operationId": "WebListAssociations",
+        "parameters": [
+          {
+            "name": "RouteTableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Table associations"
+          }
+        }
+      }
+    },
+    "/?Action=DescribeRouteTables&Version=2016-11-15&Filter.1.Value.1={AssociationId}&Filter.1.Name=association.association-id": {
+      "get": {
+        "operationId": "WebRead_association_b",
+        "parameters": [
+          {
+            "name": "AssociationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read the addressed object"
+          }
+        }
+      }
+    },
+    "/?Action=DescribeSecurityGroups&Version=2016-11-15&GroupId.1={GroupId}": {
+      "get": {
+        "operationId": "WebRead_ingress",
+        "parameters": [
+          {
+            "name": "GroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read the addressed object"
+          }
+        }
+      }
+    },
+    "/?Action=DescribeKeyPairs&Version=2016-11-15&KeyName.1={KeyName}": {
+      "get": {
+        "operationId": "WebRead_key",
+        "parameters": [
+          {
+            "name": "KeyName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read the addressed object"
+          }
+        }
+      }
+    },
+    "/?Action=DescribeInstances&Version=2016-11-15&InstanceId.1={InstanceId.1}": {
+      "get": {
+        "operationId": "WebRead_instance",
+        "parameters": [
+          {
+            "name": "InstanceId.1",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "InstanceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read the addressed object"
+          }
+        }
+      }
+    },
+    "/?Action=StopInstances&Version=2016-11-15&InstanceId.1={InstanceId.1}": {
+      "get": {
+        "operationId": "WebStopInstance",
+        "parameters": [
+          {
+            "name": "InstanceId.1",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "State",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stopped"
+              ]
+            }
+          },
+          {
+            "name": "InstanceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stop requested"
+          }
+        }
+      }
+    }
+  }
+}
