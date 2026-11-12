@@ -21,10 +21,10 @@ func TestPreviewServiceRequiresOptIn(t *testing.T) {
 			t.Errorf("previewService(%q) = true without the unstable opt-in", name)
 		}
 	}
-	// The catalogue must read exactly as it did before anyone asked for them.
+	// Only read-only metadata is added without orchestration opt-in.
 	rows := map[string]map[string]interface{}{}
 	appendPreviewServices(rows, false)
-	if len(rows) != 0 {
+	if len(rows) != 1 || rows["000002"]["name"] != "metadata" {
 		t.Errorf("appendPreviewServices added %d rows without the opt-in", len(rows))
 	}
 }

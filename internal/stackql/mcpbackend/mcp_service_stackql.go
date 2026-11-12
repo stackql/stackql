@@ -195,16 +195,40 @@ func (s *simpleStackqlInterrogator) GetDescribeMethod(hI dto.HierarchyInput) (st
 	if err := checkHierarchyIdentifiers(hI); err != nil {
 		return "", err
 	}
-	sb := strings.Builder{}
-	sb.WriteString("DESCRIBE METHOD EXTENDED ")
-	sb.WriteString(hI.Provider)
-	sb.WriteString(".")
-	sb.WriteString(hI.Service)
-	sb.WriteString(".")
-	sb.WriteString(hI.Resource)
-	sb.WriteString(".")
-	sb.WriteString(hI.Method)
-	return sb.String(), nil
+	if hI.Depth < 0 || hI.Depth > 32 {
+		return "", fmt.Errorf("depth must be between 1 and 32")
+	}
+	// Preserve discovery of host-native relations, which have no provider schema graph.
+	if strings.EqualFold(hI.Provider, "stackql_preview") {
+		if hI.Depth > 1 || hI.Path != "" || hI.ParamType != "" || hI.IncludeGlobal {
+			return "", fmt.Errorf("schema drill-down requires a document-backed provider")
+		}
+		extended := ""
+		if hI.Descriptions {
+			extended = " EXTENDED"
+		}
+		return fmt.Sprintf("DESCRIBE METHOD%s %s.%s.%s.%s", extended, hI.Provider, hI.Service, hI.Resource, hI.Method), nil
+	}
+	quote := func(value string) string {
+		return "'" + strings.ReplaceAll(strings.ReplaceAll(value, "\\", "\\\\"), "'", "''") + "'"
+	}
+	query := "SELECT * FROM stackql_preview.metadata.method_fields WHERE provider = " + quote(hI.Provider) + " AND service = " + quote(hI.Service) + " AND resource = " + quote(hI.Resource) + " AND method = " + quote(hI.Method)
+	if hI.Depth != 0 {
+		query += " AND depth = " + strconv.Itoa(hI.Depth)
+	}
+	if hI.Path != "" {
+		query += " AND path = " + quote(hI.Path)
+	}
+	if hI.ParamType != "" {
+		query += " AND param_type = " + quote(hI.ParamType)
+	}
+	if hI.Descriptions {
+		query += " AND descriptions = 'true'"
+	}
+	if hI.IncludeGlobal {
+		query += " AND include_global = 'true'"
+	}
+	return query, nil
 }
 
 func (s *simpleStackqlInterrogator) GetQueryJSON(qI dto.QueryJSONInput) (string, error) {

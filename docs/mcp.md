@@ -156,7 +156,7 @@ Tools also carry a `title` and every MCP behavioural hint as an explicit boolean
 | `list_services` | Table | Services under a provider.  Requires `provider`. |
 | `list_resources` | Table | Resources under a `provider`.`service`.  Requires `provider` and `service`. |
 | `list_methods` | Table | Access methods (HTTP operations) for a resource with their SQL verb and required params.  **Call before writing any query.** Requires `provider`, `service`, `resource`. |
-| `describe_method` | KV | Full I/O contract for one method (always EXTENDED): inputs with `param_type` and the `output` fields a SELECT can reference.  Requires `provider`, `service`, `resource`, `method`. |
+| `describe_method` | KV | Typed, shallow I/O contract for one method: inputs with `param_type` and selected response-row fields. Requires `provider`, `service`, `resource`, `method`. Optional `depth` (default 1, maximum 32), `path`, `descriptions` (default false), `param_type` and `include_global` control expansion. |
 | `validate_select_query` | KV | Parse and plan a SELECT without executing.  Returns `{valid, errors}`.  SELECT only. |
 | `run_select_query` | Table | Execute a SELECT.  Returns `{rows}`.  Reads only. |
 | `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE.  **Real side effects.** Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
@@ -166,6 +166,27 @@ Tools also carry a `title` and every MCP behavioural hint as an explicit boolean
 | `reload_credentials` | Table | Live-reload credentials: re-source the [`--env.file`](#credential-resourcing---envfile--reload_credentials) dotenv file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider.  Never returns secret values.  Optional `provider` filters the report.  Recovery and rotation only, never a pre-query step.  Allowed in every mode. |
 | `query_library_search` | Table | Search the curated query library by natural-language `intent` (optional `provider` / `service` / `tags` filters).  Consult before composing SQL from scratch.  Read-only, no credentials. |
 | `query_library_get` | KV | Retrieve one library entry by `id`; with `params` the server validates them and returns rendered SQL plus the tool to execute it with.  Read-only, no credentials. |
+
+Method discovery resolves recursive schemas but expands only the requested depth (maximum 4096
+nodes). `shape` contains JSON schema properties/items, enums, wire names, child counts and truncation
+markers. Drill down with paths such as `data__networkInterfaces.accessConfigs`; array items are
+traversed implicitly. Descriptions and document-global optional query controls are opt-in.
+`param_type` accepts `input`, `output`, `input_required` or `input_optional`.
+
+The same controls are available over SQL and both MCP backends:
+
+```sql
+SELECT * FROM stackql_preview.metadata.method_fields
+WHERE provider = 'google' AND service = 'compute'
+  AND resource = 'instances' AND method = 'insert'
+  AND path = 'data__networkInterfaces.accessConfigs'
+  AND depth = 2 AND descriptions = 'true' AND param_type = 'input';
+```
+
+Plain `DESCRIBE METHOD` uses the same typed shallow view; `EXTENDED` opts into descriptions.
+Discovery verifies provider documents and makes no provider API calls. Malformed source schemas
+produce explicit errors rather than invented row fields; the self-referencing S3 GET lifecycle
+schema requires a registry correction. Request-only discovery remains available.
 
 ## Canonical agent prompts, resources and instructions
 

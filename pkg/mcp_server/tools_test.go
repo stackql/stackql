@@ -287,10 +287,13 @@ func TestTool_DescribeMethod_RequiresFourSegments(t *testing.T) {
 
 	const wantMethod = "select_one"
 	callTool(t, cs, "describe_method", map[string]any{
-		"provider": "google", "service": "compute", "resource": "networks", "method": wantMethod,
+		"provider": "google", "service": "compute", "resource": "networks", "method": wantMethod, "depth": 2, "path": "data__settings.mode", "descriptions": true, "param_type": "input", "include_global": true,
 	})
 	if be.lastHierarchy.Method != wantMethod {
 		t.Errorf("method not forwarded: %+v", be.lastHierarchy)
+	}
+	if be.lastHierarchy.Depth != 2 || be.lastHierarchy.Path != "data__settings.mode" || !be.lastHierarchy.Descriptions || be.lastHierarchy.ParamType != "input" || !be.lastHierarchy.IncludeGlobal {
+		t.Fatalf("schema controls not forwarded: %+v", be.lastHierarchy)
 	}
 }
 
