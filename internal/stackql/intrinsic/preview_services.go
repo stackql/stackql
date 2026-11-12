@@ -37,6 +37,8 @@ const (
 	graphRelation    = "query"
 	convergeRelation = "run"
 	destroyRelation  = "destroy"
+	ledgerRelation   = "ledger"
+	recoverRelation  = "recover"
 )
 
 const (
@@ -110,7 +112,11 @@ func registryRoot(ctx queryContext) string {
 	if err := yaml.Unmarshal([]byte(runtime.RegistryRaw), &cfg); err == nil && cfg.SrcPrefix != nil {
 		prefix = *cfg.SrcPrefix
 	}
-	return filepath.Join(localDocRoot(runtime), prefix)
+	root := filepath.Join(localDocRoot(runtime), prefix)
+	if host, ok := ctx.(interface{ DocumentRegistry(string) string }); ok {
+		return host.DocumentRegistry(root)
+	}
+	return root
 }
 
 // popPredicate takes a predicate out of the parameter map. What remains after
@@ -324,6 +330,14 @@ func previewTables(service string) []table {
 		isData:      true,
 		description: "every resource a named collection holds, deleted",
 	}}
+	out = append(out, table{
+		service: iacService, name: recoverRelation, isData: true,
+		description: "explicit recovery of an operator-verified pending outcome",
+	})
+	out = append(out, table{
+		service: iacService, name: ledgerRelation, isData: true,
+		description: "read-only resource identities and phases from the collection ledger",
+	})
 	return append(out, blueprintTables()...)
 }
 
@@ -344,7 +358,8 @@ func describePreviewTableFunc(
 	resource := node.Table.Name.GetRawVal()
 	extended := isExtended(node.Extended)
 	if service == iacService && !strings.EqualFold(resource, convergeRelation) &&
-		!strings.EqualFold(resource, destroyRelation) {
+		!strings.EqualFold(resource, destroyRelation) && !strings.EqualFold(resource, ledgerRelation) &&
+		!strings.EqualFold(resource, recoverRelation) {
 		blueprint, ok := blueprintFor(resource)
 		if !ok {
 			return refuse(fmt.Errorf(

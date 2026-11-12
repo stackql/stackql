@@ -19,12 +19,13 @@ import (
 )
 
 type providerSessionState struct {
-	variables map[string]any
-	base      omnisdk.Args
-	mu        sync.Mutex
-	client    omnisdk.ClientSession
-	store     secrets.Store
-	bindings  map[string]omnisdk.ProviderBinding
+	variables    map[string]any
+	base         omnisdk.Args
+	mu           sync.Mutex
+	client       omnisdk.ClientSession
+	store        secrets.Store
+	bindings     map[string]omnisdk.ProviderBinding
+	documentView string
 }
 
 func decodeSessionObject(value interface{}, target interface{}) error {
@@ -304,6 +305,7 @@ func (source *standardHandlerContext) NewClientContext() HandlerContext {
 		source.runtimeContext.APIRequestTimeout, source.runtimeContext.HTTPPageLimit,
 	)
 	target.providerSession.variables = maps.Clone(state.variables)
+	target.providerSession.documentView = state.documentView
 	target.providerSession.bindings = make(map[string]omnisdk.ProviderBinding, len(state.bindings))
 	for alias, binding := range state.bindings {
 		binding.Params = maps.Clone(binding.Params)

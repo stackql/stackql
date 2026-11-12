@@ -51,6 +51,10 @@ func iacSelectFunc(
 	switch {
 	case strings.EqualFold(resource, convergeRelation):
 		action = convergeSelectFunc(ctx, node)
+	case strings.EqualFold(resource, recoverRelation):
+		return recoverSelectFunc(ctx, node), true
+	case strings.EqualFold(resource, ledgerRelation):
+		return ledgerSelectFunc(ctx, node), true
 	case strings.EqualFold(resource, destroyRelation):
 		action = destroySelectFunc(ctx, node)
 	default:
@@ -382,6 +386,17 @@ func blueprintSelectFunc(resource string) func() internaldto.ExecutorOutput {
 
 // iacBindings keeps typed values separate from provider execution scope.
 func iacBindings(params map[string]string) (map[string]any, map[string]any, error) {
+	file := popPredicate(params, "inputs_file")
+	if file != "" {
+		if _, inline := params["inputs"]; inline {
+			return nil, nil, fmt.Errorf("supply inputs or inputs_file, not both")
+		}
+		raw, err := os.ReadFile(file)
+		if err != nil {
+			return nil, nil, fmt.Errorf("inputs_file: %w", err)
+		}
+		params["inputs"] = string(raw)
+	}
 	var maps [2]map[string]any
 	for index, name := range []string{"inputs", "environment"} {
 		raw := popPredicate(params, name)
@@ -426,7 +441,11 @@ func (r *iacRows) Next() bool {
 	}
 	if failed {
 		r.mu.Lock()
-		r.failure = iacOutcomeError{key: fmt.Sprint(row["key"]), status: status}
+		failure := iacOutcomeError{key: fmt.Sprint(row["key"]), status: status}
+		if detail := row["error"]; detail != nil && fmt.Sprint(detail) != "" {
+			failure.cause = fmt.Errorf("IaC operation failed for key %s: %s", failure.key, detail)
+		}
+		r.failure = failure
 		r.mu.Unlock()
 	}
 	return true

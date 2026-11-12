@@ -1,0 +1,67 @@
+{
+  "resources": [
+    {
+      "key": "instance",
+      "provider": "aws",
+      "address": "ec2.web_instance",
+      "identity": "id",
+      "addressed_by": "InstanceId.1",
+      "write_once": {
+        "ClientToken": {
+          "from": "input",
+          "attribute": "client_token"
+        },
+        "ImageId": {
+          "from": "input",
+          "attribute": "image_id"
+        },
+        "InstanceType": {
+          "from": "input",
+          "attribute": "instance_type"
+        },
+        "MaxCount": "1",
+        "MetadataOptions.HttpTokens": "required",
+        "MinCount": "1",
+        "NetworkInterface.1.AssociatePublicIpAddress": "true",
+        "NetworkInterface.1.DeviceIndex": "0",
+        "TagSpecification.1.ResourceType": "instance",
+        "TagSpecification.1.Tag.1.Key": "Name",
+        "TagSpecification.1.Tag.1.Value": {
+          "from": "input",
+          "attribute": "tag_instance"
+        },
+        "UserData": {
+          "from": "input",
+          "attribute": "user_data"
+        }
+      },
+      "desired": {
+        "State": "stopped"
+      },
+      "inbound": [
+        {
+          "from": "subnet_a",
+          "as": "subnet_id"
+        },
+        {
+          "from": "key",
+          "as": "key_name"
+        },
+        {
+          "from": "ingress",
+          "as": "security_group"
+        },
+        {
+          "from": "default_route",
+          "as": "route_ready"
+        },
+        {
+          "from": "association_a",
+          "as": "association_ready"
+        }
+      ],
+      "via_type": "starlark",
+      "via": "{\"NetworkInterface.1.SubnetId\":inbox[\"subnet_id\"],\"NetworkInterface.1.SecurityGroupId.1\":inbox[\"security_group\"],\"KeyName\":inbox[\"key_name\"]}"
+    }
+  ]
+}

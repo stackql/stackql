@@ -1,0 +1,327 @@
+{
+  "resources": [
+    {
+      "key": "vpc",
+      "provider": "aws",
+      "address": "ec2.web_vpc",
+      "identity": "id",
+      "addressed_by": "VpcId",
+      "write_once": {
+        "CidrBlock": "10.77.0.0/16",
+        "TagSpecification.1.ResourceType": "vpc",
+        "TagSpecification.1.Tag.1.Key": "Name",
+        "TagSpecification.1.Tag.1.Value": {
+          "from": "input",
+          "attribute": "tag_vpc"
+        }
+      },
+      "desired": {}
+    },
+    {
+      "key": "subnet_a",
+      "provider": "aws",
+      "address": "ec2.web_subnet_a",
+      "identity": "id",
+      "addressed_by": "SubnetId",
+      "write_once": {
+        "AvailabilityZone": {
+          "from": "input",
+          "attribute": "zone_a"
+        },
+        "CidrBlock": "10.77.1.0/24",
+        "TagSpecification.1.ResourceType": "subnet",
+        "TagSpecification.1.Tag.1.Key": "Name",
+        "TagSpecification.1.Tag.1.Value": {
+          "from": "input",
+          "attribute": "tag_subnet_a"
+        }
+      },
+      "desired": {},
+      "inbound": [
+        {
+          "from": "vpc",
+          "as": "VpcId"
+        }
+      ]
+    },
+    {
+      "key": "subnet_b",
+      "provider": "aws",
+      "address": "ec2.web_subnet_b",
+      "identity": "id",
+      "addressed_by": "SubnetId",
+      "write_once": {
+        "AvailabilityZone": {
+          "from": "input",
+          "attribute": "zone_b"
+        },
+        "CidrBlock": "10.77.2.0/24",
+        "TagSpecification.1.ResourceType": "subnet",
+        "TagSpecification.1.Tag.1.Key": "Name",
+        "TagSpecification.1.Tag.1.Value": {
+          "from": "input",
+          "attribute": "tag_subnet_b"
+        }
+      },
+      "desired": {},
+      "inbound": [
+        {
+          "from": "vpc",
+          "as": "VpcId"
+        }
+      ]
+    },
+    {
+      "key": "gateway",
+      "provider": "aws",
+      "address": "ec2.web_gateway",
+      "identity": "id",
+      "addressed_by": "InternetGatewayId",
+      "write_once": {
+        "TagSpecification.1.ResourceType": "internet-gateway",
+        "TagSpecification.1.Tag.1.Key": "Name",
+        "TagSpecification.1.Tag.1.Value": {
+          "from": "input",
+          "attribute": "tag_gateway"
+        }
+      },
+      "desired": {}
+    },
+    {
+      "key": "gateway_attachment",
+      "provider": "aws",
+      "address": "ec2.web_gateway_attachment",
+      "identity": "id",
+      "addressed_by": "InternetGatewayId",
+      "write_once": {},
+      "desired": {},
+      "inbound": [
+        {
+          "from": "gateway",
+          "as": "InternetGatewayId"
+        },
+        {
+          "from": "vpc",
+          "as": "VpcId"
+        }
+      ]
+    },
+    {
+      "key": "route_table",
+      "provider": "aws",
+      "address": "ec2.web_route_table",
+      "identity": "id",
+      "addressed_by": "RouteTableId",
+      "write_once": {
+        "TagSpecification.1.ResourceType": "route-table",
+        "TagSpecification.1.Tag.1.Key": "Name",
+        "TagSpecification.1.Tag.1.Value": {
+          "from": "input",
+          "attribute": "tag_route_table"
+        }
+      },
+      "desired": {},
+      "inbound": [
+        {
+          "from": "vpc",
+          "as": "VpcId"
+        }
+      ]
+    },
+    {
+      "key": "default_route",
+      "provider": "aws",
+      "address": "ec2.web_default_route",
+      "identity": "id",
+      "addressed_by": "RouteTableId",
+      "write_once": {
+        "DestinationCidrBlock": "0.0.0.0/0"
+      },
+      "desired": {},
+      "inbound": [
+        {
+          "from": "route_table",
+          "as": "RouteTableId"
+        },
+        {
+          "from": "gateway_attachment",
+          "as": "GatewayId"
+        }
+      ]
+    },
+    {
+      "key": "association_a",
+      "provider": "aws",
+      "address": "ec2.web_association_a",
+      "identity": "id",
+      "addressed_by": "AssociationId",
+      "write_once": {},
+      "desired": {},
+      "inbound": [
+        {
+          "from": "route_table",
+          "as": "RouteTableId"
+        },
+        {
+          "from": "subnet_a",
+          "as": "SubnetId"
+        }
+      ]
+    },
+    {
+      "key": "association_b",
+      "provider": "aws",
+      "address": "ec2.web_association_b",
+      "identity": "id",
+      "addressed_by": "AssociationId",
+      "write_once": {},
+      "desired": {},
+      "inbound": [
+        {
+          "from": "route_table",
+          "as": "RouteTableId"
+        },
+        {
+          "from": "subnet_b",
+          "as": "SubnetId"
+        }
+      ]
+    },
+    {
+      "key": "security_group",
+      "provider": "aws",
+      "address": "ec2.web_security_group",
+      "identity": "id",
+      "addressed_by": "GroupId",
+      "write_once": {
+        "GroupDescription": "omnisdk nginx demo",
+        "GroupName": {
+          "from": "input",
+          "attribute": "group_name"
+        },
+        "TagSpecification.1.ResourceType": "security-group",
+        "TagSpecification.1.Tag.1.Key": "Name",
+        "TagSpecification.1.Tag.1.Value": {
+          "from": "input",
+          "attribute": "tag_security_group"
+        }
+      },
+      "desired": {},
+      "inbound": [
+        {
+          "from": "vpc",
+          "as": "VpcId"
+        }
+      ]
+    },
+    {
+      "key": "ingress",
+      "provider": "aws",
+      "address": "ec2.web_ingress",
+      "identity": "id",
+      "addressed_by": "GroupId",
+      "write_once": {
+        "IpPermissions.1.FromPort": "22",
+        "IpPermissions.1.IpProtocol": "tcp",
+        "IpPermissions.1.IpRanges.1.CidrIp": {
+          "from": "input",
+          "attribute": "ssh_cidr"
+        },
+        "IpPermissions.1.ToPort": "22",
+        "IpPermissions.2.FromPort": "80",
+        "IpPermissions.2.IpProtocol": "tcp",
+        "IpPermissions.2.IpRanges.1.CidrIp": {
+          "from": "input",
+          "attribute": "http_cidr"
+        },
+        "IpPermissions.2.ToPort": "80"
+      },
+      "desired": {},
+      "inbound": [
+        {
+          "from": "security_group",
+          "as": "GroupId"
+        }
+      ]
+    },
+    {
+      "key": "key",
+      "provider": "aws",
+      "address": "ec2.web_key",
+      "identity": "id",
+      "addressed_by": "KeyName",
+      "write_once": {
+        "KeyName": {
+          "from": "input",
+          "attribute": "key_name"
+        },
+        "PublicKeyMaterial": {
+          "from": "input",
+          "attribute": "public_key_material"
+        }
+      },
+      "desired": {}
+    },
+    {
+      "key": "instance",
+      "provider": "aws",
+      "address": "ec2.web_instance",
+      "identity": "id",
+      "addressed_by": "InstanceId.1",
+      "write_once": {
+        "ClientToken": {
+          "from": "input",
+          "attribute": "client_token"
+        },
+        "ImageId": {
+          "from": "input",
+          "attribute": "image_id"
+        },
+        "InstanceType": {
+          "from": "input",
+          "attribute": "instance_type"
+        },
+        "MaxCount": "1",
+        "MetadataOptions.HttpTokens": "required",
+        "MinCount": "1",
+        "NetworkInterface.1.AssociatePublicIpAddress": "true",
+        "NetworkInterface.1.DeviceIndex": "0",
+        "TagSpecification.1.ResourceType": "instance",
+        "TagSpecification.1.Tag.1.Key": "Name",
+        "TagSpecification.1.Tag.1.Value": {
+          "from": "input",
+          "attribute": "tag_instance"
+        },
+        "UserData": {
+          "from": "input",
+          "attribute": "user_data"
+        }
+      },
+      "desired": {},
+      "inbound": [
+        {
+          "from": "subnet_a",
+          "as": "subnet_id"
+        },
+        {
+          "from": "key",
+          "as": "key_name"
+        },
+        {
+          "from": "ingress",
+          "as": "security_group"
+        },
+        {
+          "from": "default_route",
+          "as": "route_ready"
+        },
+        {
+          "from": "association_a",
+          "as": "association_ready"
+        }
+      ],
+      "via_type": "starlark",
+      "via": "{\"NetworkInterface.1.SubnetId\":inbox[\"subnet_id\"],\"NetworkInterface.1.SecurityGroupId.1\":inbox[\"security_group\"],\"KeyName\":inbox[\"key_name\"]}"
+    }
+  ]
+}

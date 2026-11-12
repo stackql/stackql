@@ -623,3 +623,58 @@ esac
         sql += "SET enabled = false; SELECT id FROM typed.things.widgets WHERE region = '42' AND active = $enabled;"
         result = self.run_sql(sql, [('Bearer typed-token', '42'), ('Bearer typed-token', '42')])
         assert result.stdout.rstrip().endswith('null'), result.stdout
+
+    def document_merge_inline_file_and_reset(self):
+        binding = self.setting("providers.merged", {"provider": "widgets", "tenancy": "merge-test", "auth": {"type": "bearer", "credentials": "merge-token"}, "params": {"region": "merge-region"}})
+        config = {"patches": [{"service": "stackql_unstable_widgets.things", "merge": {"components": {"x-stackQL-resources": {"widgets": {"methods": {"list": {"response": {"transform": {"type": "golang_template_json_v0.3.0", "body": '[{"id":"patched"}]'}}}}}}}}}]}
+        query = "SELECT id FROM merged.things.widgets;"
+        patch_file = self.root / "merge.json"
+        patch_file.write_text(json.dumps(config))
+        base_doc = self.root / "registry/src/widgets/v00.00.00000/services/things.yaml"
+        original = base_doc.read_bytes()
+        for value in [json.dumps(config).replace("\\", "\\\\"), "@" + patch_file.as_posix()]:
+            sql = binding + self.setting("document_merge", value) + query
+            sql += 'UNSET "$.document_merge";' + query
+            result = self.run_sql(sql, [("Bearer merge-token", "merge-region")] * 2)
+            assert 'patched' in result.stdout and 'merge-region' in result.stdout, result.stdout
+            assert base_doc.read_bytes() == original, "base document changed"
+        result = self.run_sql(binding + query, [("Bearer merge-token", "merge-region")])
+        assert 'patched' not in result.stdout, "merge leaked into a new session"
+
+    def iac_inputs_file_errors_precede_provider_dispatch(self):
+        missing = str(self.root / "missing-inputs.json")
+        sql = "SELECT * FROM stackql_preview.iac.run WHERE collection = 'file-check' AND resources = '[]' AND inputs_file = '" + missing + "';"
+        before = len(self.calls)
+        result = subprocess.run(self.prefix + ["exec", sql] + self.flags, text=True, capture_output=True, timeout=30, env=self.env)
+        assert result.returncode != 0 and "inputs_file:" in result.stderr, result.stderr
+        assert len(self.calls) == before, "provider called before inputs loaded"
+
+    def ledger_query_is_read_only_and_collection_scoped(self):
+        import base64
+        def encoded(value):
+            return base64.b64encode(value.encode()).decode()
+        root = self.root / "app/iac/ledger"
+        for collection in ["demo", "demo-other"]:
+            directory = root / collection
+            directory.mkdir(parents=True, exist_ok=True)
+            (directory / "vm.v1.json").write_text(json.dumps({"phase": 1, "identity": encoded("i-ledger-test"), "about": encoded(json.dumps({"provider":"aws","address":"ec2.web_instance","params":{"secret":"hidden"}}))}))
+        before = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+        result = self.run_sql("SELECT * FROM stackql_preview.iac.ledger WHERE collection = 'demo' AND resource_key = 'vm';", [])
+        assert "i-ledger-test" in result.stdout and 'live' in result.stdout, result.stdout
+        assert "demo-other" not in result.stdout and "hidden" not in result.stdout, result.stdout
+        after = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+        assert before == after, "ledger changed during inspection"
+        assert not (self.root / "app/iac/journal").exists(), "reader created a journal"
+
+    def recover_verified_absent_create_without_provider_calls(self):
+        import base64
+        root = self.root / "app/iac/ledger/recover-test"
+        root.mkdir(parents=True, exist_ok=True)
+        record = {"phase":0,"proposed":base64.b64encode(b"{}").decode()}
+        (root / "pending.v1.json").write_text(json.dumps(record))
+        sql = "SELECT * FROM stackql_preview.iac.recover WHERE collection = 'recover-test' AND resource_key = 'pending' AND outcome = 'absent' AND version = '1';"
+        result = self.run_sql(sql, [])
+        assert 'recovered_absent' in result.stdout, result.stdout
+        assert json.loads((root / 'pending.v2.json').read_text())['tombstone'], "recovery did not clear verified absent create"
+        evidence = [json.loads(line) for path in (self.root / 'app/iac/journal').glob('*.diagnostics.jsonl') for line in path.read_text().splitlines()]
+        assert any(row.get('diagnostic', {}).get('event') == 'recovery_assertion' for row in evidence), 'recovery decision not durable'
