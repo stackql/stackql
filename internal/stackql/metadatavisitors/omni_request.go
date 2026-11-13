@@ -61,7 +61,7 @@ func ToOmniInsertStatement(
 			if !exists || !includeRequestProperty(body, shape, property, requiredOnly) {
 				continue
 			}
-			value, err := printer.PrintTemplatedJSON(requestTemplate(shape, ".values."+name, false, 0))
+			value, err := printer.PrintTemplatedJSON(requestTemplate(shape, "."+name, false, 0))
 			if err != nil {
 				return "", err
 			}
