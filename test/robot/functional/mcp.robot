@@ -311,7 +311,7 @@ MCP Stdio Startup Masks Credentials And Preserves Configuration
     ${extra_auth}=    Evaluate    {"type":"basic","username":"visible-user","password":"HIDE_password","client_secret":"HIDE_client","private_key":"HIDE_private","passphrase":"HIDE_phrase","credentialsenvvar":"MY_CLIENT_SECRET","successor":{"api_key":"HIDE_successor"}}
     Set To Dictionary    ${auth}    diagnostic_fixture=${extra_auth}
     ${auth_json}=    Evaluate    json.dumps($auth)    json
-    ${config}=    Set Variable    {"server":{"read_only":true,"request_timeout":"1ms","audit":{"disabled":true},"transport_cfg":{"nested":[{"access-token":"HIDE_transport","client_secret_env_var":"PASSWORD_ENV"}]}},"backend":{"dsn":"HIDE_backend"},"enabled_tools":["server_info","run_select_query","run_mutation_query"]}
+    ${config}=    Set Variable    {"server":{"read_only":true,"request_timeout":"30s","audit":{"disabled":true},"transport_cfg":{"nested":[{"access-token":"HIDE_transport","client_secret_env_var":"PASSWORD_ENV"}]}},"backend":{"dsn":"HIDE_backend"},"enabled_tools":["server_info","run_select_query","run_mutation_query"]}
     ${argv}=    Evaluate    ["mcp", "--mcp.server.type=stdio", "--approot", $REPOSITORY_ROOT + "/test/tmp", "--mcp.config", '{"server":{"audit":{"disabled":true}}}', "--auth=" + $auth_json, '--mcp.config={"server":{"transport_cfg":"HIDE_discarded"}}', "--mcp.config=" + $config, "--registry", $REGISTRY_NO_VERIFY_CFG_JSON_STR, "--tls.allowInsecure", "--http.proxy.password=HIDE_first", "--http.proxy.password", "-HIDE_second", "--http.proxy.user=proxy-user", "--var", "password=public,token=literal", "--var=secret=public-too", "--otel.config", '{"exporter":{"endpoint":"http://collector.example/v1/logs","headers":{"X-Custom":"HIDE_header"},"batch_size":10}}', "--pgsrv.tls", '{"keyContents":"HIDE_tls","certContents":"VISIBLE_CERT"}']
     ${sql}=    Set Variable    select id from stackql_auth_testing.collectors.collectors order by id desc;
     ${calls}=    Evaluate    [{"name":"server_info","arguments":{}},{"name":"run_select_query","arguments":{"sql":$sql}},{"name":"run_mutation_query","arguments":{"sql":"DELETE FROM stackql_auth_testing.collectors.collectors WHERE id = '100000001';"}}]
@@ -335,6 +335,43 @@ MCP Stdio Startup Masks Credentials And Preserves Configuration
     Should Contain    ${result['stderr']}    ${registry_url}
     Should Contain    ${result['stderr']}    transport=stdio
     Should Not Contain    ${result['stdout']}    [stackql mcp]
+
+MCP Stdio Request Timeout Ends Slow Call And Session Survives
+    [Documentation]    server.request_timeout bounds backend work (issue 828). The select cannot finish
+    ...                inside 1ms, so it returns a tool error naming the setting. server_info does no
+    ...                backend work, so it and the later ping show the session outlives the timeout.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${config}=    Set Variable    {"server":{"mode":"read_only","request_timeout":"1ms","max_concurrent_requests":1,"audit":{"disabled":true}},"enabled_tools":["server_info","run_select_query"]}
+    ${argv}=    Evaluate    ["mcp", "--mcp.server.type=stdio", "--approot", $REPOSITORY_ROOT + "/test/tmp", "--mcp.config=" + $config, "--auth", $AUTH_CFG_STR, "--registry", $REGISTRY_NO_VERIFY_CFG_JSON_STR, "--tls.allowInsecure"]
+    ${sql}=    Set Variable    select id from stackql_auth_testing.collectors.collectors order by id desc;
+    ${calls}=    Evaluate    [{"name":"run_select_query","arguments":{"sql":$sql}},{"name":"server_info","arguments":{}}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_startup_script($STACKQL_EXE, $argv, $calls)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['returncode']}    0
+    Should Contain    ${result['run_select_query']}    server.request_timeout
+    Should Contain    ${result['run_select_query']}    isError=true
+    Should Contain    ${result['server_info']}    read_only
+    Should Not Contain    ${result['server_info']}    isError=true
+    Should Be True    ${result['alive_after_idle']}
+    Should Contain    ${result['ping']}    result
+
+MCP Stdio Concurrency Limit Admits Sequential Calls
+    [Documentation]    server.max_concurrent_requests of 1 with a generous request_timeout (issue 828).
+    ...                Each call must hand its slot back: a slot kept by an earlier call would leave
+    ...                a later one queued until it is refused as busy.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${config}=    Set Variable    {"server":{"mode":"read_only","request_timeout":"60s","max_concurrent_requests":1,"audit":{"disabled":true}},"enabled_tools":["list_providers","list_services","run_select_query"]}
+    ${argv}=    Evaluate    ["mcp", "--mcp.server.type=stdio", "--approot", $REPOSITORY_ROOT + "/test/tmp", "--mcp.config=" + $config, "--auth", $AUTH_CFG_STR, "--registry", $REGISTRY_NO_VERIFY_CFG_JSON_STR, "--tls.allowInsecure"]
+    ${sql}=    Set Variable    select id from stackql_auth_testing.collectors.collectors order by id desc;
+    ${calls}=    Evaluate    [{"name":"list_providers","arguments":{}},{"name":"run_select_query","arguments":{"sql":$sql}},{"name":"list_services","arguments":{"provider":"google"}}]
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_startup_script($STACKQL_EXE, $argv, $calls)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Equal As Integers    ${result['returncode']}    0
+    Should Contain    ${result['list_providers']}    google
+    Should Contain    ${result['run_select_query']}    100000001
+    Should Contain    ${result['list_services']}    compute
+    FOR    ${tool}    IN    list_providers    run_select_query    list_services
+        Should Not Contain    ${result}[${tool}]    isError=true
+        Should Not Contain    ${result}[${tool}]    server busy
+    END
 
 MCP Config Transport Overrides Command Default
     [Documentation]    Explicit stdio configuration takes precedence over the command's HTTP default.

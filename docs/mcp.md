@@ -62,6 +62,24 @@ Audit is on by default.  To opt out:
 
 ```
 
+### Request limits (`max_concurrent_requests` + `request_timeout`)
+
+Both limits are off unless set; a value of zero or less disables that limit.
+
+```bash
+
+./build/stackql mcp --mcp.server.type=http --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "allow_unauthenticated": true, "max_concurrent_requests": 8, "request_timeout": "2m"} }'
+
+```
+
+Semantics:
+
+- The limits apply to backend work (queries, discovery, registry and credential calls) and are shared by every client of the process.  `server_info` does no backend work and is never limited.
+- `max_concurrent_requests` caps the calls in flight; further calls queue.  `request_timeout` is the budget for one call, queue wait included.  Set both: without a timeout a queued call waits until its client gives up.
+- A call that the mode refuses, or that is waiting on a user's approval, holds no slot and spends none of its budget.
+- Both outcomes are tool errors that name the setting and are written to the audit log.  `server busy` means the call never ran, so it is safe to retry.  A mutation or lifecycle call that timed out may already have taken effect at the provider, so check before retrying.
+- Choose a `request_timeout` above the slowest call you expect; a call that exceeds it is cancelled.
+
 ### Credential (re)sourcing (`--env.file` + `reload_credentials`)
 
 `--env.file` is a root flag: it nominates a dotenv-style file that every stackql entrypoint (`exec`, `shell`, `srv`, `mcp`) sources into the process environment at startup.  For the MCP server it additionally acts as a mutable credential store: a process env block is fixed at spawn, so a stdio server launched without credential vars (eg by Claude Desktop) can only pick them up from such a file, re-sourced on each `reload_credentials` tool call.
