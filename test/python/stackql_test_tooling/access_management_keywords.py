@@ -83,8 +83,8 @@ class AccessManagementKeywords:
                 import psycopg
                 dsn = cfg["dsn"]
                 if docker:
-                    subprocess.run(["docker", "compose", "-p", "execrun", "up", "-d", "postgres_stackql"], capture_output=True, check=True, timeout=120)
-                    result = subprocess.run(["docker", "compose", "-p", "execrun", "port", "postgres_stackql", "5432"], capture_output=True, text=True, check=True, timeout=30)
+                    subprocess.run(["docker", "compose", "--progress", "quiet", "-p", "execrun", "up", "-d", "postgres_stackql"], capture_output=True, check=True, timeout=120)
+                    result = subprocess.run(["docker", "compose", "--progress", "quiet", "-p", "execrun", "port", "postgres_stackql", "5432"], capture_output=True, text=True, check=True, timeout=30)
                     published = result.stdout.strip().splitlines()[0].rsplit(":", 1)[1]
                     url = urlsplit(dsn)
                     credentials = url.netloc.rsplit("@", 1)[0]
@@ -254,7 +254,7 @@ components:
                 signature = (signer or key).sign(message)
                 return (message + b"." + base64.urlsafe_b64encode(signature).rstrip(b"=")).decode()
 
-            prefix = (["docker", "compose", "-p", "execrun", "run", "--rm", "--no-deps", "-T", "--user", f"{os.getuid()}:{os.getgid()}", "--workdir", str(root), "-v", str(root) + ":" + str(root), "-e", "STACKQL_CALLER_TOKEN", "--entrypoint", "stackql", "stackqlsrv"]
+            prefix = (["docker", "compose", "--progress", "quiet", "-p", "execrun", "run", "--rm", "--no-deps", "-T", "--user", f"{os.getuid()}:{os.getgid()}", "--workdir", str(root), "-v", str(root) + ":" + str(root), "-e", "STACKQL_CALLER_TOKEN", "--entrypoint", "stackql", "stackqlsrv"]
                       if docker else [shutil.which(executable) or str(pathlib.Path(executable).resolve())])
             base = prefix + ["--approot", str(root), "--sqlBackend", json.dumps(cfg), "--registry", json.dumps({"localDocRoot": str(root), "verifyConfig": {"nopVerify": True}}), "--preview", '{"unstable":true}', "--output", "json"]
 

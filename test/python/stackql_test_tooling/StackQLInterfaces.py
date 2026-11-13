@@ -351,6 +351,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     docker_args = (
       "docker",
       "compose",
+      "--progress",
+      "quiet",
       "-p",
       "execrun",
       "run",
@@ -471,6 +473,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     start_cmd = [
       "docker", 
       "compose",
+      "--progress",
+      "quiet",
       "-p",
       "stackqlshell",
       "run",
