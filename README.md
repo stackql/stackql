@@ -314,20 +314,22 @@ Caller authentication and permissions: [configuration](docs/access_management.md
 
 StackQL can be used via the interactive REPL shell, or via the `exec` command or ran as a server using the [Postgres wire protocol](https://www.postgresql.org/docs/current/protocol.html).  
 
+For provider authentication, StackQL uses the provider's default configuration when no `--auth` override is supplied. Set the environment variables required by the provider before running queries. For example, AWS uses `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. See [provider authentication examples](docs/auth.md).
+
 > ℹ️ StackQL does not require or install a database.
 
 * Interactive Shell
   ```sh
   # run interactive stackql queries
-  stackql shell --auth="${AUTH}"
+  stackql shell
   ```
 * Execute a statement or file
   ```sh
-  stackql exec --auth="${AUTH}" -i myscript.iql --iqldata vars.jsonnet --output json
+  stackql exec -i myscript.iql --iqldata vars.jsonnet --output json
   
   # or
   
-  stackql exec --auth="${AUTH}" "SELECT id, status FROM aws.ec2.instances WHERE region = 'us-east-1'"
+  stackql exec "SELECT id, status FROM aws.ec2.instances WHERE region = 'us-east-1'"
   ```
 
   > ℹ️ output options of `json`, `csv`, `table` and `text` are available for the `exec` command using the `--output` flag
@@ -337,8 +339,10 @@ StackQL can be used via the interactive REPL shell, or via the `exec` command or
   ```sh
   # serve client requests over the Postgres wire protocol (psycopg2, etc.) 
   # clients are not authenticated unless mTLS is configured via --pgsrv.tls, so keep the listener on loopback otherwise
-  stackql srv --pgsrv.address=127.0.0.1 --auth="${AUTH}"
+  stackql srv --pgsrv.address=127.0.0.1
   ```
+
+To override a provider's default authentication, supply an auth JSON object with `--auth`, for example `stackql shell --auth="${AUTH}"`.
 
 _For more examples, please check our [Blog][blog]_
 
