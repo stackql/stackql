@@ -331,6 +331,20 @@ Show Insert Renders Snake Body Keys
     ...    show insert into stackql_native_test.casing.echo;
     ...    data__storage_class
 
+Show Insert Uses Root Template Values
+    [Documentation]    SHOW INSERT references values at the root of its declaration block.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    show insert into stackql_native_test.casing.echo;
+    ...    {{ .data__storage_class }}
+    ...    stackql_H=True
+
 Bodyless Exec With Metadata Only Request Block Dispatches Wire Args
     [Documentation]    A body-less method carrying request.nativeCasing (no schema)
     ...    dispatches: GetRequestBodySchema reports nil, nil rather than an error.

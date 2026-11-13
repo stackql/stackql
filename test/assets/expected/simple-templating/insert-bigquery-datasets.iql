@@ -42,15 +42,15 @@ INSERT INTO google.bigquery.datasets(
   data__location
 )
 SELECT
-  '{{ .values.projectId }}',
-  '[ { "dataset": {{ .values.data__access[0].dataset }}, "domain": "{{ .values.data__access[0].domain }}", "groupByEmail": "{{ .values.data__access[0].groupByEmail }}", "iamMember": "{{ .values.data__access[0].iamMember }}", "role": "{{ .values.data__access[0].role }}", "routine": {{ .values.data__access[0].routine }}, "specialGroup": "{{ .values.data__access[0].specialGroup }}", "userByEmail": "{{ .values.data__access[0].userByEmail }}", "view": {{ .values.data__access[0].view }} } ]',
-  '{ "datasetId": "{{ .values.data__datasetReference.datasetId }}", "projectId": "{{ .values.data__datasetReference.projectId }}" }',
-  '{ "kmsKeyName": "{{ .values.data__defaultEncryptionConfiguration.kmsKeyName }}" }',
-  '{{ .values.data__defaultPartitionExpirationMs }}',
-  '{{ .values.data__defaultTableExpirationMs }}',
-  '{{ .values.data__description }}',
-  '{{ .values.data__friendlyName }}',
-   {{ .values.data__isCaseInsensitive }},
-   {{ .values.data__labels }},
-  '{{ .values.data__location }}'
+  '{{ .projectId }}',
+  '[ { "dataset": {{ .data__access[0].dataset }}, "domain": "{{ .data__access[0].domain }}", "groupByEmail": "{{ .data__access[0].groupByEmail }}", "iamMember": "{{ .data__access[0].iamMember }}", "role": "{{ .data__access[0].role }}", "routine": {{ .data__access[0].routine }}, "specialGroup": "{{ .data__access[0].specialGroup }}", "userByEmail": "{{ .data__access[0].userByEmail }}", "view": {{ .data__access[0].view }} } ]',
+  '{ "datasetId": "{{ .data__datasetReference.datasetId }}", "projectId": "{{ .data__datasetReference.projectId }}" }',
+  '{ "kmsKeyName": "{{ .data__defaultEncryptionConfiguration.kmsKeyName }}" }',
+  '{{ .data__defaultPartitionExpirationMs }}',
+  '{{ .data__defaultTableExpirationMs }}',
+  '{{ .data__description }}',
+  '{{ .data__friendlyName }}',
+   {{ .data__isCaseInsensitive }},
+   {{ .data__labels }},
+  '{{ .data__location }}'
 ;

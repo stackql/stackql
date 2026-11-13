@@ -11,8 +11,8 @@ INSERT INTO google.compute.addresses(
   data__name
 )
 SELECT
-  '{{ .values.project }}',
-  '{{ .values.region }}',
-  '{{ .values.data__name }}'
+  '{{ .project }}',
+  '{{ .region }}',
+  '{{ .data__name }}'
 ;
 

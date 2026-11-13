@@ -89,11 +89,11 @@ func (pp *PrettyPrinter) RenderColumnName(cn string) string {
 }
 
 func (pp *PrettyPrinter) RenderTemplateVarAndDelimit(tv string) string {
-	return pp.baseIndentationAndDelimit(fmt.Sprintf("{{ .values.%s }}", tv))
+	return pp.baseIndentationAndDelimit(fmt.Sprintf("{{ .%s }}", tv))
 }
 
 func (pp *PrettyPrinter) RenderTemplateVarNoDelimit(tv string) string {
-	return pp.baseIndentationNoDelimit(fmt.Sprintf("{{ .values.%s }}", tv))
+	return pp.baseIndentationNoDelimit(fmt.Sprintf("{{ .%s }}", tv))
 }
 
 func (pp *PrettyPrinter) RenderTemplateVarPlaceholderNoDelimit(tv string) string {
