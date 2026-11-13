@@ -442,7 +442,7 @@ class web_service_keywords(Process):
         # host aliases are not addresses the Robot runner can necessarily resolve.
         command = [sys.executable]
         if execution_platform == 'docker':
-            command = ['docker', 'compose', '-f', 'docker-compose-testing.yml',
+            command = ['docker', 'compose', '--progress', 'quiet', '-f', 'docker-compose-testing.yml',
                        'exec', '-T', 'google_mockserver', 'python']
         program = (
             "import ssl; from urllib.request import Request, urlopen; "
@@ -458,7 +458,7 @@ class web_service_keywords(Process):
         # if system has docker installed and also has docker compose file, use that to run mock servers
         if os.system('which docker >/dev/null 2>&1') == 0 and os.path.exists('docker-compose-testing.yml'):
             ## inherits env vars from parent process so IS_DOCKER env var is passed along
-            cmd = 'docker compose -f docker-compose-testing.yml up -d --build --force-recreate'
+            cmd = 'docker compose --progress quiet -f docker-compose-testing.yml up -d --build --force-recreate'
             rv = os.system(cmd)
             if rv != 0: # debug failures
                 os.system('docker compose -f docker-compose-testing.yml ps || true')
