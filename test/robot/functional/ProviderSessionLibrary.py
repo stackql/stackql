@@ -111,7 +111,7 @@ class ProviderSessionLibrary:
             dsn = self.backend["dsn"]
             if execution_platform == "docker":
                 subprocess.run(["docker", "--log-level", "error", "compose", "--progress", "quiet", "-p", "execrun", "up", "-d", "postgres_stackql"], capture_output=True, check=True, timeout=120)
-                published = subprocess.check_output(["docker", "compose", "-p", "execrun", "port", "postgres_stackql", "5432"], text=True).strip().splitlines()[0].rsplit(":", 1)[1]
+                published = subprocess.check_output(["docker", "--log-level", "error", "compose", "--progress", "quiet", "-p", "execrun", "port", "postgres_stackql", "5432"], text=True).strip().splitlines()[0].rsplit(":", 1)[1]
                 url = urlsplit(dsn)
                 dsn = urlunsplit((url.scheme, url.netloc.rsplit("@", 1)[0] + "@127.0.0.1:" + published, url.path, url.query, url.fragment))
             for attempt in range(100):
