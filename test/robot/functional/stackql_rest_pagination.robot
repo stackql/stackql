@@ -180,6 +180,30 @@ Cursor Request Token Default Encoding Unchanged
     ...    timeout=120s
     ...    on_timeout=terminate
 
+CSV Pagination Stream Failure Flushes Completed Rows
+    [Documentation]    The first cursor page completes before the mock returns malformed
+    ...                JSON for the second page. CSV stdout must retain its header and both
+    ...                rows, while stderr still reports the stream failure.
+    [Timeout]    120 seconds
+    ${output} =    Run Stackql Exec Command No Errors
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name from stackql_native_test.cursor.items_default_encoding where group_by \= 'stream_error';
+    ...    stackql_output=csv
+    ...    timeout=120s
+    ...    on_timeout=terminate
+    ${rows} =    Evaluate    list(csv.reader(io.StringIO($output.stdout)))    modules=csv,io
+    Length Should Be    ${rows}    3
+    Should Be Equal As Strings    ${rows}[0][0]    name
+    Should Be Equal As Strings    ${rows}[1][0]    C1
+    Should Be Equal As Strings    ${rows}[2][0]    C2
+    Should Contain    ${output.stderr}    unexpected EOF
+
 Cursor Request Token Encoding None Keeps Other Parameters Escaped
     [Documentation]    Only the cursor is verbatim: a second query parameter containing a
     ...                space is still percent-encoded alongside it.
