@@ -1,4 +1,4 @@
-package prettyprint
+package prettyprint_test
 
 import (
 	"bytes"
@@ -6,10 +6,11 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/pkg/prettyprint"
 )
 
 func TestRenderTemplateVarAndDelimitUsesRootName(t *testing.T) {
-	printer := NewPrettyPrinter(NewPrettyPrintContext(false, 2, 0, "'", logrus.New()))
+	printer := prettyprint.NewPrettyPrinter(prettyprint.NewPrettyPrintContext(false, 2, 0, "'", logrus.New()))
 	tmpl, err := template.New("value").Parse(printer.RenderTemplateVarAndDelimit("resourceGroupName"))
 	if err != nil {
 		t.Fatal(err)
@@ -25,7 +26,7 @@ func TestRenderTemplateVarAndDelimitUsesRootName(t *testing.T) {
 }
 
 func TestPrintTemplatedJSONUsesRootNameForNestedValues(t *testing.T) {
-	printer := NewPrettyPrinter(NewPrettyPrintContext(false, 2, 0, "'", logrus.New()))
+	printer := prettyprint.NewPrettyPrinter(prettyprint.NewPrettyPrintContext(false, 2, 0, "'", logrus.New()))
 	rendered, err := printer.PrintTemplatedJSON(map[string]interface{}{
 		"name": "\"{{ .data__settings.name }}\"",
 	})
