@@ -7,8 +7,9 @@ zip="${1:?usage: attach-release-asset.sh <plugin-zip> <release-tag>}"
 tag="${2:?usage: attach-release-asset.sh <plugin-zip> <release-tag>}"
 
 if command -v sha256sum >/dev/null 2>&1; then
-  sha256sum "${zip}" | awk '{print $1}' > "${zip}.sha256"
+  digest=$(sha256sum "${zip}" | awk '{print $1}')
 else
-  shasum -a 256 "${zip}" | awk '{print $1}' > "${zip}.sha256"
+  digest=$(shasum -a 256 "${zip}" | awk '{print $1}')
 fi
-gh release upload "${tag}" "${zip}" "${zip}.sha256" --clobber
+printf '%s  %s\n' "${digest}" "${zip##*/}" > "${zip}.sha256"
+gh release upload "${tag}" "${zip}" "${zip}.sha256"
