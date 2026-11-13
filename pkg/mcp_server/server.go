@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/sync/semaphore"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -48,9 +47,6 @@ type simpleMCPServer struct {
 	approvals *approvalBinder
 
 	server *mcp.Server
-
-	// Concurrency control
-	requestSemaphore *semaphore.Weighted
 
 	// Server state
 	mu      sync.RWMutex
@@ -297,10 +293,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		serverOpts,
 	)
 
-	requestSemaphore := newRequestSemaphore(config.Server.MaxConcurrentRequests)
-	server.AddReceivingMiddleware(
-		toolCallLimits(requestSemaphore, time.Duration(config.Server.RequestTimeout)),
-	)
+	// The limits wrap backend work rather than the whole tools/call; see limitedBackend.
+	backend = newLimitedBackend(
+		backend, config.Server.MaxConcurrentRequests, time.Duration(config.Server.RequestTimeout))
 
 	if toolsErr := registerTools(server, config, backend, logger, sink, approvals); toolsErr != nil {
 		return nil, toolsErr
@@ -313,14 +308,13 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 	}
 
 	return &simpleMCPServer{
-		config:           config,
-		backend:          backend,
-		logger:           logger,
-		auditSink:        sink,
-		approvals:        approvals,
-		server:           server,
-		requestSemaphore: requestSemaphore,
-		servers:          make([]io.Closer, 0),
+		config:    config,
+		backend:   backend,
+		logger:    logger,
+		auditSink: sink,
+		approvals: approvals,
+		server:    server,
+		servers:   make([]io.Closer, 0),
 	}, nil
 }
 
@@ -508,6 +502,10 @@ func registerTools(
 				return nil, dto.ValidationResultDTO{}, fmt.Errorf("validate_select_query accepts exactly one statement")
 			}
 			rowsBack, err := backend.ValidateQuery(ctx, args.SQL)
+			if isRequestLimitError(err) {
+				// A limit says nothing about the statement, so it is not a verdict.
+				return nil, dto.ValidationResultDTO{}, err
+			}
 			isValid := err == nil
 			var errs []string
 			if err != nil {

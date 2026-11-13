@@ -252,10 +252,12 @@ type ServerConfig struct {
 	// Description is a human-readable description of the server.
 	Description string `json:"description" yaml:"description"`
 
-	// MaxConcurrentRequests limits the number of concurrent client requests.
+	// MaxConcurrentRequests caps the backend calls in flight across all
+	// clients; further calls queue.  Zero or less means no cap.
 	MaxConcurrentRequests int `json:"max_concurrent_requests" yaml:"max_concurrent_requests"`
 
-	// RequestTimeout specifies the timeout for individual requests.
+	// RequestTimeout is the budget for one backend call, queue wait included.
+	// Zero or less means no deadline.
 	RequestTimeout Duration `json:"request_timeout" yaml:"request_timeout"`
 
 	// Mode controls the safety contract for query / mutation / lifecycle tools.

@@ -72,8 +72,8 @@ func (b *stackqlMCPReverseProxyService) ServerInfo(_ context.Context, _ any) (dt
 // orchestrator-backed backend returns {messages, timestamp} instead.  Robot
 // assertions that target both backends must rely only on `timestamp`, which
 // both shapes carry.
-func (b *stackqlMCPReverseProxyService) ExecQuery(_ context.Context, query string) (map[string]any, error) {
-	r, sqlErr := b.db.Exec(query)
+func (b *stackqlMCPReverseProxyService) ExecQuery(ctx context.Context, query string) (map[string]any, error) {
+	r, sqlErr := b.db.ExecContext(ctx, query)
 	if sqlErr != nil {
 		return nil, sqlErr
 	}
@@ -107,8 +107,8 @@ func (b *stackqlMCPReverseProxyService) ReloadCredentials(
 }
 
 //nolint:gocognit,funlen // acceptable
-func (b *stackqlMCPReverseProxyService) query(_ context.Context, query string, rowLimit int) ([]map[string]any, error) {
-	r, sqlErr := b.db.Query(query)
+func (b *stackqlMCPReverseProxyService) query(ctx context.Context, query string, rowLimit int) ([]map[string]any, error) {
+	r, sqlErr := b.db.QueryContext(ctx, query)
 	if sqlErr != nil {
 		return nil, sqlErr
 	}
@@ -176,6 +176,10 @@ func (b *stackqlMCPReverseProxyService) query(_ context.Context, query string, r
 			masterData[v.Name()] = scanArgs[i]
 		}
 		finalRows = append(finalRows, masterData)
+	}
+	// Next also stops on cancellation, which must not read as a short result.
+	if iterErr := r.Err(); iterErr != nil {
+		return nil, iterErr
 	}
 	return finalRows, nil
 }
