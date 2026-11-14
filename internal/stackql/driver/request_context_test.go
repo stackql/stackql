@@ -34,8 +34,9 @@ func TestCommitUsesCurrentRequestContext(t *testing.T) {
 	}
 	// PG wire cancels each command's context as soon as that command completes.
 	for _, query := range []string{
-		"begin;",
 		"create materialized view request_context_mv as select 'kept' as value;",
+		"begin;",
+		"select * from request_context_mv;",
 		"commit;",
 		"select * from request_context_mv;",
 		"drop materialized view request_context_mv;",
@@ -67,6 +68,45 @@ func assertCommittedRequestResult(t *testing.T, result sqldata.ISQLResultStream)
 	rows, err := result.Read()
 	if (err != nil && !errors.Is(err, io.EOF)) || rows == nil || len(rows.ToArr()) != 1 || rows.ToArr()[0]["value"] != "kept" {
 		t.Fatalf("committed materialized view: result=%v, error=%v", rows, err)
+	}
+}
+
+func TestBatchFailureStopsOnlyInsideTransaction(t *testing.T) {
+	runtime, err := stackqltestutil.GetRuntimeCtx("", "json", t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := stackqltestutil.BuildInputBundle(*runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hc, err := handler.NewHandlerCtx("", *runtime, lrucache.NewLRUCache(0), bundle, "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	backend, err := driver.NewStackQLDriver(hc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	run := func(query string) error {
+		result, queryErr := backend.HandleSimpleQuery(context.Background(), query)
+		if result != nil {
+			if closeErr := result.Close(); closeErr != nil && queryErr == nil {
+				queryErr = closeErr
+			}
+		}
+		return queryErr
+	}
+	// Outside a transaction a failing statement does not stop the statements after it.
+	_ = run("select * from batch_missing_relation; create materialized view batch_after_failure as select 1 as x;")
+	if err = run("drop materialized view batch_after_failure;"); err != nil {
+		t.Fatalf("statement after a failure outside a transaction did not run: %v", err)
+	}
+	// Inside a transaction the first failure ends the batch.
+	_ = run("begin; select * from batch_missing_relation; create materialized view batch_in_txn as select 1 as x;")
+	_ = run("rollback;")
+	if err = run("select * from batch_in_txn;"); err == nil {
+		t.Fatal("statement after a failure inside a transaction ran")
 	}
 }
 

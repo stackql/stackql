@@ -106,8 +106,10 @@ func (cr *commandRunnerImpl) RunCommand(handlerCtx handler.HandlerContext) {
 	}
 	queryErr := stackqlDriver.ProcessQueryWithError(handlerCtx.GetRawQuery())
 	var iacFailure interface{ IaCFailure() bool }
+	var transactionFailure interface{ TransactionFailure() bool }
 	if queryErr != nil && (handlerCtx.GetRuntimeContext().AccessConfigFile != "" ||
-		errors.As(queryErr, &iacFailure) || errors.Is(queryErr, handler.ErrSessionConfiguration)) {
+		errors.As(queryErr, &iacFailure) || errors.As(queryErr, &transactionFailure) ||
+		errors.Is(queryErr, handler.ErrSessionConfiguration)) {
 		os.Exit(1) // The response handler has already presented the error.
 	}
 }

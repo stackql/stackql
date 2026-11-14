@@ -371,11 +371,14 @@ func planDocQuery(ctx queryContext, translated docQuery) (omnisdk.Plan, string, 
 	if completionErr := configureMutationCompletion(ctx, translated, &args); completionErr != nil {
 		return nil, "", completionErr
 	}
-	configureMutationObserver(ctx, q.Target() != nil, &args)
 	args.Relations = relations
 	args.Tuning.Limit = translated.getLimit()
 	configureReadHints(translated, &args)
 	configureLegacyReadCache(ctx, q, &args)
+	transactionPlan, active, transactionErr := planProviderTransaction(ctx, translated, registry, res.Graph(), args)
+	if active {
+		return transactionPlan, relation, transactionErr
+	}
 	plan, planErr := omnisdk.NewGraphQuery(registry, res.Graph(), args)
 	if planErr != nil {
 		return nil, "", planErr

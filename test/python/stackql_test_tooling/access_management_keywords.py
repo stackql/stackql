@@ -146,6 +146,8 @@ class AccessManagementKeywords:
                     if scenario.startswith("query_deadline"):
                         time.sleep(2)
                     counts["read"] += 1
+                    if scenario.startswith("provider_transaction"):
+                        counts.setdefault("read_after_mutations", []).append(counts["mutation"])
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
@@ -166,7 +168,10 @@ class AccessManagementKeywords:
                     self.end_headers()
                     identity = "managed-" + str(counts["mutation"])
                     managed[identity] = dict(body, id=identity)
-                    self.wfile.write(json.dumps(managed[identity]).encode())
+                    response = dict(managed[identity])
+                    if scenario == "provider_transaction_recovery":
+                        response.pop("id", None)
+                    self.wfile.write(json.dumps(response).encode())
 
                 def do_PATCH(self):
                     counts["mutation"] += 1
@@ -242,6 +247,8 @@ components:
             resource["sqlVerbs"]["select"].append({"$ref": "#/components/x-stackQL-resources/items/methods/get"})
             resource["sqlVerbs"]["update"] = [{"$ref": "#/components/x-stackQL-resources/items/methods/update"}]
             resource["sqlVerbs"]["delete"] = [{"$ref": "#/components/x-stackQL-resources/items/methods/delete"}]
+            if scenario.startswith("provider_transaction") and scenario!="provider_transaction_missing_inverse":
+                resource["methods"]["create"]["inverse"]={"sqlVerb":{"$ref":"#/components/x-stackQL-resources/items/methods/delete"},"tokens":{"id":{"key":"id","location":"body","algorithm":"toString"}}}
             service_file.write_text(yaml.safe_dump(service))
 
             def token(subject="reader", updates=None, remove=(), signer=None, kid="local"):
@@ -359,6 +366,11 @@ components:
                         assert code != 0 and "deadline" in output.lower(), "opt-in deadline did not cancel query (rc=" + str(code) + "): " + output
                     else:
                         assert code == 0 and "known-item" in output, "default deadline interrupted query: " + output
+                    return
+                if scenario.startswith("provider_transaction"):
+                    from stackql_test_tooling.provider_transaction_scenarios import verify_provider_transaction
+                    verify_provider_transaction(scenario, run, token, managed, counts, root,
+                                                base=base, config_file=config_file)
                     return
                 if scenario == "config":
                     self._verify_configuration(base, config_file, config, reader, query, counts)

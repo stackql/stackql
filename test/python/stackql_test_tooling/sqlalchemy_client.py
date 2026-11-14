@@ -5,9 +5,10 @@ import typing
 class SQLAlchemyClient(object):
 
 
-  def __init__(self, connection_string :str):
+  def __init__(self, connection_string :str, autocommit :bool = False):
     self._connection_string :str = connection_string
-    self._eng = sqlalchemy.create_engine(connection_string)
+    options = {"isolation_level": "AUTOCOMMIT"} if autocommit else {}
+    self._eng = sqlalchemy.create_engine(connection_string, **options)
 
 
   def _exec_raw_query(self, query :str) -> typing.List[typing.Dict]:

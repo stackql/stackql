@@ -75,7 +75,8 @@ PG Extended Query Prepared Statement NULL Param Returns Zero Rows
     ...    stdout=${CURDIR}/tmp/PG-Extended-Query-Prepared-Statement-NULL-Param.tmp
     [Teardown]    NONE
 
-SQLAlchemy Session Materialized View Lifecycle
+SQLAlchemy Autocommit Materialized View Lifecycle
+    [Documentation]    Local DDL runs outside Omni transactions using explicit DBAPI autocommit.
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a postgres only test
     ${inputStr} =    Catenate
     ...    [
@@ -88,6 +89,12 @@ SQLAlchemy Session Materialized View Lifecycle
     ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
     ...    ${inputList}
     ...    2
+    ...    autocommit=${TRUE}
     ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-v2-Materialized-View-Lifecycle.tmp
     ...    stderr=${CURDIR}/tmp/SQLAlchemy-Session-v2-Materialized-View-Lifecycle-stderr.tmp
+    [Teardown]    NONE
+
+SQLAlchemy Implicit Transactions Reject Local DDL And Autocommit Supports It
+    Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a postgres only test
+    Verify SQLAlchemy DDL Transaction Boundary    ${POSTGRES_URL_UNENCRYPTED_CONN}
     [Teardown]    NONE

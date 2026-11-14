@@ -28,7 +28,6 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/diagnostics"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
@@ -38,6 +37,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/mcpbackend"
 	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
 	db_util "github.com/stackql/stackql/internal/stackql/sqlengine/connect"
+	"github.com/stackql/stackql/internal/stackql/transaction"
 	"github.com/stackql/stackql/pkg/mcp_server"
 
 	_ "github.com/jackc/pgx/v5" //nolint:revive // canonical driver pattern
@@ -206,7 +206,7 @@ func runMCPServer(handlerCtx handler.HandlerContext, config *mcp_server.Config) 
 		)
 		iqlerror.PrintErrorAndExitOneIfError(backendErr)
 	} else {
-		orchestrator, orchestratorErr := tsm_physio.NewOrchestrator(handlerCtx)
+		orchestrator, orchestratorErr := transaction.NewOrchestrator(handlerCtx)
 		iqlerror.PrintErrorAndExitOneIfError(orchestratorErr)
 		iqlerror.PrintErrorAndExitOneIfNil(orchestrator, "orchestrator is unexpectedly nil")
 		backend, backendErr = mcpbackend.NewStackqlMCPBackendService(
