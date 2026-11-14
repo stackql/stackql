@@ -379,16 +379,13 @@ jobs:
         cache: true
       id: go
 
-    - name: Check go sum coherence
+    - name: Check go.mod and go.sum are tidy
       run: |
-        cp go.sum go.sum.bkp
-        sumDiff="$(diff go.sum go.sum.bkp)" || true;
-        if [ "$sumDiff" = "" ]; then 
-          echo "go.sum check passed"
-        else 
-          echo "go.sum is inconsistent, might be time to run 'go mod tidy' and commit";
-          exit 1;
+        if ! go mod tidy -diff; then
+          echo "go.mod or go.sum is not tidy: run 'go mod tidy' and commit the result"
+          exit 1
         fi
+        echo "go.mod and go.sum are tidy"
 
     
     - name: Setup Python
@@ -487,16 +484,15 @@ jobs:
         outFile="cicd/log/current-bench-nocache.txt"
         baselineRefFile="cicd/ref/bench/baseline-go-bench.log"
         thresholdRefFile="cicd/ref/bench/max-threshold-go-bench.log"
-        go test -run='^$' -bench . -benchtime=100x -count=6 \
+        # Without pipefail a pipeline's status is tee's, so a failing benchmark would pass.
+        set -o pipefail
+        if ! go test -run='^$' -bench . -benchtime=100x -count=6 \
           --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
-          ./... | tee ${outFile}
-        # shellcheck disable=SC2181
-        if [ "$?" = "0" ]; then
-          echo "Benchmarking run completed successfully"
-        else
+          ./... | tee ${outFile}; then
           echo "Benchmarking run failed"
           exit 1
         fi
+        echo "Benchmarking run completed successfully"
         echo ""
         echo "##### Raw benchstat on current run #####"
         echo ""
@@ -1114,16 +1110,15 @@ jobs:
         outFile="cicd/log/current-bench-nocache.txt"
         baselineRefFile="cicd/ref/bench/baseline-go-bench.log"
         thresholdRefFile="cicd/ref/bench/max-threshold-go-bench.log"
-        go test -run='^$' -bench . -benchtime=100x -count=6 \
+        # Without pipefail a pipeline's status is tee's, so a failing benchmark would pass.
+        set -o pipefail
+        if ! go test -run='^$' -bench . -benchtime=100x -count=6 \
           --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
-          ./... | tee ${outFile}
-        # shellcheck disable=SC2181
-        if [ "$?" = "0" ]; then
-          echo "Benchmarking run completed successfully"
-        else
+          ./... | tee ${outFile}; then
           echo "Benchmarking run failed"
           exit 1
         fi
+        echo "Benchmarking run completed successfully"
         echo ""
         echo "##### Raw benchstat on current run #####"
         echo ""
