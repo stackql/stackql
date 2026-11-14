@@ -62,5 +62,17 @@ func OmniAuth(authCtx *AuthCtx) *omnisdk.Auth {
 	if clientSecret, secErr := authCtx.GetClientSecret(); secErr == nil {
 		auth.ClientSecret = clientSecret
 	}
+	if strings.EqualFold(authCtx.Type, AuthAWSAssumeRoleStr) {
+		auth.AssumeRole = &omnisdk.AWSAssumeRole{
+			RoleARN:          authCtx.AwsRoleArn,
+			RoleARNEnvVar:    authCtx.AwsRoleArnEnvVar,
+			ExternalID:       authCtx.AwsRoleExternalID,
+			ExternalIDEnvVar: authCtx.AwsRoleExternalIDEnvVar,
+			SessionName:      authCtx.GetAwsRoleSessionName(),
+			DurationSeconds:  authCtx.AwsRoleDurationSeconds,
+			STSRegion:        authCtx.GetAwsStsRegion(),
+			STSEndpoint:      authCtx.AwsStsEndpoint,
+		}
+	}
 	return auth
 }
