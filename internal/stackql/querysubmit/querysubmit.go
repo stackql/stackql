@@ -7,7 +7,6 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/accessmanagement"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
-	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -24,7 +23,6 @@ type QuerySubmitter interface {
 	GetStatement() (sqlparser.Statement, bool)
 	PrepareQuery(handlerCtx handler.HandlerContext) error
 	SubmitQuery() internaldto.ExecutorOutput
-	WithTransactionContext(transactionContext txn_context.ITransactionContext) QuerySubmitter
 	IsReadOnly() bool
 	// Get the redo log entry.
 	GetRedoLog() (binlog.LogEntry, bool)
@@ -38,12 +36,9 @@ func NewQuerySubmitter() QuerySubmitter {
 }
 
 type basicQuerySubmitter struct {
-	queryPlan          plan.Plan
-	undoPlan           plan.Plan
-	undoHandlerCtx     handler.HandlerContext
-	handlerCtx         handler.HandlerContext
-	transactionContext txn_context.ITransactionContext
-	cancel             func()
+	queryPlan  plan.Plan
+	handlerCtx handler.HandlerContext
+	cancel     func()
 }
 
 func (qs *basicQuerySubmitter) GetRedoLog() (binlog.LogEntry, bool) {
@@ -78,13 +73,6 @@ func (qs *basicQuerySubmitter) GetStatement() (sqlparser.Statement, bool) {
 	return qs.queryPlan.GetStatement()
 }
 
-func (qs *basicQuerySubmitter) WithTransactionContext(
-	transactionContext txn_context.ITransactionContext,
-) QuerySubmitter {
-	qs.transactionContext = transactionContext
-	return qs
-}
-
 func (qs *basicQuerySubmitter) PrepareQuery(handlerCtx handler.HandlerContext) error {
 	if manager := handlerCtx.GetAccessManager(); manager != nil {
 		caller, runCtx, cancel, err := manager.Establish(handlerCtx.GetExecutionContext())
@@ -105,7 +93,7 @@ func (qs *basicQuerySubmitter) PrepareQuery(handlerCtx handler.HandlerContext) e
 	}
 	qs.handlerCtx = handlerCtx
 	logging.GetLogger().Debugln("PrepareQuery() invoked...")
-	pb := planbuilder.NewPlanBuilder(qs.transactionContext)
+	pb := planbuilder.NewPlanBuilder()
 	plan, err := pb.BuildPlanFromContext(handlerCtx)
 	qs.queryPlan = plan
 	if err != nil && qs.cancel != nil {
@@ -141,25 +129,6 @@ func (qs *basicQuerySubmitter) SubmitQuery() internaldto.ExecutorOutput {
 		}
 	}
 	return result
-}
-
-func (qs *basicQuerySubmitter) PrepareUndoQuery(handlerCtx handler.HandlerContext) error {
-	qs.undoHandlerCtx = handlerCtx
-	logging.GetLogger().Debugln("PrepareQuery() invoked...")
-	pb := planbuilder.NewPlanBuilder(qs.transactionContext)
-	plan, err := pb.BuildPlanFromContext(handlerCtx)
-	qs.undoPlan = plan
-	return err
-}
-
-func (qs *basicQuerySubmitter) UndoQuery() internaldto.ExecutorOutput {
-	logging.GetLogger().Debugln("UndoQuery() invoked...")
-	pl := internaldto.NewBasicPrimitiveContext(
-		nil,
-		qs.handlerCtx.GetOutfile(),
-		qs.handlerCtx.GetOutErrFile(),
-	)
-	return qs.queryPlan.GetInstructions().GetInversePrimitiveGraph().Execute(pl)
 }
 
 // Read-only snapshots live through streaming, and release their deadline timer at EOF/close.

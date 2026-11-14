@@ -163,21 +163,9 @@ func ledgerPredicates(
 				"and the correlation stamp, and it is how a later run addresses the same resources",
 			relation, collectionPredicate))
 	}
-	root := previewCfg.getIaCStateRoot()
-	if root == "" {
-		root = filepath.Join(ctx.GetRuntimeContext().ApplicationFilesRootPath, stateDirName)
-	}
-	if ctx.GetRuntimeContext().AccessConfigFile != "" {
-		host, ok := ctx.(interface{ GetCaller() authorization.Session })
-		if !ok || host.GetCaller() == nil {
-			return nil, nil, refuse(errors.New("authenticated caller required for IaC state"))
-		}
-		principal := host.GetCaller().Principal()
-		owner := "principal:" + principal.ID()
-		if tenant := principal.Attributes()["tenant"]; tenant != "" {
-			owner = "tenant:" + tenant
-		}
-		root = filepath.Join(root, fmt.Sprintf("%x", sha256.Sum256([]byte(owner))))
+	root, rootErr := ManagedStateRoot(ctx)
+	if rootErr != nil {
+		return nil, nil, refuse(rootErr)
 	}
 	state, stateErr := resolveStateDir(root, popPredicate(params, statePredicate))
 	if stateErr != nil {
@@ -474,3 +462,32 @@ func (e iacOutcomeError) Error() string {
 func (iacOutcomeError) IaCFailure() bool { return true }
 
 func (e iacOutcomeError) Unwrap() error { return e.cause }
+
+// ManagedStateRoot is shared by IaC and provider SQL transaction coordination.
+func ManagedStateRoot(ctx queryContext) (string, error) {
+	root := previewCfg.getIaCStateRoot()
+	if root == "" {
+		root = filepath.Join(ctx.GetRuntimeContext().ApplicationFilesRootPath, stateDirName)
+	}
+	if ctx.GetRuntimeContext().AccessConfigFile != "" {
+		host, ok := ctx.(interface{ GetCaller() authorization.Session })
+		if !ok || host.GetCaller() == nil {
+			return "", errors.New("authenticated caller required for IaC state")
+		}
+		principal := host.GetCaller().Principal()
+		owner := "principal:" + principal.ID()
+		if tenant := principal.Attributes()["tenant"]; tenant != "" {
+			owner = "tenant:" + tenant
+		}
+		root = filepath.Join(root, fmt.Sprintf("%x", sha256.Sum256([]byte(owner))))
+	}
+	return root, nil
+}
+
+func ManagedStateDirectory(ctx queryContext, name string) (string, error) {
+	root, err := ManagedStateRoot(ctx)
+	if err != nil {
+		return "", err
+	}
+	return resolveStateDir(root, name)
+}

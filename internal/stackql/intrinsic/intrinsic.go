@@ -60,10 +60,16 @@ func GeneratePrimitiveFunc(
 ) (func() internaldto.ExecutorOutput, bool) {
 	current := ctx.GetCurrentProvider()
 	switch node := stmt.(type) {
+	case *sqlparser.Select:
+		if action, handled := providerTransactionControlFunc(ctx, node); handled {
+			return action, true
+		}
 	case *sqlparser.Auth:
 		return authFunc(ctx, node), true
 	case *sqlparser.AuthRevoke:
 		return authRevokeFunc(ctx, node), true
+	case *sqlparser.Set:
+		return sessionSetFunc(ctx, node)
 	case *sqlparser.Sleep:
 		return sleepFunc(ctx, node), true
 	case *sqlparser.Use:
