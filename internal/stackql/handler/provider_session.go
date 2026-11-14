@@ -19,13 +19,17 @@ import (
 )
 
 type providerSessionState struct {
-	variables    map[string]any
-	base         omnisdk.Args
-	mu           sync.Mutex
-	client       omnisdk.ClientSession
-	store        secrets.Store
-	bindings     map[string]omnisdk.ProviderBinding
-	documentView string
+	transactionStarting bool
+	transactionConfig   *ProviderTransactionConfig
+	transactionSession  *omnisdk.TransactionSession
+	transactionHandle   omnisdk.TransactionHandle
+	variables           map[string]any
+	base                omnisdk.Args
+	mu                  sync.Mutex
+	client              omnisdk.ClientSession
+	store               secrets.Store
+	bindings            map[string]omnisdk.ProviderBinding
+	documentView        string
 }
 
 func decodeSessionObject(value interface{}, target interface{}) error {
@@ -144,6 +148,8 @@ func (hc *standardHandlerContext) setProviderSessionConfig(path string, rhs inte
 		return false, nil
 	}
 	switch parts[0] {
+	case "transaction":
+		return true, hc.configureProviderTransaction(parts, rhs, scope)
 	case "providers", "secret_store", "secrets":
 	default:
 		return false, nil

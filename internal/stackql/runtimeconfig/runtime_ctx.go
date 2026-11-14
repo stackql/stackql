@@ -51,7 +51,6 @@ type RuntimeCtx struct {
 	NamespaceCfgRaw              string
 	StoreTxnCfgRaw               string
 	GCCfgRaw                     string
-	ACIDCfgRaw                   string
 	UpstreamErrorCfgRaw          string
 	StrictUpstreamErrors         bool
 	QueryCacheSize               int
@@ -171,8 +170,6 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		rc.StoreTxnCfgRaw = val
 	case GCCfgRawKey:
 		rc.GCCfgRaw = val
-	case ACIDCfgRawKey:
-		rc.ACIDCfgRaw = val
 	case UpstreamErrorCfgRawKey:
 		rc.UpstreamErrorCfgRaw = val
 	case OutfilePathKey:
@@ -271,7 +268,6 @@ func (rc RuntimeCtx) Copy() RuntimeCtx {
 		NamespaceCfgRaw:              rc.NamespaceCfgRaw,
 		StoreTxnCfgRaw:               rc.StoreTxnCfgRaw,
 		GCCfgRaw:                     rc.GCCfgRaw,
-		ACIDCfgRaw:                   rc.ACIDCfgRaw,
 		UpstreamErrorCfgRaw:          rc.UpstreamErrorCfgRaw,
 		StrictUpstreamErrors:         rc.StrictUpstreamErrors,
 		QueryCacheSize:               rc.QueryCacheSize,

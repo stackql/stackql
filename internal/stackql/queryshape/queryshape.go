@@ -92,7 +92,7 @@ func (si *standardInferrer) inferFromPlan(query string) []sqldata.ISQLColumn {
 	clonedCtx := si.handlerCtx.Clone()
 	clonedCtx.SetQuery(query)
 	clonedCtx.SetRawQuery(query)
-	pb := planbuilder.NewPlanBuilder(nil)
+	pb := planbuilder.NewPlanBuilder()
 	qPlan, err := pb.BuildPlanFromContext(clonedCtx)
 	if err != nil || qPlan == nil {
 		return nil

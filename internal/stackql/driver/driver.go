@@ -10,7 +10,6 @@ import (
 	"github.com/stackql-labs/omnisdk/public/authentication"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/accessmanagement"
-	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -18,6 +17,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/queryshape"
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/transaction"
 	"github.com/stackql/stackql/internal/stackql/util"
 	"github.com/stackql/stackql/pkg/txncounter"
 
@@ -54,15 +54,10 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 		return nil, err
 	}
 	clonedCtx := sdf.handlerCtx.NewClientContext()
-	txnOrchestrator, orcErr := tsm_physio.NewOrchestrator(clonedCtx)
+	txnOrchestrator, orcErr := transaction.NewOrchestrator(clonedCtx)
 	if orcErr != nil {
 		return nil, orcErr
 	}
-	tsmInstance, walError := tsm_physio.GetTSM(sdf.handlerCtx)
-	if walError != nil {
-		return nil, walError
-	}
-	sdf.handlerCtx.SetTSM(tsmInstance)
 	clonedCtx.SetTxnCounterMgr(txCtr)
 	buf := bytes.NewBuffer([]byte{})
 	if sdf.isCaptureDebug {
@@ -157,7 +152,7 @@ type portalMeta struct {
 type basicStackQLDriver struct {
 	debugBuf        *bytes.Buffer
 	handlerCtx      handler.HandlerContext
-	txnOrchestrator tsm_physio.Orchestrator
+	txnOrchestrator transaction.Orchestrator
 	shapeInferrer   queryshape.Inferrer
 	paramDecoder    paramdecoder.Decoder
 	stmtCache       map[string]*stmtMeta
@@ -254,15 +249,10 @@ func (dr *basicStackQLDriver) SplitCompoundQuery(s string) ([]string, error) {
 }
 
 func NewStackQLDriver(handlerCtx handler.HandlerContext) (StackQLDriver, error) {
-	txnOrchestrator, orcErr := tsm_physio.NewOrchestrator(handlerCtx)
+	txnOrchestrator, orcErr := transaction.NewOrchestrator(handlerCtx)
 	if orcErr != nil {
 		return nil, orcErr
 	}
-	tsmInstance, walError := tsm_physio.GetTSM(handlerCtx)
-	if walError != nil {
-		return nil, walError
-	}
-	handlerCtx.SetTSM(tsmInstance)
 	return &basicStackQLDriver{
 		handlerCtx:      handlerCtx,
 		txnOrchestrator: txnOrchestrator,
