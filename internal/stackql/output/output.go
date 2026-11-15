@@ -399,6 +399,9 @@ func (csvw *CSVWriter) Write(res sqldata.ISQLResultStream) error {
 				w.Flush()
 				return w.Error()
 			}
+			if w != nil {
+				w.Flush()
+			}
 			return err
 		}
 		if !isHeaderRead {
