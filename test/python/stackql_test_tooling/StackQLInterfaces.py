@@ -7,6 +7,7 @@ import re
 import sys
 import time
 import typing
+from types import SimpleNamespace
 
 from robot.api.deco import keyword, library
 from robot.libraries.BuiltIn import BuiltIn
@@ -137,11 +138,22 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       r'(?:Running|Creating|Created|Starting|Started|Waiting|Healthy|Stopping|Stopped|Removing|Removed)$')
     return "\n".join(line for line in stderr.splitlines() if not compose_line.fullmatch(line))
 
+  @staticmethod
+  def _mask_transaction_ids(text: str) -> str:
+    # Omni transaction ids are random; tests compare them as <txn>.
+    return re.sub(r'\b[A-Z2-7]{26}\b', '<txn>', text)
+
+  @staticmethod
+  def _pop_flag(cfg: dict, name: str) -> bool:
+    return str(cfg.pop(name, False)).lower() == 'true'
+
   def _verify_both_streams(self, result, expected_output, expected_stderr_output, **cfg):
     pass_through = {
       'strip_spaces': cfg.pop('strip_spaces', False),
       'collapse_spaces': cfg.pop('collapse_spaces', False)
     }
+    if self._pop_flag(cfg, 'mask_transaction_ids'):
+      result = SimpleNamespace(stdout=result.stdout, stderr=self._mask_transaction_ids(result.stderr))
     stdout_ok = self.should_be_equal(result.stdout, expected_output, **pass_through)
     if cfg.pop('unordered_http_diagnostics', False):
       records = lambda text: sorted(part.strip() for part in re.split(r'(?m)(?=^http response status code:)', text) if part.strip())
@@ -794,14 +806,43 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   
 
   @keyword
-  def should_sqlalchemy_raw_session_inline_have_length(self, conn_str :str, queries :typing.List[str], expected_length :int, **kwargs):
-    client = SQLAlchemyClient(conn_str)
+  def should_sqlalchemy_raw_session_inline_have_length(self, conn_str :str, queries :typing.List[str], expected_length :int,
+                                                      autocommit :bool = False, **kwargs):
+    client = SQLAlchemyClient(conn_str, autocommit=autocommit)
     result =  client.run_raw_queries(
       queries
     )
     self.log(result)
     return self.should_be_equal(len(result), expected_length, collapse_spaces=kwargs.pop('collapse_spaces', False))
   
+
+  @keyword
+  def verify_sqlalchemy_ddl_transaction_boundary(self, conn_str :str):
+    """Default SQLAlchemy transactions reject local DDL; explicit autocommit supports its lifecycle."""
+    import uuid
+    import sqlalchemy
+    name = "sa_ddl_" + uuid.uuid4().hex
+    create = f"create materialized view {name} as select 'kept' as value"
+    transactional = SQLAlchemyClient(conn_str)
+    autocommit = SQLAlchemyClient(conn_str, autocommit=True)
+    try:
+      try:
+        transactional.run_raw_queries([create])
+      except sqlalchemy.exc.DBAPIError as err:
+        assert 'statement cannot execute inside a provider transaction' in str(err), str(err)
+      else:
+        raise AssertionError('local DDL was accepted in an implicit transaction')
+      try:
+        autocommit.run_raw_queries([f"select * from {name}"])
+      except sqlalchemy.exc.DBAPIError:
+        pass
+      else:
+        raise AssertionError('rejected DDL left a materialized view')
+      self.should_sqlalchemy_raw_session_inline_have_length(
+        conn_str, [create, f"select * from {name}", f"drop materialized view {name}"], 1, autocommit=True)
+    finally:
+      transactional._eng.dispose()
+      autocommit._eng.dispose()
 
   @keyword
   def should_sqlalchemy_raw_session_inline_have_length_greater_than_or_equal_to(self, conn_str :str, queries :typing.List[str], expected_length :int, **kwargs):
@@ -1240,7 +1281,10 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     *args,
     **cfg
   ):
-    comparison = {'unordered_http_diagnostics': cfg.pop('unordered_http_diagnostics', False)}
+    comparison = {
+      'unordered_http_diagnostics': cfg.pop('unordered_http_diagnostics', False),
+      'mask_transaction_ids': cfg.pop('mask_transaction_ids', False),
+    }
     repeat_count = int(cfg.pop('repeat_count', 1))
     for _ in range(repeat_count):
       result = self._run_stackql_exec_command(
@@ -1428,19 +1472,22 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     *args,
     **cfg
   ):
+    mask = self._pop_flag(cfg, 'mask_transaction_ids')
     result = self._run_stackql_exec_command(
-      stackql_exe, 
+      stackql_exe,
       okta_secret_str,
       github_secret_str,
       k8s_secret_str,
-      registry_cfg, 
-      auth_cfg_str, 
+      registry_cfg,
+      auth_cfg_str,
       sql_backend_cfg_str,
       query,
       *args,
       **cfg
     )
     se = self.application_stderr(result.stderr)
+    if mask:
+      se = self._mask_transaction_ids(se)
     return self.should_be_equal(se, expected_output, collapse_spaces=True, formatter='ascii', strip_spaces=True)
 
   

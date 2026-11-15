@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,8 +16,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/accessmanagement"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
-	"github.com/stackql/stackql/internal/stackql/acid/tsm"
-	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
@@ -33,6 +30,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/registry"
 	dto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
+	"github.com/stackql/stackql/internal/stackql/sessionconfig"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -46,7 +44,7 @@ import (
 )
 
 // ErrSessionConfiguration identifies a rejected session mutation at CLI boundaries.
-var ErrSessionConfiguration = errors.New("session configuration failed")
+var ErrSessionConfiguration = sessionconfig.ErrSessionConfiguration
 
 var (
 	_ HandlerContext = &standardHandlerContext{}
@@ -103,7 +101,6 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	//
 	SetOutErrFile(io.Writer)
 	//
-	GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext
 
 	GetTypingConfig() typing.Config
 	GetIsolationLevel() constants.IsolationLevel
@@ -111,9 +108,6 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 
 	GetRollbackType() constants.RollbackType
 	UpdateRollbackType(rollbackTypeStr string) error
-
-	GetTSM() (tsm.TSM, bool)
-	SetTSM(tsm.TSM)
 
 	SetExportNamespace(string)
 	GetExportNamespace() string
@@ -123,6 +117,12 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	//
 	ResolveVariables(sqlparser.Statement) error
 	SetConfigAtPath(path string, rhs interface{}, scope string) error
+
+	// Provider transaction state, shared by every clone of a session. Part of the
+	// interface so that wrapping contexts (for example the MCP server's) forward it.
+	ProviderTransaction() (*omnisdk.TransactionSession, omnisdk.TransactionHandle, bool)
+	BeginProviderTransaction(context.Context) error
+	ClearProviderTransaction()
 
 	// Upstream (provider HTTP) error strictness.  When true, data
 	// acquisition failures (eg HTTP 4xx / 5xx on a SELECT) surface as
@@ -169,10 +169,8 @@ type standardHandlerContext struct {
 	namespaceCollection tablenamespace.Collection
 	formatter           sqlparser.NodeFormatter
 	pgInternalRouter    dbmsinternal.Router
-	txnCoordinatorCtx   txn_context.ITransactionCoordinatorContext
 	typCfg              typing.Config
 	sessionContext      dto.SessionContext
-	walInstance         tsm.TSM
 	exportNamespace     string
 	stackqlSemver       string
 	defaultHTTPClient   *http.Client
@@ -210,18 +208,6 @@ func (hc *standardHandlerContext) SetExportNamespace(exportNamespace string) {
 
 func (hc *standardHandlerContext) GetExportNamespace() string {
 	return hc.exportNamespace
-}
-
-func (hc *standardHandlerContext) GetTSM() (tsm.TSM, bool) {
-	return hc.walInstance, hc.walInstance != nil
-}
-
-func (hc *standardHandlerContext) SetTSM(w tsm.TSM) {
-	hc.walInstance = w
-}
-
-func (hc *standardHandlerContext) GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext {
-	return hc.txnCoordinatorCtx
 }
 
 func (hc *standardHandlerContext) GetTypingConfig() typing.Config {
@@ -702,7 +688,6 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		namespaceCollection:  hc.namespaceCollection,
 		formatter:            hc.formatter,
 		pgInternalRouter:     hc.pgInternalRouter,
-		txnCoordinatorCtx:    hc.txnCoordinatorCtx,
 		typCfg:               hc.typCfg,
 		sessionContext:       hc.sessionContext,
 		exportNamespace:      hc.exportNamespace,
@@ -784,7 +769,6 @@ func NewHandlerCtx(
 		formatter:           inputBundle.GetSQLSystem().GetASTFormatter(),
 		pgInternalRouter:    inputBundle.GetDBMSInternalRouter(),
 		currentProvider:     runtimeCtx.ProviderStr,
-		txnCoordinatorCtx:   inputBundle.GetTxnCoordinatorContext(),
 		typCfg:              inputBundle.GetTypingConfig(),
 		sessionContext:      inputBundle.GetSessionContext(),
 		accessManager:       accessManager,

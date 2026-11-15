@@ -6,7 +6,6 @@ import (
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/accessmanagement"
-	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/earlyanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -27,20 +26,9 @@ type PlanBuilder interface {
 	BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error)
 }
 
-func NewPlanBuilder(transactionContext txn_context.ITransactionContext) PlanBuilder {
-	return &standardPlanBuilder{
-		transactionContext: transactionContext,
-	}
-}
+func NewPlanBuilder() PlanBuilder { return &standardPlanBuilder{} }
 
-type standardPlanBuilder struct {
-	transactionContext txn_context.ITransactionContext
-}
-
-//nolint:nilnil // TODO: sweep through tech debt
-func (pb *standardPlanBuilder) BuildUndoPlanFromContext(_ handler.HandlerContext) (plan.Plan, error) {
-	return nil, nil
-}
+type standardPlanBuilder struct{}
 
 //nolint:funlen,gocognit,errcheck,gocyclo,cyclop // no big deal
 func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error) {
@@ -124,12 +112,12 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		statement = stmt
 	}
 
-	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit, pb.transactionContext)
+	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit)
 
 	// An omnisdk data relation streams its rows straight to the output writer,
 	// so it is not backed by a view and analysis would try, and fail, to resolve
 	// it as a registry-backed relation. Plan it here, ahead of that analysis.
-	executor, inverse, handled := intrinsic.GenerateTransactionStreamFunc(handlerCtx, statement)
+	executor, handled := intrinsic.GenerateStreamFunc(handlerCtx, statement)
 	if !handled {
 		executor, handled = intrinsic.GeneratePrimitiveFunc(handlerCtx, statement)
 	}
@@ -151,11 +139,7 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 				},
 			),
 		)
-		if inverse != nil {
-			pGBuilder.getPlanGraphHolder().CreateInversePrimitiveNode(primitive.NewLocalPrimitive(
-				func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput { return inverse() },
-			))
-		}
+
 		qPlan.SetInstructions(pGBuilder.getPlanGraphHolder())
 		if optimiseErr := qPlan.GetInstructions().GetPrimitiveGraph().Optimise(); optimiseErr != nil {
 			return createErroneousPlan(handlerCtx, qPlan, rowSort, optimiseErr)

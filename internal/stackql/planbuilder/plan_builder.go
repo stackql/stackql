@@ -1,13 +1,11 @@
 package planbuilder
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -23,6 +21,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/registry"
+	"github.com/stackql/stackql/internal/stackql/sessionconfig"
 	"github.com/stackql/stackql/internal/stackql/util"
 	"golang.org/x/mod/semver"
 
@@ -58,7 +57,6 @@ type planGraphBuilder interface {
 type standardPlanGraphBuilder struct {
 	planGraphHolder            primitivegraph.PrimitiveGraphHolder
 	rootPrimitiveGenerator     primitivegenerator.PrimitiveGenerator
-	transactionContext         txn_context.ITransactionContext
 	preBuiltIndirectCollection []primitivebuilder.Builder
 }
 
@@ -83,10 +81,9 @@ func (pgb *standardPlanGraphBuilder) getPlanGraphHolder() primitivegraph.Primiti
 	return pgb.planGraphHolder
 }
 
-func newPlanGraphBuilder(concurrencyLimit int, transactionContext txn_context.ITransactionContext) planGraphBuilder {
+func newPlanGraphBuilder(concurrencyLimit int) planGraphBuilder {
 	return &standardPlanGraphBuilder{
-		planGraphHolder:    primitivegraph.NewPrimitiveGraphHolder(concurrencyLimit),
-		transactionContext: transactionContext,
+		planGraphHolder: primitivegraph.NewPrimitiveGraphHolder(concurrencyLimit),
 	}
 }
 
@@ -224,58 +221,8 @@ func (pgb *standardPlanGraphBuilder) handleExplain(pbi planbuilderinput.PlanBuil
 	return buildErr
 }
 
-//nolint:exhaustive // Unsupported literal kinds are explicitly rejected by the default branch.
 func setLogic(pbi planbuilderinput.PlanBuilderInput, setExpr *sqlparser.SetExpr) error {
-	lhsTrimmed := setExpr.Name.GetRawVal()
-	config := strings.HasPrefix(lhsTrimmed, "$")
-	if config {
-		lhsTrimmed = strings.TrimPrefix(strings.TrimPrefix(lhsTrimmed, "$"), ".")
-		root, _, _ := strings.Cut(lhsTrimmed, ".")
-		switch root {
-		case "auth", "providers", "secret_store", "secrets", "document_merge":
-		default:
-			return fmt.Errorf("unknown intrinsic session configuration %q", lhsTrimmed)
-		}
-	} else if !strings.HasPrefix(lhsTrimmed, "variables.") {
-		lhsTrimmed = "variables." + lhsTrimmed
-	}
-	if _, reset := setExpr.Expr.(*sqlparser.Default); reset {
-		return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, nil, setExpr.Scope)
-	}
-	if !config {
-		var raw json.RawMessage
-		switch value := setExpr.Expr.(type) {
-		case *sqlparser.NullVal:
-			raw = json.RawMessage("null")
-		case sqlparser.BoolVal:
-			raw = json.RawMessage(fmt.Sprint(bool(value)))
-		case *sqlparser.SQLVal:
-			switch value.Type {
-			case sqlparser.StrVal:
-				raw, _ = json.Marshal(string(value.Val))
-			case sqlparser.IntVal, sqlparser.FloatVal:
-				raw = json.RawMessage(value.Val)
-			default:
-				return fmt.Errorf("variables accepts scalar literals only")
-			}
-		default:
-			return fmt.Errorf("variables accepts scalar literals only")
-		}
-		return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, raw, setExpr.Scope)
-	}
-	value, ok := setExpr.Expr.(*sqlparser.SQLVal)
-	if !ok || value.Type != sqlparser.StrVal {
-		return fmt.Errorf("session configuration requires a string literal or DEFAULT")
-	}
-	exprStr := string(value.Val)
-	if strings.HasPrefix(lhsTrimmed, "secrets.") {
-		return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprStr, setExpr.Scope)
-	}
-	var exprObj map[string]interface{}
-	if err := json.Unmarshal([]byte(exprStr), &exprObj); err == nil && exprObj != nil {
-		return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprObj, setExpr.Scope)
-	}
-	return pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprStr, setExpr.Scope)
+	return sessionconfig.Apply(pbi.GetHandlerCtx(), setExpr)
 }
 
 func (pgb *standardPlanGraphBuilder) handleSet(pbi planbuilderinput.PlanBuilderInput) error {

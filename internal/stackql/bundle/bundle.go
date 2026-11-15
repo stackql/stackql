@@ -4,7 +4,6 @@ import (
 	"io"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
-	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/garbagecollector"
@@ -28,7 +27,6 @@ type Bundle interface {
 	GetSQLEngine() sqlengine.SQLEngine
 	GetTxnCounterManager() txncounter.Manager
 	GetTxnStore() kstore.KStore
-	GetTxnCoordinatorContext() txn_context.ITransactionCoordinatorContext
 	GetTypingConfig() typing.Config
 	GetSessionContext() dto.SessionContext
 	GetStdOut() (io.Writer, bool)
@@ -47,43 +45,40 @@ func NewBundle(
 	txnCtrMgr txncounter.Manager,
 	authContexts map[string]*dto.AuthCtx,
 	sqlDataSources map[string]sql_datasource.SQLDataSource,
-	txnCoordintatorContext txn_context.ITransactionCoordinatorContext,
 	typCfg typing.Config,
 	sessionCtx dto.SessionContext,
 ) Bundle {
 	return &simpleBundle{
-		garbageCollector:       garbageCollector,
-		namespaces:             namespaces,
-		sqlEngine:              sqlEngine,
-		sqlSystem:              sqlSystem,
-		txnStore:               txnStore,
-		txnCtrMgr:              txnCtrMgr,
-		formatter:              sqlSystem.GetASTFormatter(),
-		pgInternalRouter:       pgInternalRouter,
-		authContexts:           authContexts,
-		sqlDataSources:         sqlDataSources,
-		txnCoordintatorContext: txnCoordintatorContext,
-		typCfg:                 typCfg,
-		sessionCtx:             sessionCtx,
+		garbageCollector: garbageCollector,
+		namespaces:       namespaces,
+		sqlEngine:        sqlEngine,
+		sqlSystem:        sqlSystem,
+		txnStore:         txnStore,
+		txnCtrMgr:        txnCtrMgr,
+		formatter:        sqlSystem.GetASTFormatter(),
+		pgInternalRouter: pgInternalRouter,
+		authContexts:     authContexts,
+		sqlDataSources:   sqlDataSources,
+		typCfg:           typCfg,
+		sessionCtx:       sessionCtx,
 	}
 }
 
 type simpleBundle struct {
-	garbageCollector       garbagecollector.GarbageCollector
-	namespaces             tablenamespace.Collection
-	sqlEngine              sqlengine.SQLEngine
-	sqlSystem              sql_system.SQLSystem
-	txnStore               kstore.KStore
-	txnCtrMgr              txncounter.Manager
-	typCfg                 typing.Config
-	formatter              sqlparser.NodeFormatter
-	pgInternalRouter       dbmsinternal.Router
-	sqlDataSources         map[string]sql_datasource.SQLDataSource
-	authContexts           map[string]*dto.AuthCtx
-	txnCoordintatorContext txn_context.ITransactionCoordinatorContext
-	sessionCtx             dto.SessionContext
-	stdOut                 io.Writer
-	stdErr                 io.Writer
+	garbageCollector garbagecollector.GarbageCollector
+	namespaces       tablenamespace.Collection
+	sqlEngine        sqlengine.SQLEngine
+	sqlSystem        sql_system.SQLSystem
+	txnStore         kstore.KStore
+	txnCtrMgr        txncounter.Manager
+	typCfg           typing.Config
+	formatter        sqlparser.NodeFormatter
+	pgInternalRouter dbmsinternal.Router
+	sqlDataSources   map[string]sql_datasource.SQLDataSource
+	authContexts     map[string]*dto.AuthCtx
+	sessionCtx       dto.SessionContext
+	stdOut           io.Writer
+	stdErr           io.Writer
 }
 
 func (sb *simpleBundle) WithStdOut(w io.Writer) Bundle {
@@ -106,10 +101,6 @@ func (sb *simpleBundle) GetStdErr() (io.Writer, bool) {
 
 func (sb *simpleBundle) GetSessionContext() dto.SessionContext {
 	return sb.sessionCtx
-}
-
-func (sb *simpleBundle) GetTxnCoordinatorContext() txn_context.ITransactionCoordinatorContext {
-	return sb.txnCoordintatorContext
 }
 
 func (sb *simpleBundle) GetSQLDataSources() map[string]sql_datasource.SQLDataSource {

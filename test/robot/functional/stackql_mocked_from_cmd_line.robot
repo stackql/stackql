@@ -2332,7 +2332,7 @@ Digitalocean Insert Droplet
 
 Transaction Rollback Digitalocean Insert Droplet
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    OK
+    ...    transaction begun: <txn>
     ...    mutating statement queued
     ...    Rollback OK
     Should Stackql Exec Inline Equal Stderr
@@ -2345,6 +2345,7 @@ Transaction Rollback Digitalocean Insert Droplet
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    begin; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '["env:prod", "web"]' ; rollback;
     ...    ${outputStr}
+    ...    mask_transaction_ids=True
     ...    stderr=${CURDIR}/tmp/Digitalocean-Insert-Droplet.tmp
 
 Transaction Abort Attempted Commit Digitalocean Insert Droplet
@@ -2375,18 +2376,14 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    'ubuntu-20-04-x64', true, true, true, 
     ...    '["env:prod", "web"]' ;
     ...    commit;
+    # Omni refuses a create with no declared inverse before it is dispatched, so the
+    # erroring third insert is never sent and nothing needs undoing.
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}500,${SPACE}response${SPACE}body:${SPACE}{
-    ...    ${SPACE}${SPACE}"id":${SPACE}"server_error",
-    ...    ${SPACE}${SPACE}"message":${SPACE}"Unexpected${SPACE}server-side${SPACE}error"
-    ...    }
-    ...    OK
+    ...    transaction begun: <txn>
     ...    mutating statement queued
     ...    mutating statement queued
     ...    mutating statement queued
-    ...    insert over HTTP error: 500 INTERNAL SERVER ERROR
-    ...    UNDO required: Undo the insert on digitalocean.droplets.droplets
-    ...    UNDO required: Undo the insert on digitalocean.droplets.droplets
+    ...    transaction create requires a declared inverse
     Should Stackql Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -2397,6 +2394,7 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
+    ...    mask_transaction_ids=True
     ...    stderr=${CURDIR}/tmp/Transaction-Abort-Attempted-Commit-Digitalocean-Insert-Droplet.tmp
 
 Transaction Rollback Eager Idealised Google Admin Directory User
@@ -2406,7 +2404,7 @@ Transaction Rollback Eager Idealised Google Admin Directory User
     ...    values ('somejimbo@grubit.com');
     ...    rollback;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    OK
+    ...    transaction begun: <txn>
     ...    The operation was despatched successfully
     ...    Rollback OK
     Should Stackql Exec Inline Equal Stderr
@@ -2420,6 +2418,7 @@ Transaction Rollback Eager Idealised Google Admin Directory User
     ...    ${inputStr}
     ...    ${outputStr}
     ...    stackql_rollback_eager=True
+    ...    mask_transaction_ids=True
     ...    stderr=${CURDIR}/tmp/Transaction-Rollback-Eager-Idealised-Google-Admin-Directory-User.tmp
 
 Transaction Rollback Failure Eager Idealised Google Admin Directory User
@@ -2428,12 +2427,11 @@ Transaction Rollback Failure Eager Idealised Google Admin Directory User
     ...    insert into googleadmin.directory.users(data__primaryEmail)
     ...    values ('joeblow@grubit.com');
     ...    rollback;
+    # The inverse delete gets a 404, so Omni keeps the compensation outstanding for recovery.
     ${stderrOutputStr} =    Catenate    SEPARATOR=\n
-    ...    http response status code: 404, response body is nil
-    ...    OK
+    ...    transaction begun: <txn>
     ...    The operation was despatched successfully
-    ...    undo over HTTP error: 404 NOT FOUND
-    ...    Rollback failed
+    ...    transaction compensation outstanding: [sql/transactions/<txn>/0/users]
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -2446,6 +2444,7 @@ Transaction Rollback Failure Eager Idealised Google Admin Directory User
     ...    ${EMPTY}
     ...    ${stderrOutputStr}
     ...    stackql_rollback_eager=True
+    ...    mask_transaction_ids=True
     ...    stderr=${CURDIR}/tmp/Transaction-Rollback-Failure-Eager-Idealised-Google-Admin-Directory-User.tmp
 
 Recently Active Logic Multi Backend
@@ -2992,6 +2991,8 @@ Google Asset List Aggregate Verify
     ...    stdout=${CURDIR}/tmp/Google-Asset-List-Aggregate-Verify.tmp
 
 Transaction Commit Eager Show and Lazy Digitalocean Insert Droplet
+    # SHOW runs immediately inside the transaction; COMMIT then refuses the queued create,
+    # which has no declared inverse.
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -3002,7 +3003,8 @@ Transaction Commit Eager Show and Lazy Digitalocean Insert Droplet
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    begin; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '["env:prod", "web"]' ; show services in digitalocean like 'droplets'; commit;
     ...    |-----------------------|----------|-----------------------------|\n|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}title${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|\n|-----------------------|----------|-----------------------------|\n|${SPACE}droplets:v23.03.00127${SPACE}|${SPACE}droplets${SPACE}|${SPACE}DigitalOcean${SPACE}API${SPACE}-${SPACE}Droplets${SPACE}|\n|-----------------------|----------|-----------------------------|
-    ...    OK\nmutating${SPACE}statement${SPACE}queued\nThe${SPACE}operation${SPACE}was${SPACE}despatched${SPACE}successfully\nOK
+    ...    transaction${SPACE}begun:${SPACE}<txn>\nmutating${SPACE}statement${SPACE}queued\ntransaction${SPACE}create${SPACE}requires${SPACE}a${SPACE}declared${SPACE}inverse
+    ...    mask_transaction_ids=True
     ...    stdout=${CURDIR}/tmp/Digitalocean-Insert-Droplet.tmp
 
 Registry Pull Google Provider Specific Version Prerelease

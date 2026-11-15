@@ -11,11 +11,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stackql/psql-wire/pkg/sqldata"
-	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	runtimedto "github.com/stackql/stackql/internal/stackql/runtimeconfig"
+	"github.com/stackql/stackql/internal/stackql/transaction"
 	"github.com/stackql/stackql/pkg/mcp_server"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
 
@@ -272,7 +272,7 @@ func (s *simpleStackqlInterrogator) GetRegistryPull(provider, version string) (s
 }
 
 type stackqlMCPService struct {
-	txnOrchestrator tsm_physio.Orchestrator
+	txnOrchestrator transaction.Orchestrator
 	interrogator    StackqlInterrogator
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
@@ -283,7 +283,7 @@ type stackqlMCPService struct {
 }
 
 func NewStackqlMCPBackendService(
-	txnOrchestrator tsm_physio.Orchestrator,
+	txnOrchestrator transaction.Orchestrator,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
 	serverInfo serverBuildInfo,
