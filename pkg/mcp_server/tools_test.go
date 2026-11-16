@@ -704,6 +704,108 @@ func TestMode_ReadOnly_RefusesSmuggledStatements(t *testing.T) {
 	}
 }
 
+func TestMode_NestedExecIsGatedBeforeSelectExecution(t *testing.T) {
+	const sql = "select status from (exec stackql_native_test.casing.activate.activate @id = 'x')"
+
+	t.Run("read_only refuses", func(t *testing.T) {
+		be := &testBackend{}
+		cs := connectInProcess(t, readOnlyConfig(), be)
+		callExpectingError(t, cs, "run_select_query", map[string]any{"sql": sql}, "read_only")
+		if be.lastQueryJSON.SQL != "" {
+			t.Fatalf("read_only must refuse before backend execution, got %q", be.lastQueryJSON.SQL)
+		}
+	})
+
+	t.Run("read-only tool remains protected", func(t *testing.T) {
+		cases := []struct {
+			cfg  *Config
+			sql  string
+			want string
+		}{
+			{DefaultConfig(), "EXEC x.y.z", "lifecycle statements run through"},
+			{deleteSafeConfig(), "select 1; EXEC x.y.z", "lifecycle statements run through"},
+			{fullAccessConfig(), sql, "lifecycle statements run through"},
+			{fullAccessConfig(), "delete from t", "mutation_delete statements run through"},
+		}
+		for _, tc := range cases {
+			be := &testBackend{}
+			cs := connectInProcess(t, tc.cfg, be)
+			callExpectingError(t, cs, "run_select_query", map[string]any{"sql": tc.sql}, tc.want)
+			if be.lastQueryJSON.SQL != "" {
+				t.Fatalf("run_select_query must not execute a non-read-only statement, got %q", be.lastQueryJSON.SQL)
+			}
+		}
+	})
+
+	t.Run("safe requires approval", func(t *testing.T) {
+		be := &testBackend{}
+		cs := connectInProcess(t, DefaultConfig(), be)
+		callExpectingError(t, cs, "run_mutation_query", map[string]any{"sql": sql}, "does not support elicitation")
+		if be.lastExecQuery != "" {
+			t.Fatalf("safe mode must not execute before approval, got %q", be.lastExecQuery)
+		}
+	})
+
+	t.Run("delete_safe requires approval", func(t *testing.T) {
+		be := &testBackend{}
+		cs := connectInProcess(t, deleteSafeConfig(), be)
+		callExpectingError(t, cs, "run_mutation_query", map[string]any{"sql": sql}, "delete_safe")
+		if be.lastExecQuery != "" {
+			t.Fatalf("delete_safe must not execute before approval, got %q", be.lastExecQuery)
+		}
+	})
+
+	t.Run("safe executes after approval", func(t *testing.T) {
+		be := &testBackend{}
+		cs := connectInProcessWith(t, DefaultConfig(), be, acceptingElicit)
+		callTool(t, cs, "run_mutation_query", map[string]any{"sql": sql})
+		if be.lastExecQuery != sql {
+			t.Fatalf("approved nested EXEC was not forwarded: %q", be.lastExecQuery)
+		}
+	})
+
+	t.Run("delete_safe executes after approval", func(t *testing.T) {
+		be := &testBackend{}
+		cs := connectInProcessWith(t, deleteSafeConfig(), be, acceptingElicit)
+		callTool(t, cs, "run_mutation_query", map[string]any{"sql": sql})
+		if be.lastExecQuery != sql {
+			t.Fatalf("approved nested EXEC was not forwarded: %q", be.lastExecQuery)
+		}
+	})
+
+	t.Run("full_access allows", func(t *testing.T) {
+		be := &testBackend{}
+		cs := connectInProcess(t, fullAccessConfig(), be)
+		callTool(t, cs, "run_mutation_query", map[string]any{"sql": sql})
+		if be.lastExecQuery != sql {
+			t.Fatalf("full_access nested EXEC was not forwarded: %q", be.lastExecQuery)
+		}
+	})
+}
+
+func TestMode_ReadOnly_UnresolvedRelationsDoNotReachBackend(t *testing.T) {
+	queries := []string{
+		"select status from hidden_view",
+		"select * from iac.run",
+		"select * from iac.destroy",
+		"select * from storage.buckets",
+		"with q as (select * from hidden_view) select * from q",
+		"select * from (select status from (exec stackql_native_test.casing.activate.activate @id = 'x')) q",
+	}
+	for _, sql := range queries {
+		t.Run(sql, func(t *testing.T) {
+			be := &testBackend{}
+			cs := connectInProcess(t, readOnlyConfig(), be)
+			for _, tool := range []string{"run_select_query", "run_mutation_query", "run_lifecycle_operation"} {
+				callExpectingError(t, cs, tool, map[string]any{"sql": sql}, "read_only")
+			}
+			if be.lastQueryJSON.SQL != "" || be.execCalls != 0 {
+				t.Fatalf("unresolved or effectful relation reached the backend: %+v", be)
+			}
+		})
+	}
+}
+
 func TestMode_Safe_RefusesMutationsWithoutElicitation(t *testing.T) {
 	be := &testBackend{}
 	cs := connectInProcess(t, DefaultConfig(), be) // default is safe

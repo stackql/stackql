@@ -151,6 +151,16 @@ class MethodSchemaLibrary(ProviderSessionLibrary):
             rows = content["rows"]
             assert rows, "describe_method list returned no rows"
             assert self.named(rows, "region")["param_type"] == "input_required", rows
+            args = {"provider": "stackql_preview", "service": "audit", "resource": "aws_s3_buckets", "method": "list", "format": "json"}
+            response = request(3, "tools/call", {"name": "describe_method", "arguments": args})
+            assert "error" not in response and not response["result"].get("isError"), response
+            content = response["result"].get("structuredContent")
+            if content is None:
+                content = json.loads(response["result"]["content"][0]["text"])
+            rows = content["rows"]
+            assert self.named(rows, "provider")["type"] == "string", rows
+            assert self.named(rows, "public")["type"] == "bool", rows
+            assert self.named(rows, "region")["param_type"] == "response", rows
             assert not self.calls, "MCP discovery called the provider"
             process.stdin.close()
             process.stdin = None

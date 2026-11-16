@@ -12,6 +12,9 @@ and pin-verifying the release bundle when absent. Either way it spawns the
 binary as an MCP stdio server and hands you a connected client from the
 official
 [modelcontextprotocol/go-sdk](https://github.com/modelcontextprotocol/go-sdk).
+The launcher and StackQL use Go SDK v1.8.0. The client attempts
+`2026-07-28` discovery first and falls back to the legacy initialization
+handshake when required by the server.
 
 The module is version-locked to the stackql release it embeds: the module
 tag is `v<stackql version>` (pin the minor, e.g. `v0.10`), and its
@@ -139,6 +142,8 @@ go test -short ./...   # unit tests
 go test ./embed/       # + conformance tests (downloads the release bundle,
                        #   spawns it, exercises the github provider with no
                        #   credentials; ports scripts/smoke-test.py)
+STACKQL_MCP_TEST_BINARY=/absolute/path/to/stackql go test ./embed/
+                       # also test current and legacy protocol lifecycles
 python scripts/smoke-test.py --cmd "go run -C go ./cmd/stackql-mcp-launch"  # from packaging/mcpb
 ```
 

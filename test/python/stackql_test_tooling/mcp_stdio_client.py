@@ -535,6 +535,8 @@ def run_stdio_stateless_roundtrip(
     list_error = listed.get("error") or {}
     return {
         "tools": tools,
+        "tool_cache_ttl_ms": (listed.get("result") or {}).get("ttlMs"),
+        "tool_cache_scope": (listed.get("result") or {}).get("cacheScope"),
         "list_error_code": list_error.get("code"),
         "list_error_supported": (list_error.get("data") or {}).get("supported") or [],
         "first_result_type": first.get("resultType", ""),
@@ -733,6 +735,254 @@ def run_http_legacy_roundtrip(url, extra_headers=None):
         "session_issued": bool(session_id),
         "tools": [t.get("name") for t in (listed.get("result") or {}).get("tools") or []],
     }
+
+
+def run_http_oauth_resource_server(
+    stackql_exe,
+    registry_cfg,
+    auth_cfg,
+    tls_cert_file,
+    tls_key_file,
+):
+    """Runs OAuth acceptance/rejection requests against a real TLS StackQL
+    process and a loopback TLS JWKS issuer. No tokens or verifier errors are
+    included in the returned result or written to files.
+    """
+    import base64
+    import socket
+    import ssl
+    import http.client
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from urllib.error import HTTPError, URLError
+    from urllib.request import Request, urlopen
+
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+    issuer = "https://issuer.example.test/"
+    audience = "https://mcp.example.test/api"
+    metadata_url = "https://mcp.example.test/.well-known/oauth-protected-resource"
+    key_id = "robot-ed25519"
+    private_key = Ed25519PrivateKey.generate()
+    public_key = private_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+
+    def b64url(raw):
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+    def make_token(claims, kid=key_id, algorithm="EdDSA", signer=private_key):
+        header = {"alg": algorithm, "kid": kid, "typ": "JWT"}
+        first = b64url(json.dumps(header, separators=(",", ":"), sort_keys=True).encode())
+        second = b64url(json.dumps(claims, separators=(",", ":"), sort_keys=True).encode())
+        signing_input = (first + "." + second).encode("ascii")
+        signature = signer.sign(signing_input)
+        return first + "." + second + "." + b64url(signature)
+
+    def valid_claims():
+        return {
+            "iss": issuer,
+            "aud": audience,
+            "exp": 4102444800,
+            "scope": "tools:read tools:write",
+            "sub": "robot-service",
+        }
+
+    class JWKSHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path != "/jwks":
+                self.send_error(404)
+                return
+            body = json.dumps({
+                "keys": [{
+                    "kty": "OKP",
+                    "crv": "Ed25519",
+                    "x": b64url(public_key),
+                    "kid": key_id,
+                    "use": "sig",
+                    "alg": "EdDSA",
+                }],
+            }, separators=(",", ":")).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, _format, *_args):
+            return
+
+    issuer_server = ThreadingHTTPServer(("127.0.0.1", 0), JWKSHandler)
+    issuer_server.daemon_threads = True
+    issuer_tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    issuer_tls.load_cert_chain(tls_cert_file, tls_key_file)
+    issuer_server.socket = issuer_tls.wrap_socket(issuer_server.socket, server_side=True)
+    issuer_thread = threading.Thread(target=issuer_server.serve_forever, daemon=True)
+    issuer_thread.start()
+
+    with socket.socket() as reservation:
+        reservation.bind(("127.0.0.1", 0))
+        server_port = reservation.getsockname()[1]
+    server_url = "https://127.0.0.1:" + str(server_port)
+    server_config = {
+        "server": {
+            "transport": "http",
+            "address": "127.0.0.1:" + str(server_port),
+            "tls_cert_file": tls_cert_file,
+            "tls_key_file": tls_key_file,
+            "mode": "full_access",
+            "audit": {"disabled": True},
+            "oauth": {
+                "issuer": issuer,
+                "audience": audience,
+                "resource": audience,
+                "jwks_url": "https://127.0.0.1:" + str(issuer_server.server_port) + "/jwks",
+                "jwks_ca_file": tls_cert_file,
+                "metadata_url": metadata_url,
+                "scopes": ["tools:read", "tools:write"],
+                "algorithms": ["EdDSA"],
+            },
+        },
+    }
+    argv = [
+        stackql_exe,
+        "mcp",
+        "--mcp.server.type=http",
+        "--mcp.config",
+        json.dumps(server_config, separators=(",", ":")),
+        "--registry",
+        registry_cfg,
+        "--auth",
+        auth_cfg,
+        "--tls.allowInsecure",
+    ]
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    process = subprocess.Popen(
+        argv,
+        cwd=repo_root,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    client_tls = ssl._create_unverified_context()
+    all_tokens = []
+
+    def request(url, bearer=None):
+        headers = {}
+        if bearer:
+            headers["Authorization"] = "Bearer " + bearer
+        if url.endswith("/.well-known/oauth-protected-resource"):
+            req = Request(url, headers=headers, method="GET")
+        else:
+            payload = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": {"name": "oauth-robot", "version": "1"},
+                },
+            }
+            req = Request(
+                url,
+                data=json.dumps(payload, separators=(",", ":")).encode(),
+                headers={"Content-Type": "application/json", "Accept": "application/json, text/event-stream", **headers},
+                method="POST",
+            )
+        try:
+            with urlopen(req, timeout=3, context=client_tls) as response:
+                body = response.read()
+                return response.status, {key.lower(): value for key, value in response.headers.items()}, body
+        except HTTPError as error:
+            body = error.read()
+            return error.code, {key.lower(): value for key, value in error.headers.items()}, body
+        except (URLError, OSError, http.client.HTTPException) as error:
+            return 0, {}, str(error).encode("utf-8", errors="replace")
+
+    result = {"startup_error": ""}
+    try:
+        deadline = time.monotonic() + 15
+        metadata = None
+        while time.monotonic() < deadline:
+            if process.poll() is not None:
+                break
+            try:
+                metadata = request(server_url + "/.well-known/oauth-protected-resource")
+                if metadata[0] == 200:
+                    break
+            except (OSError, URLError):
+                time.sleep(0.05)
+        if metadata is None or metadata[0] != 200:
+            result["startup_error"] = "OAuth HTTP server did not become ready"
+            return result
+        result["metadata_status"] = metadata[0]
+        result["metadata_resource"] = json.loads(metadata[2]).get("resource", "")
+
+        cases = {}
+        cases["missing"] = (None, 401)
+        cases["valid"] = (make_token(valid_claims()), 200)
+        invalid_issuer = valid_claims()
+        invalid_issuer["iss"] = "https://wrong-issuer.example.test/"
+        cases["issuer"] = (make_token(invalid_issuer), 401)
+        invalid_audience = valid_claims()
+        invalid_audience["aud"] = "https://wrong-audience.example.test/"
+        cases["audience"] = (make_token(invalid_audience), 401)
+        expired = valid_claims()
+        expired["exp"] = 1
+        cases["expired"] = (make_token(expired), 401)
+        missing_expiration = valid_claims()
+        del missing_expiration["exp"]
+        cases["missing_expiration"] = (make_token(missing_expiration), 401)
+        insufficient_scope = valid_claims()
+        insufficient_scope["scope"] = "tools:read"
+        cases["scope"] = (make_token(insufficient_scope), 403)
+        unknown_key = make_token(valid_claims(), kid="unknown-key")
+        cases["unknown_key"] = (unknown_key, 401)
+        wrong_algorithm = make_token(valid_claims(), algorithm="HS256")
+        cases["algorithm"] = (wrong_algorithm, 401)
+        invalid_signature = make_token(valid_claims())
+        first, second, signature = invalid_signature.split(".")
+        changed_signature = ("A" if signature[:1] != "A" else "B") + signature[1:]
+        cases["signature"] = (first + "." + second + "." + changed_signature, 401)
+
+        statuses = {}
+        challenge = ""
+        valid_has_session = False
+        for name, (token, expected) in cases.items():
+            if token:
+                all_tokens.append(token)
+            status, headers, _ = request(server_url + "/", token)
+            statuses[name] = status
+            if name == "missing":
+                challenge = headers.get("www-authenticate", "")
+            if name == "valid":
+                valid_has_session = bool(headers.get("mcp-session-id"))
+            if status != expected:
+                result["startup_error"] = "OAuth case returned an unexpected HTTP status"
+                result["statuses"] = statuses
+                result["failure_detail"] = _.decode("utf-8", errors="replace") if isinstance(_, bytes) else ""
+                return result
+        result["statuses"] = statuses
+        result["challenge"] = challenge
+        result["valid_has_session"] = valid_has_session
+        result["logs_clean"] = True
+    finally:
+        if process.poll() is None:
+            process.terminate()
+        try:
+            stdout, stderr = process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate(timeout=5)
+        issuer_server.shutdown()
+        issuer_server.server_close()
+        issuer_thread.join(timeout=5)
+        logs = (stdout or b"") + (stderr or b"")
+        result["logs_clean"] = result.get("logs_clean", True) and all(
+            token.encode() not in logs for token in all_tokens
+        ) and b"invalid token" not in logs.lower() and b"jwks unavailable" not in logs.lower()
+        if process.returncode not in (0, -15):
+            result["process_returncode"] = process.returncode
+    return result
 
 
 def _stateless_headers(payload):

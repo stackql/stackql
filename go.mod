@@ -8,6 +8,7 @@ require (
 	github.com/PaesslerAG/gval v1.0.0
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/chzyer/readline v1.5.1
+	github.com/go-jose/go-jose/v4 v4.1.6
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/go-jsonnet v0.17.0
 	github.com/google/licensecheck v0.3.1
@@ -84,7 +85,6 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fullstorydev/grpcurl v1.9.3 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.7 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/golang/glog v1.2.5 // indirect

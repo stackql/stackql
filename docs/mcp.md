@@ -64,7 +64,7 @@ Audit is on by default.  To opt out:
 
 ### Request limits (`max_concurrent_requests` + `request_timeout`)
 
-Both limits are off unless set; a value of zero or less disables that limit.
+Defaults are 100 concurrent backend calls and a 30-second request timeout. Omitted settings retain these defaults, including when the `server` object contains other settings. Explicit `max_concurrent_requests: 0` or `request_timeout: "0s"` disables that limit; negative values also disable it.
 
 ```bash
 
@@ -79,6 +79,15 @@ Semantics:
 - A call that the mode refuses, or that is waiting on a user's approval, holds no slot and spends none of its budget.
 - Both outcomes are tool errors that name the setting and are written to the audit log.  `server busy` means the call never ran, so it is safe to retry.  A mutation or lifecycle call that timed out may already have taken effect at the provider, so check before retrying.
 - Choose a `request_timeout` above the slowest call you expect; a call that exceeds it is cancelled.
+- Cancellation is cooperative: backend work must honor its context. A permit remains held until that work exits, including cancellation cleanup, so timing out cannot bypass the concurrency cap.
+
+### HTTP connection limits
+
+The Streamable HTTP listener uses a 10-second header read timeout, a 30-second total request read timeout, a 60-second keep-alive idle timeout, and a 1 MiB maximum for request headers. MCP request bodies are limited to 4 MiB and larger requests receive HTTP 413. These transport limits are fixed and apply independently of the backend request limits above.
+
+There is no HTTP write timeout. Streamable HTTP responses can remain open while delivering events, so a fixed write deadline could interrupt a valid long-lived response. The read timeout applies only while receiving a request, and the idle timeout applies between requests on a keep-alive connection.
+
+The HTTP listener is registered for `Stop()`. Stopping the server or cancelling its `Start` context closes the listener and active connections; normal HTTP shutdown does not return a listener-closed error.
 
 ### Credential (re)sourcing (`--env.file` + `reload_credentials`)
 
@@ -219,7 +228,7 @@ Instructions, prompts, resources and tool descriptions are authored as markdown 
 
 ## Server modes
 
-`Config.Server.Mode` picks one of four safety contracts.  All four allow SELECTs and metadata reads; they differ in how they handle mutations and lifecycle operations.
+`Config.Server.Mode` picks one of four safety contracts. Metadata reads and classified read-only SELECTs are allowed; mutations, lifecycle operations and unresolved effects follow the mode gate.
 
 | Mode | SELECT / metadata | INSERT / UPDATE / REPLACE / MERGE / UPSERT | DELETE | EXEC (lifecycle) |
 |---|---|---|---|---|
@@ -227,6 +236,28 @@ Instructions, prompts, resources and tool descriptions are authored as markdown 
 | `safe` (default) | allow | needs approval | needs approval | needs approval |
 | `delete_safe` | allow | allow | needs approval | needs approval |
 | `full_access` | allow | allow | allow | allow |
+
+**SQL classification limits (issue #818).** The MCP policy walks the parser AST,
+including nested EXEC, subqueries and in-query CTE definitions. SELECTs over
+`stackql_preview.iac.run` or `destroy`, including abbreviated `iac.run` and
+`iac.destroy`, are classified as lifecycle operations. Bare relation names
+outside an in-query CTE, other abbreviated names and unparseable SELECT/WITH
+statements are unknown effects: `read_only` refuses them, `safe` and
+`delete_safe` require approval, and `full_access` allows them. Use fully
+qualified provider names for ordinary SELECTs. `run_select_query` retains its
+existing refusal of known write/lifecycle classes in every mode; use a
+mutation/lifecycle tool for approved effectful SQL.
+
+This is not a complete semantic effect classifier or a closure of #818.
+Fully qualified names can still resolve to persisted or provider-document views
+whose definitions are unavailable to the MCP policy. Provider aliases, variable
+substitution and document-defined or other effectful intrinsic relations also
+require backend-owned resolution before effects can be proven safe. The backend
+interface currently exposes execution and EXPLAIN-based validation, not an
+effect-summary API. EXPLAIN output is not a substitute for that API. Do not rely
+on `read_only` alone as a cloud-effect security boundary when these mechanisms
+are available; restrict tools and provider credentials until semantic
+classification is implemented in the parser/planner/backend.
 
 **Refuse** returns an error immediately.
 
@@ -512,3 +543,51 @@ $ ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:999
 {"timestamp":"2026-05-16T00:47:33Z","tool":"run_mutation_query","mode":"full_access","decision":"allow","query_class":"mutation_delete","sql":"delete from google.compute.networks where project = 'stackql-demo' and network = 'returning-test-01' ;","args":{"sql":"delete from google.compute.networks where project = 'stackql-demo' and network = 'returning-test-01' ;","row_limit":0},"duration_ms":42}
 
 ```
+
+## OAuth JWT resource-server authentication
+
+OAuth is opt-in for the Streamable HTTP transport. Configure the issuer, audience,
+resource URI, JWKS URL, protected-resource metadata URL, required scopes, and
+allowed signing algorithms explicitly:
+
+```yaml
+server:
+  transport: http
+  oauth:
+    issuer: https://auth.example.com/
+    audience: https://mcp.example.com/
+    resource: https://mcp.example.com/
+    jwks_url: https://auth.example.com/.well-known/jwks.json
+    # Optional PEM CA bundle for a private authorization server.
+    # If omitted, the system trust roots are used.
+    # jwks_ca_file: /etc/stackql/oauth-issuer-ca.pem
+    metadata_url: https://mcp.example.com/.well-known/oauth-protected-resource
+    scopes: [stackql:query]
+    algorithms: [RS256]
+    cache_ttl: 5m
+    clock_skew: 30s
+```
+
+The metadata URL path is served without credentials. MCP HTTP requests require
+a signed JWT with the configured issuer and audience, an expiration, and every
+configured scope. Only HTTPS issuer, JWKS, resource, and metadata URLs are
+accepted. Redirects are disabled for JWKS fetches. RSA keys must be 2048 to
+4096 bits. JWKS bodies, key counts, token sizes, cache duration, and clock skew
+are bounded. A fresh JWKS cache is refreshed for an unknown key at most once
+per second; publish replacement keys before retiring old keys to allow token
+rotation.
+
+An unavailable or invalid JWKS response fails closed as a server error, while
+invalid credentials receive an authentication rejection. OAuth cannot be
+combined with the pre-shared bearer token, the unauthenticated opt-in, the
+embedding authentication hook, or client-certificate authentication. Serve the
+protected endpoint over HTTPS, including when TLS terminates at a trusted
+reverse proxy.
+
+This resource server verifies signed JWTs only. It does not acquire tokens,
+introspect opaque tokens, provide immediate revocation, or support DPoP or
+mTLS-bound access tokens. Existing pre-shared bearer-token deployments and
+stdio authentication behavior remain available when OAuth is not configured.
+
+MCP response cache metadata is private. List results use a 30-second TTL;
+resource content and discovery results are marked immediately stale.
