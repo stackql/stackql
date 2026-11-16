@@ -81,6 +81,46 @@ func textContent(t *testing.T, res *mcp.CallToolResult) string {
 	return sb.String()
 }
 
+func TestProtocolLifecycleCompatibility(t *testing.T) {
+	if testing.Short() {
+		t.Skip("integration test: spawns the embedded server")
+	}
+	if os.Getenv("STACKQL_MCP_TEST_BINARY") == "" {
+		t.Skip("requires a current StackQL binary with protocol version pinning")
+	}
+	bin := conformanceBinary(t)
+	for _, version := range []string{"2026-07-28", "2025-11-25"} {
+		t.Run(version, func(t *testing.T) {
+			tmp := t.TempDir()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			client, err := stackqlmcp.StartServer(ctx, stackqlmcp.Options{
+				Binary:    bin,
+				AppRoot:   filepath.Join(tmp, "app"),
+				CacheDir:  filepath.Join(tmp, "bin-cache"),
+				ExtraArgs: []string{"--mcp.protocol.version=" + version},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err := client.Close(); err != nil {
+					t.Errorf("closing server: %v", err)
+				}
+			})
+			// The SDK populates this from discovery for the handshake-free revision.
+			result := client.Session.InitializeResult()
+			if result == nil || result.ServerInfo == nil || result.ProtocolVersion != version {
+				t.Fatalf("server discovery or initialization: %+v", result)
+			}
+			tools, err := client.Session.ListTools(ctx, nil)
+			if err != nil || len(tools.Tools) == 0 {
+				t.Fatalf("listing tools: result=%+v err=%v", tools, err)
+			}
+		})
+	}
+}
+
 func TestConformanceGithubNullAuth(t *testing.T) {
 	if testing.Short() {
 		t.Skip("integration test: spawns the embedded server and reaches registry.stackql.app")
@@ -109,7 +149,7 @@ func TestConformanceGithubNullAuth(t *testing.T) {
 	if got := client.Session.InitializeResult(); got == nil || got.ServerInfo == nil {
 		t.Fatal("initialize returned no server info")
 	} else {
-		t.Logf("initialize ok: server=%s %s", got.ServerInfo.Name, got.ServerInfo.Version)
+		t.Logf("connected: server=%s %s protocol=%s", got.ServerInfo.Name, got.ServerInfo.Version, got.ProtocolVersion)
 	}
 
 	tools, err := client.Session.ListTools(ctx, nil)

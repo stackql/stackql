@@ -4,9 +4,9 @@
 package policy
 
 import (
-	"regexp"
 	"strings"
 
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/pkg/sqlsplit"
 )
 
@@ -19,9 +19,8 @@ const (
 )
 
 // QueryClass identifies the kind of statement a query tool is being asked to run.
-// The classifier is intentionally shallow: it looks at the first token of each
-// statement only, except for a leading WITH, which is resolved by scanning for
-// a data-modifying keyword (see ClassifyQuery).
+// SELECT effects are inspected in the parser AST. Backend-owned view
+// definitions and provider document effects are not available here.
 type QueryClass int
 
 const (
@@ -48,11 +47,6 @@ func (c QueryClass) String() string {
 	}
 	return "unknown"
 }
-
-// withMutationRegexp matches a data-modifying keyword appearing as a whole
-// word.  It is applied only to statements that begin with WITH, to decide
-// whether the common table expression heads a read-only statement.
-var withMutationRegexp = regexp.MustCompile(`(?i)\b(INSERT|UPDATE|DELETE|REPLACE|MERGE|UPSERT|EXEC)\b`)
 
 // ClassifyQuery returns the class of the SQL.  Every statement in the payload
 // (see sqlsplit.Statements) is classified, so a mutation cannot hide behind a
@@ -82,15 +76,19 @@ func classPrivilege(class QueryClass) int {
 	return 2
 }
 
-// classifyStatement classifies a single trimmed statement by inspecting only
-// the first whitespace-separated token.  It does not parse the statement.
-//
-// A leading WITH is the one case that needs more than the first token: SQL
-// allows a common table expression to head a read-only SELECT but also an
-// INSERT, UPDATE or DELETE, so classifying every WITH as read-only would let
-// a mutation through the gate.  Such statements are resolved by classifyWith.
+// classifyStatement never treats an unparseable SELECT or WITH as read-only.
+// Existing statement-head classes remain for other verbs, including syntax
+// that StackQL's parser does not currently support.
 func classifyStatement(trimmed string) QueryClass {
-	// First whitespace-separated token.
+	if node, err := sqlparser.Parse(trimmed); err == nil {
+		switch node.(type) {
+		case sqlparser.SelectStatement:
+			return classifyReadAST(node, nil)
+		case *sqlparser.Exec:
+			return QueryClassLifecycle
+		}
+	}
+
 	var verb string
 	if idx := strings.IndexAny(trimmed, " \t\r\n"); idx >= 0 {
 		verb = trimmed[:idx]
@@ -98,10 +96,10 @@ func classifyStatement(trimmed string) QueryClass {
 		verb = trimmed
 	}
 	switch strings.ToUpper(verb) {
-	case "SELECT", "SHOW", "DESCRIBE", "DESC", "EXPLAIN":
+	case "SHOW", "DESCRIBE", "DESC", "EXPLAIN":
 		return QueryClassSelect
-	case "WITH":
-		return classifyWith(trimmed)
+	case "SELECT", "WITH":
+		return QueryClassUnknown
 	case "INSERT", "UPDATE", "REPLACE", "MERGE", "UPSERT":
 		return QueryClassMutationCreate
 	case "DELETE":
@@ -113,16 +111,80 @@ func classifyStatement(trimmed string) QueryClass {
 	}
 }
 
-// classifyWith resolves a statement that begins with a common table
-// expression.  A WITH followed only by a query body is read-only; anything
-// containing a data-modifying keyword is deliberately demoted to
-// QueryClassUnknown rather than to its specific mutation class, so the gate
-// still applies in every mode while the shallow scan stays honest about what
-// it cannot determine.  The scan cannot exclude keywords inside string
-// literals or identifiers, which biases it towards demotion - the safe
-// direction.
-func classifyWith(sql string) QueryClass {
-	if withMutationRegexp.MatchString(sql) {
+// classifyReadAST follows subqueries and in-payload CTE definitions. A bare
+// relation outside a CTE is unresolved indirection, not evidence of a read.
+// Fully qualified provider resources may still be document or persisted views:
+// proving their effects requires a backend-owned semantic classification API.
+func classifyReadAST(root sqlparser.SQLNode, inherited map[string]bool) QueryClass {
+	ctes := make(map[string]bool, len(inherited))
+	for name := range inherited {
+		ctes[name] = true
+	}
+	class := QueryClassSelect
+	if selectNode, ok := root.(*sqlparser.Select); ok && selectNode.With != nil {
+		if selectNode.With.Recursive {
+			return QueryClassUnknown
+		}
+		for _, cte := range selectNode.With.CTEs {
+			ctes[cte.Name.GetRawVal()] = true
+		}
+	}
+	merge := func(candidate QueryClass) {
+		if classPrivilege(candidate) > classPrivilege(class) || candidate == QueryClassLifecycle {
+			class = candidate
+		}
+	}
+	err := sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		if node != root {
+			if _, ok := node.(sqlparser.SelectStatement); ok {
+				merge(classifyReadAST(node, ctes))
+				return false, nil
+			}
+		}
+		switch node := node.(type) {
+		case *sqlparser.Exec:
+			merge(QueryClassLifecycle)
+			return false, nil
+		case *sqlparser.AliasedTableExpr:
+			candidate, descend := classifyAliasedTableAST(node, ctes)
+			merge(candidate)
+			return descend, nil
+		}
+		return true, nil
+	}, root)
+	if err != nil {
+		return QueryClassUnknown
+	}
+	return class
+}
+
+func classifyAliasedTableAST(node *sqlparser.AliasedTableExpr, ctes map[string]bool) (QueryClass, bool) {
+	table, ok := node.Expr.(sqlparser.TableName)
+	if !ok {
+		return QueryClassSelect, true
+	}
+	if table.Qualifier.IsEmpty() && table.QualifierSecond.IsEmpty() &&
+		table.QualifierThird.IsEmpty() && ctes[table.Name.GetRawVal()] {
+		return QueryClassSelect, false
+	}
+	return classifyRelation(table), true
+}
+
+func classifyRelation(table sqlparser.TableName) QueryClass {
+	service, resource := table.Qualifier.GetRawVal(), table.Name.GetRawVal()
+	provider := table.QualifierSecond.GetRawVal()
+	if (provider == "" || strings.EqualFold(provider, "stackql_preview")) &&
+		strings.EqualFold(service, "iac") &&
+		(strings.EqualFold(resource, "run") || strings.EqualFold(resource, "destroy") ||
+			strings.EqualFold(resource, "recover")) {
+		return QueryClassLifecycle
+	}
+	if provider == "" {
+		// The parser inserts dual for SELECTs without FROM. Bare names and
+		// abbreviated provider names otherwise require backend resolution.
+		if service == "" && table.QualifierThird.IsEmpty() && resource == "dual" {
+			return QueryClassSelect
+		}
 		return QueryClassUnknown
 	}
 	return QueryClassSelect

@@ -1079,6 +1079,36 @@ MCP HTTP Mode Read Only Refuses Smuggled Statements
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-smuggled-hierarchy-stderr.txt
     Should Not Be Equal As Integers    ${hierarchy.rc}    0
     Should Contain    ${hierarchy.stderr}    forbidden characters
+    ${nested_exec}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select status from (exec stackql_native_test.casing.activate.activate @id \= 'x');"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-nested-exec.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-nested-exec-stderr.txt
+    Should Not Be Equal As Integers    ${nested_exec.rc}    0
+    Should Contain    ${nested_exec.stderr}    read_only
+    ${iac_run}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select * from stackql_preview.iac.run where collection \= 'policy\-test';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-iac-run.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-iac-run-stderr.txt
+    Should Not Be Equal As Integers    ${iac_run.rc}    0
+    Should Contain    ${iac_run.stderr}    read_only
+    FOR    ${sql}    IN    select * from iac.run;    select * from hidden_effect_view;    WITH q AS (select * from hidden_effect_view) select * from q;
+        ${unresolved}=    Run Process    ${STACKQL_MCP_CLIENT_EXE}
+        ...    exec
+        ...    \-\-client\-type\=http
+        ...    \-\-url\=http://127.0.0.1:9920
+        ...    \-\-exec.action    run_select_query
+        ...    \-\-exec.args    {"sql":"${sql}"}
+        Should Not Be Equal As Integers    ${unresolved.rc}    0
+        Should Contain    ${unresolved.stderr}    read_only
+    END
 
 MCP HTTP Mode Safe Refuses Mutations Without Elicitation
     [Documentation]    Server at 9912 starts with mode=full_access (existing scenarios assume that).
@@ -1802,6 +1832,9 @@ MCP Stdio Current Revision Client Gated Write Approved Via Input Requests
     ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_stateless_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $sql, approval_action='accept')    modules=stackql_test_tooling.mcp_stdio_client
     Log    ${result['stderr']}
     List Should Contain Value    ${result['tools']}    run_mutation_query
+    Should Be Equal As Integers    ${result['tool_cache_ttl_ms']}    30000
+    Should Be Equal    ${result['tool_cache_scope']}    private
+    Should Be Equal    ${result['tools']}    ${{sorted($result['tools'])}}
     Should Be Equal    ${result['first_result_type']}    input_required
     Should Be Equal    ${result['input_request_methods']}    ${{['elicitation/create']}}
     Should Contain        ${result['retry']}    timestamp
@@ -2016,6 +2049,52 @@ MCP HTTP Bearer Token Authentication
     List Should Contain Value    ${authed['tools']}    server_info
     ${cross}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_legacy_roundtrip('http://127.0.0.1:9931', {'Authorization': 'Bearer robot-mcp-token', 'Origin': 'https://cross-origin.example'})    modules=stackql_test_tooling.mcp_stdio_client
     Should Be Equal As Integers    ${cross['status']}    403
+
+MCP OAuth Resource Server Verifies External Issuer Tokens
+    [Documentation]    A built StackQL binary verifies Client Credentials JWTs acquired from a local TLS authorization server and serves public protected-resource metadata.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${registry_cfg}=    Evaluate    $REGISTRY_NO_VERIFY_CFG_STR.get_config_str('native')
+    ${tls_cert_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-tls${/}server_cert.pem
+    ${tls_key_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-tls${/}server_key.pem
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_oauth_resource_server($STACKQL_EXE, $registry_cfg, '{}', $tls_cert_file, $tls_key_file)    modules=stackql_test_tooling.mcp_stdio_client
+    Should Be Empty    ${result['startup_error']}
+    Should Be Equal As Integers    ${result['token_endpoint_status']}    200
+    Should Be Equal As Integers    ${result['token_endpoint_bad_client_status']}    401
+    Should Be Equal As Integers    ${result['token_endpoint_bad_grant_status']}    400
+    Should Be Equal As Integers    ${result['token_endpoint_bad_scope_status']}    400
+    Should Be Equal As Integers    ${result['metadata_status']}    200
+    Should Be Equal    ${result['metadata_resource']}    https://mcp.example.test/api
+    Should Be Equal As Integers    ${result['statuses']['missing']}    401
+    Should Be Equal As Integers    ${result['statuses']['signature']}    401
+    Should Be Equal As Integers    ${result['statuses']['issuer']}    401
+    Should Be Equal As Integers    ${result['statuses']['audience']}    401
+    Should Be Equal As Integers    ${result['statuses']['expired']}    401
+    Should Be Equal As Integers    ${result['statuses']['missing_expiration']}    401
+    Should Be Equal As Integers    ${result['statuses']['unknown_key']}    401
+    Should Be Equal As Integers    ${result['statuses']['algorithm']}    401
+    Should Be Equal As Integers    ${result['statuses']['scope']}    403
+    Should Be Equal As Integers    ${result['statuses']['acquired_scope']}    403
+    Should Contain    ${result['challenge']}    https://mcp.example.test/.well-known/oauth-protected-resource
+    Should Contain    ${result['challenge']}    tools:read
+    Should Be True    ${result['valid_has_session']}
+    Should Be True    ${result['independent_subjects']}
+    Should Be True    ${result['independent_sessions']}
+    FOR    ${caller}    IN    @{result['caller_cache']}
+        Should Be Equal    ${caller['scope']}    private
+        Should Be Equal As Integers    ${caller['ttl_ms']}    30000
+        Should Be True    ${caller['has_tools']}
+    END
+    Should Be Equal As Integers    ${result['warmed_missing_status']}    401
+    Should Be Equal As Integers    ${result['warmed_scope_status']}    403
+    Should Be Equal As Integers    ${result['warmed_caller_status']}    200
+    Should Be Equal As Integers    ${result['rotated_status']}    200
+    Should Be Equal As Integers    ${result['retired_key_status']}    401
+    Should Be Equal As Integers    ${result['jwks_outage_status']}    500
+    Should Be True    ${result['outage_fetch_observed']}
+    Should Be Equal As Integers    ${result['outage_cached_key_status']}    200
+    Should Be Equal As Integers    ${result['outage_metadata_status']}    200
+    Should Be Equal As Integers    ${result['jwks_recovery_status']}    200
+    Should Be True    ${result['logs_clean']}
 
 MCP Server Refuses Unset Bearer Token Env Var
     [Documentation]    server.auth_token_env_var naming an unset env var fails at startup

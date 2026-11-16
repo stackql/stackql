@@ -3,6 +3,7 @@ package mcp_server //nolint:revive // fine for now
 import (
 	"context"
 	"crypto/subtle"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,6 +33,13 @@ const (
 	DefaultHTTPServerAddress = "127.0.0.1:9876"
 )
 
+const (
+	httpReadHeaderTimeout = 10 * time.Second
+	httpReadTimeout       = 30 * time.Second
+	httpIdleTimeout       = 60 * time.Second
+	httpMaxHeaderBytes    = 1 << 20
+)
+
 type MCPServer interface {
 	Start(context.Context) error
 	Stop() error
@@ -54,15 +62,12 @@ type simpleMCPServer struct {
 	servers []io.Closer // Track all running servers for cleanup
 }
 
-func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) error {
+func (s *simpleMCPServer) runHTTPServer(ctx context.Context, server *mcp.Server, config *Config) error {
 	address := config.GetServerAddress()
 	if config.IsStateless() && !config.Server.Stateless {
 		s.logger.Infof("server.protocol_version %s implies stateless Streamable HTTP", config.GetProtocolVersion())
 	}
-	// Request bodies keep the SDK's 4 MiB default cap (413 beyond it).
-	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
-		return server
-	}, &mcp.StreamableHTTPOptions{Stateless: config.IsStateless()})
+	handler := newMCPStreamableHTTPHandler(server, config)
 
 	securedHandler, authErr := secureHTTPHandler(handler, config)
 	if authErr != nil {
@@ -72,22 +77,65 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 
 	s.logger.Debugf("MCP server listening on %s", address)
 
-	//nolint:gosec // TODO: find viable alternative to http.ListenAndServe
+	httpServer := newMCPHTTPServer(address, handlerWithLogging, config.TLSConfig)
+	s.mu.Lock()
+	if !s.running {
+		s.mu.Unlock()
+		return nil
+	}
+	s.servers = append(s.servers, httpServer)
+	s.mu.Unlock()
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		select {
+		case <-ctx.Done():
+			if err := s.Stop(); err != nil {
+				s.logger.Errorf("MCP server shutdown failed: %v", err)
+			}
+		case <-done:
+		}
+	}()
 	if config.Server.TLSCertFile != "" && config.Server.TLSKeyFile != "" {
 		s.logger.Infof("Starting HTTPS server on %s", address)
-		https := &http.Server{Addr: address, Handler: handlerWithLogging, TLSConfig: config.TLSConfig, ReadHeaderTimeout: 10 * time.Second}
-		if err := https.ListenAndServeTLS(config.Server.TLSCertFile, config.Server.TLSKeyFile); err != nil {
+		if err := httpServer.ListenAndServeTLS(config.Server.TLSCertFile, config.Server.TLSKeyFile); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
 			s.logger.Errorf("HTTPS Server failed: %v", err)
 			return err
 		}
 		return nil
 	}
-	//nolint:gosec // TODO: find viable alternative to http.ListenAndServe
-	if err := http.ListenAndServe(address, handlerWithLogging); err != nil {
+	if err := httpServer.ListenAndServe(); err != nil {
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
 		s.logger.Errorf("Server failed: %v", err)
 		return err
 	}
 	return nil
+}
+
+func newMCPHTTPServer(address string, handler http.Handler, tlsConfig *tls.Config) *http.Server {
+	return &http.Server{
+		Addr:              address,
+		Handler:           handler,
+		TLSConfig:         tlsConfig,
+		ReadHeaderTimeout: httpReadHeaderTimeout,
+		ReadTimeout:       httpReadTimeout,
+		IdleTimeout:       httpIdleTimeout,
+		MaxHeaderBytes:    httpMaxHeaderBytes,
+	}
+}
+
+func newMCPStreamableHTTPHandler(server *mcp.Server, config *Config) http.Handler {
+	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
+		return server
+	}, &mcp.StreamableHTTPOptions{
+		Stateless:           config.IsStateless(),
+		MaxRequestBodyBytes: mcp.DefaultMaxRequestBodyBytes,
+	})
 }
 
 // secureHTTPHandler adds cross-origin protection and client authentication.
@@ -95,6 +143,9 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 // server.auth_token_env_var; serving without one is an explicit opt-in via
 // server.allow_unauthenticated.
 func secureHTTPHandler(handler http.Handler, config *Config) (http.Handler, error) {
+	if config.Server.OAuth != nil {
+		return secureOAuthHTTPHandler(handler, config)
+	}
 	protection := http.NewCrossOriginProtection()
 	protection.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rejectRequest(w, r, http.StatusForbidden, "cross-origin request rejected")
@@ -147,8 +198,15 @@ const rejectedBodyDrainLimit = 64 << 10
 // closing a connection with unread bytes resets it, and a Windows client then
 // drops the buffered response.
 func rejectRequest(w http.ResponseWriter, r *http.Request, status int, message string) {
-	io.Copy(io.Discard, io.LimitReader(r.Body, rejectedBodyDrainLimit)) //nolint:errcheck // best effort
+	drainRejectedRequestBody(r)
 	http.Error(w, message, status)
+}
+
+func drainRejectedRequestBody(r *http.Request) {
+	if r == nil || r.Body == nil {
+		return
+	}
+	_, _ = io.Copy(io.Discard, io.LimitReader(r.Body, rejectedBodyDrainLimit))
 }
 
 // addPromptIfEnabled registers a prompt only when cfg.IsPromptEnabled allows it.
@@ -280,6 +338,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		// nil keeps every SDK revision; a pinned server.protocol_version
 		// narrows what is advertised and negotiated (issue #784).
 		SupportedProtocolVersions: config.AdvertisedProtocolVersions(),
+		SetCacheable:              setCachePolicy,
 	}
 	if !config.DisableInstructions {
 		instructions, instrErr := loadEmbeddedInstructions()
@@ -678,18 +737,19 @@ func registerReloadCredentialsTool(
 }
 
 // Start starts the MCP server with all configured transports.
-//
-//nolint:errcheck // ok for now
 func (s *simpleMCPServer) Start(ctx context.Context) error {
 	s.mu.Lock()
-	defer func() {
-		s.mu.Unlock()
-		s.running = false
-	}()
 	if s.running {
+		s.mu.Unlock()
 		return fmt.Errorf("server is already running")
 	}
 	s.running = true
+	s.mu.Unlock()
+	defer func() {
+		s.mu.Lock()
+		s.running = false
+		s.mu.Unlock()
+	}()
 	return s.run(ctx)
 }
 
@@ -697,7 +757,7 @@ func (s *simpleMCPServer) Start(ctx context.Context) error {
 func (s *simpleMCPServer) run(ctx context.Context) error {
 	switch s.config.GetServerTransport() {
 	case serverTransportHTTP:
-		return s.runHTTPServer(s.server, s.config)
+		return s.runHTTPServer(ctx, s.server, s.config)
 	case serverTransportSSE:
 		return fmt.Errorf("SSE transport obsoleted; use streamable HTTP transport instead")
 	case serverTransportStdIO:

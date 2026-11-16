@@ -232,6 +232,11 @@ type ServerConfig struct {
 	// transport refuses to start.
 	AllowUnauthenticated bool `json:"allow_unauthenticated,omitempty" yaml:"allow_unauthenticated,omitempty"`
 
+	// OAuth configures JWT bearer-token verification against a trusted external
+	// authorization server. It is mutually exclusive with the other HTTP auth
+	// mechanisms and is supported only by the Streamable HTTP transport.
+	OAuth *OAuthResourceServerConfig `json:"oauth,omitempty" yaml:"oauth,omitempty"`
+
 	TransportCfg map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 
 	// Stateless serves Streamable HTTP without sessions (no Mcp-Session-Id),
@@ -282,25 +287,26 @@ type ServerConfig struct {
 // serverConfigWire mirrors ServerConfig with the legacy `read_only` flag
 // included as a transient field.  Used only for unmarshalling.
 type serverConfigWire struct {
-	Name                  string         `json:"name" yaml:"name"`
-	Transport             string         `json:"transport" yaml:"transport"`
-	Address               string         `json:"address" yaml:"address"`
-	Scheme                string         `json:"scheme" yaml:"scheme"`
-	Version               string         `json:"version" yaml:"version"`
-	TLSCertFile           string         `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
-	TLSKeyFile            string         `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
-	AuthTokenEnvVar       string         `json:"auth_token_env_var,omitempty" yaml:"auth_token_env_var,omitempty"`
-	ApprovalKeyEnvVar     string         `json:"approval_key_env_var,omitempty" yaml:"approval_key_env_var,omitempty"`
-	AllowUnauthenticated  bool           `json:"allow_unauthenticated,omitempty" yaml:"allow_unauthenticated,omitempty"`
-	TransportCfg          map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
-	Stateless             bool           `json:"stateless,omitempty" yaml:"stateless,omitempty"`
-	ProtocolVersion       string         `json:"protocol_version,omitempty" yaml:"protocol_version,omitempty"`
-	Description           string         `json:"description" yaml:"description"`
-	MaxConcurrentRequests int            `json:"max_concurrent_requests" yaml:"max_concurrent_requests"`
-	RequestTimeout        Duration       `json:"request_timeout" yaml:"request_timeout"`
-	Mode                  string         `json:"mode,omitempty" yaml:"mode,omitempty"`
-	Render                string         `json:"render,omitempty" yaml:"render,omitempty"`
-	Audit                 AuditConfig    `json:"audit,omitempty" yaml:"audit,omitempty"`
+	Name                  string                     `json:"name" yaml:"name"`
+	Transport             string                     `json:"transport" yaml:"transport"`
+	Address               string                     `json:"address" yaml:"address"`
+	Scheme                string                     `json:"scheme" yaml:"scheme"`
+	Version               string                     `json:"version" yaml:"version"`
+	TLSCertFile           string                     `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
+	TLSKeyFile            string                     `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
+	AuthTokenEnvVar       string                     `json:"auth_token_env_var,omitempty" yaml:"auth_token_env_var,omitempty"`
+	ApprovalKeyEnvVar     string                     `json:"approval_key_env_var,omitempty" yaml:"approval_key_env_var,omitempty"`
+	AllowUnauthenticated  bool                       `json:"allow_unauthenticated,omitempty" yaml:"allow_unauthenticated,omitempty"`
+	OAuth                 *OAuthResourceServerConfig `json:"oauth,omitempty" yaml:"oauth,omitempty"`
+	TransportCfg          map[string]any             `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
+	Stateless             bool                       `json:"stateless,omitempty" yaml:"stateless,omitempty"`
+	ProtocolVersion       string                     `json:"protocol_version,omitempty" yaml:"protocol_version,omitempty"`
+	Description           string                     `json:"description" yaml:"description"`
+	MaxConcurrentRequests *int                       `json:"max_concurrent_requests" yaml:"max_concurrent_requests"`
+	RequestTimeout        *Duration                  `json:"request_timeout" yaml:"request_timeout"`
+	Mode                  string                     `json:"mode,omitempty" yaml:"mode,omitempty"`
+	Render                string                     `json:"render,omitempty" yaml:"render,omitempty"`
+	Audit                 AuditConfig                `json:"audit,omitempty" yaml:"audit,omitempty"`
 	// LegacyReadOnly preserves the PR1 `read_only: true` wire form.
 	LegacyReadOnly *bool `json:"read_only,omitempty" yaml:"read_only,omitempty"`
 }
@@ -316,12 +322,17 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.AuthTokenEnvVar = w.AuthTokenEnvVar
 	s.ApprovalKeyEnvVar = w.ApprovalKeyEnvVar
 	s.AllowUnauthenticated = w.AllowUnauthenticated
+	s.OAuth = w.OAuth
 	s.TransportCfg = w.TransportCfg
 	s.Stateless = w.Stateless
 	s.ProtocolVersion = w.ProtocolVersion
 	s.Description = w.Description
-	s.MaxConcurrentRequests = w.MaxConcurrentRequests
-	s.RequestTimeout = w.RequestTimeout
+	if w.MaxConcurrentRequests != nil {
+		s.MaxConcurrentRequests = *w.MaxConcurrentRequests
+	}
+	if w.RequestTimeout != nil {
+		s.RequestTimeout = *w.RequestTimeout
+	}
 	s.Mode = w.Mode
 	s.Render = w.Render
 	s.Audit = w.Audit
@@ -527,7 +538,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("invalid server.audit.failure_mode %q (legal: strict, strict_mutations, best_effort)",
 			c.Server.Audit.FailureMode)
 	}
-	return nil
+	return c.validateOAuth()
 }
 
 func decodeConfigJSON(data []byte, dst any) error {
@@ -542,7 +553,7 @@ func decodeConfigJSON(data []byte, dst any) error {
 
 // LoadFromJSON loads configuration from a JSON object, rejecting unknown fields.
 func LoadFromJSON(data []byte) (*Config, error) {
-	config := &Config{}
+	config := DefaultConfig()
 	if err := decodeConfigJSON(data, config); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON config: %w", err)
 	}
@@ -554,7 +565,7 @@ func LoadFromJSON(data []byte) (*Config, error) {
 
 // LoadFromYAML loads configuration from YAML data.
 func LoadFromYAML(data []byte) (*Config, error) {
-	config := &Config{}
+	config := DefaultConfig()
 	if err := yaml.Unmarshal(data, config); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML config: %w", err)
 	}

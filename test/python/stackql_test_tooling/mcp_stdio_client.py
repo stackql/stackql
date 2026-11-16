@@ -535,6 +535,8 @@ def run_stdio_stateless_roundtrip(
     list_error = listed.get("error") or {}
     return {
         "tools": tools,
+        "tool_cache_ttl_ms": (listed.get("result") or {}).get("ttlMs"),
+        "tool_cache_scope": (listed.get("result") or {}).get("cacheScope"),
         "list_error_code": list_error.get("code"),
         "list_error_supported": (list_error.get("data") or {}).get("supported") or [],
         "first_result_type": first.get("resultType", ""),
@@ -733,6 +735,471 @@ def run_http_legacy_roundtrip(url, extra_headers=None):
         "session_issued": bool(session_id),
         "tools": [t.get("name") for t in (listed.get("result") or {}).get("tools") or []],
     }
+
+
+def run_http_oauth_resource_server(
+    stackql_exe,
+    registry_cfg,
+    auth_cfg,
+    tls_cert_file,
+    tls_key_file,
+):
+    """Runs OAuth acceptance/rejection requests against a real TLS StackQL
+    process and a loopback TLS authorization server, acquiring a JWT through
+    client_credentials before using it at MCP. No credentials or tokens are
+    included in the returned result or written to files.
+    """
+    import base64
+    import socket
+    import ssl
+    import http.client
+    import hmac
+    import secrets
+    import shutil
+    from pathlib import Path
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from urllib.error import HTTPError, URLError
+    from urllib.request import Request, urlopen
+    from urllib.parse import parse_qs, urlencode
+
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+    issuer = "https://issuer.example.test/"
+    audience = "https://mcp.example.test/api"
+    metadata_url = "https://mcp.example.test/.well-known/oauth-protected-resource"
+    key_id = "robot-ed25519"
+    private_key = Ed25519PrivateKey.generate()
+    public_key = private_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+    client_id = "robot-service"
+    client_secret = secrets.token_urlsafe(32)
+    client_authorization = "Basic " + base64.b64encode(
+        (client_id + ":" + client_secret).encode()
+    ).decode()
+    second_client_secret = secrets.token_urlsafe(32)
+    second_client_authorization = "Basic " + base64.b64encode(
+        ("robot-service-second:" + second_client_secret).encode()
+    ).decode()
+    issuer_lock = threading.Lock()
+    issuer_state = {
+        "kid": key_id, "private": private_key, "public": public_key,
+        "unavailable": False, "last_fetch": 0.0, "fetches": 0,
+    }
+
+    def b64url(raw):
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+    def make_token(claims, kid=key_id, algorithm="EdDSA", signer=private_key):
+        header = {"alg": algorithm, "kid": kid, "typ": "JWT"}
+        first = b64url(json.dumps(header, separators=(",", ":"), sort_keys=True).encode())
+        second = b64url(json.dumps(claims, separators=(",", ":"), sort_keys=True).encode())
+        signing_input = (first + "." + second).encode("ascii")
+        signature = signer.sign(signing_input)
+        return first + "." + second + "." + b64url(signature)
+
+    def valid_claims():
+        return {
+            "iss": issuer,
+            "aud": audience,
+            "exp": int(time.time()) + 300,
+            "scope": "tools:read tools:write",
+            "sub": "robot-service",
+        }
+
+    class JWKSHandler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            if self.path != "/token":
+                self.send_error(404)
+                return
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 4096:
+                self.send_error(400)
+                return
+            form = parse_qs(self.rfile.read(length).decode())
+            authorization = self.headers.get("Authorization", "")
+            if hmac.compare_digest(authorization, client_authorization):
+                subject = client_id
+            elif hmac.compare_digest(authorization, second_client_authorization):
+                subject = "robot-service-second"
+            else:
+                self._json_response(401, {"error": "invalid_client"})
+                return
+            if form.get("grant_type") != ["client_credentials"]:
+                self._json_response(400, {"error": "unsupported_grant_type"})
+                return
+            scopes = form.get("scope", [""])[0].split()
+            if not scopes or not set(scopes) <= {"tools:read", "tools:write"}:
+                self._json_response(400, {"error": "invalid_scope"})
+                return
+            claims = valid_claims()
+            claims["scope"] = " ".join(scopes)
+            claims["sub"] = subject
+            with issuer_lock:
+                token = make_token(claims, kid=issuer_state["kid"], signer=issuer_state["private"])
+            self._json_response(200, {
+                "access_token": token, "token_type": "Bearer",
+                "expires_in": 300, "scope": claims["scope"],
+            })
+
+        def _json_response(self, status, payload):
+            body = json.dumps(payload, separators=(",", ":")).encode()
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):
+            if self.path != "/jwks":
+                self.send_error(404)
+                return
+            with issuer_lock:
+                issuer_state["last_fetch"] = time.monotonic()
+                issuer_state["fetches"] += 1
+                unavailable = issuer_state["unavailable"]
+                jwks_public = issuer_state["public"]
+                jwks_kid = issuer_state["kid"]
+            if unavailable:
+                self._json_response(503, {"error": "temporarily_unavailable"})
+                return
+            body = json.dumps({
+                "keys": [{
+                    "kty": "OKP",
+                    "crv": "Ed25519",
+                    "x": b64url(jwks_public),
+                    "kid": jwks_kid,
+                    "use": "sig",
+                    "alg": "EdDSA",
+                }],
+            }, separators=(",", ":")).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, _format, *_args):
+            return
+
+    issuer_server = ThreadingHTTPServer(("127.0.0.1", 0), JWKSHandler)
+    issuer_server.daemon_threads = True
+    issuer_tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    issuer_tls.minimum_version = ssl.TLSVersion.TLSv1_2
+    issuer_tls.load_cert_chain(tls_cert_file, tls_key_file)
+    issuer_server.socket = issuer_tls.wrap_socket(issuer_server.socket, server_side=True)
+    issuer_thread = threading.Thread(target=issuer_server.serve_forever, daemon=True)
+    issuer = "https://127.0.0.1:" + str(issuer_server.server_port) + "/"
+
+    with socket.socket() as reservation:
+        reservation.bind(("127.0.0.1", 0))
+        server_port = reservation.getsockname()[1]
+    server_url = "https://127.0.0.1:" + str(server_port)
+    server_config = {
+        "server": {
+            "transport": "http",
+            "address": "127.0.0.1:" + str(server_port),
+            "tls_cert_file": tls_cert_file,
+            "tls_key_file": tls_key_file,
+            "mode": "full_access",
+            "audit": {"disabled": True},
+            "oauth": {
+                "issuer": issuer,
+                "audience": audience,
+                "resource": audience,
+                "jwks_url": "https://127.0.0.1:" + str(issuer_server.server_port) + "/jwks",
+                "jwks_ca_file": tls_cert_file,
+                "metadata_url": metadata_url,
+                "scopes": ["tools:read", "tools:write"],
+                "algorithms": ["EdDSA"],
+            },
+        },
+    }
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    workspace = Path(repo_root) / "build" / (".mcp-oauth-" + secrets.token_hex(12))
+    argv = [
+        stackql_exe,
+        "mcp",
+        "--mcp.server.type=http",
+        "--mcp.config",
+        json.dumps(server_config, separators=(",", ":")),
+        "--registry",
+        registry_cfg,
+        "--auth",
+        auth_cfg,
+        "--approot",
+        str(workspace),
+        "--tls.allowInsecure",
+    ]
+    process = None
+    issuer_started = False
+    workspace_created = False
+    all_tokens = []
+
+    def acquire_token(scope, authorization=client_authorization, grant_type="client_credentials"):
+        req = Request(
+            issuer + "token",
+            data=urlencode({"grant_type": grant_type, "scope": scope}).encode(),
+            headers={"Content-Type": "application/x-www-form-urlencoded", "Authorization": authorization},
+            method="POST",
+        )
+        try:
+            with urlopen(req, timeout=3, context=client_tls) as response:
+                payload = json.loads(response.read())
+                if response.status == 200:
+                    all_tokens.append(payload["access_token"])
+                return response.status, payload
+        except HTTPError as error:
+            with error:
+                return error.code, json.loads(error.read())
+
+    def request(url, bearer=None, method="initialize", params=None, session=None):
+        headers = {}
+        if bearer:
+            headers["Authorization"] = "Bearer " + bearer
+        if session:
+            headers["Mcp-Session-Id"] = session
+            headers["Mcp-Protocol-Version"] = "2025-03-26"
+        if url.endswith("/.well-known/oauth-protected-resource"):
+            req = Request(url, headers=headers, method="GET")
+        else:
+            payload = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": method,
+                "params": params if params is not None else {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": {"name": "oauth-robot", "version": "1"},
+                },
+            }
+            req = Request(
+                url,
+                data=json.dumps(payload, separators=(",", ":")).encode(),
+                headers={"Content-Type": "application/json", "Accept": "application/json, text/event-stream", **headers},
+                method="POST",
+            )
+        try:
+            with urlopen(req, timeout=3, context=client_tls) as response:
+                body = response.read()
+                return response.status, {key.lower(): value for key, value in response.headers.items()}, body
+        except HTTPError as error:
+            body = error.read()
+            return error.code, {key.lower(): value for key, value in error.headers.items()}, body
+        except (URLError, OSError, http.client.HTTPException) as error:
+            return 0, {}, str(error).encode("utf-8", errors="replace")
+
+    def rpc_result(body):
+        text = body.decode()
+        if text.startswith("data:") or "\ndata:" in text:
+            frames = [json.loads(line[5:].strip()) for line in text.splitlines() if line.startswith("data:")]
+            message = next(frame for frame in frames if frame.get("id") == 1)
+        else:
+            message = json.loads(text)
+        if "error" in message:
+            raise AssertionError("OAuth MCP request returned a JSON-RPC error")
+        return message.get("result", {})
+
+    def wait_for_refresh_window():
+        with issuer_lock:
+            remaining = issuer_state["last_fetch"] + 1.1 - time.monotonic()
+        if remaining > 0:
+            time.sleep(remaining)
+
+    def rotate_key(kid):
+        signer = Ed25519PrivateKey.generate()
+        with issuer_lock:
+            issuer_state["kid"] = kid
+            issuer_state["private"] = signer
+            issuer_state["public"] = signer.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+
+    result = {"startup_error": ""}
+    try:
+        issuer_thread.start()
+        issuer_started = True
+        workspace.mkdir(parents=True)
+        workspace_created = True
+        client_tls = ssl.create_default_context(cafile=tls_cert_file)
+        process = subprocess.Popen(
+            argv,
+            cwd=repo_root,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        deadline = time.monotonic() + 15
+        metadata = None
+        while time.monotonic() < deadline:
+            if process.poll() is not None:
+                break
+            try:
+                metadata = request(server_url + "/.well-known/oauth-protected-resource")
+                if metadata[0] == 200:
+                    break
+            except (OSError, URLError):
+                time.sleep(0.05)
+        if metadata is None or metadata[0] != 200:
+            result["startup_error"] = "OAuth HTTP server did not become ready"
+            return result
+        result["metadata_status"] = metadata[0]
+        result["metadata_resource"] = json.loads(metadata[2]).get("resource", "")
+        acquired_status, acquired = acquire_token("tools:read tools:write")
+        result["token_endpoint_status"] = acquired_status
+        result["token_endpoint_bad_client_status"], _ = acquire_token("tools:read", authorization="Basic invalid")
+        result["token_endpoint_bad_grant_status"], _ = acquire_token("tools:read", grant_type="password")
+        result["token_endpoint_bad_scope_status"], _ = acquire_token("admin")
+        if acquired_status != 200 or acquired.get("token_type") != "Bearer" or acquired.get("expires_in") != 300:
+            result["startup_error"] = "Client Credentials acquisition failed"
+            return result
+        limited_status, limited = acquire_token("tools:read")
+        if limited_status != 200:
+            result["startup_error"] = "Limited-scope Client Credentials acquisition failed"
+            return result
+
+        cases = {}
+        cases["missing"] = (None, 401)
+        cases["valid"] = (acquired["access_token"], 200)
+        cases["acquired_scope"] = (limited["access_token"], 403)
+        invalid_issuer = valid_claims()
+        invalid_issuer["iss"] = "https://wrong-issuer.example.test/"
+        cases["issuer"] = (make_token(invalid_issuer), 401)
+        invalid_audience = valid_claims()
+        invalid_audience["aud"] = "https://wrong-audience.example.test/"
+        cases["audience"] = (make_token(invalid_audience), 401)
+        expired = valid_claims()
+        expired["exp"] = 1
+        cases["expired"] = (make_token(expired), 401)
+        missing_expiration = valid_claims()
+        del missing_expiration["exp"]
+        cases["missing_expiration"] = (make_token(missing_expiration), 401)
+        insufficient_scope = valid_claims()
+        insufficient_scope["scope"] = "tools:read"
+        cases["scope"] = (make_token(insufficient_scope), 403)
+        unknown_key = make_token(valid_claims(), kid="unknown-key")
+        cases["unknown_key"] = (unknown_key, 401)
+        wrong_algorithm = make_token(valid_claims(), algorithm="HS256")
+        cases["algorithm"] = (wrong_algorithm, 401)
+        invalid_signature = make_token(valid_claims())
+        first, second, signature = invalid_signature.split(".")
+        changed_signature = ("A" if signature[:1] != "A" else "B") + signature[1:]
+        cases["signature"] = (first + "." + second + "." + changed_signature, 401)
+
+        statuses = {}
+        challenge = ""
+        valid_has_session = False
+        for name, (token, expected) in cases.items():
+            if token:
+                all_tokens.append(token)
+            status, headers, _ = request(server_url + "/", token)
+            statuses[name] = status
+            if name == "missing":
+                challenge = headers.get("www-authenticate", "")
+            if name == "valid":
+                valid_has_session = bool(headers.get("mcp-session-id"))
+            if status != expected:
+                result["startup_error"] = "OAuth case returned an unexpected HTTP status"
+                result["statuses"] = statuses
+                result["failure_detail"] = _.decode("utf-8", errors="replace") if isinstance(_, bytes) else ""
+                return result
+        result["statuses"] = statuses
+        result["challenge"] = challenge
+        result["valid_has_session"] = valid_has_session
+
+        second_status, second = acquire_token("tools:read tools:write", authorization=second_client_authorization)
+        if second_status != 200:
+            raise AssertionError("Second Client Credentials acquisition failed")
+        subject_a = json.loads(base64.urlsafe_b64decode(acquired["access_token"].split(".")[1] + "=="))["sub"]
+        subject_b = json.loads(base64.urlsafe_b64decode(second["access_token"].split(".")[1] + "=="))["sub"]
+        result["independent_subjects"] = subject_a != subject_b
+        sessions = []
+        for token in (acquired["access_token"], second["access_token"]):
+            status, headers, _ = request(server_url + "/", token)
+            if status != 200 or not headers.get("mcp-session-id"):
+                raise AssertionError("OAuth caller initialization failed")
+            sessions.append(headers["mcp-session-id"])
+        result["independent_sessions"] = sessions[0] != sessions[1]
+        caller_cache = []
+        for token, session in zip((acquired["access_token"], second["access_token"]), sessions):
+            status, _, body = request(server_url + "/", token, method="tools/list", params={}, session=session)
+            if status != 200:
+                raise AssertionError("OAuth caller catalogue request failed")
+            listed = rpc_result(body)
+            caller_cache.append({
+                "scope": listed.get("cacheScope"), "ttl_ms": listed.get("ttlMs"),
+                "has_tools": bool(listed.get("tools")),
+            })
+        result["caller_cache"] = caller_cache
+        result["warmed_missing_status"], _, _ = request(
+            server_url + "/", method="tools/list", params={}, session=sessions[0],
+        )
+        result["warmed_scope_status"], _, _ = request(
+            server_url + "/", limited["access_token"], method="tools/list", params={}, session=sessions[1],
+        )
+        result["warmed_caller_status"], _, _ = request(
+            server_url + "/", second["access_token"], method="tools/list", params={}, session=sessions[1],
+        )
+
+        rotate_key("robot-ed25519-rotated")
+        wait_for_refresh_window()
+        rotated_status, rotated = acquire_token("tools:read tools:write")
+        if rotated_status != 200:
+            raise AssertionError("Rotated Client Credentials acquisition failed")
+        result["rotated_status"], _, _ = request(server_url + "/", rotated["access_token"])
+        wait_for_refresh_window()
+        result["retired_key_status"], _, _ = request(server_url + "/", acquired["access_token"])
+
+        rotate_key("robot-ed25519-outage")
+        with issuer_lock:
+            issuer_state["unavailable"] = True
+            outage_fetches = issuer_state["fetches"]
+        wait_for_refresh_window()
+        outage_status, outage = acquire_token("tools:read tools:write")
+        if outage_status != 200:
+            raise AssertionError("Outage Client Credentials acquisition failed")
+        result["jwks_outage_status"], _, _ = request(server_url + "/", outage["access_token"])
+        with issuer_lock:
+            result["outage_fetch_observed"] = issuer_state["fetches"] > outage_fetches
+        result["outage_cached_key_status"], _, _ = request(server_url + "/", rotated["access_token"])
+        result["outage_metadata_status"], _, _ = request(server_url + "/.well-known/oauth-protected-resource")
+        with issuer_lock:
+            issuer_state["unavailable"] = False
+        wait_for_refresh_window()
+        result["jwks_recovery_status"], _, _ = request(server_url + "/", outage["access_token"])
+        result["logs_clean"] = True
+    finally:
+        stdout, stderr = b"", b""
+        if process is not None:
+            if process.poll() is None:
+                process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate(timeout=5)
+        if issuer_started:
+            issuer_server.shutdown()
+        issuer_server.server_close()
+        if issuer_started:
+            issuer_thread.join(timeout=5)
+        cleanup_deadline = time.monotonic() + 5
+        while workspace_created:
+            try:
+                shutil.rmtree(workspace)
+                break
+            except PermissionError:
+                if time.monotonic() >= cleanup_deadline:
+                    raise
+                time.sleep(0.05)
+        logs = (stdout or b"") + (stderr or b"")
+        result["logs_clean"] = result.get("logs_clean", True) and all(
+            token.encode() not in logs for token in all_tokens
+        ) and client_secret.encode() not in logs and client_authorization.encode() not in logs \
+            and second_client_secret.encode() not in logs and second_client_authorization.encode() not in logs \
+            and b"invalid token" not in logs.lower() and b"jwks unavailable" not in logs.lower()
+        if process is not None and process.returncode not in (0, -15):
+            result["process_returncode"] = process.returncode
+    return result
 
 
 def _stateless_headers(payload):
