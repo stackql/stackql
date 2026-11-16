@@ -34,9 +34,12 @@ var awsUnorderedFields = map[string]struct{}{
 
 // AWSPolicyEqual implements aws_policy_equal(a, b): 1 if the two IAM policy
 // documents are equivalent under the retired C normalization rules (see
-// awsPolicyCompare and DIVERGENCES.md), else 0. NULL or unparseable
-// arguments are errors.
+// awsPolicyCompare and DIVERGENCES.md), else 0. NULL arguments yield SQL
+// NULL; unparseable arguments are errors.
 func AWSPolicyEqual(a, b any) (any, error) {
+	if a == nil || b == nil {
+		return nil, nil
+	}
 	sa, okA := valueText(a)
 	sb, okB := valueText(b)
 	if !okA || !okB {

@@ -14,8 +14,12 @@ var errJSONParse = errors.New("Error parsing JSON strings") //nolint:staticcheck
 
 // JSONEqual implements json_equal(a, b): 1 if the documents are deeply equal,
 // else 0. Objects compare unordered, arrays ordered, numbers as doubles with
-// the epsilon rule (1 == 1.0). NULL or unparseable arguments are errors.
+// the epsilon rule (1 == 1.0). NULL arguments yield SQL NULL; unparseable
+// arguments are errors.
 func JSONEqual(a, b any) (any, error) {
+	if a == nil || b == nil {
+		return nil, nil
+	}
 	sa, okA := valueText(a)
 	sb, okB := valueText(b)
 	if !okA || !okB {

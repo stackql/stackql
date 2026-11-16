@@ -153,8 +153,8 @@
         null,
         "{}"
       ],
-      "error": true,
-      "note": "NULL arguments raise an error in the C implementation, not NULL"
+      "note": "NULL arguments yield SQL NULL (stackql issue #914), not an error",
+      "result": null
     },
     {
       "id": "cref_null_rhs",
@@ -163,7 +163,8 @@
         "{}",
         null
       ],
-      "error": true
+      "result": null,
+      "note": "NULL arguments yield SQL NULL (stackql issue #914), not an error"
     },
     {
       "id": "cref_invalid_json",
