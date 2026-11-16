@@ -122,3 +122,42 @@ class MethodSchemaLibrary(ProviderSessionLibrary):
             if process.poll() is None:
                 process.kill()
                 process.wait()
+
+    def mcp_describe_method_named_list(self):
+        flags = list(self.flags)
+        flags[flags.index("--preview") + 1] = json.dumps({"unstable": False})
+        command = self.prefix + flags + ["--mcp.config", json.dumps({"server": {"transport": "stdio", "audit": {"disabled": True}}, "enabled_tools": ["describe_method"]}), "mcp"]
+        process = subprocess.Popen(command, env=self.env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        watchdog = threading.Timer(45, process.kill)
+        watchdog.start()
+        try:
+            def request(identifier, method, params):
+                process.stdin.write((json.dumps({"jsonrpc": "2.0", "id": identifier, "method": method, "params": params}) + "\n").encode())
+                process.stdin.flush()
+                while True:
+                    line = process.stdout.readline()
+                    assert line, "MCP closed before response"
+                    message = json.loads(line)
+                    if message.get("id") == identifier:
+                        return message
+            request(1, "initialize", {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "schema-test", "version": "1"}})
+            process.stdin.write(b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
+            args = {"provider": "widgets", "service": "things", "resource": "widgets", "method": "list", "format": "json"}
+            response = request(2, "tools/call", {"name": "describe_method", "arguments": args})
+            assert "error" not in response and not response["result"].get("isError"), response
+            content = response["result"].get("structuredContent")
+            if content is None:
+                content = json.loads(response["result"]["content"][0]["text"])
+            rows = content["rows"]
+            assert rows, "describe_method list returned no rows"
+            assert self.named(rows, "region")["param_type"] == "input_required", rows
+            assert not self.calls, "MCP discovery called the provider"
+            process.stdin.close()
+            process.stdin = None
+            process.communicate(timeout=10)
+            assert process.returncode == 0
+        finally:
+            watchdog.cancel()
+            if process.poll() is None:
+                process.kill()
+                process.wait()

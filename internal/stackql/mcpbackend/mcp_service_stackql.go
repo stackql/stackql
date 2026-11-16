@@ -207,7 +207,14 @@ func (s *simpleStackqlInterrogator) GetDescribeMethod(hI dto.HierarchyInput) (st
 		if hI.Descriptions {
 			extended = " EXTENDED"
 		}
-		return fmt.Sprintf("DESCRIBE METHOD%s %s.%s.%s.%s", extended, hI.Provider, hI.Service, hI.Resource, hI.Method), nil
+		// Quote each segment: a method (or service, or resource) may be named
+		// after a keyword such as `list`, which the parser rejects bare in
+		// this position. A quoted identifier parses as a plain identifier,
+		// and doubling an embedded quote keeps the statement well formed.
+		quoteIdent := func(value string) string {
+			return "\"" + strings.ReplaceAll(value, "\"", "\"\"") + "\""
+		}
+		return fmt.Sprintf("DESCRIBE METHOD%s %s.%s.%s.%s", extended, quoteIdent(hI.Provider), quoteIdent(hI.Service), quoteIdent(hI.Resource), quoteIdent(hI.Method)), nil
 	}
 	quote := func(value string) string {
 		return "'" + strings.ReplaceAll(strings.ReplaceAll(value, "\\", "\\\\"), "'", "''") + "'"

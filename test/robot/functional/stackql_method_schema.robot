@@ -20,3 +20,6 @@ Method Schema Rejects Invalid Controls And Missing Paths
 
 MCP Describe Method Applies Schema Controls
     Mcp Method Schema Controls Reach Backend
+
+MCP Describe Method Accepts Keyword Named Method
+    Mcp Describe Method Named List
