@@ -4,12 +4,16 @@ import json
 import os
 import queue
 import shutil
+import socket
 import subprocess
 import threading
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 
 class MCPEffectsLibrary:
@@ -26,6 +30,7 @@ class MCPEffectsLibrary:
         self.root.mkdir(parents=True)
         self.calls = []
         self.lock = threading.Lock()
+        self.provider_barrier = None
         owner = self
 
         class API(BaseHTTPRequestHandler):
@@ -36,6 +41,13 @@ class MCPEffectsLibrary:
                 self.rfile.read(int(self.headers.get("Content-Length", "0")))
                 with owner.lock:
                     owner.calls.append(self.path)
+                    barrier = owner.provider_barrier
+                if barrier is not None:
+                    try:
+                        barrier.wait(timeout=10)
+                    except threading.BrokenBarrierError:
+                        self.send_error(503, "Concurrent provider operations did not overlap")
+                        return
                 payload = json.dumps({"status": "ACTIVE", "id": "x"}).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
@@ -272,3 +284,220 @@ class MCPEffectsLibrary:
                 self._refused(call(tool, retry=(prompt, "accept")), "already used")
                 assert self._count() == before + 1, self.calls
             assert self.calls == ["/activate/x", "/activate/x"], self.calls
+
+    @contextlib.contextmanager
+    def _http_audit_server(self, mode):
+        run = self.root / uuid.uuid4().hex
+        run.mkdir()
+        audit_path = run / "audit.jsonl"
+        token = uuid.uuid4().hex
+        with socket.socket() as reservation:
+            reservation.bind(("127.0.0.1", 0))
+            port = reservation.getsockname()[1]
+        server = {
+            "transport": "http", "address": "127.0.0.1:" + str(port), "mode": mode,
+            "protocol_version": "2026-07-28", "auth_token_env_var": "STACKQL_MCP_EFFECTS_TOKEN",
+            "audit": {"format": "otel", "failure_mode": "strict", "file": {"path": str(audit_path)}},
+        }
+        command = [
+            self.binary, "mcp", "--mcp.server.type=http", "--mcp.config", json.dumps({
+                "server": server, "enabled_tools": ["server_info", "run_mutation_query", "run_lifecycle_operation"],
+            }),
+            "--approot", str(run / "app"),
+            "--registry", json.dumps({"localDocRoot": str(self.root / "registry"),
+                                     "verifyConfig": {"nopVerify": True}}),
+            "--auth", json.dumps({"mcp_effects": {"type": "null_auth"}}),
+            "--sqlBackend", json.dumps({"dsn": str(run / "staging.db")}),
+        ]
+        process = subprocess.Popen(command, cwd=run,
+                                   env=dict(os.environ, GOMAXPROCS="2", STACKQL_MCP_EFFECTS_TOKEN=token),
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        diagnostics = []
+        stderr = threading.Thread(target=lambda: diagnostics.extend(
+            line.decode(errors="replace") for line in process.stderr), daemon=True)
+        stderr.start()
+        identifier = 0
+        identifier_lock = threading.Lock()
+        used_identifiers = set()
+
+        def call(tool, client, traceparent, retry=None, request_id=None):
+            nonlocal identifier
+            with identifier_lock:
+                if request_id is None:
+                    request_id = identifier + 1
+                assert request_id not in used_identifiers, "Duplicate HTTP request ID"
+                used_identifiers.add(request_id)
+                identifier = max(identifier, request_id)
+            params = {
+                "_meta": {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                          "io.modelcontextprotocol/clientCapabilities": {"elicitation": {"form": {}}},
+                          "io.modelcontextprotocol/clientInfo": {"name": client, "version": "1"},
+                          "traceparent": traceparent},
+                "name": tool, "arguments": {} if tool == "server_info" else {"sql": self.SQL},
+            }
+            if retry:
+                prompt, action = retry
+                params["inputResponses"] = {key: {"action": action} for key in prompt["inputRequests"]}
+                params["requestState"] = prompt["requestState"]
+            message = {"jsonrpc": "2.0", "id": request_id, "method": "tools/call", "params": params}
+            request = Request("http://127.0.0.1:" + str(port), json.dumps(message).encode(), {
+                "Content-Type": "application/json", "Accept": "application/json, text/event-stream",
+                "Authorization": "Bearer " + token, "MCP-Protocol-Version": "2026-07-28",
+                "Mcp-Method": "tools/call", "Mcp-Name": tool, "Connection": "close",
+            })
+            try:
+                with urlopen(request, timeout=15) as response:
+                    assert not response.headers.get("Mcp-Session-Id"), "Expected sessionless current revision"
+                    raw = response.read().decode()
+                    if response.headers.get_content_type() == "application/json":
+                        result = json.loads(raw)
+                    else:
+                        messages = [json.loads(line[5:].strip()) for line in raw.splitlines() if line.startswith("data:")]
+                        result = next(message for message in messages if message.get("id") == request_id)
+            except HTTPError as error:
+                with error:
+                    detail = json.loads(error.read())["error"]
+                raise AssertionError("MCP HTTP " + str(error.code) + ": " + detail["message"]) from None
+            assert result.get("id") == request_id, result
+            return result
+
+        try:
+            deadline = time.monotonic() + 10
+            while True:
+                try:
+                    with socket.create_connection(("127.0.0.1", port), timeout=0.2):
+                        break
+                except OSError:
+                    assert process.poll() is None, "".join(diagnostics)
+                    assert time.monotonic() < deadline, "HTTP MCP listener did not start"
+                    time.sleep(0.02)
+            self._success(call("server_info", "preflight", self._traceparent()))
+            yield call, audit_path, token, diagnostics
+        finally:
+            if process.poll() is None:
+                process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
+            stderr.join(timeout=5)
+            process.stderr.close()
+
+    @staticmethod
+    def _traceparent():
+        return "00-" + uuid.uuid4().hex + "-" + uuid.uuid4().hex[:16] + "-01"
+
+    def reconnecting_clients_keep_approval_audit_request_scoped(self, mode):
+        assert mode in ("safe", "delete_safe"), mode
+        expected = {}
+        with self._http_audit_server(mode) as (call, audit_path, token, diagnostics):
+            prompts = []
+            for client, tool in [("client-a", "run_mutation_query"), ("client-b", "run_lifecycle_operation")]:
+                response = call(tool, client, self._traceparent())
+                assert "error" not in response and not response["result"].get("isError"), response
+                prompt = response["result"]
+                assert prompt.get("requestState") and prompt.get("inputRequests"), response
+                prompts.append(prompt)
+                assert self._count() == 0, self.calls
+
+            trace = self._traceparent()
+            self._refused(call("run_mutation_query", "client-a", trace, retry=(prompts[1], "accept")),
+                          "does not match")
+            expected[trace] = ("run_mutation_query", "needs_approval_declined")
+            assert self._count() == 0, self.calls
+            for count, client, tool, prompt in [
+                (1, "client-b", "run_lifecycle_operation", prompts[1]),
+                (2, "client-a", "run_mutation_query", prompts[0]),
+            ]:
+                trace = self._traceparent()
+                self._success(call(tool, client, trace, retry=(prompt, "accept")))
+                expected[trace] = (tool, "needs_approval_accepted")
+                assert self._count() == count, self.calls
+            trace = self._traceparent()
+            self._refused(call("run_lifecycle_operation", "client-b", trace, retry=(prompts[1], "accept")),
+                          "already used")
+            expected[trace] = ("run_lifecycle_operation", "needs_approval_declined")
+            assert self.calls == ["/activate/x", "/activate/x"], self.calls
+
+        self._assert_scoped_audit(audit_path, token, diagnostics, prompts, expected, mode)
+
+    def concurrent_clients_keep_approval_audit_request_scoped(self, mode):
+        assert mode in ("safe", "delete_safe"), mode
+        expected = {}
+        clients = [("client-a", "run_mutation_query"), ("client-b", "run_lifecycle_operation")]
+        with self._http_audit_server(mode) as (call, audit_path, token, diagnostics):
+            prompts = []
+            for client, tool in clients:
+                response = call(tool, client, self._traceparent())
+                assert "error" not in response and not response["result"].get("isError"), response
+                prompt = response["result"]
+                assert prompt.get("requestState") and prompt.get("inputRequests"), response
+                prompts.append(prompt)
+                assert self._count() == 0, self.calls
+
+            overlap = threading.Event()
+            barrier = threading.Barrier(2, action=overlap.set)
+            with self.lock:
+                self.provider_barrier = barrier
+            try:
+                with ThreadPoolExecutor(max_workers=2) as workers:
+                    futures = []
+                    for request_id, (client, tool), prompt in zip((4, 5), clients, prompts):
+                        trace = self._traceparent()
+                        expected[trace] = (tool, "needs_approval_accepted")
+                        futures.append((request_id, workers.submit(
+                            call, tool, client, trace, retry=(prompt, "accept"), request_id=request_id)))
+                    for request_id, future in futures:
+                        response = future.result(timeout=20)
+                        assert response["id"] == request_id, response
+                        self._success(response)
+                assert overlap.is_set(), "Both provider operations must be in flight before either returns"
+            finally:
+                barrier.abort()
+                with self.lock:
+                    self.provider_barrier = None
+            assert self.calls == ["/activate/x", "/activate/x"], self.calls
+
+            for (client, tool), prompt in zip(clients, prompts):
+                trace = self._traceparent()
+                self._refused(call(tool, client, trace, retry=(prompt, "accept")), "already used")
+                expected[trace] = (tool, "needs_approval_declined")
+                assert self._count() == 2, self.calls
+
+        self._assert_scoped_audit(audit_path, token, diagnostics, prompts, expected, mode)
+
+    def _assert_scoped_audit(self, audit_path, token, diagnostics, prompts, expected, mode):
+        audit_text = audit_path.read_text(encoding="utf-8")
+        for secret in [token] + [prompt["requestState"] for prompt in prompts]:
+            assert secret not in audit_text and secret not in "".join(diagnostics), "Credentials or approval state logged"
+        records = []
+        for line in audit_text.splitlines():
+            for resource in json.loads(line)["resourceLogs"]:
+                for scope in resource["scopeLogs"]:
+                    records.extend(scope["logRecords"])
+        actual = {}
+        call_ids = set()
+        for trace, (tool, decision) in expected.items():
+            trace_id, span_id = trace.split("-")[1:3]
+            matched = [record for record in records if record["traceId"] == trace_id]
+            assert len(matched) == 2, (trace, matched)
+            ids = set()
+            methods = set()
+            for record in matched:
+                attrs = {attribute["key"]: attribute["value"].get("stringValue")
+                         for attribute in record["attributes"]}
+                assert record["spanId"] == span_id, record
+                assert attrs["gen_ai.tool.name"] == tool and attrs["stackql.decision"] == decision, attrs
+                assert attrs["stackql.mode"] == mode and attrs["mcp.protocol.version"] == "2026-07-28", attrs
+                assert not attrs.get("mcp.session.id"), attrs
+                if attrs["mcp.method.name"] == "tools/call":
+                    assert attrs["stackql.query"] == self.SQL and attrs["stackql.query_class"] == "lifecycle", attrs
+                ids.add(attrs["gen_ai.tool.call.id"])
+                methods.add(attrs["mcp.method.name"])
+            assert len(ids) == 1 and methods == {"tools/call", "elicitation/create"}, matched
+            actual[trace] = matched
+            call_ids.update(ids)
+        assert len(call_ids) == len(expected), call_ids
+        effect_records = [record for record in records if record["body"]["stringValue"] != "execute_tool server_info"]
+        assert len(effect_records) == sum(len(matched) for matched in actual.values()), effect_records
