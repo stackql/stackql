@@ -319,6 +319,28 @@ Any other value fails config validation at startup (`invalid server.protocol_ver
 - Streamable HTTP request bodies are capped at the SDK default of 4 MiB (`413` beyond it) and JSON nested deeper than 1000 levels is rejected before parsing; stackql's own stdio transport bounds a frame at 8 MiB (issue #701).  None of these are configurable in `mcp.config`: they sit far above any SQL statement stackql accepts.
 - Roots, sampling and server-side logging are deprecated by `2026-07-28` (SEP-2577).  stackql uses none of them: it issues no roots or sampling requests and emits no `notifications/message`; the SDK's default `logging` capability stays advertised for the deprecation window.
 
+### Feature and extension status
+
+The root module and Go launcher use MCP Go SDK v1.8.0, released on
+2026-09-14, with `2026-07-28` as the newest supported protocol revision.
+
+| Feature | Status |
+|---|---|
+| Current and legacy protocol lifecycles, approval, structured results, and JSON schemas | Already supported. Existing tool names, arguments, and default rendering remain unchanged. |
+| Response cache metadata | Added here. List responses have a private 30-second TTL; resource content and discovery are private and immediately stale. This does not cache query results. |
+| OAuth Client Credentials, stable revision `2026-07-28` | The opt-in HTTP resource server validates signed JWTs issued by an external authorization server. It does not acquire tokens or implement an authorization server, so this alone is not full extension conformance. See [OAuth JWT resource-server authentication](#oauth-jwt-resource-server-authentication). |
+| Enterprise-Managed Authorization | Not implemented. Centralized identity assertion and its trust model require separate design. |
+| MCP Apps | Not implemented. The desktop bundle packages a server but does not implement the Apps UI protocol. |
+| MCP Tasks, Skills over MCP, and Server Cards | Beta extensions are not enabled or advertised. Existing tool calls remain synchronous. |
+
+The SDK's `ClientCredentialsHandler` is a client-side token acquisition helper,
+not resource-server verification. In v1.8.0 it requires a client secret and
+selects `client_secret_post` or `client_secret_basic`; it does not implement the
+extension's `private_key_jwt` client authentication. The external authorization
+server and client determine the token acquisition method. Remaining extension
+conformance and interoperability work is tracked in
+[issue #919](https://github.com/stackql/stackql/issues/919).
+
 ### Breaking change vs PR1
 
 PR1 had a single `read_only: true/false` flag with a default of "no enforcement; mutations proceed."  PR2 replaces that flag with `mode: safe` as the default, which means **mutations now require user approval out of the box.**  Operators running an elicitation-capable client see one approval prompt per mutation.  Operators running automation or the bundled client must explicitly opt into `full_access`.
