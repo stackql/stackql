@@ -68,7 +68,8 @@ func expandDocumentViews(
 		if err != nil {
 			return nil, err
 		}
-		ddl, err := viewSQL(view, dialect.catalogue(), viewLiteralBindings(node.Where, table.As.GetRawVal(), resource))
+		bindings := viewLiteralBindings(node.Where, table.As.GetRawVal(), resource)
+		ddl, viewInputs, err := viewSQL(view, dialect.catalogue(), bindings)
 		if err != nil {
 			return nil, fmt.Errorf("view %s: %w", key, err)
 		}
@@ -97,7 +98,7 @@ func expandDocumentViews(
 		if alias == "" {
 			alias = resource
 		}
-		node, err = inlineDocumentView(node, projection, alias)
+		node, err = inlineDocumentView(node, projection, alias, viewInputs...)
 		if err != nil {
 			return nil, fmt.Errorf("view %s: %w", key, err)
 		}
@@ -105,7 +106,9 @@ func expandDocumentViews(
 	return nil, fmt.Errorf("document views exceed the expansion depth bound")
 }
 
-func viewSQL(view aot.View, dialect sqlfn.Dialect, bindings map[string]*sqlparser.ComparisonExpr) (string, error) {
+func viewSQL(
+	view aot.View, dialect sqlfn.Dialect, bindings map[string]*sqlparser.ComparisonExpr,
+) (string, []string, error) {
 	target := "sqlite3"
 	if dialect == sqlfn.Postgres {
 		target = "postgres"
@@ -113,22 +116,22 @@ func viewSQL(view aot.View, dialect sqlfn.Dialect, bindings map[string]*sqlparse
 	for depth := 0; depth < 16; depth++ {
 		matches, err := matchViewPredicate(view.Predicate(), target, bindings)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		if matches {
-			return view.DDL(), nil
+			return view.DDL(), viewRequiredParams(view.Predicate()), nil
 		}
 		next, ok := view.Fallback()
 		if !ok {
-			return "", fmt.Errorf("no view for SQL dialect %s", target)
+			return "", nil, fmt.Errorf("no view for SQL dialect %s", target)
 		}
 		view = next
 	}
-	return "", fmt.Errorf("view fallback exceeds the depth bound")
+	return "", nil, fmt.Errorf("view fallback exceeds the depth bound")
 }
 
 //nolint:errcheck,govet,gocognit,gocyclo,nestif,cyclop,funlen // AST rewriting keeps these cases together.
-func inlineDocumentView(node, view *sqlparser.Select, alias string) (*sqlparser.Select, error) {
+func inlineDocumentView(node, view *sqlparser.Select, alias string, inputs ...string) (*sqlparser.Select, error) {
 	columns := map[string]sqlparser.Expr{}
 	for _, selection := range view.SelectExprs {
 		selected, ok := selection.(*sqlparser.AliasedExpr)
@@ -185,9 +188,13 @@ func inlineDocumentView(node, view *sqlparser.Select, alias string) (*sqlparser.
 		selections = append(selections, selected)
 	}
 	node.SelectExprs = selections
-	// Explicit scope/body bindings on the outer query override the view's
-	// declared defaults; business predicates remain conjunctive.
+	// Explicit scope/body and declared view inputs override literal defaults;
+	// unrelated business predicates remain conjunctive.
 	bindings := viewLiteralBindings(node.Where, alias, alias)
+	declaredInputs := make(map[string]bool, len(inputs))
+	for _, name := range inputs {
+		declaredInputs[name] = true
+	}
 	if node.Where != nil {
 		node.Where.Expr = rewrite(node.Where.Expr).(sqlparser.Expr)
 	}
@@ -200,7 +207,8 @@ func inlineDocumentView(node, view *sqlparser.Select, alias string) (*sqlparser.
 		if compare, ok := expr.(*sqlparser.ComparisonExpr); ok && literalViewBinding(compare) {
 			if col, ok := compare.Left.(*sqlparser.ColName); ok {
 				name := col.Name.GetRawVal()
-				if replacement := bindings[name]; replacement != nil && (name == "region" || strings.HasPrefix(name, "data__")) {
+				if replacement := bindings[name]; replacement != nil &&
+					(name == "region" || strings.HasPrefix(name, "data__") || declaredInputs[name]) {
 					// Replace only literal inbox bindings. Column-to-column beta
 					// dependencies and business predicates retain their meaning.
 					bound := *replacement

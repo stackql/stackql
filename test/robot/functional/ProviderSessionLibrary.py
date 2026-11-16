@@ -19,6 +19,7 @@ class ProviderSessionLibrary:
         self.root = Path(tempfile.mkdtemp(prefix="stackql-session-"))
         self.calls = []
         self.aws_calls = []
+        self.view_calls = []
         self.concurrent_gate = None
         self.env = os.environ.copy()
         if os.name != "nt":
@@ -69,6 +70,20 @@ class ProviderSessionLibrary:
                     owner.concurrent_gate.wait(timeout=10)
                 owner.calls.append((token, region))
                 payload = json.dumps([{"id": region or "account", "active": True, "count": 42}]).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+
+            def do_POST(self):
+                if urlparse(self.path).path != "/resource":
+                    self.send_error(404)
+                    return
+                body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
+                owner.view_calls.append((body, parse_qs(urlparse(self.path).query).get("region", [""])[0]))
+                payload = json.dumps({"ResourceDescription": {"Identifier": body.get("Identifier"),
+                    "Properties": json.dumps({"BucketName": body.get("Identifier")})}}).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(payload)))
@@ -678,3 +693,41 @@ esac
         assert json.loads((root / 'pending.v2.json').read_text())['tombstone'], "recovery did not clear verified absent create"
         evidence = [json.loads(line) for path in (self.root / 'app/iac/journal').glob('*.diagnostics.jsonl') for line in path.read_text().splitlines()]
         assert any(row.get('diagnostic', {}).get('event') == 'recovery_assertion' for row in evidence), 'recovery decision not durable'
+
+    def provider_view_declared_inputs_override_placeholders(self):
+        version = self.root / "registry/src/widgets/v00.00.00000"
+        provider = json.loads((version / "provider.yaml").read_text())
+        provider["providerServices"]["views"] = {"id": "views:v00.00.00000", "name": "views", "preferred": True,
+            "service": {"$ref": "widgets/v00.00.00000/services/views.yaml"}}
+        (version / "provider.yaml").write_text(json.dumps(provider))
+        response = {"type": "object", "properties": {"ResourceDescription": {"type": "object", "properties": {
+            "Identifier": {"type": "string"}, "Properties": {"type": "string"}}}}}
+        projection = "SELECT region, Identifier, {extract} AS bucket_name FROM widgets.views.resources "
+        projection += "WHERE TypeName = 'Example::Bucket' AND Identifier = '<BucketName>' AND region = 'default-region'"
+        view = {"predicate": 'sqlDialect == "sqlite3" && requiredParams == [ Identifier ]',
+            "ddl": projection.format(extract="JSON_EXTRACT(Properties, '$.BucketName')"),
+            "fallback": {"predicate": 'sqlDialect == "postgres" && requiredParams == [ Identifier ]',
+                "ddl": projection.format(extract="json_extract_path_text(Properties, 'BucketName')")}}
+        doc = {"openapi": "3.0.0", "servers": [{"url": "https://example.test"}], "paths": {"/resource": {"post": {
+            "parameters": [{"name": "region", "in": "query", "required": True, "schema": {"type": "string"}}],
+            "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {
+                "TypeName": {"type": "string"}, "Identifier": {"type": "string"}}}}}},
+            "responses": {"200": {"content": {"application/json": {"schema": response}}}}}}},
+            "components": {"x-stackQL-resources": {
+                "resources": {"methods": {"get": {"operation": {"$ref": "#/paths/~1resource/post"},
+                    "request": {"mediaType": "application/json"},
+                    "response": {"mediaType": "application/json", "objectKey": "$.ResourceDescription"}}},
+                    "sqlVerbs": {"select": [{"$ref": "#/components/x-stackQL-resources/resources/methods/get"}]}},
+                "buckets": {"methods": {}, "config": {"views": {"select": view}}}}}}
+        (version / "services/views.yaml").write_text(json.dumps(doc))
+        prefix = self.setting("auth.widgets", {"type": "null_auth"})
+        before = len(self.view_calls)
+        result = self.run_sql(prefix + "SELECT count(*) AS count FROM widgets.views.buckets "
+            "WHERE region = 'east' AND Identifier = 'caller-bucket';", [])
+        assert json.loads(result.stdout) == [{"count": "1"}], result.stdout
+        assert self.view_calls[before:] == [({"TypeName": "Example::Bucket", "Identifier": "caller-bucket"}, "east")], self.view_calls
+        before = len(self.view_calls)
+        result = self.run_sql(prefix + "SELECT b.bucket_name FROM widgets.views.buckets b "
+            "WHERE b.region = 'west' AND b.Identifier = 'quoted''bucket';", [])
+        assert json.loads(result.stdout) == [{"bucket_name": "quoted'bucket"}], result.stdout
+        assert self.view_calls[before:] == [({"TypeName": "Example::Bucket", "Identifier": "quoted'bucket"}, "west")], self.view_calls

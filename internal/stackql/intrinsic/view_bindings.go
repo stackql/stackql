@@ -74,16 +74,29 @@ func matchViewPredicate(predicate, dialect string, bindings map[string]*sqlparse
 		case strings.HasPrefix(term, "sqlDialect=="):
 			matches = matches && strings.Trim(strings.TrimPrefix(term, "sqlDialect=="), "\"'") == dialect
 		case strings.HasPrefix(term, "requiredParams==[") && strings.HasSuffix(term, "]"):
-			names := strings.TrimSuffix(strings.TrimPrefix(term, "requiredParams==["), "]")
-			if names == "" {
-				continue
-			}
-			for _, name := range strings.Split(names, ",") {
-				matches = matches && bindings[strings.Trim(name, "\"'")] != nil
+			for _, name := range viewRequiredParams(term) {
+				matches = matches && bindings[name] != nil
 			}
 		default:
 			return false, fmt.Errorf("unsupported view predicate %q", predicate)
 		}
 	}
 	return matches, nil
+}
+
+// viewRequiredParams preserves the selected variant's declared input names.
+func viewRequiredParams(predicate string) []string {
+	var names []string
+	for _, term := range strings.Split(strings.Join(strings.Fields(predicate), ""), "&&") {
+		if !strings.HasPrefix(term, "requiredParams==[") || !strings.HasSuffix(term, "]") {
+			continue
+		}
+		raw := strings.TrimSuffix(strings.TrimPrefix(term, "requiredParams==["), "]")
+		for _, name := range strings.Split(raw, ",") {
+			if name = strings.Trim(name, "\"'"); name != "" {
+				names = append(names, name)
+			}
+		}
+	}
+	return names
 }

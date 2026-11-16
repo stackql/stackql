@@ -71,3 +71,21 @@ func TestViewFanoutOverridesLiteralInboxButRetainsDependency(t *testing.T) {
 		t.Fatal(result)
 	}
 }
+
+func TestInlineDocumentViewOverridesDeclaredBareInputs(t *testing.T) {
+	outer := parseSelect(t, "select count(*) as count from p.s.buckets b where b.region = 'east' and b.Identifier = 'caller-bucket'")
+	view := parseSelect(t, "select region, Identifier, Properties from p.cloud_control.resource where TypeName = 'AWS::S3::Bucket' and Identifier = '<BucketName>' and region = 'west' and Status = 'ACTIVE'")
+	expanded, err := inlineDocumentView(outer, view, "b", "Identifier")
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := statementSQL(expanded)
+	if strings.Contains(result, "<BucketName>") || strings.Contains(result, "'west'") {
+		t.Fatalf("view default survived: %s", result)
+	}
+	for _, want := range []string{"caller-bucket", "AWS::S3::Bucket", "ACTIVE", "count(*)"} {
+		if !strings.Contains(result, want) {
+			t.Fatalf("lost %s: %s", want, result)
+		}
+	}
+}
