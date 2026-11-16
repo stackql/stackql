@@ -813,6 +813,7 @@ def run_http_oauth_resource_server(
     issuer_server = ThreadingHTTPServer(("127.0.0.1", 0), JWKSHandler)
     issuer_server.daemon_threads = True
     issuer_tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    issuer_tls.minimum_version = ssl.TLSVersion.TLSv1_2
     issuer_tls.load_cert_chain(tls_cert_file, tls_key_file)
     issuer_server.socket = issuer_tls.wrap_socket(issuer_server.socket, server_side=True)
     issuer_thread = threading.Thread(target=issuer_server.serve_forever, daemon=True)
