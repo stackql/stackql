@@ -2077,6 +2077,23 @@ MCP OAuth Resource Server Verifies External Issuer Tokens
     Should Contain    ${result['challenge']}    https://mcp.example.test/.well-known/oauth-protected-resource
     Should Contain    ${result['challenge']}    tools:read
     Should Be True    ${result['valid_has_session']}
+    Should Be True    ${result['independent_subjects']}
+    Should Be True    ${result['independent_sessions']}
+    FOR    ${caller}    IN    @{result['caller_cache']}
+        Should Be Equal    ${caller['scope']}    private
+        Should Be Equal As Integers    ${caller['ttl_ms']}    30000
+        Should Be True    ${caller['has_tools']}
+    END
+    Should Be Equal As Integers    ${result['warmed_missing_status']}    401
+    Should Be Equal As Integers    ${result['warmed_scope_status']}    403
+    Should Be Equal As Integers    ${result['warmed_caller_status']}    200
+    Should Be Equal As Integers    ${result['rotated_status']}    200
+    Should Be Equal As Integers    ${result['retired_key_status']}    401
+    Should Be Equal As Integers    ${result['jwks_outage_status']}    500
+    Should Be True    ${result['outage_fetch_observed']}
+    Should Be Equal As Integers    ${result['outage_cached_key_status']}    200
+    Should Be Equal As Integers    ${result['outage_metadata_status']}    200
+    Should Be Equal As Integers    ${result['jwks_recovery_status']}    200
     Should Be True    ${result['logs_clean']}
 
 MCP Server Refuses Unset Bearer Token Env Var

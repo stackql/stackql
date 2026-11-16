@@ -175,7 +175,8 @@ func classifyRelation(table sqlparser.TableName) QueryClass {
 	provider := table.QualifierSecond.GetRawVal()
 	if (provider == "" || strings.EqualFold(provider, "stackql_preview")) &&
 		strings.EqualFold(service, "iac") &&
-		(strings.EqualFold(resource, "run") || strings.EqualFold(resource, "destroy")) {
+		(strings.EqualFold(resource, "run") || strings.EqualFold(resource, "destroy") ||
+			strings.EqualFold(resource, "recover")) {
 		return QueryClassLifecycle
 	}
 	if provider == "" {

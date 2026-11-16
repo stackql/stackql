@@ -239,8 +239,11 @@ Instructions, prompts, resources and tool descriptions are authored as markdown 
 
 **SQL classification limits (issue #818).** The MCP policy walks the parser AST,
 including nested EXEC, subqueries and in-query CTE definitions. SELECTs over
-`stackql_preview.iac.run` or `destroy`, including abbreviated `iac.run` and
-`iac.destroy`, are classified as lifecycle operations. Bare relation names
+`stackql_preview.iac.run`, `destroy` or `recover`, including abbreviated `iac.run`,
+`iac.destroy` and `iac.recover`, are classified as lifecycle operations.
+Recovery records operator attestations and updates local ledger state, even
+though it does not call a cloud provider, so it is conservatively gated alongside
+run and destroy. Bare relation names
 outside an in-query CTE, other abbreviated names and unparseable SELECT/WITH
 statements are unknown effects: `read_only` refuses them, `safe` and
 `delete_safe` require approval, and `full_access` allows them. Use fully

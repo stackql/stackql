@@ -102,7 +102,7 @@ class MCPEffectsLibrary:
             return len(self.calls)
 
     @contextlib.contextmanager
-    def _server(self, mode):
+    def _server(self, mode, preview=False):
         run = self.root / uuid.uuid4().hex
         run.mkdir()
         command = [
@@ -117,6 +117,10 @@ class MCPEffectsLibrary:
             "--auth", json.dumps({"mcp_effects": {"type": "null_auth"}}),
             "--sqlBackend", json.dumps({"dsn": str(run / "staging.db")}),
         ]
+        if preview:
+            command.extend(["--preview", json.dumps({
+                "unstable": True, "iacStateRoot": str(self.root / "ledger"),
+            })])
         process = subprocess.Popen(command, cwd=run, env=dict(os.environ, GOMAXPROCS="2"),
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         responses = queue.Queue()
@@ -194,6 +198,23 @@ class MCPEffectsLibrary:
                 assert self._count() == 0, self.calls
             self._success(call("run_select_query", sql="select 'EXEC is literal text' as description"))
             assert self._count() == 0, self.calls
+
+    def iac_read_only_does_not_write_ledger(self):
+        ledger = self.root / "ledger"
+        with self._server("read_only", preview=True) as call:
+            metadata = call("run_select_query", sql="SHOW RESOURCES IN stackql_preview.iac")
+            self._success(metadata)
+            assert "stackql_preview.iac.recover" in json.dumps(metadata), metadata
+            assert not ledger.exists(), "Metadata discovery created IaC state"
+            predicates = (" where collection = 'policy-test' and state = 'recovery' "
+                          "and resource_key = 'item' and version = 'observed' and outcome = 'absent'")
+            for relation in ["stackql_preview.iac.run", "stackql_preview.iac.destroy",
+                             "stackql_preview.iac.recover", "iac.recover"]:
+                sql = "select * from " + relation + predicates
+                for tool in ["run_select_query", "run_mutation_query", "run_lifecycle_operation"]:
+                    self._refused(call(tool, sql=sql), "read_only")
+                    assert not ledger.exists(), "Read-only IaC query wrote local state"
+                    assert self._count() == 0, self.calls
 
     def nested_exec_requires_approval(self, mode):
         assert mode in ("safe", "delete_safe"), mode

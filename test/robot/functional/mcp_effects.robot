@@ -31,3 +31,8 @@ Nested EXEC Delete Safe Requires Approval Before Provider Operation
 Nested EXEC Full Access Executes Through Effectful Tools
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Nested Exec Full Access Executes
+
+IaC Recovery Read Only Refuses Before Ledger Writes
+    [Documentation]    Preview is enabled; run, destroy and recover are refused without creating ledger state.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Iac Read Only Does Not Write Ledger
