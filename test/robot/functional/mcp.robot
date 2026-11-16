@@ -2051,13 +2051,17 @@ MCP HTTP Bearer Token Authentication
     Should Be Equal As Integers    ${cross['status']}    403
 
 MCP OAuth Resource Server Verifies External Issuer Tokens
-    [Documentation]    A built StackQL binary serves TLS-protected MCP HTTP, public protected-resource metadata, and verifies signed tokens from a local TLS JWKS issuer.
+    [Documentation]    A built StackQL binary verifies Client Credentials JWTs acquired from a local TLS authorization server and serves public protected-resource metadata.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${registry_cfg}=    Evaluate    $REGISTRY_NO_VERIFY_CFG_STR.get_config_str('native')
     ${tls_cert_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-tls${/}server_cert.pem
     ${tls_key_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-tls${/}server_key.pem
     ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_oauth_resource_server($STACKQL_EXE, $registry_cfg, '{}', $tls_cert_file, $tls_key_file)    modules=stackql_test_tooling.mcp_stdio_client
     Should Be Empty    ${result['startup_error']}
+    Should Be Equal As Integers    ${result['token_endpoint_status']}    200
+    Should Be Equal As Integers    ${result['token_endpoint_bad_client_status']}    401
+    Should Be Equal As Integers    ${result['token_endpoint_bad_grant_status']}    400
+    Should Be Equal As Integers    ${result['token_endpoint_bad_scope_status']}    400
     Should Be Equal As Integers    ${result['metadata_status']}    200
     Should Be Equal    ${result['metadata_resource']}    https://mcp.example.test/api
     Should Be Equal As Integers    ${result['statuses']['missing']}    401
@@ -2069,6 +2073,7 @@ MCP OAuth Resource Server Verifies External Issuer Tokens
     Should Be Equal As Integers    ${result['statuses']['unknown_key']}    401
     Should Be Equal As Integers    ${result['statuses']['algorithm']}    401
     Should Be Equal As Integers    ${result['statuses']['scope']}    403
+    Should Be Equal As Integers    ${result['statuses']['acquired_scope']}    403
     Should Contain    ${result['challenge']}    https://mcp.example.test/.well-known/oauth-protected-resource
     Should Contain    ${result['challenge']}    tools:read
     Should Be True    ${result['valid_has_session']}

@@ -745,16 +745,20 @@ def run_http_oauth_resource_server(
     tls_key_file,
 ):
     """Runs OAuth acceptance/rejection requests against a real TLS StackQL
-    process and a loopback TLS JWKS issuer. No tokens or verifier errors are
+    process and a loopback TLS authorization server, acquiring a JWT through
+    client_credentials before using it at MCP. No credentials or tokens are
     included in the returned result or written to files.
     """
     import base64
     import socket
     import ssl
     import http.client
+    import hmac
+    import secrets
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
     from urllib.error import HTTPError, URLError
     from urllib.request import Request, urlopen
+    from urllib.parse import parse_qs, urlencode
 
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
@@ -765,6 +769,11 @@ def run_http_oauth_resource_server(
     key_id = "robot-ed25519"
     private_key = Ed25519PrivateKey.generate()
     public_key = private_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+    client_id = "robot-service"
+    client_secret = secrets.token_urlsafe(32)
+    client_authorization = "Basic " + base64.b64encode(
+        (client_id + ":" + client_secret).encode()
+    ).decode()
 
     def b64url(raw):
         return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
@@ -781,12 +790,48 @@ def run_http_oauth_resource_server(
         return {
             "iss": issuer,
             "aud": audience,
-            "exp": 4102444800,
+            "exp": int(time.time()) + 300,
             "scope": "tools:read tools:write",
             "sub": "robot-service",
         }
 
     class JWKSHandler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            if self.path != "/token":
+                self.send_error(404)
+                return
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 4096:
+                self.send_error(400)
+                return
+            form = parse_qs(self.rfile.read(length).decode())
+            if not hmac.compare_digest(self.headers.get("Authorization", ""), client_authorization):
+                self._json_response(401, {"error": "invalid_client"})
+                return
+            if form.get("grant_type") != ["client_credentials"]:
+                self._json_response(400, {"error": "unsupported_grant_type"})
+                return
+            scopes = form.get("scope", [""])[0].split()
+            if not scopes or not set(scopes) <= {"tools:read", "tools:write"}:
+                self._json_response(400, {"error": "invalid_scope"})
+                return
+            claims = valid_claims()
+            claims["scope"] = " ".join(scopes)
+            self._json_response(200, {
+                "access_token": make_token(claims), "token_type": "Bearer",
+                "expires_in": 300, "scope": claims["scope"],
+            })
+
+        def _json_response(self, status, payload):
+            body = json.dumps(payload, separators=(",", ":")).encode()
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
         def do_GET(self):
             if self.path != "/jwks":
                 self.send_error(404)
@@ -818,6 +863,7 @@ def run_http_oauth_resource_server(
     issuer_server.socket = issuer_tls.wrap_socket(issuer_server.socket, server_side=True)
     issuer_thread = threading.Thread(target=issuer_server.serve_forever, daemon=True)
     issuer_thread.start()
+    issuer = "https://127.0.0.1:" + str(issuer_server.server_port) + "/"
 
     with socket.socket() as reservation:
         reservation.bind(("127.0.0.1", 0))
@@ -863,8 +909,25 @@ def run_http_oauth_resource_server(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    client_tls = ssl._create_unverified_context()
+    client_tls = ssl.create_default_context(cafile=tls_cert_file)
     all_tokens = []
+
+    def acquire_token(scope, authorization=client_authorization, grant_type="client_credentials"):
+        req = Request(
+            issuer + "token",
+            data=urlencode({"grant_type": grant_type, "scope": scope}).encode(),
+            headers={"Content-Type": "application/x-www-form-urlencoded", "Authorization": authorization},
+            method="POST",
+        )
+        try:
+            with urlopen(req, timeout=3, context=client_tls) as response:
+                payload = json.loads(response.read())
+                if response.status == 200:
+                    all_tokens.append(payload["access_token"])
+                return response.status, payload
+        except HTTPError as error:
+            with error:
+                return error.code, json.loads(error.read())
 
     def request(url, bearer=None):
         headers = {}
@@ -917,10 +980,23 @@ def run_http_oauth_resource_server(
             return result
         result["metadata_status"] = metadata[0]
         result["metadata_resource"] = json.loads(metadata[2]).get("resource", "")
+        acquired_status, acquired = acquire_token("tools:read tools:write")
+        result["token_endpoint_status"] = acquired_status
+        result["token_endpoint_bad_client_status"], _ = acquire_token("tools:read", authorization="Basic invalid")
+        result["token_endpoint_bad_grant_status"], _ = acquire_token("tools:read", grant_type="password")
+        result["token_endpoint_bad_scope_status"], _ = acquire_token("admin")
+        if acquired_status != 200 or acquired.get("token_type") != "Bearer" or acquired.get("expires_in") != 300:
+            result["startup_error"] = "Client Credentials acquisition failed"
+            return result
+        limited_status, limited = acquire_token("tools:read")
+        if limited_status != 200:
+            result["startup_error"] = "Limited-scope Client Credentials acquisition failed"
+            return result
 
         cases = {}
         cases["missing"] = (None, 401)
-        cases["valid"] = (make_token(valid_claims()), 200)
+        cases["valid"] = (acquired["access_token"], 200)
+        cases["acquired_scope"] = (limited["access_token"], 403)
         invalid_issuer = valid_claims()
         invalid_issuer["iss"] = "https://wrong-issuer.example.test/"
         cases["issuer"] = (make_token(invalid_issuer), 401)
@@ -980,7 +1056,8 @@ def run_http_oauth_resource_server(
         logs = (stdout or b"") + (stderr or b"")
         result["logs_clean"] = result.get("logs_clean", True) and all(
             token.encode() not in logs for token in all_tokens
-        ) and b"invalid token" not in logs.lower() and b"jwks unavailable" not in logs.lower()
+        ) and client_secret.encode() not in logs and client_authorization.encode() not in logs \
+            and b"invalid token" not in logs.lower() and b"jwks unavailable" not in logs.lower()
         if process.returncode not in (0, -15):
             result["process_returncode"] = process.returncode
     return result
