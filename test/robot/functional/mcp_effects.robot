@@ -2,6 +2,7 @@
 Documentation     Issue 818: nested EXEC through the real native MCP binary with a counted POST operation.
 ...               Fixture registry, application root and database are unique per test; loopback ports are ephemeral.
 ...               SELECT tool remains read-only in all modes; effectful SQL uses mutation/lifecycle tools.
+...               Issue 919: current-revision approval state tampering and replay cause no additional operations.
 ...               Backend-owned semantic view and indirection classification is tracked separately in issue 928.
 Library           MCPEffectsLibrary.py
 Test Setup        Prepare Native MCP Effects
@@ -36,3 +37,11 @@ IaC Recovery Read Only Refuses Before Ledger Writes
     [Documentation]    Preview is enabled; run, destroy and recover are refused without creating ledger state.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Iac Read Only Does Not Write Ledger
+
+Nested EXEC Safe Rejects Tampered And Replayed Approval State
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Approval State Tampering And Replay Prevent Operations    safe
+
+Nested EXEC Delete Safe Rejects Tampered And Replayed Approval State
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Approval State Tampering And Replay Prevent Operations    delete_safe

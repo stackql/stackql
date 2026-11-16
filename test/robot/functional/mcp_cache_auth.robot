@@ -20,3 +20,11 @@ MCP Private Catalogue Isolation And Immediately Stale Reads
 MCP OAuth Disabled Preserves Bearer And Anonymous Opt In After Cache Warming
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    MCP tests are disabled on this platform
     OAuth Disabled HTTP Preserves Auth After Cache Warming
+
+MCP Stdio Rejects Invalid Per Request Protocol Metadata
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    MCP tests are disabled on this platform
+    Protocol Metadata Rejections Preserve Liveness    stdio
+
+MCP Stateless HTTP Rejects Metadata And Header Mismatches
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    MCP tests are disabled on this platform
+    Protocol Metadata Rejections Preserve Liveness    http

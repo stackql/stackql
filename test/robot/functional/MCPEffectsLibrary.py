@@ -249,3 +249,26 @@ class MCPEffectsLibrary:
                 self._success(call(tool, approval=False))
                 assert self._count() == expected, self.calls
             assert self.calls == ["/activate/x", "/activate/x"], self.calls
+
+    def approval_state_tampering_and_replay_prevent_operations(self, mode):
+        assert mode in ("safe", "delete_safe"), mode
+        with self._server(mode) as call:
+            for before, tool in enumerate(["run_mutation_query", "run_lifecycle_operation"]):
+                response = call(tool)
+                assert "error" not in response and not response["result"].get("isError"), response
+                prompt = response["result"]
+                assert prompt.get("inputRequests") and prompt.get("requestState"), response
+                assert self._count() == before, self.calls
+
+                state = prompt["requestState"]
+                replacement = "BB" if state.endswith("AA") else "AA"
+                tampered = dict(prompt, requestState=state[:-2] + replacement)
+                assert tampered["requestState"] != state
+                self._refused(call(tool, retry=(tampered, "accept")), "not issued by this server")
+                assert self._count() == before, self.calls
+
+                self._success(call(tool, retry=(prompt, "accept")))
+                assert self._count() == before + 1, self.calls
+                self._refused(call(tool, retry=(prompt, "accept")), "already used")
+                assert self._count() == before + 1, self.calls
+            assert self.calls == ["/activate/x", "/activate/x"], self.calls

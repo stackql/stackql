@@ -102,8 +102,10 @@ class MCPCacheAuthLibrary:
                         "protocolVersion": "2025-11-25", "capabilities": {},
                         "clientInfo": {"name": "cache-auth-legacy", "version": "1"},
                     } if legacy else None
-                    status, _ = self._call(client, method, params, token=self.token if authenticated else None)
+                    status, initialized = self._call(client, method, params, token=self.token if authenticated else None)
                     if status == 200:
+                        if legacy:
+                            assert initialized.get("protocolVersion") == "2025-11-25", "Legacy handshake negotiated the wrong revision"
                         break
                 except (URLError, OSError):
                     pass
@@ -112,11 +114,11 @@ class MCPCacheAuthLibrary:
                 raise AssertionError("MCP HTTP endpoint did not become ready")
         return client
 
-    def _call(self, client, method, params=None, token=None):
+    def _call(self, client, method, params=None, token=None, raw=False, omit_meta=False, headers_override=None):
         client["id"] += 1
         meta = self.meta if client["protocol"] == "2026-07-28" else {}
         payload = {"jsonrpc": "2.0", "id": client["id"], "method": method,
-                   "params": {"_meta": meta, **(params or {})}}
+                   "params": {**({} if omit_meta else {"_meta": meta}), **(params or {})}}
         if client["endpoint"]:
             headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream",
                        "Mcp-Protocol-Version": client["protocol"], "Mcp-Method": method}
@@ -126,16 +128,28 @@ class MCPCacheAuthLibrary:
                 headers["Mcp-Name"] = params["uri"]
             if token:
                 headers["Authorization"] = "Bearer " + token
+            for name, value in (headers_override or {}).items():
+                if value is None:
+                    headers.pop(name, None)
+                else:
+                    headers[name] = value
             request = Request(client["endpoint"], json.dumps(payload).encode(), headers)
             try:
                 with urlopen(request, timeout=10) as response:
-                    raw = response.read()
+                    response_data = response.read()
                     status = response.status
                     client["session"] = response.headers.get("Mcp-Session-Id", client["session"])
             except HTTPError as error:
-                error.close()
-                return error.code, {}
-            text = raw.decode()
+                with error:
+                    status = error.code
+                    data = error.read()
+                if not raw:
+                    return status, {}
+                try:
+                    return status, json.loads(data)
+                except ValueError:
+                    return status, {"http_error": data.decode()}
+            text = response_data.decode()
             if text.startswith("data:") or "\ndata:" in text:
                 frames = [json.loads(line[5:].strip()) for line in text.splitlines() if line.startswith("data:")]
                 message = next(frame for frame in frames if frame.get("id") == payload["id"])
@@ -147,6 +161,8 @@ class MCPCacheAuthLibrary:
             message = client["output"].get(timeout=15)
             status = 200
             assert message.get("id") == payload["id"], "Unexpected stdio reply"
+        if raw:
+            return status, message
         assert "error" not in message, "MCP request failed for method " + method
         assert "result" in message, "MCP reply missing result for " + method + ": " + str(sorted(message))
         return status, message.get("result", {})
@@ -204,6 +220,46 @@ class MCPCacheAuthLibrary:
         assert status == 200 and legacy_tools.get("tools"), "Legacy authenticated session cannot list tools"
         status, _ = self._call(legacy, "tools/list")
         assert status == 401, "Legacy session ID bypassed bearer authentication"
+
+    def protocol_metadata_rejections_preserve_liveness(self, transport):
+        client = self._start(transport)
+        version_key = "io.modelcontextprotocol/protocolVersion"
+        capabilities_key = "io.modelcontextprotocol/clientCapabilities"
+        info_key = "io.modelcontextprotocol/clientInfo"
+        # Without a valid revision stdio selects the legacy initialization gate.
+        # The SDK returns code 0 for that plain error, not InvalidParams.
+        tests = [
+            ("missing metadata", {}, True, None, -32602 if transport == "http" else 0),
+            ("invalid metadata shape", {"_meta": "invalid"}, False, None, -32602 if transport == "http" else 0),
+            ("missing protocol version", {"_meta": {capabilities_key: {}}}, False, None,
+             -32602 if transport == "http" else 0),
+            ("invalid protocol version", {"_meta": {version_key: 42, capabilities_key: {}}}, False, None,
+             -32602 if transport == "http" else 0),
+            ("missing capabilities", {"_meta": {version_key: "2026-07-28"}}, False, None, -32602),
+            ("invalid capabilities", {"_meta": {version_key: "2026-07-28", capabilities_key: "invalid"}}, False, None, -32602),
+            ("invalid client info", {"_meta": {**self.meta, info_key: "invalid"}}, False, None, -32602),
+        ]
+        if transport == "http":
+            tests += [
+                ("missing version header", {}, False, {"Mcp-Protocol-Version": None}, -32020),
+                ("version mismatch", {"_meta": {**self.meta, version_key: "2026-07-29"}}, False, None, -32020),
+                ("missing method header", {}, False, {"Mcp-Method": None}, -32020),
+                ("method mismatch", {}, False, {"Mcp-Method": "resources/list"}, -32020),
+            ]
+        for name, params, omit_meta, headers, code in tests:
+            status, response = self._call(
+                client, "tools/list", params, raw=True, omit_meta=omit_meta, headers_override=headers,
+            )
+            actual = response.get("error", {}).get("code")
+            assert actual == code, name + ": expected JSON-RPC " + str(code) + ", got " + str(actual) + " (HTTP " + str(status) + ")"
+            assert response.get("id") == client["id"], name + ": response lost request correlation"
+            if transport == "http":
+                assert status == 400, name + ": expected HTTP 400"
+        _, valid = self._call(client, "tools/list", {"_meta": {
+            version_key: "2026-07-28", capabilities_key: {},
+        }})
+        assert valid.get("tools"), "Valid metadata after rejection did not restore a working request"
+        self._check_cache(valid, 30000)
 
     def stop_cache_auth_fixture(self):
         clean_logs = True
