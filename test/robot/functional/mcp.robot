@@ -2054,7 +2054,9 @@ MCP OAuth Resource Server Verifies External Issuer Tokens
     [Documentation]    A built StackQL binary serves TLS-protected MCP HTTP, public protected-resource metadata, and verifies signed tokens from a local TLS JWKS issuer.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${registry_cfg}=    Evaluate    $REGISTRY_NO_VERIFY_CFG_STR.get_config_str('native')
-    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_oauth_resource_server($STACKQL_EXE, $registry_cfg, '{}', $CURDIR + "/tmp/mcp-tls/server_cert.pem", $CURDIR + "/tmp/mcp-tls/server_key.pem")    modules=stackql_test_tooling.mcp_stdio_client
+    ${tls_cert_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-tls${/}server_cert.pem
+    ${tls_key_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-tls${/}server_key.pem
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_http_oauth_resource_server($STACKQL_EXE, $registry_cfg, '{}', $tls_cert_file, $tls_key_file)    modules=stackql_test_tooling.mcp_stdio_client
     Should Be Empty    ${result['startup_error']}
     Should Be Equal As Integers    ${result['metadata_status']}    200
     Should Be Equal    ${result['metadata_resource']}    https://mcp.example.test/api
