@@ -38,7 +38,7 @@ var awsUnorderedFields = map[string]struct{}{
 // NULL; unparseable arguments are errors.
 func AWSPolicyEqual(a, b any) (any, error) {
 	if a == nil || b == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // A SQL NULL is a valid scalar result.
 	}
 	sa, okA := valueText(a)
 	sb, okB := valueText(b)

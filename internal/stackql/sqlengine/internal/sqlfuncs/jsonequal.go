@@ -18,7 +18,7 @@ var errJSONParse = errors.New("Error parsing JSON strings") //nolint:staticcheck
 // arguments are errors.
 func JSONEqual(a, b any) (any, error) {
 	if a == nil || b == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // A SQL NULL is a valid scalar result.
 	}
 	sa, okA := valueText(a)
 	sb, okB := valueText(b)
