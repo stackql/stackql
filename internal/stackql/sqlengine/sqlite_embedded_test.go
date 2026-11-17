@@ -489,3 +489,84 @@ func TestCallerDirectoryForeignKeysOnEveryConnection(t *testing.T) {
 		t.Fatal("second connection accepted an orphan membership")
 	}
 }
+
+// TestSQLiteEmbeddedNullOptionalPropertyComparison pins the issue #914
+// contract: a SQL NULL optional property must not abort the whole result set,
+// and WHERE comparison = 1 must exclude the resulting SQL NULL rows. SQL NULL
+// stays distinct from the JSON text 'null', which remains comparable.
+func TestSQLiteEmbeddedNullOptionalPropertyComparison(t *testing.T) {
+	eng := newTestEngine(t, "")
+	if _, err := eng.Exec(`CREATE TABLE opt_cmp (id INTEGER PRIMARY KEY, lhs TEXT, rhs TEXT)`); err != nil {
+		t.Fatalf("create table: %v", err)
+	}
+	inserts := []string{
+		`INSERT INTO opt_cmp VALUES (1, '{"a":1}', '{"a":1}')`,
+		`INSERT INTO opt_cmp VALUES (2, NULL, '{"a":1}')`,
+		`INSERT INTO opt_cmp VALUES (3, '{"a":null}', '{"a":null}')`,
+	}
+	for _, q := range inserts {
+		if _, err := eng.Exec(q); err != nil {
+			t.Fatalf("insert: %v", err)
+		}
+	}
+
+	for _, fn := range []string{"json_equal", "aws_policy_equal"} {
+		t.Run(fn, func(t *testing.T) {
+			assertOptionalComparisonRows(t, eng, fn)
+			assertOptionalComparisonFilteredRows(t, eng, fn)
+		})
+	}
+}
+
+func assertOptionalComparisonRows(t *testing.T, eng *sqLiteEmbeddedEngine, fn string) {
+	t.Helper()
+	rows, err := eng.Query(`SELECT id, ` + fn + `(lhs, rhs) FROM opt_cmp ORDER BY id`)
+	if err != nil {
+		t.Fatalf("read all rows: %v", err)
+	}
+	defer rows.Close()
+	got := map[int64]any{}
+	for rows.Next() {
+		var id int64
+		var cmp any
+		if err := rows.Scan(&id, &cmp); err != nil {
+			t.Fatalf("scan row %d: %v", id, err)
+		}
+		got[id] = cmp
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("rows: %v", err)
+	}
+	if got[1] != int64(1) {
+		t.Fatalf("row 1 (%s) = %#v, want 1", fn, got[1])
+	}
+	if got[2] != nil {
+		t.Fatalf("row 2 (%s) = %#v, want SQL NULL", fn, got[2])
+	}
+	if got[3] != int64(1) {
+		t.Fatalf("row 3 (%s) = %#v, want 1 (JSON null stays comparable)", fn, got[3])
+	}
+}
+
+func assertOptionalComparisonFilteredRows(t *testing.T, eng *sqLiteEmbeddedEngine, fn string) {
+	t.Helper()
+	filtered, err := eng.Query(`SELECT id FROM opt_cmp WHERE ` + fn + `(lhs, rhs) = 1 ORDER BY id`)
+	if err != nil {
+		t.Fatalf("filter rows: %v", err)
+	}
+	defer filtered.Close()
+	var ids []int64
+	for filtered.Next() {
+		var id int64
+		if err := filtered.Scan(&id); err != nil {
+			t.Fatalf("scan filtered row: %v", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := filtered.Err(); err != nil {
+		t.Fatalf("filtered rows: %v", err)
+	}
+	if len(ids) != 2 || ids[0] != 1 || ids[1] != 3 {
+		t.Fatalf("filtered ids = %v, want [1 3]", ids)
+	}
+}

@@ -84,13 +84,13 @@ Preserved C behaviors (parity):
 - Numbers compare as IEEE 754 doubles using cJSON's `DBL_EPSILON` rule
   (`|a-b| <= max(|a|,|b|) * DBL_EPSILON`), so `1` equals `1.0` and one-ULP
   differences are equal (vector `cref_number_epsilon`).
-- `json_equal`: NULL arguments and parse failures are **errors**, not NULL
-  results. Object comparison is unordered with case-*sensitive* keys; array
-  comparison is ordered.
-- `aws_policy_equal`: NULL arguments and parse failures are errors, except
-  that byte-identical inputs return 1 *before* parsing (the C `strcmp`
-  shortcut, vector `cref_strcmp_shortcut` - even non-JSON identical strings
-  compare equal).
+- `json_equal`: NULL arguments yield SQL NULL (stackql issue #914); parse
+  failures are errors. Object comparison is unordered with case-*sensitive*
+  keys; array comparison is ordered.
+- `aws_policy_equal`: NULL arguments yield SQL NULL (stackql issue #914);
+  parse failures are errors, except that byte-identical inputs return 1
+  *before* parsing (the C `strcmp` shortcut, vector `cref_strcmp_shortcut`
+  - even non-JSON identical strings compare equal).
 
 ## aws_policy_equal comparison rules
 
