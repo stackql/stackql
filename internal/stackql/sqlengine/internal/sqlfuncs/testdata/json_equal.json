@@ -167,6 +167,16 @@
       "note": "NULL arguments yield SQL NULL (stackql issue #914), not an error"
     },
     {
+      "id": "cref_null_both",
+      "source": "C reference implementation behavior (json_equal.c)",
+      "args": [
+        null,
+        null
+      ],
+      "note": "NULL arguments yield SQL NULL (stackql issue #914), not an error",
+      "result": null
+    },
+    {
       "id": "cref_invalid_json",
       "source": "C reference implementation behavior (json_equal.c)",
       "args": [

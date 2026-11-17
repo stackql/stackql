@@ -152,6 +152,16 @@
       "note": "NULL arguments yield SQL NULL (stackql issue #914), not an error"
     },
     {
+      "id": "cref_null_both",
+      "source": "C reference implementation behavior (aws_policy_equal.c)",
+      "args": [
+        null,
+        null
+      ],
+      "note": "NULL arguments yield SQL NULL (stackql issue #914), not an error",
+      "result": null
+    },
+    {
       "id": "cref_strcmp_shortcut",
       "source": "C reference implementation behavior (aws_policy_equal.c)",
       "args": [
