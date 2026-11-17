@@ -79,16 +79,20 @@ The C implementations parsed with cJSON; the Go implementations use
     *last* occurrence. Documents with duplicate keys (invalid per RFC 8259
     "SHOULD be unique") may compare differently.
 
+SQL NULL propagation is an intentional change from the retired C behavior
+(issue #914): either SQL NULL argument yields SQL NULL instead of an error,
+including when both arguments are NULL. This happens before parsing the
+other argument. The JSON text `null` remains a valid, comparable document.
+
 Preserved C behaviors (parity):
 
 - Numbers compare as IEEE 754 doubles using cJSON's `DBL_EPSILON` rule
   (`|a-b| <= max(|a|,|b|) * DBL_EPSILON`), so `1` equals `1.0` and one-ULP
   differences are equal (vector `cref_number_epsilon`).
-- `json_equal`: NULL arguments yield SQL NULL (stackql issue #914); parse
-  failures are errors. Object comparison is unordered with case-*sensitive*
-  keys; array comparison is ordered.
-- `aws_policy_equal`: NULL arguments yield SQL NULL (stackql issue #914);
-  parse failures are errors, except that byte-identical inputs return 1
+- `json_equal`: non-NULL parse failures are errors. Object comparison is
+  unordered with case-*sensitive* keys; array comparison is ordered.
+- `aws_policy_equal`: non-NULL parse failures are errors, except that
+  byte-identical inputs return 1
   *before* parsing (the C `strcmp` shortcut, vector `cref_strcmp_shortcut`
   - even non-JSON identical strings compare equal).
 

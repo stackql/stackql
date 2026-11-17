@@ -1233,6 +1233,47 @@ Sqlite Extension Functions Smoke Working
     ...    ${outputStr}
     ...    ${CURDIR}/tmp/Sqlite-Extension-Functions-Smoke-Working.tmp
 
+Sqlite Nullable Optional Property Comparisons Working
+    [Documentation]    Issue #914: missing optional JSON properties propagate SQL NULL
+    ...    without aborting later rows, and equality filters exclude those NULL rows.
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    Skipping postgres backend test due to unsupported sqlite extension functions
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    id,cmp
+    ...    1,1
+    ...    2,-1
+    ...    3,-1
+    ...    4,-1
+    ...    5,1
+    ...    6,0
+    ...    id
+    ...    1
+    ...    5
+    FOR    ${fn}    IN    json_equal    aws_policy_equal
+        ${inputStr} =    Catenate
+        ...    create table nullable_cmp_914 (id integer, properties text);
+        ...    insert into nullable_cmp_914 (id, properties) values
+        ...    (1, json_object('lhs', json_object('a', 1), 'rhs', json_object('a', 1))),
+        ...    (2, json_object('rhs', json_object('a', 1))),
+        ...    (3, json_object('lhs', json_object('a', 1))),
+        ...    (4, '{}'),
+        ...    (5, json_object('lhs', json_object('a', null), 'rhs', json_object('a', null))),
+        ...    (6, json_object('lhs', json_object('a', 1), 'rhs', json_object('a', 2)));
+        ...    select id, coalesce(${fn}(json_extract(properties, '$.lhs'), json_extract(properties, '$.rhs')), -1) as cmp from nullable_cmp_914 order by id;
+        ...    select id from nullable_cmp_914 where ${fn}(json_extract(properties, '$.lhs'), json_extract(properties, '$.rhs')) = 1 order by id;
+        ...    drop table nullable_cmp_914;
+        Should StackQL Exec Inline Equal
+        ...    ${STACKQL_EXE}
+        ...    ${OKTA_SECRET_STR}
+        ...    ${GITHUB_SECRET_STR}
+        ...    ${K8S_SECRET_STR}
+        ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+        ...    ${AUTH_CFG_STR}
+        ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+        ...    ${inputStr}
+        ...    ${outputStr}
+        ...    \-o\=csv
+    END
+
 Create Table Scenario Working
     ${inputStr} =    Catenate
     ...    create table phystab_one(t_id int, z text);
