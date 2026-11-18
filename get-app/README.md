@@ -29,6 +29,31 @@ Behaviour:
   `databricks`. Use it as `curl -fsSL https://get-stackql.io/install/aws | sh`.
 - Any other path - `301`-redirects to `https://stackql.io`.
 
+### Pinning a release
+
+Every install endpoint accepts an optional `version` query parameter or a
+version as the leading path segment. Versions may be written with or without a
+leading `v`; the release download URL always uses the unprefixed version.
+Omitting the version, or specifying `latest`, preserves the latest-release
+behavior.
+
+```sh
+curl -fsSL "https://get-stackql.io/install?version=0.12.824" | sh
+curl -fsSL https://get-stackql.io/v0.12.824/install/aws | sh
+curl -sI "https://get-stackql.io/?version=v0.12.824"
+```
+
+```powershell
+irm "https://get-stackql.io/install.ps1?version=0.12.824" | iex
+irm https://get-stackql.io/v0.12.824/install.ps1 | iex
+```
+
+The query form should be quoted in shells such as zsh, where `?` is a glob
+character. Versions must match `v?major.minor.patch`; invalid values return a
+readable error without reflecting the supplied value. If a release does not
+include the detected platform's asset, the installer reports the missing asset
+and links to that release.
+
 ### Cloud shell helpers
 
 The helper scripts (`stackql-aws-cloud-shell.sh` etc.) used to be packaged into
@@ -90,6 +115,9 @@ curl -A "WindowsPowerShell/5.1" http://localhost:8787/install  # -> PowerShell i
 curl -A "WindowsPowerShell/5.1" http://localhost:8787/install.sh   # -> "use install.ps1" guide
 curl -A "curl/8.4.0" http://localhost:8787/install.ps1            # -> "use install.sh" guide
 curl -A "curl/8.4.0" http://localhost:8787/install/aws            # -> aws cloud shell installer
+curl -A "curl/8.4.0" "http://localhost:8787/install?version=v0.12.824" # -> pinned sh installer
+curl -sI "http://localhost:8787/v0.12.824"                        # -> pinned release asset
+curl -A "curl/8.4.0" "http://localhost:8787/install?version=invalid" # -> version error script
 curl -A "Mozilla/5.0 (Macintosh)" http://localhost:8787/install/aws  # -> "Linux downloads only"
 curl -sI -A "Mozilla/5.0 (Macintosh)" http://localhost:8787/   # -> 302 to macos pkg
 curl -sI -A "curl/8.4.0" http://localhost:8787/                # -> 302 to linux zip
