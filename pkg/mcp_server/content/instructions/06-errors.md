@@ -2,7 +2,7 @@
 
 How errors surface:
 
-- Provider HTTP errors are reported as messages (eg `http response status code: 404, response body is nil`), not SQL exceptions. A query can partially succeed: in a multi-member acquisition (eg per-identifier detail reads), members that 404 contribute zero rows and the message is reported alongside the rows that resolved. A hard failure in an `IN` fan-out, by contrast, fails the whole query (see routing).
+- Provider HTTP errors are reported as messages (eg `http response status code: 404, response body is nil`), not SQL exceptions. For `run_select_query` against the native backend they arrive in the tool result itself: a `messages` array beside `rows` in the structured payload, and a labelled `**messages**` block after the rendered rows. Messages are bounded: long messages are truncated and the list is capped, with a marker reporting anything cut. A statement with no messages carries no `messages` field at all. Over the `reverse_proxy` backend the engine's messages are not available to the client; an empty result there simply means "not found". A query can partially succeed: in a multi-member acquisition (eg per-identifier detail reads), members that 404 contribute zero rows and their messages are reported alongside the rows that resolved. A hard failure in an `IN` fan-out, by contrast, fails the whole query (see routing).
 - An empty result set accompanied by a 404 message is the normal outcome of querying an object that may or may not exist. Treat it as "not found" - a valid answer - not as a failure to be retried.
 - Parser and planner errors (unknown table, `no such column`, syntax) are returned immediately; no provider call is made.
 
