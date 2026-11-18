@@ -565,6 +565,67 @@ MCP HTTP Server Query Tool
     Should Contain       ${result.stdout}       cloudkms.googleapis.com
     Should Be Equal As Integers    ${result.rc}    0
 
+MCP HTTP Server Query Tool Not Found Lookup Carries Provider Message
+    [Documentation]    A lookup that 404s upstream stays an empty, successful
+    ...    result, and the provider's diagnostic accompanies it in the
+    ...    structured payload (messages beside rows).
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT name FROM google.storage.buckets WHERE project \= 'not-a-project';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-Not-Found.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-Not-Found-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain       ${result.stdout}       "rows":[]
+    Should Contain       ${result.stdout}       "messages":[
+    Should Contain       ${result.stdout}       http response status code: 404
+    Should Contain       ${result.stdout}       Project Not Found
+
+MCP HTTP Server Query Tool Not Found Lookup Renders Messages Block
+    [Documentation]    The same lookup through the rendered text surface: the
+    ...    provider's diagnostic appears in a labelled messages block after
+    ...    the (empty) row rendering.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-client\-cfg      {"prefer_text": true}
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT name FROM google.storage.buckets WHERE project \= 'not-a-project';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-Not-Found-Text.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-Not-Found-Text-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain       ${result.stdout}       **no results**
+    Should Contain       ${result.stdout}       **messages**
+    Should Contain       ${result.stdout}       http response status code: 404
+    Should Contain       ${result.stdout}       Project Not Found
+
+MCP HTTP Server Query Tool Partial Result Carries Provider Message Alongside Rows
+    [Documentation]    A multi-member acquisition where one member 404s:
+    ...    the rows that resolved are returned and the 404 diagnostic is
+    ...    reported alongside them in the messages array.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "select region, bucket_name, tag_key, tag_value from aws.pseudo_s3.s3_extravogant_bucket_list_and_detail order by region asc, bucket_name asc, tag_key asc, tag_value asc;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-Partial-Result.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-Partial-Result-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain       ${result.stdout}       stackql-contrived-bucket-01
+    Should Contain       ${result.stdout}       stackql-trial-bucket-01
+    Should Contain       ${result.stdout}       "messages":[
+    Should Contain       ${result.stdout}       http response status code: 404, response body is nil
+
 
 Concurrent psql and MCP HTTP Server Query Tool
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available

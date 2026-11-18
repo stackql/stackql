@@ -27,6 +27,7 @@ type testBackend struct {
 	listMethodsOut   []map[string]any
 	describeMethOut  []map[string]any
 	runJSONOut       []map[string]any
+	runJSONMessages  []string
 	validateOut      []map[string]any
 	validateErr      error
 	execOut          map[string]any
@@ -59,13 +60,10 @@ func (b *testBackend) ValidateQuery(_ context.Context, q string) ([]map[string]a
 	b.lastValidateSQL = q
 	return b.validateOut, b.validateErr
 }
-func (b *testBackend) RunQueryJSON(_ context.Context, in dto.QueryJSONInput) ([]map[string]any, error) {
+func (b *testBackend) RunQueryJSON(_ context.Context, in dto.QueryJSONInput) (dto.QueryResultDTO, error) {
 	b.lastQueryJSON = in
-	if b.runJSONOut == nil {
-		// SDK validates QueryResultDTO.Rows as a JSON array; nil is rejected.
-		return []map[string]any{}, nil
-	}
-	return b.runJSONOut, nil
+	// SDK validates QueryResultDTO.Rows as a JSON array; nil is rejected.
+	return dto.QueryResultDTO{Rows: nilOrEmpty(b.runJSONOut), Messages: b.runJSONMessages}, nil
 }
 func (b *testBackend) ListProviders(_ context.Context) ([]map[string]any, error) {
 	return nilOrEmpty(b.listProvidersOut), nil
@@ -328,6 +326,51 @@ func TestTool_RunSelectQuery_ForwardsRowLimit(t *testing.T) {
 	callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1", "row_limit": 7})
 	if be.lastQueryJSON.SQL != "select 1" || be.lastQueryJSON.RowLimit != 7 {
 		t.Errorf("input not forwarded: %+v", be.lastQueryJSON)
+	}
+}
+
+func TestTool_RunSelectQuery_CarriesEngineMessages(t *testing.T) {
+	const diagnostic = "http response status code: 404, response body is nil"
+	be := &testBackend{runJSONMessages: []string{diagnostic}}
+	cs := connectInProcess(t, DefaultConfig(), be)
+
+	res := callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1"})
+	if res.IsError {
+		t.Fatalf("messages must not make the result an error: %+v", res)
+	}
+	text := firstText(t, res)
+	if !strings.Contains(text, "**no results**") || !strings.Contains(text, "**messages**") ||
+		!strings.Contains(text, diagnostic) {
+		t.Errorf("expected rows rendering plus labelled messages block, got %q", text)
+	}
+	out := structuredAs[dto.QueryResultDTO](t, res)
+	if len(out.Rows) != 0 || len(out.Messages) != 1 || out.Messages[0] != diagnostic {
+		t.Errorf("structured payload mismatch: %+v", out)
+	}
+
+	// JSON render format mirrors the same DTO, messages included.
+	res = callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1", "format": "json"})
+	text = firstText(t, res)
+	if !strings.Contains(text, `"messages":`) || !strings.Contains(text, diagnostic) {
+		t.Errorf("json text content must carry messages, got %q", text)
+	}
+}
+
+func TestTool_RunSelectQuery_NoMessagesOutputUnchanged(t *testing.T) {
+	be := &testBackend{runJSONOut: []map[string]any{{"a": "x"}}}
+	cs := connectInProcess(t, DefaultConfig(), be)
+
+	res := callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1"})
+	text := firstText(t, res)
+	if strings.Contains(text, "**messages**") {
+		t.Errorf("no-message statement must render without a messages block, got %q", text)
+	}
+	raw, err := json.Marshal(res.StructuredContent)
+	if err != nil {
+		t.Fatalf("marshal structured: %v", err)
+	}
+	if strings.Contains(string(raw), "messages") {
+		t.Errorf("no-message structured payload must omit the messages key, got %s", raw)
 	}
 }
 

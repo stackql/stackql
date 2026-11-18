@@ -128,8 +128,8 @@ func (b *limitedBackend) ValidateQuery(ctx context.Context, query string) ([]map
 	})
 }
 
-func (b *limitedBackend) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]any, error) {
-	return limited(ctx, b, false, func(runCtx context.Context) ([]map[string]any, error) {
+func (b *limitedBackend) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) (dto.QueryResultDTO, error) {
+	return limited(ctx, b, false, func(runCtx context.Context) (dto.QueryResultDTO, error) {
 		return b.inner.RunQueryJSON(runCtx, input)
 	})
 }

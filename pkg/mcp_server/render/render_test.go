@@ -15,6 +15,26 @@ func TestRenderTable_Empty(t *testing.T) {
 	}
 }
 
+func TestRenderTableWithMessages_NoMessagesUnchanged(t *testing.T) {
+	rows := []map[string]any{{"a": "x"}}
+	if got, want := render.RenderTableWithMessages(rows, nil), render.RenderTable(rows); got != want {
+		t.Fatalf("no-message rendering must equal RenderTable output: %q vs %q", got, want)
+	}
+}
+
+func TestRenderTableWithMessages_AppendsLabelledBlock(t *testing.T) {
+	const diagnostic = "http response status code: 404, response body is nil"
+	got := render.RenderTableWithMessages(nil, []string{diagnostic, "second message"})
+	if !strings.Contains(got, "no results") {
+		t.Fatalf("row rendering missing: %q", got)
+	}
+	if !strings.Contains(got, "**messages**") ||
+		!strings.Contains(got, "- "+diagnostic) ||
+		!strings.Contains(got, "- second message") {
+		t.Fatalf("expected labelled messages block with one bullet per message, got %q", got)
+	}
+}
+
 func TestRenderTable_StableColumnOrder(t *testing.T) {
 	rows := []map[string]any{
 		{"b": 1, "a": "x"},

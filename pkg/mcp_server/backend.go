@@ -24,8 +24,10 @@ type Backend interface {
 	// ValidateQuery parses and plans a SELECT without executing it.
 	ValidateQuery(ctx context.Context, query string) ([]map[string]any, error)
 
-	// RunQueryJSON executes a SELECT and returns the rows.
-	RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error)
+	// RunQueryJSON executes a SELECT and returns the rows plus any
+	// per-statement engine messages (eg upstream provider diagnostics).
+	// Backends that have no channel for messages return rows only.
+	RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) (dto.QueryResultDTO, error)
 
 	// ListProviders lists available providers.
 	ListProviders(ctx context.Context) ([]map[string]any, error)
