@@ -2,9 +2,23 @@ import { CLOUD_SHELL_SCRIPTS, type CloudShellScript } from "./cloud-shell-script
 
 const GITHUB_REPO = "stackql/stackql";
 // const RELEASE_BASE = `https://github.com/${GITHUB_REPO}/releases/latest/download`;
-const RELEASE_BASE = "https://releases.stackql.io/stackql/latest";
-const RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
 const DOCS_URL = "https://stackql.io/docs";
+
+function getReleaseBase(version?: string): string {
+  return `https://releases.stackql.io/stackql/${version ?? "latest"}`;
+}
+
+function getReleasesURL(version?: string): string {
+  return version
+    ? `https://github.com/${GITHUB_REPO}/releases/tag/v${version}`
+    : `https://github.com/${GITHUB_REPO}/releases/latest`;
+}
+
+function normalizeVersion(value: string | undefined): string | undefined | null {
+  if (value === undefined || /^latest$/i.test(value)) return undefined;
+  const match = value.match(/^v?(\d+\.\d+\.\d+)$/);
+  return match?.[1] ?? null;
+}
 
 // Browser / known-OS callers send a User-Agent that identifies the platform, so
 // the root URL can redirect them straight to the correct release asset. CLI
@@ -57,13 +71,14 @@ function isPosixShellTool(ua: string): boolean {
   return /\bcurl\b|\bwget\b/i.test(ua);
 }
 
-const INSTALL_SH = `#!/bin/sh
+function installSh(baseURL: string, releasesURL: string, version: string): string {
+  return `#!/bin/sh
 # stackql installer - https://get-stackql.io/install.sh
 # Detects OS + architecture and downloads the matching release binary into the
 # current directory.
 set -eu
 
-base="${RELEASE_BASE}"
+base="${baseURL}"
 os=$(uname -s)
 arch=$(uname -m)
 
@@ -74,7 +89,11 @@ case "$os" in
     asset="stackql_darwin_multiarch.pkg"
     echo "Downloading $asset ..."
     tmp=$(mktemp -d)
-    curl -fsSL "$base/$asset" -o "$tmp/stackql.pkg"
+    if ! curl -fsSL "$base/$asset" -o "$tmp/stackql.pkg"; then
+      echo "stackql ${version} has no $asset or it could not be downloaded - see ${releasesURL}" >&2
+      rm -rf "$tmp"
+      exit 1
+    fi
     pkgutil --expand-full "$tmp/stackql.pkg" "$tmp/expanded" >/dev/null 2>&1 || true
     bin=$(find "$tmp/expanded" -type f -name stackql 2>/dev/null | head -n1)
     if [ -z "$bin" ]; then
@@ -97,7 +116,7 @@ case "$os" in
       *)
         echo "stackql: there's no prebuilt Linux binary for your CPU ($arch)." >&2
         echo "Prebuilt Linux builds cover x86_64 (amd64) and arm64 (aarch64)." >&2
-        echo "Browse all downloads: ${RELEASES_URL}" >&2
+        echo "Browse all downloads: ${releasesURL}" >&2
         exit 1
         ;;
     esac
@@ -114,7 +133,7 @@ case "$os" in
   *)
     echo "stackql: this installer doesn't recognize your system ($os $arch)." >&2
     echo "See the install guide for every option: ${DOCS_URL}" >&2
-    echo "Or download a binary directly: ${RELEASES_URL}" >&2
+    echo "Or download a binary directly: ${releasesURL}" >&2
     exit 1
     ;;
 esac
@@ -128,7 +147,11 @@ if ! command -v unzip >/dev/null 2>&1; then
   exit 1
 fi
 tmp=$(mktemp -d)
-curl -fsSL "$base/$asset" -o "$tmp/stackql.zip"
+if ! curl -fsSL "$base/$asset" -o "$tmp/stackql.zip"; then
+  echo "stackql ${version} has no $asset or it could not be downloaded - see ${releasesURL}" >&2
+  rm -rf "$tmp"
+  exit 1
+fi
 unzip -oq "$tmp/stackql.zip" stackql -d "$tmp" 2>/dev/null || unzip -oq "$tmp/stackql.zip" -d "$tmp"
 bin=$(find "$tmp" -type f -name stackql 2>/dev/null | head -n1)
 if [ -z "$bin" ]; then
@@ -142,11 +165,13 @@ chmod +x ./stackql
 rm -rf "$tmp"
 echo "Installed ./stackql ($os/$arch). Run it with ./stackql or move it onto your PATH."
 `;
+}
 
-const INSTALL_PS1 = `#Requires -Version 5
+function installPs1(baseURL: string, releasesURL: string, version: string): string {
+  return `#Requires -Version 5
 # stackql installer - https://get-stackql.io/install.ps1
 # Detects the native Windows architecture (AMD64 or ARM64), downloads the matching
-# latest release archive and extracts stackql.exe into the current directory.
+# release archive and extracts stackql.exe into the current directory.
 # Usage: irm https://get-stackql.io/install.ps1 | iex
 #
 # Everything runs in a script block so 'irm | iex' leaves no variables or
@@ -168,7 +193,7 @@ const INSTALL_PS1 = `#Requires -Version 5
     return
   }
 
-  $base = "${RELEASE_BASE}"
+  $base = "${baseURL}"
 
   # Detect the native OS architecture. $env:PROCESSOR_ARCHITECTURE describes this
   # PowerShell process, so it reads AMD64 when x64 PowerShell runs under emulation
@@ -192,19 +217,24 @@ const INSTALL_PS1 = `#Requires -Version 5
   } else {
     Write-Host "stackql: there's no prebuilt Windows binary for your CPU ($arch)."
     Write-Host "Prebuilt Windows builds cover x64 (AMD64) and ARM64."
-    Write-Host "Browse all downloads: ${RELEASES_URL}"
+    Write-Host "Browse all downloads: ${releasesURL}"
     return
   }
 
   $dest = (Get-Location).Path
   $zip = Join-Path $dest $asset
   Write-Host "Downloading $asset ..."
-  Invoke-WebRequest -Uri "$base/$asset" -OutFile $zip
+  try {
+    Invoke-WebRequest -Uri "$base/$asset" -OutFile $zip
+  } catch {
+    throw "stackql ${version} has no $asset or it could not be downloaded - see ${releasesURL}"
+  }
   Expand-Archive -Path $zip -DestinationPath $dest -Force
   Remove-Item $zip
   Write-Host "Installed .\\stackql.exe (Windows/$arch). Run it with .\\stackql.exe or move it onto your PATH."
 }
 `;
+}
 
 // Served when the sh installer is fetched by PowerShell - valid PowerShell that
 // just points the user at the Windows one-liner.
@@ -259,7 +289,12 @@ Write-Host ""
 // Builds an sh installer that drops ./stackql and the given cloud shell helper
 // into the current directory, both executable. The helper body is embedded via a
 // quoted heredoc so its contents are written verbatim.
-function providerInstallSh(script: CloudShellScript): string {
+function providerInstallSh(
+  script: CloudShellScript,
+  baseURL: string,
+  releasesURL: string,
+  version: string,
+): string {
   return `#!/bin/sh
 # stackql cloud shell installer - https://get-stackql.io/install/<provider>
 # Downloads the stackql binary and the ${script.file} helper into the current
@@ -273,14 +308,14 @@ if [ "$os" != "Linux" ]; then
   exit 1
 fi
 
-base="${RELEASE_BASE}"
+base="${baseURL}"
 arch=$(uname -m)
 case "$arch" in
   x86_64 | amd64)        asset="stackql_linux_amd64.zip" ;;
   aarch64 | arm64)       asset="stackql_linux_arm64.zip" ;;
   *)
     echo "stackql: there's no prebuilt Linux binary for your CPU ($arch)." >&2
-    echo "Browse all downloads: ${RELEASES_URL}" >&2
+    echo "Browse all downloads: ${releasesURL}" >&2
     exit 1
     ;;
 esac
@@ -293,7 +328,11 @@ fi
 
 echo "Downloading $asset ..."
 tmp=$(mktemp -d)
-curl -fsSL "$base/$asset" -o "$tmp/stackql.zip"
+if ! curl -fsSL "$base/$asset" -o "$tmp/stackql.zip"; then
+  echo "stackql ${version} has no $asset or it could not be downloaded - see ${releasesURL}" >&2
+  rm -rf "$tmp"
+  exit 1
+fi
 unzip -oq "$tmp/stackql.zip" stackql -d "$tmp" 2>/dev/null || unzip -oq "$tmp/stackql.zip" -d "$tmp"
 bin=$(find "$tmp" -type f -name stackql 2>/dev/null | head -n1)
 if [ -z "$bin" ]; then
@@ -318,7 +357,13 @@ echo "Launch the cloud shell helper with: ./${script.file}"
 
 // Routes /install[.sh|.ps1]/<provider>. Unknown providers get a short message
 // listing the supported ones; non-Linux callers get the Linux-only message.
-function cloudShellResponse(provider: string, ua: string): Response {
+function cloudShellResponse(
+  provider: string,
+  ua: string,
+  baseURL: string,
+  releasesURL: string,
+  version: string,
+): Response {
   const script = CLOUD_SHELL_SCRIPTS[provider];
   if (!script) {
     const supported = Object.keys(CLOUD_SHELL_SCRIPTS).join(", ");
@@ -337,7 +382,7 @@ exit 1
   if (!isLinuxShellTarget(ua)) {
     return isPowerShell(ua) ? ps1Response(LINUX_ONLY_PS1) : shResponse(LINUX_ONLY_SH);
   }
-  return shResponse(providerInstallSh(script));
+  return shResponse(providerInstallSh(script, baseURL, releasesURL, version));
 }
 
 function shResponse(body: string): Response {
@@ -352,44 +397,89 @@ function ps1Response(body: string): Response {
   });
 }
 
+function invalidVersionResponse(pathname: string, ua: string): Response {
+  let usePowerShell = isPowerShell(ua);
+  if (/\.sh(?:\/|$)/.test(pathname)) usePowerShell = isPowerShell(ua);
+  if (/\.ps1(?:\/|$)/.test(pathname)) usePowerShell = !isPosixShellTool(ua);
+  const body = usePowerShell
+    ? `throw "stackql: invalid version. Use x.y.z or vx.y.z."
+`
+    : `#!/bin/sh
+echo "stackql: invalid version. Use x.y.z or vx.y.z." >&2
+exit 1
+`;
+  return new Response(body, {
+    headers: {
+      "content-type": usePowerShell ? "text/plain; charset=utf-8" : "text/x-shellscript; charset=utf-8",
+    },
+  });
+}
+
 export default {
   fetch(req: Request): Response {
     const url = new URL(req.url);
     const ua = req.headers.get("user-agent") ?? "";
 
+    const segments = url.pathname.split("/").filter(Boolean);
+    let pathname = url.pathname;
+    let pathVersion: string | undefined;
+    const hasInstallerRoute = ["install", "install.sh", "install.ps1"].includes(segments[1] ?? "");
+    if (
+      segments.length > 0 &&
+      (segments[0] === "latest" || /^(?:v)?\d/.test(segments[0]) || hasInstallerRoute)
+    ) {
+      pathVersion = segments.shift();
+      pathname = `/${segments.join("/")}`;
+    }
+    const requestedVersion = url.searchParams.has("version")
+      ? url.searchParams.get("version") ?? ""
+      : pathVersion;
+    const version = normalizeVersion(requestedVersion);
+    if (version === null) return invalidVersionResponse(pathname, ua);
+
+    const baseURL = getReleaseBase(version);
+    const releasesURL = getReleasesURL(version);
+    const releaseLabel = version ?? "latest";
+
     // Cloud shell helpers: /install/<provider>, /install.sh/<provider>, and
     // /install.ps1/<provider> (the last only to give Windows callers the
     // Linux-only message rather than a 301 to stackql.io).
-    const segments = url.pathname.split("/").filter(Boolean);
+    const routeSegments = pathname.split("/").filter(Boolean);
     if (
-      segments.length === 2 &&
-      (segments[0] === "install" || segments[0] === "install.sh" || segments[0] === "install.ps1")
+      routeSegments.length === 2 &&
+      (routeSegments[0] === "install" || routeSegments[0] === "install.sh" || routeSegments[0] === "install.ps1")
     ) {
-      return cloudShellResponse(segments[1].toLowerCase(), ua);
+      return cloudShellResponse(routeSegments[1].toLowerCase(), ua, baseURL, releasesURL, releaseLabel);
     }
 
     // Universal installer: pick the script that matches the calling shell.
-    if (url.pathname === "/install") {
-      return isPowerShell(ua) ? ps1Response(INSTALL_PS1) : shResponse(INSTALL_SH);
+    if (pathname === "/install") {
+      return isPowerShell(ua)
+        ? ps1Response(installPs1(baseURL, releasesURL, releaseLabel))
+        : shResponse(installSh(baseURL, releasesURL, releaseLabel));
     }
 
     // Explicit POSIX installer. If PowerShell fetched it, hand back a PowerShell
     // message instead of sh it can't run.
-    if (url.pathname === "/install.sh") {
-      return isPowerShell(ua) ? ps1Response(GUIDE_USE_PS1) : shResponse(INSTALL_SH);
+    if (pathname === "/install.sh") {
+      return isPowerShell(ua)
+        ? ps1Response(GUIDE_USE_PS1)
+        : shResponse(installSh(baseURL, releasesURL, releaseLabel));
     }
 
     // Explicit PowerShell installer. If curl/wget fetched it (i.e. it's about to
     // be piped into sh), hand back an sh message instead of PowerShell.
-    if (url.pathname === "/install.ps1") {
-      return isPosixShellTool(ua) ? shResponse(GUIDE_USE_SH) : ps1Response(INSTALL_PS1);
+    if (pathname === "/install.ps1") {
+      return isPosixShellTool(ua)
+        ? shResponse(GUIDE_USE_SH)
+        : ps1Response(installPs1(baseURL, releasesURL, releaseLabel));
     }
 
-    if (url.pathname !== "/") {
+    if (pathname !== "/") {
       return Response.redirect("https://stackql.io", 301);
     }
 
     const asset = getAssetName(ua);
-    return Response.redirect(`${RELEASE_BASE}/${asset}`, 302);
+    return Response.redirect(`${baseURL}/${asset}`, 302);
   },
 } satisfies ExportedHandler;

@@ -53,6 +53,50 @@ check_body() {
   esac
 }
 
+# Invalid versions must be rejected without reflecting the supplied value.
+check_invalid_version() {
+  name="$1"; url="$2"; ua="$3"
+  response=$(curl -sS -w '\n%{http_code}' -A "$ua" "$url" 2>/dev/null) || { fail "$name (request failed)"; return; }
+  status=$(printf '%s\n' "$response" | tail -n1)
+  body=$(printf '%s\n' "$response" | sed '$d')
+  if [ "$status" = "200" ] && printf '%s' "$body" | grep -Fq "invalid version" \
+    && ! printf '%s' "$body" | grep -Fq "0.12.824"; then
+    pass "$name"
+  else
+    fail "$name (expected an error script without reflecting the supplied value)"
+  fi
+}
+
+# Force the generated sh installer to select a known-missing Linux/ARM64 asset.
+check_missing_asset() {
+  name="$1"
+  tmp=$(mktemp -d)
+  mkdir "$tmp/bin"
+  curl -fsSL "$BASE/install.sh?version=0.5.418" -o "$tmp/install.sh" || {
+    fail "$name (could not fetch pinned installer)"
+    rm -rf "$tmp"
+    return
+  }
+  cat > "$tmp/bin/uname" <<'EOF'
+#!/bin/sh
+case "$1" in
+  -s) echo Linux ;;
+  -m) echo aarch64 ;;
+esac
+EOF
+  printf '#!/bin/sh\nexit 0\n' > "$tmp/bin/unzip"
+  chmod +x "$tmp/bin/uname" "$tmp/bin/unzip"
+  if (cd "$tmp" && PATH="$tmp/bin:$PATH" sh ./install.sh) > "$tmp/output" 2>&1; then
+    fail "$name (installer unexpectedly succeeded)"
+  elif grep -Fq "stackql 0.5.418 has no stackql_linux_arm64.zip" "$tmp/output" \
+    && grep -Fq "https://github.com/stackql/stackql/releases/tag/v0.5.418" "$tmp/output"; then
+    pass "$name"
+  else
+    fail "$name (expected readable missing-asset message and release link)"
+  fi
+  rm -rf "$tmp"
+}
+
 # Assert a path redirects (no -L) to a Location containing a substring.
 check_redirect() {
   name="$1"; url="$2"; ua="$3"; expect="$4"
@@ -85,6 +129,12 @@ check_body "/install (powershell)  -> ps1 installer"       "$BASE/install"     "
 # Explicit endpoints serve their real script for the matching shell.
 check_body "/install.sh (curl)     -> sh installer"        "$BASE/install.sh"  "$UA_CURL" "#!/bin/sh"
 check_body "/install.ps1 (ps)      -> ps1 installer"       "$BASE/install.ps1" "$UA_PS"   "#Requires -Version 5"
+check_body "/install (pinned query) -> pinned sh installer" "$BASE/install?version=0.12.824" "$UA_CURL" 'base="https://releases.stackql.io/stackql/0.12.824"'
+check_body "/install.sh (v-prefixed path) -> pinned sh" "$BASE/v0.12.824/install.sh" "$UA_CURL" 'base="https://releases.stackql.io/stackql/0.12.824"'
+check_body "/install.ps1 (pinned query) -> pinned ps1" "$BASE/install.ps1?version=v0.12.824" "$UA_PS" 'https://releases.stackql.io/stackql/0.12.824'
+check_body "/install/aws (pinned path) -> pinned helper" "$BASE/v0.12.824/install/aws" "$UA_CURL" 'base="https://releases.stackql.io/stackql/0.12.824"'
+check_invalid_version "invalid version rejected without reflection" "$BASE/install?version=0.12.824%3Becho%20pwned" "$UA_CURL"
+check_invalid_version "invalid version path rejected" "$BASE/not-a-version/install" "$UA_CURL"
 # Wrong-shell guards point at the correct command instead of erroring.
 check_body "/install.sh (ps)       -> 'use install.ps1'"   "$BASE/install.sh"  "$UA_PS"   "install.ps1 | iex"
 check_body "/install.ps1 (curl)    -> 'use install.sh'"    "$BASE/install.ps1" "$UA_CURL" "install.sh | sh"
@@ -107,7 +157,13 @@ echo "Root + fallback redirects:"
 check_redirect "/ (linux UA)" "$BASE/" "$UA_CURL"                                 "stackql_linux_amd64.zip"
 check_redirect "/ (macOS UA)" "$BASE/" "Mozilla/5.0 (Macintosh; Intel Mac OS X)"  "stackql_darwin_multiarch.pkg"
 check_redirect "/ (windows UA)" "$BASE/" "Mozilla/5.0 (Windows NT 10.0; Win64)"   "stackql_windows_amd64.zip"
+check_redirect "/v0.12.824 (pinned path)" "$BASE/v0.12.824" "$UA_CURL"           "stackql_linux_amd64.zip"
+check_redirect "/ (pinned query)" "$BASE/?version=0.12.824" "$UA_CURL"            "/stackql/0.12.824/stackql_linux_amd64.zip"
 check_redirect "/some/other/path" "$BASE/some/other/path" "$UA_CURL"              "stackql.io"
+echo
+
+echo "Missing asset handling:"
+check_missing_asset "pinned missing Linux/ARM64 asset reports release link"
 echo
 
 echo "Running installer:"

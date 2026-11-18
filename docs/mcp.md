@@ -129,7 +129,7 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 
 ```bash
 
-## Server identity and runtime metadata.  Call once at session start.
+## Server identity and runtime metadata. Call on demand, for example to diagnose a refused or gated operation or to check version-specific behavior. It is not needed at session start or before queries.
 ./build/stackql_mcp_client exec --client-type=http  --url=http://127.0.0.1:9992 --exec.action server_info
 
 ## List available providers.
@@ -178,7 +178,7 @@ Tools also carry a `title` and every MCP behavioural hint as an explicit boolean
 
 | Tool | Renderer | Description |
 |---|---|---|
-| `server_info` | KV | Server identity and runtime: stackql version, backing SQL engine, provider registry location, mode, read-only flag.  Call once at session start. |
+| `server_info` | KV | Server identity and runtime: stackql version, backing SQL engine, provider registry location, mode, read-only flag. Call on demand, for example to diagnose a refused or gated operation or to check version-specific behavior. Not needed at session start or before queries. |
 | `list_providers` | Table | Available cloud/SaaS providers (top of the hierarchy).  No inputs. |
 | `list_services` | Table | Services under a provider.  Requires `provider`. |
 | `list_resources` | Table | Resources under a `provider`.`service`.  Requires `provider` and `service`. |

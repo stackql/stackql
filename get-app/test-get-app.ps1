@@ -66,6 +66,52 @@ function Assert-Body {
   }
 }
 
+function Assert-InvalidVersion {
+  param([string]$Name, [string]$Url, [string]$Ua)
+  try { $resp = Get-Resp -Url $Url -Ua $Ua } catch { Fail "$Name (request failed)"; return }
+  if ($resp.Status -eq 200 -and $resp.Body -like '*invalid version*' -and $resp.Body -notlike '*0.12.824*') {
+    Pass $Name
+  } else {
+    Fail "$Name (expected an error script without reflecting the supplied value)"
+  }
+}
+
+function Assert-MissingAsset {
+  param([string]$Name)
+  $temp = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
+  [void](New-Item -ItemType Directory -Path $temp)
+  try {
+    $resp = Get-Resp -Url "$Base/install.ps1?version=0.12.732" -Ua $UaPs
+    Set-Content -Path (Join-Path $temp 'installer.ps1') -Value $resp.Body
+    @'
+function Get-ItemProperty {
+  [CmdletBinding()]
+  param([string]$Path, [string]$Name)
+  [pscustomobject]@{ PROCESSOR_ARCHITECTURE = 'ARM64' }
+}
+function Invoke-WebRequest {
+  param([string]$Uri, [string]$OutFile)
+  throw 'simulated HTTP 404'
+}
+& "$PSScriptRoot\installer.ps1"
+'@ | Set-Content -Path (Join-Path $temp 'test.ps1')
+    $exe = (Get-Process -Id $PID).Path
+    $output = & $exe -NoProfile -File (Join-Path $temp 'test.ps1') 2>&1
+    $text = $output -join "`n"
+    if ($LASTEXITCODE -ne 0 -and
+      $text -like '*stackql 0.12.732 has no stackql_windows_arm64.zip*' -and
+      $text -like '*https://github.com/stackql/stackql/releases/tag/v0.12.732*') {
+      Pass $Name
+    } else {
+      Fail "$Name (expected readable missing-asset message and release link)"
+    }
+  } catch {
+    Fail "$Name (test failed: $($_.Exception.Message))"
+  } finally {
+    Remove-Item -Path $temp -Recurse -Force
+  }
+}
+
 function Assert-Location {
   param([string]$Name, [string]$Url, [string]$Ua, [string]$Expect)
   try { $resp = Get-Resp -Url $Url -Ua $Ua } catch { Fail "$Name (request failed)"; return }
@@ -124,9 +170,18 @@ Assert-Body "/install.sh (curl)     -> sh installer"      "$Base/install.sh"  $U
 # Both endpoints serve the arch-aware installer (fails against a pre-ARM64 deploy).
 Assert-Body "/install (powershell)  -> arch-aware ps1"    "$Base/install"     $UaPs   'stackql_windows_arm64.zip'
 Assert-Body "/install.ps1 (ps)      -> arch-aware ps1"    "$Base/install.ps1" $UaPs   'stackql_windows_arm64.zip'
+Assert-Body "/install (pinned query) -> pinned ps1"       "$Base/install?version=0.12.824" $UaPs 'https://releases.stackql.io/stackql/0.12.824'
+Assert-Body "/install.sh (v-prefixed path) -> pinned sh" "$Base/v0.12.824/install.sh" $UaCurl 'base="https://releases.stackql.io/stackql/0.12.824"'
+Assert-Body "/install/aws (pinned path) -> pinned helper" "$Base/v0.12.824/install/aws" $UaCurl 'base="https://releases.stackql.io/stackql/0.12.824"'
+Assert-InvalidVersion "invalid version rejected without reflection" "$Base/install?version=0.12.824%3BWrite-Host%20pwned" $UaPs
+Assert-InvalidVersion "invalid version path rejected" "$Base/not-a-version/install" $UaCurl
 # Wrong-shell guards point at the correct command instead of erroring.
 Assert-Body "/install.ps1 (curl)    -> 'use install.sh'"  "$Base/install.ps1" $UaCurl 'install.sh | sh'
 Assert-Body "/install.sh (ps)       -> 'use install.ps1'" "$Base/install.sh"  $UaPs   'install.ps1 | iex'
+Write-Host ""
+
+Write-Host "Missing asset handling:"
+Assert-MissingAsset "pinned missing Windows/ARM64 asset reports release link"
 Write-Host ""
 
 Write-Host "Cloud shell helper routing:"
@@ -146,6 +201,8 @@ Write-Host "Root + fallback redirects:"
 Assert-Location "/ (windows UA)"    "$Base/" $UaPs                                       'stackql_windows_amd64.zip'
 Assert-Location "/ (linux UA)"      "$Base/" $UaCurl                                     'stackql_linux_amd64.zip'
 Assert-Location "/ (macOS UA)"      "$Base/" 'Mozilla/5.0 (Macintosh; Intel Mac OS X)'   'stackql_darwin_multiarch.pkg'
+Assert-Location "/v0.12.824 (pinned path)" "$Base/v0.12.824" $UaPs 'stackql_windows_amd64.zip'
+Assert-Location "/ (pinned query)" "$Base/?version=v0.12.824" $UaPs '/stackql/0.12.824/stackql_windows_amd64.zip'
 Assert-Location "/some/other/path"  "$Base/some/other/path" $UaCurl                      'stackql.io'
 Write-Host ""
 

@@ -207,7 +207,7 @@ Tools carry MCP behavioural annotations derived from the policy-gate classificat
 
 | Tool | Renderer | Description |
 |---|---|---|
-| `server_info` | KV | Server identity and runtime: stackql version, backing SQL engine, provider registry location, read-only flag. Call once at session start. |
+| `server_info` | KV | Server identity and runtime: stackql version, backing SQL engine, provider registry location, mode, read-only flag. Call on demand, for example to diagnose a refused or gated operation or to check version-specific behavior. Not needed at session start or before queries. |
 | `list_providers` | Table | Available cloud/SaaS providers (top of the hierarchy). No inputs. |
 | `list_services` | Table | Services under a provider. Requires `provider`. |
 | `list_resources` | Table | Resources under a `provider`.`service`. Requires `provider` and `service`. |
