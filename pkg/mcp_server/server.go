@@ -255,7 +255,7 @@ func resolveRenderFormat(cfg *Config, requested string) (string, error) {
 func textForFormat(format string, v any, markdown func() string) string {
 	if format == render.FormatJSON {
 		if q, isQueryResult := v.(dto.QueryResultDTO); isQueryResult {
-			v = dto.QueryResultDTO{Rows: render.UnwrapRows(q.Rows)}
+			v = dto.QueryResultDTO{Rows: render.UnwrapRows(q.Rows), Messages: q.Messages}
 		}
 		return render.JSONValue(v)
 	}
@@ -598,12 +598,13 @@ func registerTools(
 			if formatErr != nil {
 				return nil, dto.QueryResultDTO{}, formatErr
 			}
-			rows, err := backend.RunQueryJSON(ctx, args)
+			out, err := backend.RunQueryJSON(ctx, args)
 			if err != nil {
 				return nil, dto.QueryResultDTO{}, err
 			}
-			out := dto.QueryResultDTO{Rows: rows}
-			text := textForFormat(format, out, func() string { return render.RenderTable(rows) })
+			text := textForFormat(format, out, func() string {
+				return render.RenderTableWithMessages(out.Rows, out.Messages)
+			})
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	))

@@ -187,8 +187,13 @@ type CredentialsReloadDTO struct {
 }
 
 // QueryResultDTO is the typed structured payload returned alongside the rendered text.
+// Messages carries the engine's per-statement messages (eg upstream provider
+// diagnostics such as `http response status code: 404, response body is nil`)
+// verbatim as the engine emitted them; it is absent when the statement
+// produced none.
 type QueryResultDTO struct {
-	Rows []map[string]any `json:"rows"`
+	Rows     []map[string]any `json:"rows"`
+	Messages []string         `json:"messages,omitempty" jsonschema:"engine messages for this statement, eg upstream provider diagnostics; absent when none"` //nolint:lll // schema doc
 }
 
 // ValidationResultDTO is the result of validate_select_query.

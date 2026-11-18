@@ -184,8 +184,23 @@ func (b *stackqlMCPReverseProxyService) query(ctx context.Context, query string,
 	return finalRows, nil
 }
 
-func (b *stackqlMCPReverseProxyService) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
-	return b.query(ctx, input.SQL, input.RowLimit)
+// RunQueryJSON returns rows only: this backend reaches the engine over the
+// PostgreSQL wire protocol via database/sql, which carries no channel for the
+// engine's per-statement messages (they surface on the backing server's
+// notice/stderr streams).  See content/instructions/06-errors.md.
+func (b *stackqlMCPReverseProxyService) RunQueryJSON(
+	ctx context.Context,
+	input dto.QueryJSONInput,
+) (dto.QueryResultDTO, error) {
+	rows, err := b.query(ctx, input.SQL, input.RowLimit)
+	if err != nil {
+		return dto.QueryResultDTO{}, err
+	}
+	if rows == nil {
+		// SDK schema validation on QueryResultDTO.Rows rejects null.
+		rows = []map[string]any{}
+	}
+	return dto.QueryResultDTO{Rows: rows}, nil
 }
 
 func (b *stackqlMCPReverseProxyService) DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {

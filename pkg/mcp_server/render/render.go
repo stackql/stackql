@@ -95,6 +95,33 @@ func firstNonValidField(rv reflect.Value) any {
 	return rv.Interface()
 }
 
+// RenderMessagesBlock renders engine-emitted per-statement messages (eg
+// upstream provider diagnostics) as a labelled markdown block.  Empty input
+// renders as "" so statements without messages produce unchanged output.
+func RenderMessagesBlock(messages []string) string {
+	if len(messages) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	sb.WriteString("**messages**\n")
+	for _, m := range messages {
+		sb.WriteString("\n- ")
+		sb.WriteString(m)
+	}
+	return sb.String()
+}
+
+// RenderTableWithMessages renders rows exactly as RenderTable does, appending
+// a labelled messages block when the statement produced engine messages.
+func RenderTableWithMessages(rows []map[string]any, messages []string) string {
+	base := RenderTable(rows)
+	block := RenderMessagesBlock(messages)
+	if block == "" {
+		return base
+	}
+	return strings.TrimRight(base, "\n") + "\n\n" + block + "\n"
+}
+
 // RenderTable renders a uniform multi-row result set as a markdown table.
 // Column order is stable: the union of keys across all rows, sorted alphabetically.
 func RenderTable(rows []map[string]any) string {

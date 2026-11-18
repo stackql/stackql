@@ -18,8 +18,8 @@ func (b *ExampleBackend) ServerInfo(ctx context.Context, _ any) (dto.ServerInfoO
 	return dto.ServerInfoOutput{}, nil
 }
 
-func (b *ExampleBackend) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
-	return []map[string]interface{}{}, nil
+func (b *ExampleBackend) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) (dto.QueryResultDTO, error) {
+	return dto.QueryResultDTO{Rows: []map[string]any{}}, nil
 }
 
 func (b *ExampleBackend) ValidateQuery(ctx context.Context, query string) ([]map[string]any, error) {

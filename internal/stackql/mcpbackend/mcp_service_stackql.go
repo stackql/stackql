@@ -345,16 +345,22 @@ func (b *stackqlMCPService) ServerInfo(_ context.Context, _ any) (dto.ServerInfo
 	}, nil
 }
 
-func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
+func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) (dto.QueryResultDTO, error) {
 	q, qErr := b.interrogator.GetQueryJSON(input)
 	if qErr != nil {
-		return nil, qErr
+		return dto.QueryResultDTO{}, qErr
 	}
-	return b.runPreprocessedQueryJSON(ctx, q, input.RowLimit)
+	rows, messages, extractErr := b.withContext(ctx).extractQueryResults(q, input.RowLimit)
+	if extractErr != nil {
+		return dto.QueryResultDTO{}, extractErr
+	}
+	return dto.QueryResultDTO{Rows: rows, Messages: messages}, nil
 }
 
 func (b *stackqlMCPService) runPreprocessedQueryJSON(ctx context.Context, query string, rowLimit int) ([]map[string]interface{}, error) {
-	results, extractErr := b.withContext(ctx).extractQueryResults(query, rowLimit)
+	// Metadata tools (SHOW / DESCRIBE / EXPLAIN) keep their rows-only shape;
+	// per-statement messages surface only through RunQueryJSON.
+	results, _, extractErr := b.withContext(ctx).extractQueryResults(query, rowLimit)
 	if extractErr != nil {
 		return nil, extractErr
 	}
@@ -456,7 +462,7 @@ func (b *stackqlMCPService) ValidateQuery(ctx context.Context, query string) ([]
 
 func (b *stackqlMCPService) execQuery(query string) (map[string]any, error) {
 	rv := map[string]any{}
-	r, ok := b.applyQuery(query)
+	r, _, ok := b.applyQuery(query)
 	if !ok {
 		return rv, fmt.Errorf("failed to extract query results")
 	}
@@ -488,25 +494,43 @@ func (h strictHandlerContext) NewClientContext() handler.HandlerContext {
 	return strictHandlerContext{h.HandlerContext.NewClientContext()}
 }
 
-func (b *stackqlMCPService) getUpdatedHandlerCtx(query string) (handler.HandlerContext, error) {
+func (b *stackqlMCPService) getUpdatedHandlerCtx(
+	query string,
+) (handler.HandlerContext, *statementMessageCapture, error) {
 	clonedCtx := b.handlerCtx.Clone()
 	clonedCtx.SetRawQuery(query)
-	return strictHandlerContext{clonedCtx}, nil
+	// The engine writes per-statement diagnostics (eg upstream 404 bodies for
+	// reads presented as empty tables) to the context's OutErrFile.  Tee the
+	// clone's writer through a bounded capture so those diagnostics can be
+	// attributed to exactly this statement; the operator-visible stream is
+	// unchanged.  Clone() copies the writer field by value, so this never
+	// leaks to the parent context or to concurrent statements.
+	capture := newStatementMessageCapture()
+	if existing := clonedCtx.GetOutErrFile(); existing != nil {
+		clonedCtx.SetOutErrFile(io.MultiWriter(existing, capture))
+	} else {
+		clonedCtx.SetOutErrFile(capture)
+	}
+	return strictHandlerContext{clonedCtx}, capture, nil
 }
 
-func (b *stackqlMCPService) applyQuery(query string) ([]internaldto.ExecutorOutput, bool) {
-	updatedCtx, ctxErr := b.getUpdatedHandlerCtx(query)
+func (b *stackqlMCPService) applyQuery(query string) ([]internaldto.ExecutorOutput, *statementMessageCapture, bool) {
+	updatedCtx, capture, ctxErr := b.getUpdatedHandlerCtx(query)
 	if ctxErr != nil {
-		return nil, false
+		return nil, nil, false
 	}
 	r, ok := b.txnOrchestrator.ProcessQueryOrQueries(updatedCtx)
-	return r, ok
+	return r, capture, ok
 }
 
-func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]map[string]interface{}, error) {
-	r, ok := b.applyQuery(query)
+//nolint:gocognit // single bounded drain loop plus error classification
+func (b *stackqlMCPService) extractQueryResults(
+	query string,
+	rowLimit int,
+) ([]map[string]interface{}, []string, error) {
+	r, capture, ok := b.applyQuery(query)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract query results")
+		return nil, nil, fmt.Errorf("failed to extract query results")
 	}
 	// Initialise as empty (not nil) so a zero-row result survives downstream
 	// JSON-array schema validation on QueryResultDTO.Rows.  This pairs with
@@ -514,13 +538,15 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 	// "**no results**" rather than failing extraction.
 	rv := []map[string]interface{}{}
 	rowCount := 0
+	var respMessages []string
 	for _, resp := range r {
 		if respErr := resp.GetError(); respErr != nil {
 			// Propagate the statement error (with upstream HTTP status
 			// classification where available) rather than collapsing it
 			// into an indistinct empty result (issue #670).
-			return nil, classifyBackendError(respErr, queryProviderName(query))
+			return nil, nil, classifyBackendError(respErr, queryProviderName(query))
 		}
+		respMessages = append(respMessages, resp.GetMessages()...)
 		// PrepareResultSet emits a nil SQLResult when RowMap is empty (eg
 		// REGISTRY LIST against an empty registry).  That's a zero-row
 		// result, not an extraction failure: skip the stream and continue.
@@ -531,10 +557,10 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 		var drainOK bool
 		rv, rowCount, drainOK = drainSQLRowStream(sqlRowStream, rv, rowCount, rowLimit)
 		if !drainOK {
-			return nil, fmt.Errorf("failed to extract query results")
+			return nil, nil, fmt.Errorf("failed to extract query results")
 		}
 	}
-	return rv, nil
+	return rv, capture.drain(respMessages), nil
 }
 
 // drainSQLRowStream reads `stream` to EOF (or until rowLimit is reached),
