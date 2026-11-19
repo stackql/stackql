@@ -391,6 +391,7 @@ func (csvw *CSVWriter) Write(res sqldata.ISQLResultStream) error {
 				}
 				rowsArr, err = tabulateResults(r, csvw.ci)
 				if err != nil {
+					w.Flush()
 					return err
 				}
 				for _, rs := range rowsArr {
@@ -415,6 +416,7 @@ func (csvw *CSVWriter) Write(res sqldata.ISQLResultStream) error {
 		}
 		rowsArr, err = tabulateResults(r, csvw.ci)
 		if err != nil {
+			w.Flush()
 			return err
 		}
 		for _, rs := range rowsArr {

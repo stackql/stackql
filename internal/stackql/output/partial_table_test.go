@@ -4,6 +4,7 @@ package output
 import (
 	"bytes"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 
@@ -64,5 +65,43 @@ func TestCSVWriterRetainsCompletedRowsOnStreamFailure(t *testing.T) {
 	}
 	if !strings.Contains(output.String(), "one") || !strings.Contains(output.String(), "id") {
 		t.Fatalf("completed csv rows were discarded: %q", output.String())
+	}
+}
+
+type batchedStream struct {
+	sqldata.ISQLResultStream
+	batches []sqldata.ISQLResult
+	next    int
+}
+
+func (s *batchedStream) Read() (sqldata.ISQLResult, error) {
+	if s.next >= len(s.batches) {
+		return nil, io.EOF
+	}
+	b := s.batches[s.next]
+	s.next++
+	return b, nil
+}
+func (s *batchedStream) GetColumns() []sqldata.ISQLColumn { return s.batches[0].GetColumns() }
+func (s *batchedStream) Close() error                     { return nil }
+
+func TestCSVWriterRetainsEarlierChunksOnUndecodableChunk(t *testing.T) {
+	table := sqldata.NewSQLTable(0, "partial")
+	column := sqldata.NewSQLColumn(table, "id", 0, 25, 1024, 0, "TextFormat")
+	cols := []sqldata.ISQLColumn{column}
+	good := sqldata.NewSQLResult(cols, 1, 0, []sqldata.ISQLRow{sqldata.NewSQLRow([]interface{}{"one"})})
+	// two values for a single column: tabulateResults fails on this chunk
+	bad := sqldata.NewSQLResult(cols, 1, 0, []sqldata.ISQLRow{sqldata.NewSQLRow([]interface{}{"x", "y"})})
+	stream := &batchedStream{batches: []sqldata.ISQLResult{good, bad}}
+	var output, stderr bytes.Buffer
+	writer, err := GetOutputWriter(&output, &stderr, internaldto.OutputContext{RuntimeContext: dto.RuntimeCtx{OutputFormat: "csv", Delimiter: ","}, Result: stream})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Write(stream); err == nil {
+		t.Fatal("expected decode error for malformed chunk")
+	}
+	if !strings.Contains(output.String(), "one") {
+		t.Fatalf("rows from earlier chunks were discarded: %q", output.String())
 	}
 }
