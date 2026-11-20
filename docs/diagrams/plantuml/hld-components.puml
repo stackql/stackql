@@ -1,6 +1,6 @@
 @startuml
 
-node "any-sdk" as AnySdk
+node "omnisdk" as OmniSDK
 node "stackql-parser" as StackQLParser
 node "psql-wire" as PsqlWire
 node "stackql-provider-registry" as ProviderRegistry
@@ -36,9 +36,9 @@ AIAgent -> [MCP Server]
 [Executor] ..> ProviderRegistry
 [Relational Algebra] ..> StackqlSqlite
 [Relational Algebra] -> Postgres
-[Primitive Builder] ..> AnySdk
+[Primitive Builder] ..> OmniSDK
 [Route Pass] ..> [Parameter Router]
-[Parameter Router] ..> AnySdk
+[Parameter Router] ..> OmniSDK
 [Route Pass] ..> [Route Pass] : Nesting / Composition
 
 

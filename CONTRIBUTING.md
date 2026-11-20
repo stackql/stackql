@@ -13,7 +13,7 @@ Please raise pull requests (PRs) from a fork of this repository, using the provi
 
 ## Dependency notes
 
-- Bumps of `modernc.org/sqlite` (the pure Go embedded SQLite backend, consumed via `any-sdk`) merge only after the full robot test suite passes; its transpile regenerations occasionally regress.
+- Bumps of `modernc.org/sqlite` (the pure Go embedded SQLite backend, owned by StackQL) merge only after the full robot test suite passes; its transpile regenerations occasionally regress.
 
 Finally, in respect of all your efforts; we thank you and ask that you please give us a star while you are at it.
 

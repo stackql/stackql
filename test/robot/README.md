@@ -2,9 +2,9 @@
 ## Distributed testing
 
 It is convenient for development- and release-critical robot tests to reside in this repository, because it accelerates the 
-delivery cycle.  There are other repositories in the org that can re-use much of this functionality; ironically the best examples are dependencies:
+delivery cycle.  Other repositories, including dependencies, can re-use much of this functionality:
 
-- [`any-sdk`](https://github.com/stackql/any-sdk).
+- [`omnisdk`](https://github.com/stackql-labs/omnisdk).
 - [`stackql-provider-registry`](https://github.com/stackql/stackql-provider-registry).
 
 These may consume entire testing modules, or more nuanced [tag-based](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#tagging-test-cases) approaches, with [include](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#by-tag-names) and [skip](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#skip) capabilities.
