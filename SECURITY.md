@@ -18,10 +18,10 @@ If you cannot use GitHub private vulnerability reporting, email us at [info@stac
 
 Security fixes are applied to the latest released minor line. Older lines are supported on a best-effort basis only; we recommend upgrading to the latest release. See the [releases page](https://github.com/stackql/stackql/releases) for the current version.
 
-| Version | Supported    |
-| ------- | ------------ |
-| 0.10.x  | Yes          |
-| < 0.10  | Best-effort  |
+| Version | Supported |
+| ------- | --------- |
+| Latest released minor line | Yes |
+| Earlier lines, including 0.x | Best-effort |
 
 ## Response Expectations
 
@@ -37,4 +37,6 @@ We follow coordinated (responsible) disclosure. Please give us a reasonable oppo
 
 ## Scope
 
-This policy covers the `stackql` engine in this repository and its official distributions and images (for example, the binaries on the releases page and the `stackql/stackql` Docker images). Provider definitions are maintained separately in the [stackql-provider-registry](https://github.com/stackql/stackql-provider-registry), and the request-execution library in [any-sdk](https://github.com/stackql/any-sdk); please report issues specific to those in their respective repositories.
+This policy covers the `stackql` engine, the MCP server, and official distributions, including release binaries and installers, Docker images, and MCP packages and plugins. See the [release surfaces](docs/stackql_release_process.md#surfaces-at-a-glance) for the full list.
+
+Vulnerabilities in the `omnisdk` request-execution library that affect StackQL should be reported through the private channel described above. Provider definitions are maintained separately in the [stackql-provider-registry](https://github.com/stackql/stackql-provider-registry); please report issues specific to those in that repository.

@@ -5,7 +5,7 @@ Data flow analysis is implemented as multiple passes on:
 
 - An initial abstract syntax tree (AST) from the parser.
    - Annotated derivatives of the AST.
-- `any-sdk`  `{ provider, service, resource, method, schema... }` graphs.
+- `omnisdk`  `{ provider, service, resource, method, schema... }` graphs.
 - `gonum` DAG adaptations with data flow dependencies representing edges.
 
 Some other aspects of data flow analysis:
