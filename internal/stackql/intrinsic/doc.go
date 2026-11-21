@@ -342,11 +342,11 @@ func planDocQuery(ctx queryContext, translated docQuery) (omnisdk.Plan, string, 
 	if dialectErr != nil {
 		return nil, "", dialectErr
 	}
-	q, environmentErr := bindReadPageSize(q, tables, ctx.GetRuntimeContext().HTTPMaxResults)
+	q, environmentErr := bindProviderDefaults(ctx, q, tables)
 	if environmentErr != nil {
 		return nil, "", environmentErr
 	}
-	q, environmentErr = bindProviderDefaults(ctx, q, tables)
+	q, environmentErr = bindReadPageSize(q, tables, ctx.GetRuntimeContext().HTTPMaxResults)
 	if environmentErr != nil {
 		return nil, "", environmentErr
 	}

@@ -19,7 +19,6 @@ func TestParse(t *testing.T) {
 		"SINGLE_QUOTED='single quoted value'",
 		"CRLF_KEY=crlf-value\r",
 		"EMPTY_KEY=",
-		"NOT_A_PAIR",
 		"SPACED_KEY = spaced-value",
 	}, "\n")
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
@@ -48,8 +47,34 @@ func TestParse(t *testing.T) {
 	if _, present := got["EMPTY_KEY"]; present {
 		t.Errorf("empty-valued key must be dropped, got %v", got)
 	}
-	if _, present := got["NOT_A_PAIR"]; present {
-		t.Errorf("non-pair line must be dropped, got %v", got)
+}
+
+func TestSourceRejectsMalformedDotenv(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bad.env")
+	const key = "STACKQL_TEST_RELOAD_VAR"
+	t.Setenv(key, "original")
+	if err := os.WriteFile(path, []byte(key+"=new\nNOT_A_PAIR\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := Source(path); err == nil {
+		t.Fatal("expected malformed dotenv error")
+	}
+	if got := os.Getenv(key); got != "original" {
+		t.Fatalf("invalid file changed environment to %q", got)
+	}
+}
+
+func TestEnsureExistsCreatesParseableStructuredFiles(t *testing.T) {
+	for _, suffix := range []string{"json", "toml", "yaml", "yml", "yalm"} {
+		t.Run(suffix, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "creds."+suffix)
+			if created, err := EnsureExists(path); err != nil || !created {
+				t.Fatalf("created=%t, err=%v", created, err)
+			}
+			if keys, sourced, err := Source(path); err != nil || !sourced || len(keys) != 0 {
+				t.Fatalf("keys=%v, sourced=%t, err=%v", keys, sourced, err)
+			}
+		})
 	}
 }
 

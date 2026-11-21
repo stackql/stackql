@@ -284,7 +284,7 @@ type stackqlMCPService struct {
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
 	serverInfo      serverBuildInfo
-	// envFile is the --env.file dotenv path re-sourced by reload_credentials
+	// envFile is the path re-sourced by reload_credentials
 	// (issue #688); empty means none configured.
 	envFile string
 }

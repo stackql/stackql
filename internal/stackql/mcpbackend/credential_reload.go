@@ -19,7 +19,7 @@ import (
 
 // Credential (re)sourcing for the MCP server (issue #688).  A process env
 // block is fixed at spawn, so a stdio child launched without credential vars
-// can never see them; re-sourcing the --env.file dotenv file into this
+// can never see them; re-sourcing --env.file into this
 // process's environment bridges that gap.  Values are never echoed, logged
 // or audited - only names and per-provider statuses.
 

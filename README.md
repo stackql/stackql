@@ -125,7 +125,7 @@ StackQL is a standalone application that can be used in client mode (via __`exec
 
 StackQL parses SQL statements and transpiles them into API requests to the (cloud) resource provider.  The API calls are then executed and the results are returned to the user.  
 
-StackQL provider interfaces are canonically defined in OpenAPI extensions to the providers' specification.  These definitions are then used to generate the SQL schema and the API client.  The source for the provider definitions are stored in the [__StackQL Registry__][registry].  The semantics of provider interactions are defined in the [`omnisdk` library](https://github.com/stackql-labs/omnisdk).  For more detail on nuts and bolts, please see [the local `AGENTS.md` file](/AGENTS.md) and [the `omnisdk` developer invariants](https://github.com/stackql-labs/omnisdk/blob/main/docs/developer/invariants.md).
+StackQL provider interfaces are canonically defined in OpenAPI extensions to the providers' specification.  These definitions are then used to generate the SQL schema and the API client.  The source for the provider definitions are stored in the [__StackQL Registry__][registry].  The semantics of provider interactions are defined in the [`omnisdk` library](https://github.com/stackql-labs/omnisdk).  For more detail on nuts and bolts, please see [the local `AGENTS.md` file](/AGENTS.md) and [the `omnisdk` developer guide](https://github.com/stackql-labs/omnisdk/blob/main/docs/developer/developer_guide.md).
 
 <details>
 <summary><b>StackQL Context Diagram</b></summary>

@@ -2,7 +2,7 @@
 
 These guidelines help contributors, human and otherwise, understand and work effectively on this repository.
 
-We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) for further useful information.  For deeper understanding of the "brains" of `stackql`, it is worthwhile to consult [the omnisdk developer invariants](https://github.com/stackql-labs/omnisdk/blob/main/docs/developer/invariants.md) and linked documents from there.
+We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) for further useful information.  For deeper understanding of the "brains" of `stackql`, it is worthwhile to consult [the omnisdk developer guide](https://github.com/stackql-labs/omnisdk/blob/main/docs/developer/developer_guide.md) and linked documents from there.
 
 We have upgraded to golang `>= 1.27.3` in order to take advantage of [time simulation and other capabilities in `testing/synctest`](https://go.dev/blog/testing-time).
 
