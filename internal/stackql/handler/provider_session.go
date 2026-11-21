@@ -29,6 +29,7 @@ type providerSessionState struct {
 	client              omnisdk.ClientSession
 	store               secrets.Store
 	bindings            map[string]omnisdk.ProviderBinding
+	providerParams      map[string]map[string]string
 	documentView        string
 }
 
@@ -150,7 +151,7 @@ func (hc *standardHandlerContext) setProviderSessionConfig(path string, rhs inte
 	switch parts[0] {
 	case "transaction":
 		return true, hc.configureProviderTransaction(parts, rhs, scope)
-	case "providers", "secret_store", "secrets":
+	case "providers", "tuning_by_provider", "params_by_provider", "secret_store", "secrets":
 	default:
 		return false, nil
 	}
@@ -161,6 +162,10 @@ func (hc *standardHandlerContext) setProviderSessionConfig(path string, rhs inte
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	switch parts[0] {
+	case "tuning_by_provider":
+		return true, state.setProviderTuning(parts[1:], rhs)
+	case "params_by_provider":
+		return true, state.setProviderParams(parts[1:], rhs)
 	case "secret_store":
 		if len(parts) == 1 && rhs == nil {
 			state.store, state.client = newSessionSecretStore(), nil
@@ -260,6 +265,67 @@ func (hc *standardHandlerContext) setProviderSessionConfig(path string, rhs inte
 	}
 }
 
+func providerConfigName(path []string) (string, error) {
+	if len(path) != 1 {
+		return "", fmt.Errorf("provider configuration requires one provider and a configuration object")
+	}
+	provider := strings.TrimPrefix(path[0], "stackql_unstable_")
+	if provider == "" || strings.ContainsAny(provider, "/\\.\x00") {
+		return "", fmt.Errorf("provider configuration requires a provider identifier")
+	}
+	return provider, nil
+}
+
+// setProviderTuning runs with the session lock held.
+func (state *providerSessionState) setProviderTuning(path []string, rhs interface{}) error {
+	provider, err := providerConfigName(path)
+	if err != nil {
+		return err
+	}
+	tuning := maps.Clone(state.base.TuningByProvider)
+	if rhs == nil {
+		delete(tuning, provider)
+	} else {
+		var override omnisdk.ProviderTuning
+		if decodeErr := decodeSessionObject(rhs, &override); decodeErr != nil {
+			return decodeErr
+		}
+		if tuning == nil {
+			tuning = make(map[string]omnisdk.ProviderTuning)
+		}
+		tuning[provider] = override
+	}
+	args := state.sessionArgs()
+	args.TuningByProvider = tuning
+	client, err := omnisdk.NewClientSession(args, state.store)
+	if err != nil {
+		return err
+	}
+	state.base.TuningByProvider, state.client = tuning, client
+	return nil
+}
+
+// setProviderParams runs with the session lock held.
+func (state *providerSessionState) setProviderParams(path []string, rhs interface{}) error {
+	provider, err := providerConfigName(path)
+	if err != nil {
+		return err
+	}
+	if rhs == nil {
+		delete(state.providerParams, provider)
+		return nil
+	}
+	var params map[string]string
+	if decodeErr := decodeSessionObject(rhs, &params); decodeErr != nil {
+		return decodeErr
+	}
+	if state.providerParams == nil {
+		state.providerParams = make(map[string]map[string]string)
+	}
+	state.providerParams[provider] = params
+	return nil
+}
+
 func (hc *standardHandlerContext) ReplaceAuthContext(provider string, auth *dto.AuthCtx) {
 	hc.authMapMutex.Lock()
 	defer hc.authMapMutex.Unlock()
@@ -279,10 +345,13 @@ func (hc *standardHandlerContext) ProviderBindingParams(address string) map[stri
 	defer state.mu.Unlock()
 	provider, _, _ := strings.Cut(address, ".")
 	provider = strings.TrimPrefix(provider, "stackql_unstable_")
-	params := map[string]string{}
-	for key, value := range state.bindings[provider].Params {
-		params[key] = value
+	binding, aliased := state.bindings[provider]
+	if aliased {
+		provider = strings.TrimPrefix(binding.Provider, "stackql_unstable_")
 	}
+	params := map[string]string{}
+	maps.Copy(params, state.providerParams[provider])
+	maps.Copy(params, binding.Params)
 	return params
 }
 
@@ -311,6 +380,8 @@ func (source *standardHandlerContext) NewClientContext() HandlerContext {
 		source.runtimeContext.APIRequestTimeout, source.runtimeContext.HTTPPageLimit,
 	)
 	target.providerSession.variables = maps.Clone(state.variables)
+	target.providerSession.base.TuningByProvider = maps.Clone(state.base.TuningByProvider)
+	target.providerSession.providerParams = maps.Clone(state.providerParams)
 	target.providerSession.documentView = state.documentView
 	target.providerSession.bindings = make(map[string]omnisdk.ProviderBinding, len(state.bindings))
 	for alias, binding := range state.bindings {

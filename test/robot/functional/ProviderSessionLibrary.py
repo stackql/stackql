@@ -18,6 +18,7 @@ class ProviderSessionLibrary:
         self.prefix = [shutil.which(binary) or str(Path(binary).resolve())]
         self.root = Path(tempfile.mkdtemp(prefix="stackql-session-"))
         self.calls = []
+        self.page_sizes = []
         self.aws_calls = []
         self.view_calls = []
         self.concurrent_gate = None
@@ -65,14 +66,19 @@ class ProviderSessionLibrary:
                     self.end_headers()
                     self.wfile.write(payload)
                     return
-                region = parse_qs(urlparse(self.path).query).get("region", [""])[0]
+                query = parse_qs(urlparse(self.path).query)
+                region = query.get("region", [""])[0]
                 if owner.concurrent_gate is not None:
                     owner.concurrent_gate.wait(timeout=10)
                 owner.calls.append((token, region))
+                owner.page_sizes.append(query.get("maxResults", [""])[0])
                 payload = json.dumps([{"id": region or "account", "active": True, "count": 42}]).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(payload)))
+                if region == "paged" and "page" not in query:
+                    next_path = urlparse(self.path)._replace(query=urlencode({**query, "page": ["2"]}, doseq=True))
+                    self.send_header("Link", f'<{endpoint}{next_path.geturl()}>; rel="next"')
                 self.end_headers()
                 self.wfile.write(payload)
 
@@ -107,9 +113,11 @@ class ProviderSessionLibrary:
                     "config": {"auth": {"type": "bearer"}}}
         doc = {"openapi": "3.0.0", "info": {"title": "things", "version": "v1"}, "servers": [{"url": endpoint}],
                "paths": {"/widgets": {"get": {"operationId": "list_widgets",
-                         "parameters": [{"name": "region", "in": "query", "required": True, "schema": {"type": "string"}}],
+                         "parameters": [{"name": "region", "in": "query", "required": True, "schema": {"type": "string"}},
+                                        {"name": "maxResults", "in": "query", "schema": {"type": "integer"}}],
                          "responses": {"200": {"content": {"application/json": {"schema": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "string"}, "active": {"type": "boolean"}, "count": {"type": "integer"}}}}}}}}}}},
                "components": {"x-stackQL-resources": {"widgets": {"id": "widgets.things.widgets", "name": "widgets",
+                              "config": {"pagination": {"responseToken": {"key": "Link", "location": "header"}}},
                               "methods": {"list": {"operation": {"$ref": "#/paths/~1widgets/get"}, "response": {"mediaType": "application/json", "openAPIDocKey": "200"}}},
                               "sqlVerbs": {"select": [{"$ref": "#/components/x-stackQL-resources/widgets/methods/list"}]}}}}}
         registry = self.root / "registry"
@@ -170,6 +178,67 @@ class ProviderSessionLibrary:
         sql += self.setting("providers.east.auth.credentials", "changed-token")
         sql += "SELECT id FROM east.things.widgets WHERE region = 'override';"
         self.run_sql(sql, [("Bearer east-token", "east"), ("Bearer west-token", "west"), ("Bearer changed-token", "override")])
+
+    def http_settings_follow_provider_alias_precedence(self):
+        sql = self.setting("tuning_by_provider.widgets", {"page_limit": 1})
+        sql += self.setting("params_by_provider.widgets", {"maxResults": "6"})
+        binding = {"provider": "widgets", "tenancy": "first", "auth": {"type": "bearer", "credentials": "first"},
+                   "params": {"region": "paged", "maxResults": "7"}}
+        sql += self.setting("providers.first", binding)
+        sql += self.setting("providers.second", {**binding, "tenancy": "second", "tuning": {"page_limit": 2},
+                                                 "auth": {"type": "bearer", "credentials": "second"},
+                                                 "params": {"region": "paged"}})
+        sql += "SELECT id FROM first.things.widgets; SELECT id FROM second.things.widgets; "
+        sql += "SELECT id FROM first.things.widgets WHERE maxResults = 9;"
+        sql += 'UNSET "$.tuning_by_provider.widgets", "$.params_by_provider.widgets";'
+        sql += "SELECT id FROM first.things.widgets; SELECT id FROM second.things.widgets;"
+        before = len(self.page_sizes)
+        self.run_sql(sql, [("Bearer first", "paged"), ("Bearer second", "paged"), ("Bearer second", "paged"),
+                           ("Bearer first", "paged"), ("Bearer first", "paged"), ("Bearer first", "paged"),
+                           ("Bearer second", "paged"), ("Bearer second", "paged")],
+                     ["--http.response.maxResults=5", "--http.response.pageLimit=2"])
+        assert self.page_sizes[before:] == ["7", "6", "6", "9", "7", "7", "5", "5"], self.page_sizes[before:]
+
+    def structured_config_and_env_files(self):
+        formats = {
+            "json": ('{"http.response.maxResults": 7, "configfile": {"ignored": true}}',
+                     '{"STACKQL_TEST_FILE_TOKEN": 42}', '{"nested": ["secret"]}'),
+            "toml": ('"http.response.maxResults" = 7\n[configfile]\nignored = true',
+                     'STACKQL_TEST_FILE_TOKEN = 42', 'nested = ["secret"]'),
+            **{suffix: ('http.response.maxResults: 7\nconfigfile: {ignored: true}',
+                        'STACKQL_TEST_FILE_TOKEN: 42', 'nested: [secret]')
+               for suffix in ("yaml", "yml", "yalm")},
+        }
+        sql = self.setting("providers.filetest", {"provider": "widgets", "tenancy": "filetest",
+                           "auth": {"type": "bearer", "credentialsenvvar": "STACKQL_TEST_FILE_TOKEN"},
+                           "params": {"region": "filetest"}})
+        sql += "SELECT id FROM filetest.things.widgets;"
+        legacy_config = self.root / "config.properties"
+        legacy_env = self.root / "creds.env"
+        legacy_config.write_text("http.response.maxResults=7\nconfigfile=${configfile}\n")
+        legacy_env.write_text('export STACKQL_TEST_FILE_TOKEN="legacy"\n')
+        self.run_sql(sql, [("Bearer legacy", "filetest")],
+                     ["--configfile", str(legacy_config), "--env.file", str(legacy_env)])
+        assert self.page_sizes[-1] == "7"
+        for suffix, (config, env, invalid) in formats.items():
+            config_path = self.root / f"config.{suffix}"
+            env_path = self.root / f"env.{suffix}"
+            config_path.write_text(config)
+            env_path.write_text(env)
+            flags = ["--configfile", str(config_path), "--env.file", str(env_path)]
+            self.run_sql(sql, [("Bearer 42", "filetest")], flags)
+            assert self.page_sizes[-1] == "7", suffix
+            self.run_sql(sql, [("Bearer 42", "filetest")], flags + ["--http.response.maxResults=8"])
+            assert self.page_sizes[-1] == "8", suffix
+            for path in (config_path, env_path):
+                before = len(self.calls)
+                original = path.read_text()
+                path.write_text(invalid)
+                result = subprocess.run(self.prefix + ["exec", sql] + self.flags + flags,
+                                        text=True, capture_output=True, timeout=30, env=self.env)
+                path.write_text(original)
+                assert result.returncode != 0 and "expected a scalar value" in result.stderr, result.stderr
+                assert len(self.calls) == before, suffix
 
     def aws_aliases_union_buckets_with_independent_signing_credentials(self):
         registry = self.root / "registry/src"

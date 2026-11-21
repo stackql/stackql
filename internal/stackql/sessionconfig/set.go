@@ -21,7 +21,8 @@ func Apply(host interface {
 		lhsTrimmed = strings.TrimPrefix(strings.TrimPrefix(lhsTrimmed, "$"), ".")
 		root, _, _ := strings.Cut(lhsTrimmed, ".")
 		switch root {
-		case "auth", "providers", "secret_store", "secrets", "document_merge", "transaction":
+		case "auth", "providers", "tuning_by_provider", "params_by_provider", "secret_store", "secrets",
+			"document_merge", "transaction":
 		default:
 			return fmt.Errorf("unknown intrinsic session configuration %q", lhsTrimmed)
 		}

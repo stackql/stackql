@@ -1,10 +1,13 @@
 package envfile
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/stackql/stackql/internal/stackql/flatfile"
 )
 
 const defaultContent = `# StackQL credential store, sourced at startup and on each reload_credentials call
@@ -19,7 +22,7 @@ const (
 )
 
 // EnsureExists creates path (parent directories included) as an empty
-// commented dotenv file when absent, so packaged installs (eg MCP bundles)
+// credential file when absent, so packaged installs (eg MCP bundles)
 // get a working credential store on first launch; an existing file is never
 // touched, since bundle updates must not wipe populated credentials.  Returns
 // whether this call created the file.  An empty path is a no-op.
@@ -45,22 +48,27 @@ func EnsureExists(path string) (bool, error) {
 		return false, err
 	}
 	defer f.Close() //nolint:errcheck // write error is surfaced below
-	if _, writeErr := f.WriteString(defaultContent); writeErr != nil {
+	content := defaultContent
+	switch flatfile.Format(path) {
+	case "json", "yaml":
+		content = "{}\n"
+	case "toml":
+		content = ""
+	}
+	if _, writeErr := f.WriteString(content); writeErr != nil {
 		return false, writeErr
 	}
 	return true, nil
 }
 
-// parse reads a dotenv-style file: KEY=VALUE lines; `#` comments, blanks,
-// `export ` prefixes, surrounding quotes and CRLF tolerated.  Keys with
-// empty values are dropped so a reload cannot blank out a working credential.
 func parse(path string) (map[string]string, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
+	return flatfile.Load(path, parseDotenv)
+}
+
+// parseDotenv accepts KEY=VALUE lines, comments, blanks, export prefixes and surrounding quotes.
+func parseDotenv(b []byte) (map[string]string, error) {
 	rv := map[string]string{}
-	for _, line := range strings.Split(string(b), "\n") {
+	for lineNumber, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(strings.TrimSuffix(line, "\r"))
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
@@ -69,7 +77,7 @@ func parse(path string) (map[string]string, error) {
 		key, val, found := strings.Cut(line, "=")
 		key = strings.TrimSpace(key)
 		if !found || key == "" {
-			continue
+			return nil, fmt.Errorf("expected KEY=VALUE on line %d", lineNumber+1)
 		}
 		val = strings.TrimSpace(val)
 		if len(val) >= 2 { //nolint:mnd // shortest quoted form is ""
@@ -78,10 +86,9 @@ func parse(path string) (map[string]string, error) {
 				val = val[1 : len(val)-1]
 			}
 		}
-		if val == "" {
-			continue
+		if val != "" {
+			rv[key] = val
 		}
-		rv[key] = val
 	}
 	return rv, nil
 }
@@ -100,8 +107,16 @@ func Source(path string) ([]string, bool, error) {
 		}
 		return nil, false, err
 	}
+	for k, v := range vars {
+		if k == "" || strings.ContainsAny(k, "=\x00") || strings.ContainsRune(v, '\x00') {
+			return nil, false, fmt.Errorf("invalid environment entry for key %q", k)
+		}
+	}
 	keys := make([]string, 0, len(vars))
 	for k, v := range vars {
+		if v == "" {
+			continue
+		}
 		if setErr := os.Setenv(k, v); setErr != nil {
 			return nil, false, setErr
 		}

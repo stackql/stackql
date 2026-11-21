@@ -112,8 +112,6 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	SetExportNamespace(string)
 	GetExportNamespace() string
 
-	GetDataFlowCfg() dto.DataFlowCfg
-
 	//
 	ResolveVariables(sqlparser.Statement) error
 	SetConfigAtPath(path string, rhs interface{}, scope string) error
@@ -189,13 +187,6 @@ func (hc *standardHandlerContext) IsStrictUpstreamErrors() bool {
 
 func (hc *standardHandlerContext) SetStrictUpstreamErrors(isStrict bool) {
 	hc.strictUpstreamErrors = isStrict
-}
-
-func (hc *standardHandlerContext) GetDataFlowCfg() dto.DataFlowCfg {
-	return dto.NewDataFlowCfg(
-		hc.runtimeContext.DataflowDependencyMax,
-		hc.runtimeContext.DataflowComponentsMax,
-	)
 }
 
 func (hc *standardHandlerContext) GetStacqklSemver() string {

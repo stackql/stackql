@@ -91,7 +91,7 @@ The HTTP listener is registered for `Stop()`. Stopping the server or cancelling 
 
 ### Credential (re)sourcing (`--env.file` + `reload_credentials`)
 
-`--env.file` is a root flag: it nominates a dotenv-style file that every stackql entrypoint (`exec`, `shell`, `srv`, `mcp`) sources into the process environment at startup.  For the MCP server it additionally acts as a mutable credential store: a process env block is fixed at spawn, so a stdio server launched without credential vars (eg by Claude Desktop) can only pick them up from such a file, re-sourced on each `reload_credentials` tool call.
+`--env.file` is a root flag: it nominates a credential file that every stackql entrypoint (`exec`, `shell`, `srv`, `mcp`) sources into the process environment at startup.  For the MCP server it additionally acts as a mutable credential store: a process env block is fixed at spawn, so a stdio server launched without credential vars (eg by Claude Desktop) can only pick them up from such a file, re-sourced on each `reload_credentials` tool call.
 
 ```bash
 
@@ -102,14 +102,14 @@ The HTTP listener is registered for `Stop()`. Stopping the server or cancelling 
 Semantics:
 
 - Sourced at startup (if the file exists) and again on every `reload_credentials` call; only keys with non-empty values are set, nothing is ever unset.
-- An absent file is created at startup as an empty commented dotenv file (`0600` on unix, parent directories included), so packaged installs (eg MCPB bundles in Claude Desktop) can pass the flag unconditionally; an existing file is never touched, so bundle updates cannot wipe populated credentials.
+- An absent file is created at startup in the format selected by its suffix (`0600` on unix, parent directories included), so packaged installs (eg MCPB bundles in Claude Desktop) can pass the flag unconditionally; an existing file is never touched, so bundle updates cannot wipe populated credentials.
 - The file may be created, updated or rotated at any time while the server runs.
 - `reload_credentials` runs three ordered phases: re-source the file, invalidate auth contexts registered lazily from provider documents (contexts supplied via `--auth` are retained), then report every installed provider against the now-current environment.  The report is identical before and after a provider's first query; the optional `provider` argument filters it, and an unknown provider name is the only scoped error.
 - Each report row carries variable names, per-provider status (`ok`, `unresolved`, `not_checked`) and `changed` (whether the resolved credential material differs from before the reload); secret values are never returned, logged or audited.  A second reload against an unchanged file is idempotent (`changed: false` throughout).  Without `--env.file` it degrades to a pure status probe; a configured file that has gone missing is an explicit error naming the path.
 - Credentials resolve automatically at query time, so no reload is ever required before querying.  Credential resolution failures on the query tools name the provider and the recovery sequence (fix the env file, call `reload_credentials`, retry); `changed: false` after a failure means the file was not updated.
 - Reload semantics are per process.  In a replicated stateless HTTP deployment an in-band reload mutates one replica only; rotation there belongs at the deployment layer (redeploy, shared secret store, file watcher).
 
-File format: one `KEY=VALUE` per line; `#` comments, blank lines, `export ` prefixes, surrounding quotes and CRLF are tolerated.
+Files ending in `.toml`, `.yaml`, `.yml`, `.yalm`, or `.json` must contain a flat mapping with string keys and scalar values. A structured null becomes the text `null`. Other suffixes use dotenv syntax with one `KEY=VALUE` per line. Dotenv supports `#` comments, blank lines, `export ` prefixes, surrounding quotes, and CRLF.
 
 Note for Claude Desktop on Windows: `setx` writes the registry, not running processes, and Claude Desktop passes its own (stale) environment to MCP subprocesses; `--env.file` avoids restarts entirely.
 
@@ -190,7 +190,7 @@ Tools also carry a `title` and every MCP behavioural hint as an explicit boolean
 | `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation.  Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
 | `list_registry` | Table | Providers (and their versions) available in the configured registry.  Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache.  Requires `provider`; `version` optional.  Local cache write only. |
-| `reload_credentials` | Table | Live-reload credentials: re-source the [`--env.file`](#credential-resourcing---envfile--reload_credentials) dotenv file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider.  Never returns secret values.  Optional `provider` filters the report.  Recovery and rotation only, never a pre-query step.  Allowed in every mode. |
+| `reload_credentials` | Table | Live-reload credentials: re-source the [`--env.file`](#credential-resourcing---envfile--reload_credentials) file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider.  Never returns secret values.  Optional `provider` filters the report.  Recovery and rotation only, never a pre-query step.  Allowed in every mode. |
 | `query_library_search` | Table | Search the curated query library by natural-language `intent` (optional `provider` / `service` / `tags` filters).  Consult before composing SQL from scratch.  Read-only, no credentials. |
 | `query_library_get` | KV | Retrieve one library entry by `id`; with `params` the server validates them and returns rendered SQL plus the tool to execute it with.  Read-only, no credentials. |
 

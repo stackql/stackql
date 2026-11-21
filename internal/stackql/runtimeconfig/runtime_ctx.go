@@ -28,8 +28,6 @@ type RuntimeCtx struct {
 	HTTPProxyScheme              string
 	HTTPProxyUser                string
 	IndirectDepthMax             int
-	DataflowComponentsMax        int
-	DataflowDependencyMax        int
 	InfilePath                   string
 	LogLevelStr                  string
 	OutfilePath                  string
@@ -60,7 +58,6 @@ type RuntimeCtx struct {
 	VarList                      []string
 	VerboseFlag                  bool
 	ViperCfgFileName             string
-	WorkOffline                  bool
 	CLIPayload                   string
 	CLIPayloadType               string
 	CLIParameters                string
@@ -152,10 +149,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setInt(&rc.HTTPProxyPort, val)
 	case IndirectDepthMaxKey:
 		retVal = setInt(&rc.IndirectDepthMax, val)
-	case DataflowComponentsMaxKey:
-		retVal = setInt(&rc.DataflowComponentsMax, val)
-	case DataflowDependencyMaxKey:
-		retVal = setInt(&rc.DataflowDependencyMax, val)
+	case DataflowComponentsMaxKey, DataflowDependencyMaxKey: // deprecated
+		_, retVal = strconv.Atoi(val)
 	case HTTPProxySchemeKey:
 		rc.HTTPProxyScheme = val
 	case HTTPProxyUserKey:
@@ -212,8 +207,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setBool(&rc.VerboseFlag, val)
 	case ViperCfgFileNameKey:
 		rc.ViperCfgFileName = val
-	case WorkOfflineKey:
-		retVal = setBool(&rc.WorkOffline, val)
+	case WorkOfflineKey: // deprecated
+		_, retVal = strconv.ParseBool(val)
 	}
 	return retVal
 }
@@ -245,8 +240,6 @@ func (rc RuntimeCtx) Copy() RuntimeCtx {
 		HTTPProxyScheme:              rc.HTTPProxyScheme,
 		HTTPProxyUser:                rc.HTTPProxyUser,
 		IndirectDepthMax:             rc.IndirectDepthMax,
-		DataflowComponentsMax:        rc.DataflowComponentsMax,
-		DataflowDependencyMax:        rc.DataflowDependencyMax,
 		InfilePath:                   rc.InfilePath,
 		LogLevelStr:                  rc.LogLevelStr,
 		OutfilePath:                  rc.OutfilePath,
@@ -277,7 +270,6 @@ func (rc RuntimeCtx) Copy() RuntimeCtx {
 		VarList:                      rc.VarList,
 		VerboseFlag:                  rc.VerboseFlag,
 		ViperCfgFileName:             rc.ViperCfgFileName,
-		WorkOffline:                  rc.WorkOffline,
 	}
 }
 

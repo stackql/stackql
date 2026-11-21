@@ -75,6 +75,25 @@ snapshot. Updating credentials affects subsequent queries, not queries already r
 binding/tuning changes start a new governor generation. Aliases cover document-driven metadata,
 reads, mutations and legacy EXEC; they do not extend native built-in or IaC resource addresses.
 
+Use the canonical provider name to set defaults for the current session.
+
+```sql
+SET "$.tuning_by_provider.google" = '{"page_limit":3}';
+SET "$.params_by_provider.google" = '{"maxResults":"200"}';
+```
+
+Page limits resolve from alias `tuning.page_limit`, then canonical provider tuning, then
+`--http.response.pageLimit`. Zero inherits and a negative value removes the cap.
+For reads that declare a `maxResults` query parameter, precedence is explicit SQL, alias
+`params.maxResults`, canonical provider parameters, then `--http.response.maxResults`.
+Use `UNSET` on either canonical configuration path to restore its inherited defaults.
+
+With an OmniSDK build that supports `proxy_port`, set it in canonical tuning or the alias's
+`tuning` object. A positive value replaces the port on the proxy selected by the HTTP transport.
+Zero inherits and `-1` restores the transport's original port. The transport still selects which
+requests use a proxy, including any `NO_PROXY` exclusions. The root `--http.proxy.port` flag
+continues to configure the registry transport.
+
 ## Typed dereferencing and expressions
 
 Use `$name` without single quotes, including for string variables. Resolution replaces AST nodes

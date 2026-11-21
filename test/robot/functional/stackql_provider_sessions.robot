@@ -9,6 +9,12 @@ Suite Teardown    Stop Session Provider
 Provider Aliases Keep Their Credentials And Scope Across Session Edits
     Provider Aliases Survive Session Edits
 
+HTTP Settings Follow Provider And Alias Precedence
+    HTTP Settings Follow Provider Alias Precedence
+
+Structured Config And Env Files Accept Only Scalars
+    Structured Config And Env Files
+
 AWS Aliases Union Buckets With Independent Signing Credentials
     AWS Aliases Union Buckets With Independent Signing Credentials
 
