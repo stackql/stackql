@@ -1,6 +1,6 @@
 Flask==3.1.3
 Jinja2==3.1.6
-mistune==3.3.3
+mistune==3.3.4
 psycopg2-binary==2.9.10
 psycopg[binary]>=3.1.16
 PyYaml==6.0.2
