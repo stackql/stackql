@@ -156,20 +156,29 @@ type PrettyWriter struct {
 	errWriter io.Writer
 }
 
+// writeRowsFromResult collects the rows of every batch in the stream and
+// writes them as one JSON array, so that a result read in several batches
+// is still one valid JSON document.
 func (jw *JSONWriter) writeRowsFromResult(res sqldata.ISQLResultStream) error {
+	var allRows []map[string]interface{}
 	for {
 		r, err := res.Read()
 		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
+		if r != nil {
+			rowsArr := r.ToArr()
+			if allRows == nil {
+				allRows = rowsArr
+			} else {
+				allRows = append(allRows, rowsArr...)
+			}
+		}
 		if err != nil {
+			jw.writeRows(allRows) //nolint:errcheck // output stream is not critical
 			if errors.Is(err, io.EOF) {
-				rowsArr := r.ToArr()
-				jw.writeRows(rowsArr) //nolint:errcheck // output stream is not critical
 				return nil
 			}
 			return err
 		}
-		rowsArr := r.ToArr()
-		jw.writeRows(rowsArr) //nolint:errcheck // output stream is not critical
 	}
 }
 

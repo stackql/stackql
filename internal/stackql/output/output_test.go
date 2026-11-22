@@ -2,7 +2,9 @@ package output //nolint:testpackage // do not care
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -133,5 +135,75 @@ func TestJSONLWriter_Write_PropagatesStreamError(t *testing.T) {
 	err := w.Write(&errResultStream{err: wantErr})
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("expected %v, got %v", wantErr, err)
+	}
+}
+
+func newBatchResult(t *testing.T, start, count int) sqldata.ISQLResult {
+	t.Helper()
+	columns := []sqldata.ISQLColumn{
+		sqldata.NewSQLColumn(sqldata.NewSQLTable(0, ""), "id", 0, 25, 1024, 0, "text"),
+	}
+	rows := make([]sqldata.ISQLRow, 0, count)
+	for i := start; i < start+count; i++ {
+		rows = append(rows, sqldata.NewSQLRow([]interface{}{fmt.Sprintf("row-%d", i)}))
+	}
+	return sqldata.NewSQLResult(columns, 0, 0, rows)
+}
+
+func TestJSONWriter_Write_MultipleBatchesIsOneArray(t *testing.T) {
+	for _, batchSizes := range [][]int{{100}, {100, 1}, {100, 100, 50}} {
+		stream := sqldata.NewChannelSQLResultStream(nil)
+		total := 0
+		go func(sizes []int) {
+			start := 0
+			for _, size := range sizes {
+				stream.Write(newBatchResult(t, start, size)) //nolint:errcheck // channel write
+				start += size
+			}
+			stream.Close() //nolint:errcheck // channel close
+		}(batchSizes)
+		for _, size := range batchSizes {
+			total += size
+		}
+
+		var out bytes.Buffer
+		w := NewJSONWriter(&out, &out)
+		if err := w.Write(stream); err != nil {
+			t.Fatalf("batches %v: Write() error = %v", batchSizes, err)
+		}
+
+		var rows []map[string]interface{}
+		if err := json.Unmarshal(out.Bytes(), &rows); err != nil {
+			t.Fatalf("batches %v: output is not one JSON document: %v", batchSizes, err)
+		}
+		if len(rows) != total {
+			t.Fatalf("batches %v: expected %d rows, got %d", batchSizes, total, len(rows))
+		}
+		if rows[0]["id"] != "row-0" || rows[total-1]["id"] != fmt.Sprintf("row-%d", total-1) {
+			t.Fatalf("batches %v: rows out of order: first %v, last %v", batchSizes, rows[0], rows[total-1])
+		}
+	}
+}
+
+func TestJSONWriter_Write_RetainsCompletedRowsOnStreamFailure(t *testing.T) {
+	failure := errors.New("continuation failed")
+	batch := newBatchResult(t, 0, 2)
+	stream := &partialTableStream{batch: batch, failure: failure}
+
+	var out bytes.Buffer
+	w := NewJSONWriter(&out, io.Discard)
+	if err := w.Write(stream); !errors.Is(err, failure) {
+		t.Fatalf("expected %v, got %v", failure, err)
+	}
+
+	var rows []map[string]interface{}
+	if err := json.Unmarshal(out.Bytes(), &rows); err != nil {
+		t.Fatalf("partial output is not one JSON document: %v", err)
+	}
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 partial rows, got %d: %v", len(rows), rows)
+	}
+	if rows[0]["id"] != "row-0" || rows[1]["id"] != "row-1" {
+		t.Fatalf("partial rows were not retained in order: %v", rows)
 	}
 }

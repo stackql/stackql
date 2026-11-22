@@ -325,6 +325,18 @@ def create_app() -> Flask:
         # The regression query gets malformed JSON only on its continuation page.
         if request.args.get("group_by") == "stream_error" and request.args.get("page"):
             return "{", 200, {"Content-Type": "application/json"}
+        if request.args.get("group_by") == "large_result":
+            if request.args.get("page") == "large_page_2":
+                names = ["large-result-100"]
+                next_page = None
+            else:
+                names = [f"large-result-{i:03d}" for i in range(100)]
+                next_page = "large_page_2"
+            rows = [{"name": n, "wire_query": raw} for n in names]
+            body = {"items": rows}
+            if next_page is not None:
+                body["next_page"] = next_page
+            return jsonify(body)
         if raw_page and "%" in raw_page.group(1):
             return jsonify({"error": {"message": "The page token is invalid: percent-escaped cursor"}}), 400
         names, next_page = _cursor_pages.get(request.args.get("page", ""), ([], None))
