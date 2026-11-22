@@ -180,6 +180,49 @@ Cursor Request Token Default Encoding Unchanged
     ...    timeout=120s
     ...    on_timeout=terminate
 
+JSON Pagination Produces One Projected Document Across Output Batches
+    [Documentation]    The first provider page supplies 100 rows and the continuation
+    ...                supplies one. JSON stdout must parse once, contain 101 ordered
+    ...                rows, and expose only the requested projection.
+    [Timeout]    120 seconds
+    ${output} =    Run Stackql Exec Command No Errors
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name from stackql_native_test.cursor.items where group_by \= 'large_result' order by name;
+    ...    stackql_output=json
+    ...    timeout=120s
+    ...    on_timeout=terminate
+    ${rows} =    Evaluate    json.loads($output.stdout)    modules=json
+    ${expected} =    Evaluate    [{"name": f"large-result-{i:03d}"} for i in range(101)]
+    Should Be Equal    ${rows}    ${expected}
+
+JSON Pagination Stream Failure Retains Exact Partial Projection
+    [Documentation]    A malformed second page fails after the first page's two rows.
+    ...                Stdout remains one parseable JSON array containing only the
+    ...                requested name projection, while stderr reports the stream error.
+    [Timeout]    120 seconds
+    ${output} =    Run Stackql Exec Command No Errors
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name from stackql_native_test.cursor.items where group_by \= 'stream_error' order by name;
+    ...    stackql_output=json
+    ...    timeout=120s
+    ...    on_timeout=terminate
+    ${rows} =    Evaluate    json.loads($output.stdout)    modules=json
+    ${expected} =    Evaluate    [{"name": "C1"}, {"name": "C2"}]
+    Should Be Equal    ${rows}    ${expected}
+    Should Contain    ${output.stderr}    unexpected EOF
+
 CSV Pagination Stream Failure Flushes Completed Rows
     [Documentation]    The first cursor page completes before the mock returns malformed
     ...                JSON for the second page. CSV stdout must retain its header and both

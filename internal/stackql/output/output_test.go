@@ -184,3 +184,26 @@ func TestJSONWriter_Write_MultipleBatchesIsOneArray(t *testing.T) {
 		}
 	}
 }
+
+func TestJSONWriter_Write_RetainsCompletedRowsOnStreamFailure(t *testing.T) {
+	failure := errors.New("continuation failed")
+	batch := newBatchResult(t, 0, 2)
+	stream := &partialTableStream{batch: batch, failure: failure}
+
+	var out bytes.Buffer
+	w := NewJSONWriter(&out, io.Discard)
+	if err := w.Write(stream); !errors.Is(err, failure) {
+		t.Fatalf("expected %v, got %v", failure, err)
+	}
+
+	var rows []map[string]interface{}
+	if err := json.Unmarshal(out.Bytes(), &rows); err != nil {
+		t.Fatalf("partial output is not one JSON document: %v", err)
+	}
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 partial rows, got %d: %v", len(rows), rows)
+	}
+	if rows[0]["id"] != "row-0" || rows[1]["id"] != "row-1" {
+		t.Fatalf("partial rows were not retained in order: %v", rows)
+	}
+}

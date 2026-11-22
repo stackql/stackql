@@ -164,10 +164,6 @@ func (jw *JSONWriter) writeRowsFromResult(res sqldata.ISQLResultStream) error {
 	for {
 		r, err := res.Read()
 		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
-		isLastBatch := errors.Is(err, io.EOF)
-		if err != nil && !isLastBatch {
-			return err
-		}
 		if r != nil {
 			rowsArr := r.ToArr()
 			if allRows == nil {
@@ -176,9 +172,12 @@ func (jw *JSONWriter) writeRowsFromResult(res sqldata.ISQLResultStream) error {
 				allRows = append(allRows, rowsArr...)
 			}
 		}
-		if isLastBatch {
+		if err != nil {
 			jw.writeRows(allRows) //nolint:errcheck // output stream is not critical
-			return nil
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return err
 		}
 	}
 }
