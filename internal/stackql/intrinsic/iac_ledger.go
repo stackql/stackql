@@ -3,6 +3,8 @@ package intrinsic
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/stackql-labs/omnisdk/pkg/omnisdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -49,7 +51,19 @@ func ledgerSelectFunc(ctx queryContext, node *sqlparser.Select) func() internald
 	if !ok {
 		return refuse(fmt.Errorf("the Omni dependency needs the read-only ledger capability; upgrade Omni"))
 	}
+	// Older OmniSDK releases expose rows but do not describe their schema.
+	var columns []column
+	if schema, hasSchema := reader.(interface {
+		ColumnTypes() map[string]omnisdk.ColumnType
+	}); hasSchema {
+		types := schema.ColumnTypes()
+		columns = make([]column, 0, len(types))
+		for _, name := range slices.Sorted(maps.Keys(types)) {
+			columns = append(columns, column{name: name, dataType: types[name].Type})
+		}
+	}
 	return func() internaldto.ExecutorOutput {
-		return streamPlan(ctx, ledgerReadPlan{reader: reader, resource: resource}, ledgerRelation, node.SelectExprs)
+		plan := ledgerReadPlan{reader: reader, resource: resource}
+		return streamPlan(ctx, plan, ledgerRelation, node.SelectExprs, columns...)
 	}
 }

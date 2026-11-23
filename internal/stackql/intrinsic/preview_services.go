@@ -133,15 +133,23 @@ func popPredicate(params map[string]string, key string) string {
 	return value
 }
 
-// streamPlan opens a plan and hands its cursor to the caller. Neither service
-// declares an egress schema, so the columns are the ones the first row carries
-// and the projection is applied over them.
+// streamPlan opens a plan and hands its cursor to the caller. Without a
+// declared schema, it takes the columns from the first row.
 func streamPlan(
 	ctx queryContext,
 	plan omnisdk.Plan,
 	relation string,
 	exprs sqlparser.SelectExprs,
+	declaredColumns ...column,
 ) internaldto.ExecutorOutput {
+	var columns []column
+	if len(declaredColumns) > 0 {
+		var err error
+		columns, err = projection(exprs, declaredColumns)
+		if err != nil {
+			return internaldto.NewErroneousExecutorOutput(err)
+		}
+	}
 	rows, openErr := plan.Open(executionContext(ctx))
 	if openErr != nil {
 		return internaldto.NewErroneousExecutorOutput(openErr)
@@ -157,6 +165,7 @@ func streamPlan(
 		table:         sqldata.NewSQLTable(0, relation),
 		typCfg:        ctx.GetTypingConfig(),
 		projection:    exprs,
+		columns:       columns,
 	}
 	primed, readErr := newPrimedStream(stream)
 	if readErr != nil {
