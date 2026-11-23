@@ -45,15 +45,13 @@ Inside that session, merge the overlay and create the deployment:
 ```sql
 SET "$.document_merge" = '@.stackql/aws-nginx/merge.json';
 
-SELECT * FROM stackql_preview.iac.run
-WHERE collection = 'my-nginx-demo'
-  AND region = 'ap-southeast-2'
-  AND resources_file = 'cicd/examples/aws-nginx/resources.json'
-  AND inputs_file = '.stackql/aws-nginx/inputs.json';
+INSERT INTO stackql_preview.iac.run (collection, region, resources_file, inputs_file)
+VALUES ('my-nginx-demo', 'ap-southeast-2', 'cicd/examples/aws-nginx/resources.json', '.stackql/aws-nginx/inputs.json')
+RETURNING *;
 ```
 
 Use the collection and region chosen during preparation. AWS credentials use the normal environment.
-Run the same SELECT again to verify unchanged reapply. Each execution gets a fresh run ID automatically.
+Run the same INSERT again to verify unchanged reapply. Each execution gets a fresh run ID automatically.
 
 ## Read managed identities
 
@@ -92,16 +90,15 @@ nginx bootstrap has completed.
 Declare the VM stopped, then destroy the collection in dependency order:
 
 ```sql
-SELECT * FROM stackql_preview.iac.run
-WHERE collection = 'my-nginx-demo'
-  AND region = 'ap-southeast-2'
-  AND resources_file = 'cicd/examples/aws-nginx/stopped.json'
-  AND inputs_file = '.stackql/aws-nginx/inputs.json';
+INSERT INTO stackql_preview.iac.run (collection, region, resources_file, inputs_file)
+VALUES ('my-nginx-demo', 'ap-southeast-2', 'cicd/examples/aws-nginx/stopped.json', '.stackql/aws-nginx/inputs.json')
+RETURNING *;
 
 -- Execute only after the stopped-state result succeeds.
-SELECT * FROM stackql_preview.iac.destroy
+DELETE FROM stackql_preview.iac.run
 WHERE collection = 'my-nginx-demo'
-  AND region = 'ap-southeast-2';
+  AND region = 'ap-southeast-2'
+RETURNING *;
 
 -- After teardown, restore the session's canonical document view.
 UNSET "$.document_merge";
@@ -125,11 +122,12 @@ create that is no longer in flight:
 SELECT resource_key, phase, version FROM stackql_preview.iac.ledger
 WHERE collection = 'my-nginx-demo' AND resource_key = 'subnet_a';
 
-SELECT * FROM stackql_preview.iac.recover
+UPDATE stackql_preview.iac.recover
+SET outcome = 'absent'
 WHERE collection = 'my-nginx-demo'
   AND resource_key = 'subnet_a'
-  AND outcome = 'absent'
-  AND version = '1';
+  AND version = '1'
+RETURNING *;
 ```
 
 Use the version returned by the first query; `1` is only the first-create example. Then repeat the

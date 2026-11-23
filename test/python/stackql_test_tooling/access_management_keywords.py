@@ -401,7 +401,7 @@ components:
                     assert code == 0 and "known-item" in output, "unprotected compatibility failed: " + output
                     return
                 if scenario == "policy":
-                    for sql in ["DELETE FROM stackql_unstable_accessdemo.service.items;", "INSERT INTO stackql_unstable_accessdemo.service.items (id) VALUES ('new');", "EXEC stackql_unstable_accessdemo.service.items.create;", "SELECT * FROM stackql_preview.iac.run WHERE collection = 'test' AND resources = '[]';", "SELECT * FROM stackql_preview.iac.destroy WHERE collection = 'test';", "SELECT * FROM stackql_access_principals;", "SELECT pg_read_file('/etc/passwd');"]:
+                    for sql in ["DELETE FROM stackql_unstable_accessdemo.service.items;", "INSERT INTO stackql_unstable_accessdemo.service.items (id) VALUES ('new');", "EXEC stackql_unstable_accessdemo.service.items.create;", "INSERT INTO stackql_preview.iac.run (collection, resources) VALUES ('test', '[]') RETURNING *;", "DELETE FROM stackql_preview.iac.run WHERE collection = 'test' RETURNING *;", "SELECT * FROM stackql_access_principals;", "SELECT pg_read_file('/etc/passwd');"]:
                         denied(sql, reader)
                     # Every IaC relation inherits the AST gate, including new/unclassified commands.
                     for relation in ["ledger", "recover", "unlock", "not_a_published_operation"]:
@@ -432,7 +432,8 @@ components:
                     resources = [{"key": name, "provider": "accessdemo", "address": "service.items", "identity": "id", "addressed_by": "id", "desired": {"name": {"from": "input", "attribute": "label"}}} for name in keys]
                     spec = json.dumps(resources).replace("'", "''")
                     inputs = json.dumps({"label": label})
-                    sql = "SELECT * FROM stackql_preview.iac.run WHERE collection = 'acceptance' AND state = 'audit' AND run_id = '" + label + "' AND resources = '" + spec + "' AND inputs = '" + inputs + "';"
+                    sql = ("INSERT INTO stackql_preview.iac.run (collection, state, run_id, resources, inputs) "
+                           f"VALUES ('acceptance', 'audit', '{label}', '{spec}', '{inputs}') RETURNING *;")
                     success(sql, operator, "applied")
                     assert all(item.get("name") == label for item in managed.values()), "IaC reported applied without converging desired values"
                 converge("first", ["one", "two"])
@@ -447,33 +448,37 @@ components:
                 db.execute("INSERT INTO stackql_access_memberships VALUES ('operator2','operators')")
                 if not postgres:
                     db.commit()
-                denied("SELECT * FROM stackql_preview.iac.destroy WHERE collection = 'acceptance' AND state = 'audit' AND keys = '[\"one\"]';", token(subject="operator2"))
-                denied("SELECT * FROM stackql_preview.iac.destroy WHERE collection = 'acceptance' AND state = '../../escape';", operator)
+                denied("DELETE FROM stackql_preview.iac.run WHERE collection = 'acceptance' AND state = 'audit' AND keys = '[\"one\"]' RETURNING *;", token(subject="operator2"))
+                denied("DELETE FROM stackql_preview.iac.run WHERE collection = 'acceptance' AND state = '../../escape' RETURNING *;", operator)
                 converge("second", ["one", "two"])
                 converge("third", ["one", "two"])
                 # Reusing the original create ID must not unwind its old creates after an update.
                 snapshot = json.loads(json.dumps(managed))
                 before = counts.copy()
                 replay_spec = json.dumps([{"key": name, "provider": "accessdemo", "address": "service.items", "identity": "id", "addressed_by": "id", "desired": {"name": "upstream-reject"}} for name in ["one", "two"]])
-                replay = "SELECT * FROM stackql_preview.iac.run WHERE collection = 'acceptance' AND state = 'audit' AND run_id = 'first' AND resources = '" + replay_spec + "';"
+                replay = ("INSERT INTO stackql_preview.iac.run (collection, state, run_id, resources) "
+                          f"VALUES ('acceptance', 'audit', 'first', '{replay_spec}') RETURNING *;")
                 code, output = run(replay, operator)
                 assert code != 0 and "already exists" in output, "reused run ID accepted: " + output
                 assert managed == snapshot and counts == before, "reused run changed existing resources"
                 # resources_file is the user-facing path; omitted run IDs must remain safe on repeat.
                 resource_file = root / "resources.json"
                 resource_file.write_text(json.dumps({"resources": [{"key": name, "provider": "accessdemo", "address": "service.items", "identity": "id", "addressed_by": "id", "desired": {"name": "third"}} for name in ["one", "two"]]}))
-                file_sql = "SELECT * FROM stackql_preview.iac.run WHERE collection = 'acceptance' AND state = 'audit' AND resources_file = '" + resource_file.as_posix().replace("'", "''") + "';"
+                file_path = resource_file.as_posix().replace("'", "''")
+                file_sql = ("INSERT INTO stackql_preview.iac.run (collection, state, resources_file) "
+                            f"VALUES ('acceptance', 'audit', '{file_path}') RETURNING *;")
                 for _ in range(2):
                     success(file_sql, operator, "applied")
                     assert managed == snapshot, "unchanged file rerun changed resources"
-                denied("SELECT * FROM stackql_preview.iac.destroy WHERE collection = 'acceptance' AND state = 'audit' AND keys = '[]';", operator)
-                success("SELECT * FROM stackql_preview.iac.destroy WHERE collection = 'acceptance' AND state = 'audit' AND run_id = 'prune' AND keys = '[\"two\"]';", operator, "destroyed")
+                denied("DELETE FROM stackql_preview.iac.run WHERE collection = 'acceptance' AND state = 'audit' AND keys = '[]' RETURNING *;", operator)
+                success("DELETE FROM stackql_preview.iac.run WHERE collection = 'acceptance' AND state = 'audit' AND run_id = 'prune' AND keys = '[\"two\"]' RETURNING *;", operator, "destroyed")
                 assert len(managed) == 1, "partial delete changed the retained resource set"
                 converge("fourth", ["one"])
-                success("SELECT * FROM stackql_preview.iac.destroy WHERE collection = 'acceptance' AND state = 'audit' AND run_id = 'teardown';", operator, "destroyed")
+                success("DELETE FROM stackql_preview.iac.run WHERE collection = 'acceptance' AND state = 'audit' AND run_id = 'teardown' RETURNING *;", operator, "destroyed")
                 assert not managed, "IaC teardown left managed resources"
                 spec = json.dumps([{"key": "reject", "provider": "accessdemo", "address": "service.items", "identity": "id", "addressed_by": "id", "desired": {"name": "upstream-reject"}}])
-                sql = "SELECT * FROM stackql_preview.iac.run WHERE collection = 'rejection' AND run_id = 'reject' AND resources = '" + spec + "';"
+                sql = ("INSERT INTO stackql_preview.iac.run (collection, run_id, resources) "
+                       f"VALUES ('rejection', 'reject', '{spec}') RETURNING *;")
                 code, output = run(sql, protected=False)
                 assert code != 0 and "failed" in output.lower(), "unsuccessful IaC returned success: " + output
                 assert not managed, "failed create unexpectedly retained resources"

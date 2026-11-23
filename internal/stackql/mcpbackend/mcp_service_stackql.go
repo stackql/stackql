@@ -467,11 +467,25 @@ func (b *stackqlMCPService) execQuery(query string) (map[string]any, error) {
 		return rv, fmt.Errorf("failed to extract query results")
 	}
 	messages := []string{}
+	var rows []map[string]interface{}
 	for _, resp := range r {
 		if respErr := resp.GetError(); respErr != nil {
 			return rv, classifyBackendError(respErr, queryProviderName(query))
 		}
 		messages = append(messages, resp.GetMessages()...)
+		if stream := resp.GetSQLResult(); stream != nil {
+			var err error
+			rows, _, err = drainSQLRowStream(stream, rows, 0, unlimitedRowLimit)
+			if closeErr := stream.Close(); err == nil {
+				err = closeErr
+			}
+			if err != nil {
+				return rv, classifyBackendError(err, queryProviderName(query))
+			}
+		}
+	}
+	if len(rows) > 0 {
+		rv["rows"] = rows
 	}
 	rv["messages"] = messages
 	rv["timestamp"] = nowTimestamp()
@@ -554,40 +568,41 @@ func (b *stackqlMCPService) extractQueryResults(
 		if sqlRowStream == nil {
 			continue
 		}
-		var drainOK bool
-		rv, rowCount, drainOK = drainSQLRowStream(sqlRowStream, rv, rowCount, rowLimit)
-		if !drainOK {
-			return nil, nil, fmt.Errorf("failed to extract query results")
+		var drainErr error
+		rv, rowCount, drainErr = drainSQLRowStream(sqlRowStream, rv, rowCount, rowLimit)
+		if drainErr != nil {
+			return nil, nil, classifyBackendError(drainErr, queryProviderName(query))
 		}
 	}
 	return rv, capture.drain(respMessages), nil
 }
 
 // drainSQLRowStream reads `stream` to EOF (or until rowLimit is reached),
-// appending each row's payload to `rv`.  The returned bool is false when the
-// stream surfaces a read error or a nil row outside of EOF; that maps onto
-// extractQueryResults' error failure mode.
+// appending each batch's rows and propagating stream errors.
 func drainSQLRowStream(
 	stream sqldata.ISQLResultStream,
 	rv []map[string]interface{},
 	rowCount, rowLimit int,
-) ([]map[string]interface{}, int, bool) {
+) ([]map[string]interface{}, int, error) {
 	for {
 		row, err := stream.Read()
 		if err == io.EOF {
 			if row != nil {
 				rv = append(rv, row.ToArr()...)
 			}
-			return rv, rowCount, true
+			return rv, rowCount, nil
 		}
-		if err != nil || row == nil {
-			return rv, rowCount, false
+		if err != nil {
+			return rv, rowCount, err
+		}
+		if row == nil {
+			return rv, rowCount, fmt.Errorf("result stream returned no batch before EOF")
 		}
 		rowArr := row.ToArr()
 		rv = append(rv, rowArr...)
 		rowCount += len(rowArr)
 		if rowLimit > 0 && rowCount >= rowLimit {
-			return rv, rowCount, true
+			return rv, rowCount, nil
 		}
 	}
 }

@@ -154,7 +154,7 @@ func streamPlan(
 	if openErr != nil {
 		return internaldto.NewErroneousExecutorOutput(openErr)
 	}
-	if relation == convergeRelation || relation == destroyRelation {
+	if relation == convergeRelation {
 		rows = &iacRows{Rows: rows}
 	}
 	input := previewCfg
@@ -278,14 +278,14 @@ func showPreviewFunc(
 			return showPreviewResources(ctx, service, extended)
 		}, true
 	case "METHODS":
-		// Every extended relation is select-only, so the method list does not
-		// vary by resource.
-		if _, isPreview := previewService(
+		service, isPreview := previewService(
 			node.OnTable.QualifierSecond.GetRawVal(),
-			node.OnTable.Qualifier.GetRawVal(), currentProvider); !isPreview {
+			node.OnTable.Qualifier.GetRawVal(), currentProvider)
+		if !isPreview {
 			return nil, false
 		}
-		return func() internaldto.ExecutorOutput { return showPreviewMethods(ctx, extended) }, true
+		resource := strings.ToLower(node.OnTable.Name.GetRawVal())
+		return func() internaldto.ExecutorOutput { return showPreviewMethods(ctx, service, resource, extended) }, true
 	}
 	return nil, false
 }
@@ -307,26 +307,53 @@ func showPreviewResources(
 	return prepare(ctx, util.GetResourcesHeader(extended), rows, util.DefaultRowSort)
 }
 
-func showPreviewMethods(ctx queryContext, extended bool) internaldto.ExecutorOutput {
+func showPreviewMethods(ctx queryContext, service, resource string, extended bool) internaldto.ExecutorOutput {
 	columnOrder := []string{"MethodName", "RequiredParams", "SQLVerb"}
 	if extended {
 		columnOrder = append(columnOrder, "description")
 	}
-	row := map[string]interface{}{
-		"MethodName":     selectMethodName,
-		"RequiredParams": "",
-		"SQLVerb":        strings.ToUpper(selectMethodName),
+	methods := []relationMethod{{
+		name: selectMethodName, sqlVerb: "SELECT", description: "select-only intrinsic method",
+	}}
+	if service == iacService {
+		switch resource {
+		case convergeRelation:
+			methods = []relationMethod{
+				{
+					name: convergeRelation, sqlVerb: "INSERT",
+					requiredParams: []string{"collection", "one of blueprint/resources/resources_file"},
+					description:    "converge a collection",
+				},
+				{
+					name: destroyRelation, sqlVerb: "DELETE", requiredParams: []string{"collection"},
+					description: "destroy resources in a collection",
+				},
+			}
+		case recoverRelation:
+			methods = []relationMethod{{
+				name: recoverRelation, sqlVerb: "UPDATE",
+				requiredParams: []string{"collection", "resource_key", "version", "outcome"},
+				description:    "record a verified pending outcome",
+			}}
+		case ledgerRelation:
+			methods[0].requiredParams = []string{"collection"}
+		default:
+			methods = nil
+		}
 	}
-	if extended {
-		row["description"] = "select-only intrinsic method"
+	rows := make(map[string]map[string]interface{}, len(methods))
+	for i, method := range methods {
+		row := map[string]interface{}{
+			"MethodName": method.name, "RequiredParams": strings.Join(method.requiredParams, ", "), "SQLVerb": method.sqlVerb,
+		}
+		if extended {
+			row["description"] = method.description
+		}
+		rows[fmt.Sprintf("%06d", i)] = row
 	}
-	return prepare(ctx, columnOrder,
-		map[string]map[string]interface{}{"000001": row}, util.DefaultRowSort)
+	return prepare(ctx, columnOrder, rows, util.DefaultRowSort)
 }
 
-// previewTables presents an extended service's relations. The iac service holds
-// the converge and destroy relations alongside the blueprints, because a blueprint
-// is a way of building a run's resources rather than a thing of its own.
 func previewTables(service string) []table {
 	if service == "metadata" {
 		return []table{{
@@ -346,16 +373,11 @@ func previewTables(service string) []table {
 		service:     iacService,
 		name:        convergeRelation,
 		isData:      true,
-		description: "an idempotent converge run over a named collection",
-	}, {
-		service:     iacService,
-		name:        destroyRelation,
-		isData:      true,
-		description: "every resource a named collection holds, deleted",
+		description: "INSERT converges a named collection and DELETE destroys its resources",
 	}}
 	out = append(out, table{
 		service: iacService, name: recoverRelation, isData: true,
-		description: "explicit recovery of an operator-verified pending outcome",
+		description: "UPDATE records an operator-verified pending outcome",
 	})
 	out = append(out, table{
 		service: iacService, name: ledgerRelation, isData: true,
@@ -365,8 +387,7 @@ func previewTables(service string) []table {
 }
 
 // describePreviewTableFunc answers DESCRIBE for the extended preview services.
-// Only a blueprint has columns worth describing: the two verb relations take a
-// specification rather than a column list, and yield whatever the run reports.
+// Blueprints describe their declared inputs. Lifecycle results use the run report.
 func describePreviewTableFunc(
 	ctx queryContext,
 	node *sqlparser.DescribeTable,
@@ -381,7 +402,7 @@ func describePreviewTableFunc(
 	resource := node.Table.Name.GetRawVal()
 	extended := isExtended(node.Extended)
 	if service == iacService && !strings.EqualFold(resource, convergeRelation) &&
-		!strings.EqualFold(resource, destroyRelation) && !strings.EqualFold(resource, ledgerRelation) &&
+		!strings.EqualFold(resource, ledgerRelation) &&
 		!strings.EqualFold(resource, recoverRelation) {
 		blueprint, ok := blueprintFor(resource)
 		if !ok {

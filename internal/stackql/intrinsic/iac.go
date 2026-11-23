@@ -1,9 +1,6 @@
 package intrinsic
 
-// stackql_preview.iac presents omnisdk's converge run and destroy as relations, and the
-// blueprints that render a run as a catalogue alongside them. A run is issued as an imperative -
-// these resources, under this collection name - and idempotence, ordering, locking and
-// compensation are the SDK's problem, not stackql's.
+// stackql_preview.iac exposes Omni's desired-state and ledger operations as SQL.
 
 import (
 	"bytes"
@@ -39,51 +36,39 @@ var errStateEscapesRoot = errors.New("must name a directory inside the iac state
 // runIDLayout stamps a run that names no run id, as omnisdk's Converge always has.
 const runIDLayout = "20060102T150405Z"
 
-// iacSelectFunc routes a SELECT over stackql_preview.iac. Opening the plan
-// performs the run, so a select over the converge relation is a mutation in
-// every sense except its syntax.
 func iacSelectFunc(
-	ctx queryContext,
-	node *sqlparser.Select,
-	resource string,
+	ctx queryContext, node *sqlparser.Select, resource string,
 ) (func() internaldto.ExecutorOutput, bool) {
-	var action func() internaldto.ExecutorOutput
-	switch {
-	case strings.EqualFold(resource, convergeRelation):
-		action = convergeSelectFunc(ctx, node)
-	case strings.EqualFold(resource, recoverRelation):
-		return recoverSelectFunc(ctx, node), true
-	case strings.EqualFold(resource, ledgerRelation):
+	switch strings.ToLower(resource) {
+	case ledgerRelation:
 		return ledgerSelectFunc(ctx, node), true
-	case strings.EqualFold(resource, destroyRelation):
-		action = destroySelectFunc(ctx, node)
+	case convergeRelation, destroyRelation:
+		return refuse(fmt.Errorf("use INSERT INTO %s to converge or DELETE FROM %s to destroy",
+			relationAddress(iacService, convergeRelation), relationAddress(iacService, convergeRelation))), true
+	case recoverRelation:
+		return refuse(fmt.Errorf("use UPDATE %s SET outcome = ... to recover",
+			relationAddress(iacService, recoverRelation))), true
 	default:
-		action = blueprintSelectFunc(resource)
+		return blueprintSelectFunc(resource), true
 	}
-	return func() internaldto.ExecutorOutput {
-		output := action()
-		if err := output.GetError(); err != nil {
-			return internaldto.NewErroneousExecutorOutput(iacOutcomeError{cause: err})
-		}
-		return output
-	}, true
 }
 
-// convergeSelectFunc routes a SELECT over the converge relation.
-func convergeSelectFunc(ctx queryContext, node *sqlparser.Select) func() internaldto.ExecutorOutput {
+func convergeFunc(
+	ctx queryContext, params map[string]string, returning sqlparser.SelectExprs,
+) (func() internaldto.ExecutorOutput, error) {
 	relation := relationAddress(iacService, convergeRelation)
-	params, ledger, refusal := ledgerPredicates(ctx, node, relation)
-	if refusal != nil {
-		return refusal
+	ledger, ledgerErr := iacLedgerConfig(ctx, params, relation)
+	if ledgerErr != nil {
+		return nil, ledgerErr
 	}
 	handle := popPredicate(params, blueprintPredicate)
 	spec := popPredicate(params, resourcesPredicate)
 	file := popPredicate(params, resourcesFilePredicate)
 	if countSupplied(handle, spec, file) != 1 {
-		return refuse(fmt.Errorf(
+		return nil, fmt.Errorf(
 			"relation '%s' needs exactly one of '%s', '%s' or '%s'; "+
 				"a blueprint renders the resources, a specification or a file states them",
-			relation, blueprintPredicate, resourcesPredicate, resourcesFilePredicate))
+			relation, blueprintPredicate, resourcesPredicate, resourcesFilePredicate)
 	}
 	return func() internaldto.ExecutorOutput {
 		inputs, environment, err := iacBindings(params)
@@ -103,30 +88,29 @@ func convergeSelectFunc(ctx queryContext, node *sqlparser.Select) func() interna
 		if planErr != nil {
 			return internaldto.NewErroneousExecutorOutput(planErr)
 		}
-		return streamPlan(ctx, plan, convergeRelation, node.SelectExprs)
-	}
+		return streamIaCMutation(ctx, plan, convergeRelation, returning)
+	}, nil
 }
 
-// destroySelectFunc routes a SELECT over the destroy relation. What the collection holds comes
-// from its ledger alone, so the remaining predicates are only the scope the deletes run in. With
-// no resources to name a provider, credentials come from each cloud's canonical environment
-// variables.
-func destroySelectFunc(ctx queryContext, node *sqlparser.Select) func() internaldto.ExecutorOutput {
-	relation := relationAddress(iacService, destroyRelation)
-	params, ledger, refusal := ledgerPredicates(ctx, node, relation)
-	if refusal != nil {
-		return refusal
+// Destroy takes its resource identities and dependencies from the collection ledger.
+func destroyFunc(
+	ctx queryContext, params map[string]string, returning sqlparser.SelectExprs,
+) (func() internaldto.ExecutorOutput, error) {
+	relation := relationAddress(iacService, convergeRelation)
+	ledger, ledgerErr := iacLedgerConfig(ctx, params, relation)
+	if ledgerErr != nil {
+		return nil, ledgerErr
 	}
 	selection, selected := params["keys"]
 	delete(params, "keys")
 	var keys []string
 	if selected {
 		if err := json.Unmarshal([]byte(selection), &keys); err != nil || len(keys) == 0 {
-			return refuse(errors.New("partial destroy requires a nonempty JSON array of keys"))
+			return nil, errors.New("partial destroy requires a nonempty JSON array of keys")
 		}
 		for _, key := range keys {
 			if strings.TrimSpace(key) == "" {
-				return refuse(errors.New("partial destroy requires nonempty keys"))
+				return nil, errors.New("partial destroy requires nonempty keys")
 			}
 		}
 	}
@@ -139,43 +123,34 @@ func destroySelectFunc(ctx queryContext, node *sqlparser.Select) func() internal
 		if planErr != nil {
 			return internaldto.NewErroneousExecutorOutput(planErr)
 		}
-		return streamPlan(ctx, plan, destroyRelation, node.SelectExprs)
-	}
+		return streamIaCMutation(ctx, plan, convergeRelation, returning)
+	}, nil
 }
 
-// ledgerPredicates reads the predicates every ledger backed relation takes: the collection it
-// addresses, and the state directory and run id, each defaulted when absent. The state directory
-// is a name under the operator's state root, never a path of the caller's choosing, and it is
-// checked before anything touches disk. The predicates left over are returned for the caller.
-func ledgerPredicates(
-	ctx queryContext,
-	node *sqlparser.Select,
-	relation string,
-) (map[string]string, omnisdk.WALConfig, func() internaldto.ExecutorOutput) {
-	params, refusal := previewPredicates(node, relation)
-	if refusal != nil {
-		return nil, nil, refusal
-	}
+// iacLedgerConfig consumes the collection, state directory and run ID from params.
+func iacLedgerConfig(
+	ctx queryContext, params map[string]string, relation string,
+) (omnisdk.WALConfig, error) {
 	collection := popPredicate(params, collectionPredicate)
 	if strings.TrimSpace(collection) == "" {
-		return nil, nil, refuse(fmt.Errorf(
-			"relation '%s' needs a '%s' predicate; it is the ledger key prefix, the lease scope "+
+		return nil, fmt.Errorf(
+			"relation '%s' requires the '%s' parameter; it is the ledger key prefix, the lease scope "+
 				"and the correlation stamp, and it is how a later run addresses the same resources",
-			relation, collectionPredicate))
+			relation, collectionPredicate)
 	}
 	root, rootErr := ManagedStateRoot(ctx)
 	if rootErr != nil {
-		return nil, nil, refuse(rootErr)
+		return nil, rootErr
 	}
 	state, stateErr := resolveStateDir(root, popPredicate(params, statePredicate))
 	if stateErr != nil {
-		return nil, nil, refuse(fmt.Errorf("relation '%s': '%s' %w", relation, statePredicate, stateErr))
+		return nil, fmt.Errorf("relation '%s': '%s' %w", relation, statePredicate, stateErr)
 	}
 	runID := popPredicate(params, runIDPredicate)
 	if runID == "" {
 		runID = time.Now().UTC().Format(runIDLayout) + "-" + rand.Text()
 	}
-	return params, omnisdk.NewLedger(collection, state, runID), nil
+	return omnisdk.NewLedger(collection, state, runID), nil
 }
 
 // resolveStateDir places the named state directory under root, or returns root when no name is
@@ -366,10 +341,10 @@ func blueprintSelectFunc(resource string) func() internaldto.ExecutorOutput {
 	}
 	return refuse(fmt.Errorf(
 		"'%s' renders a deployment rather than rows; "+
-			"apply it with SELECT ... FROM %s WHERE %s = '%s' AND %s = '<name>'",
+			"apply it with INSERT INTO %s (%s, %s) VALUES ('%s', '<name>') RETURNING *",
 		relationAddress(iacService, resource),
 		relationAddress(iacService, convergeRelation),
-		blueprintPredicate, resource, collectionPredicate))
+		blueprintPredicate, collectionPredicate, resource))
 }
 
 // iacBindings keeps typed values separate from provider execution scope.

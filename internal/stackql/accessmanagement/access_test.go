@@ -85,7 +85,7 @@ func TestCallerSessionsRefreshAndFailClosed(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	for _, query := range []string{"DELETE FROM demo.service.items", "SELECT * FROM stackql_access_principals", "SELECT pg_read_file('/tmp/x')", "SELECT * FROM stackql_preview.iac.run"} {
+	for _, query := range []string{"DELETE FROM demo.service.items", "SELECT * FROM stackql_access_principals", "SELECT pg_read_file('/tmp/x')", "INSERT INTO stackql_preview.iac.run (collection, resources) VALUES ('test', '[]') RETURNING *"} {
 		stmt, err := sqlparser.Parse(query)
 		if err != nil {
 			t.Fatal(err)

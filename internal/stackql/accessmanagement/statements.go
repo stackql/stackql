@@ -46,7 +46,21 @@ func CheckStatement(ctx context.Context, caller authorization.Session, statement
 
 // CheckNodes also applies to expanded stored definitions and opaque backend reads.
 func CheckNodes(ctx context.Context, node sqlparser.SQLNode) error {
-	return sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { return true, checkNode(ctx, node) }, node)
+	var destroyTarget sqlparser.TableName
+	if deletion, ok := node.(*sqlparser.Delete); ok && len(deletion.TableExprs) == 1 {
+		if expr, isTable := deletion.TableExprs[0].(*sqlparser.AliasedTableExpr); isTable {
+			table, _ := expr.Expr.(sqlparser.TableName)
+			if isIaCTable(table) && strings.EqualFold(table.Name.GetRawVal(), "run") {
+				destroyTarget = table
+			}
+		}
+	}
+	return sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		if table, ok := node.(sqlparser.TableName); ok && !destroyTarget.Name.IsEmpty() && table == destroyTarget {
+			return true, authorization.Check(ctx, "host/iac/destroy", "execute")
+		}
+		return true, checkNode(ctx, node)
+	}, node)
 }
 func checkNode(ctx context.Context, node sqlparser.SQLNode) error {
 	switch n := node.(type) {
@@ -63,12 +77,16 @@ func checkTable(ctx context.Context, n sqlparser.TableName) error {
 	if strings.HasPrefix(strings.ToLower(n.Name.GetRawVal()), "stackql_access_") {
 		return fmt.Errorf("%w: directory tables require the administration path", authorization.ErrDenied)
 	}
-	if strings.EqualFold(n.Qualifier.GetRawVal(), "iac") &&
-		strings.EqualFold(n.QualifierSecond.GetRawVal(), "stackql_preview") {
+	if isIaCTable(n) {
 		return authorization.Check(ctx, "host/iac/"+strings.ToLower(n.Name.GetRawVal()), "execute")
 	}
 	return nil
 }
+func isIaCTable(table sqlparser.TableName) bool {
+	return table.QualifierThird.IsEmpty() && strings.EqualFold(table.Qualifier.GetRawVal(), "iac") &&
+		strings.EqualFold(table.QualifierSecond.GetRawVal(), "stackql_preview")
+}
+
 func checkFunction(ctx context.Context, n *sqlparser.FuncExpr) error {
 	name := strings.ToLower(n.Name.GetRawVal())
 	// Only known pure host functions receive the reader capability.

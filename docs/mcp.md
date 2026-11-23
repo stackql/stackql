@@ -186,8 +186,8 @@ Tools also carry a `title` and every MCP behavioural hint as an explicit boolean
 | `describe_method` | KV | Typed, shallow I/O contract for one method: inputs with `param_type` and selected response-row fields. Requires `provider`, `service`, `resource`, `method`. Optional `depth` (default 1, maximum 32), `path`, `descriptions` (default false), `param_type` and `include_global` control expansion. |
 | `validate_select_query` | KV | Parse and plan a SELECT without executing.  Returns `{valid, errors}`.  SELECT only. |
 | `run_select_query` | Table | Execute a SELECT.  Returns `{rows}`.  Reads only. |
-| `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE.  **Real side effects.** Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
-| `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation.  Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
+| `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE.  **Real side effects.** Returns `{messages, timestamp}` and includes `rows` when the statement produces results.  Gated by the server [mode](#server-modes). |
+| `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation.  Returns `{messages, timestamp}` and includes `rows` when the statement produces results.  Gated by the server [mode](#server-modes). |
 | `list_registry` | Table | Providers (and their versions) available in the configured registry.  Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache.  Requires `provider`; `version` optional.  Local cache write only. |
 | `reload_credentials` | Table | Live-reload credentials: re-source the [`--env.file`](#credential-resourcing---envfile--reload_credentials) file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider.  Never returns secret values.  Optional `provider` filters the report.  Recovery and rotation only, never a pre-query step.  Allowed in every mode. |
@@ -238,12 +238,10 @@ Instructions, prompts, resources and tool descriptions are authored as markdown 
 | `full_access` | allow | allow | allow | allow |
 
 **SQL classification limits (issue #818).** The MCP policy walks the parser AST,
-including nested EXEC, subqueries and in-query CTE definitions. SELECTs over
-`stackql_preview.iac.run`, `destroy` or `recover`, including abbreviated `iac.run`,
-`iac.destroy` and `iac.recover`, are classified as lifecycle operations.
-Recovery records operator attestations and updates local ledger state, even
-though it does not call a cloud provider, so it is conservatively gated alongside
-run and destroy. Bare relation names
+including nested EXEC, subqueries and in-query CTE definitions. IaC uses INSERT
+to converge, DELETE to destroy, and UPDATE to record a recovery outcome. These
+statements follow the mode gate for their SQL verbs. SELECT on
+`stackql_preview.iac.ledger` reads local state. Bare relation names
 outside an in-query CTE, other abbreviated names and unparseable SELECT/WITH
 statements are unknown effects: `read_only` refuses them, `safe` and
 `delete_safe` require approval, and `full_access` allows them. Use fully

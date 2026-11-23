@@ -215,8 +215,8 @@ Tools carry MCP behavioural annotations derived from the policy-gate classificat
 | `describe_method` | KV | Full I/O contract for one method: inputs with `param_type` and the `output` fields a SELECT can reference. Requires `provider`, `service`, `resource`, `method`. |
 | `validate_select_query` | KV | Parse and plan a SELECT without executing. Returns `{valid, errors}`. SELECT only. |
 | `run_select_query` | Table | Execute a SELECT. Returns `{rows}`. Reads only. |
-| `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE against the provider. **Real side effects.** Returns `{messages, timestamp}`. Gated by the server [mode](#server-modes). |
-| `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation. Returns `{messages, timestamp}`. Gated by the server [mode](#server-modes). |
+| `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE against the provider. **Real side effects.** Returns `{messages, timestamp}` and includes `rows` when the statement produces results. Gated by the server [mode](#server-modes). |
+| `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation. Returns `{messages, timestamp}` and includes `rows` when the statement produces results. Gated by the server [mode](#server-modes). |
 | `list_registry` | Table | Providers (and their versions) available in the configured registry. Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache. Requires `provider`; `version` optional. Local cache write only. |
 | `reload_credentials` | Table | Live-reload credentials: re-source the backend's configured dotenv file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider (issue #688). Never returns secret values. Optional `provider` filters the report. Recovery and rotation only, never a pre-query step. Allowed in every mode. |
