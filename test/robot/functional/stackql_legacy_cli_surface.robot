@@ -59,6 +59,28 @@ Legacy Exec Outfile Should Contain
     ...    &{cfg}
 
 *** Test Cases ***
+
+Empty IaC Ledger Renders Headers Without Rows
+    ${preview} =    Set Variable    {"unstable":true}
+    ${expected} =    Catenate    SEPARATOR=\n
+    ...    |---------|--------------|------------|------------|----------|-----|-------|----------|--------------|---------|
+    ...    | address | addressed_by | collection | depends_on | identity | key | phase | provider | resource_key | version |
+    ...    |---------|--------------|------------|------------|----------|-----|-------|----------|--------------|---------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    SELECT * FROM stackql_preview.iac.ledger WHERE collection \= 'empty-table-output-regression';
+    ...    ${expected}
+    ...    --preview\=${preview}
+    ...    stackql_output=table
+    ...    stdout=${OUTPUT_ROOT}${/}${TEST NAME}.tmp
+    ...    stderr=${OUTPUT_ROOT}${/}${TEST NAME}-stderr.tmp
+
 Legacy USE Then Show Services JSON Is Array
     Legacy Exec Should Contain    USE google; SHOW SERVICES FROM google;    [{"id":    stackql_output=json
 

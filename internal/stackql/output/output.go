@@ -287,7 +287,7 @@ func (tw *TableWriter) configureTable(table *tablewriter.Table) {
 
 //nolint:gocognit // acceptable
 func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
-	var isHeaderRead bool
+	var isHeaderRead, hasColumns bool
 	var table *tablewriter.Table
 	for {
 		var rowsArr [][]string
@@ -299,6 +299,7 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 					header := tw.getHeader(r)
 					table = tablewriter.NewWriter(tw.writer)
 					table.SetHeader(header)
+					hasColumns = len(header) > 0
 					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false positive
 				}
 				rowsArr, err = tabulateResults(r, tw.ci)
@@ -308,11 +309,13 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 				for _, rs := range rowsArr {
 					table.Append(rs)
 				}
-				tw.configureTable(table)
-				table.Render()
+				if hasColumns {
+					tw.configureTable(table)
+					table.Render()
+				}
 				return nil
 			}
-			if table != nil && isHeaderRead {
+			if hasColumns {
 				tw.configureTable(table)
 				table.Render()
 			}
@@ -322,6 +325,7 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 			header := tw.getHeader(r)
 			table = tablewriter.NewWriter(tw.writer)
 			table.SetHeader(header)
+			hasColumns = len(header) > 0
 			isHeaderRead = true
 		}
 		rowsArr, err = tabulateResults(r, tw.ci)
