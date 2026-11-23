@@ -161,7 +161,7 @@ Additional host checks include:
 
 | Resource | Action | Scope |
 | --- | --- | --- |
-| `host/iac/run`, `host/iac/destroy` | `execute` | Effectful IaC relations, despite SELECT syntax |
+| `host/iac/run`, `host/iac/destroy` | `execute` | Converge with INSERT and destroy with DELETE, respectively |
 | `host/sql/exec` | `execute` | Native EXEC, including nested EXEC |
 | `host/function/<name>` | `execute` | Functions outside the small known-pure allowlist |
 | `host/backend` | `read` | Opaque stored/external backend relations |
@@ -182,13 +182,16 @@ SELECT whoami() AS principal, groups() AS memberships;
 
 For a create, rerun, update and destroy sequence, see the [AWS VPC/subnet walkthrough](iac_walkthrough.md).
 
-Use `stackql_preview.iac.run` and `.destroy` with the existing preview opt-in. Resource JSON uses
+Use INSERT and DELETE on `stackql_preview.iac.run` with the existing preview opt-in.
+Protected callers need the corresponding `host/sql/insert` or `host/sql/delete` capability as well as
+the IaC operation capability. Recovery uses UPDATE on `stackql_preview.iac.recover` and requires
+`host/sql/update` and `host/iac/recover`. Resource JSON uses
 Omni's shared parser: `write_once` carries initial request inputs, `desired` carries maintained
 state, and typed `input`, `env`, `self` and sibling bindings remain intact. Retired `params` and
 `correlationParam` resource fields are rejected. Resource keys must be unique.
 
-`inputs` and `environment` predicates accept JSON objects. JSON numbers retain their precision;
-strings are literal values, not SQL or templates. Remaining predicates are provider execution scope.
+`inputs` and `environment` INSERT values accept JSON objects. JSON numbers retain their precision;
+strings are literal values, not SQL or templates. Remaining inputs are provider execution scope.
 Always supply explicit collection and cloud scope. The host-configured state root confines relative
 `state` names, including checks against existing symlink escapes. Protected state is additionally
 namespaced by the directory's `tenant` attribute, or by principal ID when no tenant is configured.
@@ -196,13 +199,15 @@ Only trusted directory administrators should assign tenant membership.
 
 ```sql
 -- Explicit partial deletion. An empty selection is an error.
-SELECT * FROM stackql_preview.iac.destroy
+DELETE FROM stackql_preview.iac.run
 WHERE collection = 'deployment' AND state = 'production'
-  AND keys = '["resource-key"]' AND run_id = 'prune-001';
+  AND keys = '["resource-key"]' AND run_id = 'prune-001'
+RETURNING *;
 
 -- Full teardown: omit keys.
-SELECT * FROM stackql_preview.iac.destroy
-WHERE collection = 'deployment' AND state = 'production' AND run_id = 'destroy-001';
+DELETE FROM stackql_preview.iac.run
+WHERE collection = 'deployment' AND state = 'production' AND run_id = 'destroy-001'
+RETURNING *;
 ```
 
 Omit `run_id` to generate a unique ID automatically. Explicit IDs must be unique within the state

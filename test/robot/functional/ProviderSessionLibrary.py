@@ -727,7 +727,7 @@ esac
 
     def iac_inputs_file_errors_precede_provider_dispatch(self):
         missing = str(self.root / "missing-inputs.json")
-        sql = "SELECT * FROM stackql_preview.iac.run WHERE collection = 'file-check' AND resources = '[]' AND inputs_file = '" + missing + "';"
+        sql = "INSERT INTO stackql_preview.iac.run (collection, resources, inputs_file) VALUES ('file-check', '[]', '" + missing + "') RETURNING *;"
         before = len(self.calls)
         result = subprocess.run(self.prefix + ["exec", sql] + self.flags, text=True, capture_output=True, timeout=30, env=self.env)
         assert result.returncode != 0 and "inputs_file:" in result.stderr, result.stderr
@@ -756,7 +756,7 @@ esac
         root.mkdir(parents=True, exist_ok=True)
         record = {"phase":0,"proposed":base64.b64encode(b"{}").decode()}
         (root / "pending.v1.json").write_text(json.dumps(record))
-        sql = "SELECT * FROM stackql_preview.iac.recover WHERE collection = 'recover-test' AND resource_key = 'pending' AND outcome = 'absent' AND version = '1';"
+        sql = "UPDATE stackql_preview.iac.recover SET outcome = 'absent' WHERE collection = 'recover-test' AND resource_key = 'pending' AND version = '1' RETURNING *;"
         result = self.run_sql(sql, [])
         assert 'recovered_absent' in result.stdout, result.stdout
         assert json.loads((root / 'pending.v2.json').read_text())['tombstone'], "recovery did not clear verified absent create"

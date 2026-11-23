@@ -218,15 +218,34 @@ class MCPEffectsLibrary:
             self._success(metadata)
             assert "stackql_preview.iac.recover" in json.dumps(metadata), metadata
             assert not ledger.exists(), "Metadata discovery created IaC state"
-            predicates = (" where collection = 'policy-test' and state = 'recovery' "
-                          "and resource_key = 'item' and version = 'observed' and outcome = 'absent'")
-            for relation in ["stackql_preview.iac.run", "stackql_preview.iac.destroy",
-                             "stackql_preview.iac.recover", "iac.recover"]:
-                sql = "select * from " + relation + predicates
+            scope = " WHERE collection = 'policy-test' AND state = 'recovery'"
+            recovery = scope + " AND resource_key = 'item' AND version = '1' RETURNING *"
+            for sql in [
+                "INSERT INTO stackql_preview.iac.run (collection, resources) VALUES ('policy-test', '[]') RETURNING *",
+                "DELETE FROM stackql_preview.iac.run" + scope + " RETURNING *",
+                "UPDATE stackql_preview.iac.recover SET outcome = 'absent'" + recovery,
+                "UPDATE iac.recover SET outcome = 'absent'" + recovery,
+            ]:
                 for tool in ["run_select_query", "run_mutation_query", "run_lifecycle_operation"]:
                     self._refused(call(tool, sql=sql), "read_only")
                     assert not ledger.exists(), "Read-only IaC query wrote local state"
                     assert self._count() == 0, self.calls
+
+    def iac_recovery_returns_rows(self):
+        ledger = self.root / "ledger" / "ledger" / "mcp-recovery"
+        ledger.mkdir(parents=True)
+        (ledger / "pending.v1.json").write_text('{"phase":0,"proposed":"e30="}')
+        sql = ("UPDATE stackql_preview.iac.recover SET outcome = 'absent' "
+               "WHERE collection = 'mcp-recovery' AND resource_key = 'pending' AND version = 1 "
+               "RETURNING status")
+        with self._server("full_access", preview=True) as call:
+            self._refused(call("run_select_query", sql=sql), "mutation_create statements run through")
+            assert not (ledger / "pending.v2.json").exists(), "SELECT tool recovered a resource"
+            result = call("run_mutation_query", sql=sql)
+            self._success(result)
+            assert result["result"]["structuredContent"]["rows"] == [{"status": "recovered_absent"}], result
+            assert json.loads((ledger / "pending.v2.json").read_text())["tombstone"]
+            assert self._count() == 0, self.calls
 
     def nested_exec_requires_approval(self, mode):
         assert mode in ("safe", "delete_safe"), mode

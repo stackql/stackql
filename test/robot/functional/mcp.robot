@@ -1155,7 +1155,7 @@ MCP HTTP Mode Read Only Refuses Smuggled Statements
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9920
     ...                  \-\-exec.action      run_select_query
-    ...                  \-\-exec.args        {"sql":"select * from stackql_preview.iac.run where collection \= 'policy\-test';"}
+    ...                  \-\-exec.args        {"sql":"insert into stackql_preview.iac.run (collection, resources) values ('policy-test', '[]') returning *;"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-iac-run.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-iac-run-stderr.txt
     Should Not Be Equal As Integers    ${iac_run.rc}    0

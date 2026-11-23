@@ -27,22 +27,25 @@ func (p ledgerRecoveryPlan) Open(ctx context.Context) (omnisdk.Rows, error) {
 	return &materializedRelationRows{ctx: ctx, rows: rows}, nil
 }
 
-func recoverSelectFunc(ctx queryContext, node *sqlparser.Select) func() internaldto.ExecutorOutput {
-	params, config, refusal := ledgerPredicates(ctx, node, relationAddress(iacService, recoverRelation))
-	if refusal != nil {
-		return refusal
+func recoverFunc(
+	ctx queryContext, params map[string]string, returning sqlparser.SelectExprs,
+) (func() internaldto.ExecutorOutput, error) {
+	config, ledgerErr := iacLedgerConfig(ctx, params, relationAddress(iacService, recoverRelation))
+	if ledgerErr != nil {
+		return nil, ledgerErr
 	}
 	resource := popPredicate(params, "resource_key")
 	outcome := popPredicate(params, "outcome")
 	identity := popPredicate(params, "identity")
 	version := popPredicate(params, "version")
-	if len(params) != 0 || resource == "" || version == "" || (outcome != "absent" && outcome != "applied") {
-		return refuse(fmt.Errorf("recovery requires resource_key, version and verified outcome absent or applied; " +
-			"applied also requires identity"))
+	validOutcome := outcome == "absent" || (outcome == "applied" && identity != "")
+	if len(params) != 0 || resource == "" || version == "" || !validOutcome {
+		return nil, fmt.Errorf("recovery requires resource_key, version and verified outcome absent or applied; " +
+			"applied also requires identity")
 	}
 	recoverer, ok := config.(ledgerRecoverer)
 	if !ok {
-		return refuse(fmt.Errorf("upgrade Omni to the release providing explicit ledger recovery"))
+		return nil, fmt.Errorf("upgrade Omni to the release providing explicit ledger recovery")
 	}
 	return func() internaldto.ExecutorOutput {
 		args := omnisdk.Args{}
@@ -54,10 +57,6 @@ func recoverSelectFunc(ctx queryContext, node *sqlparser.Select) func() internal
 			recoverer: recoverer, resource: resource, outcome: outcome,
 			identity: identity, version: version, args: args,
 		}
-		output := streamPlan(ctx, plan, recoverRelation, node.SelectExprs)
-		if outputErr := output.GetError(); outputErr != nil {
-			return internaldto.NewErroneousExecutorOutput(iacOutcomeError{cause: outputErr})
-		}
-		return output
-	}
+		return streamIaCMutation(ctx, plan, recoverRelation, returning)
+	}, nil
 }

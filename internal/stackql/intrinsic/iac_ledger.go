@@ -39,9 +39,14 @@ func (p ledgerReadPlan) Open(ctx context.Context) (omnisdk.Rows, error) {
 }
 
 func ledgerSelectFunc(ctx queryContext, node *sqlparser.Select) func() internaldto.ExecutorOutput {
-	params, config, refusal := ledgerPredicates(ctx, node, relationAddress(iacService, ledgerRelation))
+	relation := relationAddress(iacService, ledgerRelation)
+	params, refusal := previewPredicates(node, relation)
 	if refusal != nil {
 		return refusal
+	}
+	config, err := iacLedgerConfig(ctx, params, relation)
+	if err != nil {
+		return refuse(err)
 	}
 	resource := popPredicate(params, "resource_key")
 	if len(params) != 0 {

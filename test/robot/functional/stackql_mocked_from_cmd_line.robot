@@ -11931,7 +11931,6 @@ Preview Iac Show Resources Lists Run And Blueprint Handles
     ${expected} =    Catenate    SEPARATOR=\n
     ...    name,id
     ...    run,stackql_preview.iac.run
-    ...    destroy,stackql_preview.iac.destroy
     ...    recover,stackql_preview.iac.recover
     ...    ledger,stackql_preview.iac.ledger
     ...    aws_vpc_subnet,stackql_preview.iac.aws_vpc_subnet
@@ -11996,10 +11995,9 @@ Preview Dynamic Graph Select Without Spec Is Refused
 Preview Iac Converge Without Collection Is Refused
     ${preview} =    Set Variable    {"unstable":true}
     ${query} =    Catenate    SEPARATOR=${SPACE}
-    ...    select * from stackql_preview.iac.run
-    ...    where blueprint = 'aws-vpc-subnet';
+    ...    insert into stackql_preview.iac.run (blueprint) values ('aws-vpc-subnet') returning *;
     ${expected} =    Catenate    SEPARATOR=${SPACE}
-    ...    relation 'stackql_preview.iac.run' needs a 'collection' predicate;
+    ...    relation 'stackql_preview.iac.run' requires the 'collection' parameter;
     ...    it is the ledger key prefix, the lease scope and the correlation
     ...    stamp, and it is how a later run addresses the same resources
     Should StackQL Exec Inline Equal Stderr
@@ -12019,7 +12017,7 @@ Preview Iac Converge Without Collection Is Refused
 Preview Iac Converge Needs Exactly One Of Blueprint Or Resources
     ${preview} =    Set Variable    {"unstable":true}
     ${query} =    Catenate    SEPARATOR=${SPACE}
-    ...    select * from stackql_preview.iac.run where collection = 'scratch';
+    ...    insert into stackql_preview.iac.run (collection) values ('scratch') returning *;
     ${expected} =    Catenate    SEPARATOR=${SPACE}
     ...    relation 'stackql_preview.iac.run' needs exactly one of 'blueprint',
     ...    'resources' or 'resources_file'; a blueprint renders the resources,
@@ -12041,8 +12039,8 @@ Preview Iac Converge Needs Exactly One Of Blueprint Or Resources
 Preview Iac Unknown Blueprint Names The Catalogue
     ${preview} =    Set Variable    {"unstable":true}
     ${query} =    Catenate    SEPARATOR=${SPACE}
-    ...    select * from stackql_preview.iac.run
-    ...    where collection = 'scratch' and blueprint = 'no-such-thing';
+    ...    insert into stackql_preview.iac.run (collection, blueprint)
+    ...    values ('scratch', 'no-such-thing') returning *;
     ${expected} =    Catenate    SEPARATOR=${SPACE}
     ...    intrinsic: no blueprint 'no-such-thing'; run SHOW RESOURCES IN
     ...    stackql_preview.iac to list them
@@ -12064,8 +12062,8 @@ Preview Iac Select Over A Blueprint Points At The Run Relation
     ${preview} =    Set Variable    {"unstable":true}
     ${expected} =    Catenate    SEPARATOR=${SPACE}
     ...    'stackql_preview.iac.aws_vpc_subnet' renders a deployment rather
-    ...    than rows; apply it with SELECT ... FROM stackql_preview.iac.run
-    ...    WHERE blueprint = 'aws_vpc_subnet' AND collection = '<name>'
+    ...    than rows; apply it with INSERT INTO stackql_preview.iac.run
+    ...    (blueprint, collection) VALUES ('aws_vpc_subnet', '<name>') RETURNING *
     Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -12110,12 +12108,12 @@ Preview Dynamic Graph Wiring Outside Graph Is Refused By Omnisdk
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Dynamic-Graph-Wiring-Outside-stderr.tmp
 
 Preview Iac Resource Without Provider Is Refused By Omnisdk
-    [Documentation]    Omnisdk parses the 'resources' predicate and refuses a missing
+    [Documentation]    Omnisdk parses the 'resources' value and refuses a missing
     ...                provider before any effect is attempted.
     ${preview} =    Set Variable    {"unstable":true}
     ${query} =    Catenate    SEPARATOR=${SPACE}
-    ...    select * from stackql_preview.iac.run where collection = 'scratch'
-    ...    and resources = '[{"key":"a/b/c"}]';
+    ...    insert into stackql_preview.iac.run (collection, resources)
+    ...    values ('scratch', '[{"key":"a/b/c"}]') returning *;
     Should StackQL Exec Inline Contain Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -12140,8 +12138,8 @@ Preview Iac Resources File Without Provider Is Refused By Omnisdk
     ...    /opt/stackql/input/iac/resource-without-provider.json
     ...    ${nativeResourcesFile}
     ${query} =    Catenate    SEPARATOR=${SPACE}
-    ...    select * from stackql_preview.iac.run where collection = 'scratch'
-    ...    and resources_file = '${resourcesFile}';
+    ...    insert into stackql_preview.iac.run (collection, resources_file)
+    ...    values ('scratch', '${resourcesFile}') returning *;
     Should StackQL Exec Inline Contain Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -12159,7 +12157,7 @@ Preview Iac Resources File Without Provider Is Refused By Omnisdk
 Preview Iac Destroy Without Collection Is Refused
     ${preview} =    Set Variable    {"unstable":true}
     ${expected} =    Catenate    SEPARATOR=${SPACE}
-    ...    relation 'stackql_preview.iac.destroy' needs a 'collection' predicate;
+    ...    relation 'stackql_preview.iac.run' requires the 'collection' parameter;
     ...    it is the ledger key prefix, the lease scope and the correlation
     ...    stamp, and it is how a later run addresses the same resources
     Should StackQL Exec Inline Equal Stderr
@@ -12170,11 +12168,32 @@ Preview Iac Destroy Without Collection Is Refused
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    select * from stackql_preview.iac.destroy;
+    ...    delete from stackql_preview.iac.run returning *;
     ...    ${expected}
     ...    --preview\=${preview}
     ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Destroy-No-Collection.tmp
     ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Destroy-No-Collection-stderr.tmp
+
+Preview IaC Lifecycle Selects Are Refused
+    ${preview} =    Set Variable    {"unstable":true}
+    FOR    ${relation}    ${verb}    IN
+    ...    run    INSERT
+    ...    destroy    DELETE
+    ...    recover    UPDATE
+        Should StackQL Exec Inline Contain Stderr
+        ...    ${STACKQL_EXE}
+        ...    ${OKTA_SECRET_STR}
+        ...    ${GITHUB_SECRET_STR}
+        ...    ${K8S_SECRET_STR}
+        ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+        ...    ${AUTH_CFG_STR}
+        ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+        ...    select * from stackql_preview.iac.${relation};
+        ...    ${verb}
+        ...    --preview\=${preview}
+        ...    stdout=${CURDIR}${/}tmp${/}Preview-Iac-Lifecycle-Select.tmp
+        ...    stderr=${CURDIR}${/}tmp${/}Preview-Iac-Lifecycle-Select-stderr.tmp
+    END
 
 Omni Default Derived Relation Preserves Inner Order And Limit
     [Documentation]    Derived relations execute through Omni read handles with no preview opt-in.

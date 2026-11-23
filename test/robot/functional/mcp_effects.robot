@@ -42,6 +42,10 @@ IaC Recovery Read Only Refuses Before Ledger Writes
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Iac Read Only Does Not Write Ledger
 
+IaC Recovery Returns Rows Through The Mutation Tool
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Iac Recovery Returns Rows
+
 Nested EXEC Safe Rejects Tampered And Replayed Approval State
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Approval State Tampering And Replay Prevent Operations    safe

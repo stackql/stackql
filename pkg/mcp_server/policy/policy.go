@@ -84,6 +84,10 @@ func classifyStatement(trimmed string) QueryClass {
 		switch node.(type) {
 		case sqlparser.SelectStatement:
 			return classifyReadAST(node, nil)
+		case *sqlparser.Insert, *sqlparser.Update:
+			return QueryClassMutationCreate
+		case *sqlparser.Delete:
+			return QueryClassMutationDelete
 		case *sqlparser.Exec:
 			return QueryClassLifecycle
 		}
@@ -173,12 +177,6 @@ func classifyAliasedTableAST(node *sqlparser.AliasedTableExpr, ctes map[string]b
 func classifyRelation(table sqlparser.TableName) QueryClass {
 	service, resource := table.Qualifier.GetRawVal(), table.Name.GetRawVal()
 	provider := table.QualifierSecond.GetRawVal()
-	if (provider == "" || strings.EqualFold(provider, "stackql_preview")) &&
-		strings.EqualFold(service, "iac") &&
-		(strings.EqualFold(resource, "run") || strings.EqualFold(resource, "destroy") ||
-			strings.EqualFold(resource, "recover")) {
-		return QueryClassLifecycle
-	}
 	if provider == "" {
 		// The parser inserts dual for SELECTs without FROM. Bare names and
 		// abbreviated provider names otherwise require backend resolution.

@@ -23,11 +23,9 @@ resources from a previous Omni CLI deployment.
 Paste into the StackQL shell:
 
 ```sql
-SELECT * FROM stackql_preview.iac.run
-WHERE resources_file = '/Users/generalkroll/stackql-labs/omnisdk/cicd/examples/aws-vpc-subnet/resources.json'
-  AND collection = 'stackql-vpc-demo'
-  AND state = 'demo'
-  AND region = 'ap-southeast-2';
+INSERT INTO stackql_preview.iac.run (resources_file, collection, state, region)
+VALUES ('/Users/generalkroll/stackql-labs/omnisdk/cicd/examples/aws-vpc-subnet/resources.json', 'stackql-vpc-demo', 'demo', 'ap-southeast-2')
+RETURNING *;
 ```
 
 Check for errors before continuing. Record the VPC and subnet IDs. In the AWS console, select Sydney
@@ -39,11 +37,9 @@ Run that exact SQL again now: both IDs must stay the same, with no duplicate res
 ## Update and rerun
 
 ```sql
-SELECT * FROM stackql_preview.iac.run
-WHERE resources_file = '/Users/generalkroll/stackql-labs/omnisdk/cicd/examples/aws-vpc-subnet/update-public-ip.json'
-  AND collection = 'stackql-vpc-demo'
-  AND state = 'demo'
-  AND region = 'ap-southeast-2';
+INSERT INTO stackql_preview.iac.run (resources_file, collection, state, region)
+VALUES ('/Users/generalkroll/stackql-labs/omnisdk/cicd/examples/aws-vpc-subnet/update-public-ip.json', 'stackql-vpc-demo', 'demo', 'ap-southeast-2')
+RETURNING *;
 ```
 
 Verify the same VPC now has Name `omni-demo-vpc`, and the same subnet has automatic public IPv4
@@ -56,11 +52,9 @@ no-op; verify the IDs remain unchanged. **Continue using this file after the upd
 ## Reverse the subnet setting
 
 ```sql
-SELECT * FROM stackql_preview.iac.run
-WHERE resources_file = '/Users/generalkroll/stackql-labs/omnisdk/cicd/examples/aws-vpc-subnet/update-private-ip.json'
-  AND collection = 'stackql-vpc-demo'
-  AND state = 'demo'
-  AND region = 'ap-southeast-2';
+INSERT INTO stackql_preview.iac.run (resources_file, collection, state, region)
+VALUES ('/Users/generalkroll/stackql-labs/omnisdk/cicd/examples/aws-vpc-subnet/update-private-ip.json', 'stackql-vpc-demo', 'demo', 'ap-southeast-2')
+RETURNING *;
 ```
 
 Verify automatic public IPv4 assignment is disabled. The VPC Name remains `omni-demo-vpc`.
@@ -69,10 +63,11 @@ You can repeat this same SQL; it is now the latest desired-state document.
 ## Destroy
 
 ```sql
-SELECT * FROM stackql_preview.iac.destroy
+DELETE FROM stackql_preview.iac.run
 WHERE collection = 'stackql-vpc-demo'
   AND state = 'demo'
-  AND region = 'ap-southeast-2';
+  AND region = 'ap-southeast-2'
+RETURNING *;
 ```
 
 Inspect the results for errors or outstanding resources, and confirm both recorded IDs disappear

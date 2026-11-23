@@ -112,6 +112,9 @@ func GenerateStreamFunc(
 		}
 		return action, handled
 	}
+	if action, handled := iacMutationFunc(ctx, stmt); handled {
+		return action, true
+	}
 	if action, handled := storedInsertSelectFunc(ctx, stmt); handled {
 		return action, true
 	}
@@ -420,6 +423,9 @@ func columnRows(
 
 // ValidateStatement builds an Omni plan without opening its cursor or dispatching requests.
 func ValidateStatement(ctx queryContext, stmt sqlparser.Statement) (bool, error) {
+	if _, handled, err := planIaCMutation(ctx, stmt); handled {
+		return true, err
+	}
 	dialect, err := backendDialect(ctx)
 	if err != nil {
 		return true, err
