@@ -72,13 +72,7 @@ func prepareIaCMutation(
 ) (func() internaldto.ExecutorOutput, error) {
 	switch node := stmt.(type) {
 	case *sqlparser.Insert:
-		if resource == convergeRelation {
-			params, err := iacInsertParams(node)
-			if err != nil {
-				return nil, err
-			}
-			return convergeFunc(ctx, params, node.SelectExprs)
-		}
+		return prepareIaCInsert(ctx, node, resource)
 	case *sqlparser.Delete:
 		if resource == convergeRelation && len(node.Targets) == 0 && len(node.Partitions) == 0 &&
 			len(node.OrderBy) == 0 && node.Limit == nil &&
@@ -99,14 +93,33 @@ func prepareIaCMutation(
 			return recoverFunc(ctx, params, node.SelectExprs)
 		}
 	}
-	return nil, fmt.Errorf("IaC accepts INSERT INTO iac.run, DELETE FROM iac.run, or UPDATE iac.recover")
+	return nil, errors.New("IaC accepts INSERT INTO iac.plan, INSERT INTO iac.run, " +
+		"DELETE FROM iac.run, or UPDATE iac.recover")
+}
+
+func prepareIaCInsert(
+	ctx queryContext, node *sqlparser.Insert, resource string,
+) (func() internaldto.ExecutorOutput, error) {
+	switch resource {
+	case convergeRelation, planRelation:
+		params, err := iacInsertParams(node)
+		if err != nil {
+			return nil, err
+		}
+		if resource == planRelation {
+			return iacPlanInsert(ctx, params, node.SelectExprs)
+		}
+		return convergeFunc(ctx, params, node.SelectExprs)
+	default:
+		return nil, fmt.Errorf("IaC INSERT requires iac.plan or iac.run")
+	}
 }
 
 func iacInsertParams(node *sqlparser.Insert) (map[string]string, error) {
 	rows, ok := node.Rows.(sqlparser.Values)
 	if !ok || len(rows) != 1 || len(rows[0]) != len(node.Columns) || len(node.OnDup) != 0 ||
 		len(node.Partitions) != 0 || node.Ignore != "" {
-		return nil, fmt.Errorf("INSERT INTO iac.run requires a column list and a single VALUES row")
+		return nil, fmt.Errorf("IaC INSERT requires a column list and a single VALUES row")
 	}
 	params := make(map[string]string, len(node.Columns))
 	for i, col := range node.Columns {

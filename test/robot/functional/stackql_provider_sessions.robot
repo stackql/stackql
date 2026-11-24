@@ -96,6 +96,17 @@ Document Merge Supports Inline JSON File Input And Reset
 IaC Inputs File Errors Precede Provider Dispatch
     Iac Inputs File Errors Precede Provider Dispatch
 
+IaC Plan Select And Insert Round Trip
+    ${preview} =    Set Variable    SELECT resource_key, action, change_set FROM stackql_preview.iac.plan WHERE collection \= 'robot-plan' AND resources \= '[{"key":"widget","provider":"widgets","address":"things.iac_widget","identity":"id","addressed_by":"id","desired":{"color":"COLOR_PLACEHOLDER"}}]';
+    ${apply} =    Set Variable    INSERT INTO stackql_preview.iac.plan (collection, change_set) VALUES ('robot-plan', 'CHANGE_SET_PLACEHOLDER') RETURNING status;
+    IaC Plan Select Insert Round Trip    ${preview}    ${apply}
+    ...    DESCRIBE stackql_preview.iac.plan;
+    ...    SHOW METHODS IN stackql_preview.iac.plan;
+
+IaC Plan Previews A Multi-Level Dependency Tree
+    ${preview} =    Set Variable    SELECT resource_key, action, depends_on, change_set FROM stackql_preview.iac.plan WHERE collection \= 'robot-plan-dependencies' AND resources \= 'RESOURCES_PLACEHOLDER';
+    IaC Plan Checks Dependency Tree    ${preview}
+
 Ledger Query Is Read Only And Collection Scoped
     Ledger Query Is Read Only And Collection Scoped
 

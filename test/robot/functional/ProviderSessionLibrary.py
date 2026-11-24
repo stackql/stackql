@@ -21,6 +21,8 @@ class ProviderSessionLibrary:
         self.page_sizes = []
         self.aws_calls = []
         self.view_calls = []
+        self.iac_calls = []
+        self.iac_widget = None
         self.concurrent_gate = None
         self.env = os.environ.copy()
         if os.name != "nt":
@@ -32,6 +34,10 @@ class ProviderSessionLibrary:
                 pass
 
             def do_GET(self):
+                if urlparse(self.path).path == "/iac-widget":
+                    owner.iac_calls.append("read")
+                    self.iac_response([owner.iac_widget] if owner.iac_widget else [])
+                    return
                 token = self.headers.get("Authorization", "")
                 if urlparse(self.path).path == "/buckets":
                     import re
@@ -82,7 +88,21 @@ class ProviderSessionLibrary:
                 self.end_headers()
                 self.wfile.write(payload)
 
+            def iac_response(self, value):
+                payload = json.dumps(value).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+
             def do_POST(self):
+                if urlparse(self.path).path == "/iac-widget":
+                    owner.iac_calls.append("create")
+                    body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
+                    owner.iac_widget = {**body, "id": "iac-widget-1"}
+                    self.iac_response(owner.iac_widget)
+                    return
                 if urlparse(self.path).path != "/resource":
                     self.send_error(404)
                     return
@@ -102,6 +122,7 @@ class ProviderSessionLibrary:
         endpoint = f"http://127.0.0.1:{self.server.server_port}"
         if execution_platform == "docker":
             self.prefix = ["docker", "--log-level", "error", "compose", "--progress", "quiet", "-p", "execrun", "run", "--rm", "--no-deps", "-T",
+                           "--env", "ROBOT_IAC_FIXTURE_TOKEN",
                            "--user", f"{os.getuid()}:{os.getgid()}", "--workdir", str(self.root),
                            "-v", str(self.root) + ":" + str(self.root), "--entrypoint", "/bin/sh", "stackqlsrv",
                            "-c", 'PATH="$1:$PATH"; export PATH; shift; exec stackql "$@"',
@@ -733,22 +754,122 @@ esac
         assert result.returncode != 0 and "inputs_file:" in result.stderr, result.stderr
         assert len(self.calls) == before, "provider called before inputs loaded"
 
+    def install_iac_widget_fixture(self):
+        path = self.root / "registry/src/widgets/v00.00.00000/services/things.yaml"
+        doc = json.loads(path.read_text())
+        widget = {"type": "object", "properties": {"id": {"type": "string"}, "color": {"type": "string"},
+                                                       "parent": {"type": "string"}, "peer": {"type": "string"}}}
+        def media(schema):
+            return {"content": {"application/json": {"schema": schema}}}
+        doc["paths"]["/iac-widget"] = {
+            "get": {"operationId": "read_iac_widget",
+                    "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+                    "responses": {"200": media({"type": "array", "items": widget})}},
+            "post": {"operationId": "create_iac_widget", "requestBody": media(widget),
+                     "responses": {"200": media(widget)}},
+        }
+        resource = "iac_widget"
+        methods = {"find": "get", "create": "post"}
+        prefix = "#/components/x-stackQL-resources/" + resource + "/methods/"
+        doc["components"]["x-stackQL-resources"][resource] = {
+            "id": "widgets.things." + resource, "name": resource,
+            "methods": {name: {"operation": {"$ref": "#/paths/~1iac-widget/" + verb},
+                               "response": {"mediaType": "application/json", "openAPIDocKey": "200"}}
+                        for name, verb in methods.items()},
+            "sqlVerbs": {"select": [{"$ref": prefix + "find"}], "insert": [{"$ref": prefix + "create"}]},
+        }
+        path.write_text(json.dumps(doc))
+        self.env["ROBOT_IAC_FIXTURE_TOKEN"] = "iac-fixture-token"
+        return ["--auth", json.dumps({"widgets": {"type": "bearer", "credentialsenvvar": "ROBOT_IAC_FIXTURE_TOKEN"}})]
+
+    def iac_plan_select_insert_round_trip(self, preview_sql, apply_sql, describe_sql, methods_sql):
+        auth = self.install_iac_widget_fixture()
+        description = json.loads(self.run_sql(describe_sql, []).stdout)
+        assert {row["name"] for row in description} == {"resource_key", "action", "reason", "depends_on", "change_set"}, description
+        methods = json.loads(self.run_sql(methods_sql, []).stdout)
+        assert {row["SQLVerb"] for row in methods} == {"SELECT", "INSERT"}, methods
+        # Exercise the same JSON escaping on every platform.
+        color = r"fixture\blue"
+        escaped_color = json.dumps(color)[1:-1].replace("\\", "\\\\")
+        preview_sql = preview_sql.replace("COLOR_PLACEHOLDER", escaped_color)
+        preview = json.loads(self.run_sql(preview_sql, [], auth).stdout)
+        assert preview[0]["action"] == "create" and preview[0]["resource_key"] == "widget", preview
+        assert self.iac_calls == [], self.iac_calls
+        ledger = self.root / "app/iac/ledger/robot-plan"
+        assert not ledger.exists(), ledger
+        artifact = preview[0]["change_set"]
+        assert json.loads(artifact)["version"] == 1, artifact
+        assert json.loads(artifact)["desired"][0]["desired"]["color"] == color, artifact
+        # The StackQL SQL lexer interprets backslashes in string literals.
+        # Preserve the JSON escapes in Windows paths and in desired values.
+        escaped_artifact = artifact.replace("\\", "\\\\").replace("'", "''")
+        apply_sql = apply_sql.replace("CHANGE_SET_PLACEHOLDER", escaped_artifact)
+        applied = json.loads(self.run_sql(apply_sql, [], auth).stdout)
+        assert applied[0]["status"] == "applied", applied
+        assert self.iac_calls == ["create"], self.iac_calls
+        now = json.loads(self.run_sql(preview_sql, [], auth).stdout)
+        assert now[0]["action"] == "no-op", now
+        assert self.iac_calls == ["create", "read"], self.iac_calls
+        stale = subprocess.run(self.prefix + ["exec", apply_sql] + self.flags + auth,
+                               text=True, capture_output=True, timeout=30, env=self.env)
+        assert stale.returncode != 0 and "stale" in stale.stderr, stale.stderr
+        assert self.iac_calls == ["create", "read", "read"], self.iac_calls
+
+    def iac_plan_checks_dependency_tree(self, sql):
+        auth = self.install_iac_widget_fixture()
+        # Consumers precede their producers in the spec. The root fans out, join
+        # takes both branch identities, and a second root feeds a separate leaf.
+        dependencies = {
+            "final": ["join", "side-leaf"],
+            "join": ["left", "right"],
+            "right": ["root"],
+            "side-leaf": ["side-root"],
+            "left": ["root"],
+            "side-root": [],
+            "root": [],
+        }
+        resources = [
+            {"key": key, "provider": "widgets", "address": "things.iac_widget",
+             "identity": "id", "addressed_by": "id", "desired": {"color": key},
+             "inbound": [{"from": parent, "as": name}
+                         for parent, name in zip(parents, ["parent", "peer"])]}
+            for key, parents in dependencies.items()
+        ]
+        before = list(self.iac_calls)
+        sql = sql.replace("RESOURCES_PLACEHOLDER", json.dumps(resources))
+        rows = json.loads(self.run_sql(sql, [], auth).stdout)
+        assert len(rows) == len(dependencies), rows
+        expected = {key: ("unknown" if parents else "create", sorted(parents))
+                    for key, parents in dependencies.items()}
+        actual = {row["resource_key"]: (row["action"], json.loads(row["depends_on"])) for row in rows}
+        assert actual == expected, rows
+        artifacts = {row["change_set"] for row in rows}
+        assert len(artifacts) == 1, rows
+        artifact = json.loads(artifacts.pop())
+        assert {change["key"]: (change["action"], change.get("depends_on", []))
+                for change in artifact["changes"]} == expected, artifact
+        assert self.iac_calls == before, self.iac_calls
+        assert not (self.root / "app/iac/ledger/robot-plan-dependencies").exists()
+
     def ledger_query_is_read_only_and_collection_scoped(self):
         import base64
         def encoded(value):
             return base64.b64encode(value.encode()).decode()
-        root = self.root / "app/iac/ledger"
+        state = self.root / "app/iac/ledger-read-only"
+        root = state / "ledger"
         for collection in ["demo", "demo-other"]:
             directory = root / collection
             directory.mkdir(parents=True, exist_ok=True)
             (directory / "vm.v1.json").write_text(json.dumps({"phase": 1, "identity": encoded("i-ledger-test"), "about": encoded(json.dumps({"provider":"aws","address":"ec2.web_instance","params":{"secret":"hidden"}}))}))
         before = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
-        result = self.run_sql("SELECT * FROM stackql_preview.iac.ledger WHERE collection = 'demo' AND resource_key = 'vm';", [])
+        result = self.run_sql(
+            "SELECT * FROM stackql_preview.iac.ledger "
+            "WHERE state = 'ledger-read-only' AND collection = 'demo' AND resource_key = 'vm';", [])
         assert "i-ledger-test" in result.stdout and 'live' in result.stdout, result.stdout
         assert "demo-other" not in result.stdout and "hidden" not in result.stdout, result.stdout
         after = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
         assert before == after, "ledger changed during inspection"
-        assert not (self.root / "app/iac/journal").exists(), "reader created a journal"
+        assert not (state / "journal").exists(), "reader created a journal"
 
     def recover_verified_absent_create_without_provider_calls(self):
         import base64
