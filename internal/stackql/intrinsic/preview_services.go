@@ -38,6 +38,7 @@ const (
 	convergeRelation = "run"
 	destroyRelation  = "destroy"
 	ledgerRelation   = "ledger"
+	planRelation     = "plan"
 	recoverRelation  = "recover"
 )
 
@@ -335,6 +336,17 @@ func showPreviewMethods(ctx queryContext, service, resource string, extended boo
 				requiredParams: []string{"collection", "resource_key", "version", "outcome"},
 				description:    "record a verified pending outcome",
 			}}
+		case planRelation:
+			methods = []relationMethod{
+				{
+					name: "preview", sqlVerb: "SELECT", requiredParams: []string{"collection", "resources"},
+					description: "preview desired-state changes",
+				},
+				{
+					name: "apply", sqlVerb: "INSERT", requiredParams: []string{"collection", "change_set"},
+					description: "apply a reviewed change set",
+				},
+			}
 		case ledgerRelation:
 			methods[0].requiredParams = []string{"collection"}
 		default:
@@ -383,6 +395,8 @@ func previewTables(service string) []table {
 		service: iacService, name: ledgerRelation, isData: true,
 		description: "read-only resource identities and phases from the collection ledger",
 	})
+	out = append(out, table{service: iacService, name: planRelation, isData: true,
+		description: "SELECT previews changes and INSERT executes a reviewed change set"})
 	return append(out, blueprintTables()...)
 }
 
@@ -401,6 +415,11 @@ func describePreviewTableFunc(
 	}
 	resource := node.Table.Name.GetRawVal()
 	extended := isExtended(node.Extended)
+	if service == iacService && strings.EqualFold(resource, planRelation) {
+		return func() internaldto.ExecutorOutput {
+			return describeTable(ctx, table{columns: iacPlanColumns()}, extended)
+		}, true
+	}
 	if service == iacService && !strings.EqualFold(resource, convergeRelation) &&
 		!strings.EqualFold(resource, ledgerRelation) &&
 		!strings.EqualFold(resource, recoverRelation) {

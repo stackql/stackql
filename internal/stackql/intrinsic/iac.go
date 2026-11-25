@@ -40,6 +40,8 @@ func iacSelectFunc(
 	ctx queryContext, node *sqlparser.Select, resource string,
 ) (func() internaldto.ExecutorOutput, bool) {
 	switch strings.ToLower(resource) {
+	case planRelation:
+		return iacPlanSelect(ctx, node), true
 	case ledgerRelation:
 		return ledgerSelectFunc(ctx, node), true
 	case convergeRelation, destroyRelation:
