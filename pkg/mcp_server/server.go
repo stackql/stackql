@@ -339,6 +339,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		// narrows what is advertised and negotiated (issue #784).
 		SupportedProtocolVersions: config.AdvertisedProtocolVersions(),
 		SetCacheable:              setCachePolicy,
+		Capabilities:              buildServerCapabilities(config),
 	}
 	if !config.DisableInstructions {
 		instructions, instrErr := loadEmbeddedInstructions()
