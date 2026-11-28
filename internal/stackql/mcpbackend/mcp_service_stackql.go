@@ -578,7 +578,9 @@ func (b *stackqlMCPService) extractQueryResults(
 }
 
 // drainSQLRowStream reads `stream` to EOF (or until rowLimit is reached),
-// appending each batch's rows and propagating stream errors.
+// appending each batch's rows and propagating stream errors.  A positive
+// rowLimit caps the total number of rows retained, including when a single
+// batch (or the batch delivered alongside EOF) overshoots it.
 func drainSQLRowStream(
 	stream sqldata.ISQLResultStream,
 	rv []map[string]interface{},
@@ -588,7 +590,7 @@ func drainSQLRowStream(
 		row, err := stream.Read()
 		if err == io.EOF {
 			if row != nil {
-				rv = append(rv, row.ToArr()...)
+				rv, rowCount = appendRowsWithinLimit(rv, row.ToArr(), rowCount, rowLimit)
 			}
 			return rv, rowCount, nil
 		}
@@ -598,13 +600,30 @@ func drainSQLRowStream(
 		if row == nil {
 			return rv, rowCount, fmt.Errorf("result stream returned no batch before EOF")
 		}
-		rowArr := row.ToArr()
-		rv = append(rv, rowArr...)
-		rowCount += len(rowArr)
+		rv, rowCount = appendRowsWithinLimit(rv, row.ToArr(), rowCount, rowLimit)
 		if rowLimit > 0 && rowCount >= rowLimit {
 			return rv, rowCount, nil
 		}
 	}
+}
+
+// appendRowsWithinLimit appends `batch` to `rv`, truncating the batch so the
+// running total never exceeds a positive rowLimit.
+func appendRowsWithinLimit(
+	rv []map[string]interface{},
+	batch []map[string]interface{},
+	rowCount, rowLimit int,
+) ([]map[string]interface{}, int) {
+	if rowLimit > 0 {
+		remaining := rowLimit - rowCount
+		if remaining < 0 {
+			remaining = 0
+		}
+		if len(batch) > remaining {
+			batch = batch[:remaining]
+		}
+	}
+	return append(rv, batch...), rowCount + len(batch)
 }
 
 func (b *stackqlMCPService) DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
@@ -628,7 +647,7 @@ func (b *stackqlMCPService) ListServices(ctx context.Context, hI dto.HierarchyIn
 	if qErr != nil {
 		return nil, qErr
 	}
-	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+	return b.runPreprocessedQueryJSON(ctx, q, hI.RowLimit)
 }
 
 func (b *stackqlMCPService) ListResources(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
@@ -636,7 +655,7 @@ func (b *stackqlMCPService) ListResources(ctx context.Context, hI dto.HierarchyI
 	if qErr != nil {
 		return nil, qErr
 	}
-	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+	return b.runPreprocessedQueryJSON(ctx, q, hI.RowLimit)
 }
 
 func (b *stackqlMCPService) ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
@@ -644,7 +663,7 @@ func (b *stackqlMCPService) ListMethods(ctx context.Context, hI dto.HierarchyInp
 	if qErr != nil {
 		return nil, qErr
 	}
-	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+	return b.runPreprocessedQueryJSON(ctx, q, hI.RowLimit)
 }
 
 func (b *stackqlMCPService) ListRegistry(ctx context.Context, input dto.RegistryInput) ([]map[string]interface{}, error) {
