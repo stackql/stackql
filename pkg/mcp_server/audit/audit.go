@@ -45,6 +45,12 @@ type Event struct {
 	Args       map[string]any `json:"args,omitempty"`
 	DurationMs int64          `json:"duration_ms"`
 	Error      string         `json:"error,omitempty"`
+	// TaskID and TaskStatus mark a tools/call that ran as a task (tasks
+	// extension): the decision record written when the task starts carries
+	// status "working", the execution record written when the work finishes
+	// carries the terminal status ("completed" or "failed").
+	TaskID     string `json:"task_id,omitempty"`
+	TaskStatus string `json:"task_status,omitempty"`
 	// Wire is transport context serialised only by the OTel encoding.
 	Wire WireContext `json:"-"`
 }

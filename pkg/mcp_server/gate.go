@@ -222,6 +222,13 @@ func addToolWithGate[In, Out any](
 		}
 
 		result, out, err := h(ctx, req, args)
+		if slot := taskSlotFrom(ctx); slot.prepared() {
+			// The handler handed its work to a task (it prepares a slot only
+			// on success): audit the decision now and the execution when the
+			// background work finishes.
+			return result, out, slot.launch(ctx, gateTaskAudit(
+				auditSink, cfg, gate, args, sql, p.Class(), mode, auditDecision, started, wireContext(req, nil)))
+		}
 		var produced any
 		if err == nil {
 			produced = out
@@ -348,6 +355,7 @@ func recordAudit(
 	started time.Time,
 	toolErr error,
 	wire audit.WireContext,
+	decorate ...func(*audit.Event),
 ) error {
 	if auditSink == nil {
 		return nil
@@ -372,10 +380,33 @@ func recordAudit(
 	if toolErr != nil {
 		event.Error = toolErr.Error()
 	}
+	for _, d := range decorate {
+		d(&event)
+	}
 	if err := auditSink.Record(ctx, event); err != nil {
 		return handleAuditFailure(cfg, gate.toolName, class, err)
 	}
 	return nil
+}
+
+// gateTaskAudit writes the audit records of a task with the classification
+// and decision of the call that created it.
+func gateTaskAudit(
+	auditSink sink.Sink, cfg *Config, gate toolGate, args any, sql string, class policy.QueryClass,
+	mode, decision string, started time.Time, wire audit.WireContext,
+) taskAuditFunc {
+	return func(ctx context.Context, taskID string, status taskStatus, toolErr error) error {
+		return recordAudit(ctx, auditSink, cfg, gate, args, sql, class, mode,
+			decision, started, toolErr, wire, withTaskAudit(taskID, status))
+	}
+}
+
+// withTaskAudit marks an audit event as belonging to a task.
+func withTaskAudit(taskID string, status taskStatus) func(*audit.Event) {
+	return func(e *audit.Event) {
+		e.TaskID = taskID
+		e.TaskStatus = string(status)
+	}
 }
 
 // wireContext collects the transport facts the OTel encoding records: the

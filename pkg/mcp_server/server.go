@@ -159,7 +159,7 @@ func secureHTTPHandler(handler http.Handler, config *Config) (http.Handler, erro
 				rejectRequest(w, r, http.StatusUnauthorized, "caller authentication failed")
 				return
 			}
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, httpPrincipalKey{}, callerPrincipal(r))))
 		}), nil
 	}
 	envVar := config.Server.AuthTokenEnvVar
@@ -168,13 +168,14 @@ func secureHTTPHandler(handler http.Handler, config *Config) (http.Handler, erro
 			return nil, fmt.Errorf("the HTTP transport requires server.auth_token_env_var, " +
 				"or server.allow_unauthenticated: true to serve without client authentication")
 		}
-		return handler, nil
+		return withHTTPPrincipal("anonymous", handler), nil
 	}
 	token := os.Getenv(envVar)
 	if token == "" {
 		return nil, fmt.Errorf("server.auth_token_env_var names an unset or empty env var %q", envVar)
 	}
-	return requireBearerToken(token, handler), nil
+	// Every holder of the pre-shared token is the same caller.
+	return requireBearerToken(token, withHTTPPrincipal("bearer", handler)), nil
 }
 
 // requireBearerToken answers 401 unless the request presents the pre-shared token.
@@ -369,6 +370,11 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 	if config.Server.Extensions.Skills.Enabled {
 		if skillsErr := registerSkills(server, config); skillsErr != nil {
 			return nil, skillsErr
+		}
+	}
+	if config.Server.Extensions.Tasks.Enabled {
+		if tasksErr := newTaskManager(config.Server.Extensions.Tasks, backend).register(server); tasksErr != nil {
+			return nil, tasksErr
 		}
 	}
 
@@ -668,10 +674,14 @@ func registerTools(
 
 // registerExecQueryTool registers a mutation-shaped tool (mutation or
 // lifecycle): SQL in, {messages, timestamp} out, explicitly destructive.
+// With the tasks extension on, a run_mutation_query call that converges,
+// destroys or applies an IaC deployment (policy.IsLongRunningIaC) hands its
+// work to a task when the call carries a task slot; see tasks.go.
 func registerExecQueryTool(
 	server *mcp.Server, cfg *Config, backend Backend, auditSink sink.Sink, approvals *approvalBinder,
 	descriptions toolDescriptions, name, kvTitle string,
 ) error {
+	taskEligibleTool := name == "run_mutation_query"
 	return addToolWithGate(
 		server, cfg, auditSink, approvals, descriptions, queryGate(name),
 		&mcp.Tool{
@@ -683,14 +693,44 @@ func registerExecQueryTool(
 			if formatErr != nil {
 				return nil, nil, formatErr
 			}
+			if slot := taskSlotFrom(ctx); slot != nil && taskEligibleTool && policy.IsLongRunningIaC(args.SQL) {
+				if err := slot.prepare(func(runCtx context.Context, taskBackend Backend) (*mcp.CallToolResult, error) {
+					res, err := taskBackend.ExecQuery(runCtx, args.SQL)
+					if err != nil {
+						return nil, err
+					}
+					return renderExecResult(format, kvTitle, res, true)
+				}); err != nil {
+					return nil, nil, err
+				}
+				// Placeholder: the tasks middleware answers with the task.
+				return &mcp.CallToolResult{}, map[string]any{}, nil
+			}
 			res, err := backend.ExecQuery(ctx, args.SQL)
 			if err != nil {
 				return nil, nil, err
 			}
-			text := textForFormat(format, res, func() string { return render.RenderKV(kvTitle, []map[string]any{res}) })
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
+			result, err := renderExecResult(format, kvTitle, res, false)
+			return result, res, err
 		},
 	)
+}
+
+// renderExecResult renders a mutation-shaped result.  The synchronous path
+// returns res as the typed output and the SDK mirrors it into
+// structuredContent; the task path has no SDK step, so withStructured sets
+// structuredContent the same way and both paths produce the same result.
+func renderExecResult(format, kvTitle string, res map[string]any, withStructured bool) (*mcp.CallToolResult, error) {
+	text := textForFormat(format, res, func() string { return render.RenderKV(kvTitle, []map[string]any{res}) })
+	result := &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}
+	if withStructured {
+		raw, err := json.Marshal(res)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling output: %w", err)
+		}
+		result.StructuredContent = json.RawMessage(raw)
+	}
+	return result, nil
 }
 
 // registerReloadCredentialsTool publishes reload_credentials (issue #688);

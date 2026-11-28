@@ -388,3 +388,253 @@ class MCPExtensionsLibrary:
                 code = self._error_code(client.request("skills/get", {"uri": "skill://stackql-deploy/SKILL.md"}))
                 assert code == -32602, code
                 assert "error" in client.request("resources/read", {"uri": "skill://stackql-deploy/SKILL.md"})
+
+    # --- Group C: tasks ------------------------------------------------------
+
+    DECLARES_TASKS = {"extensions": {TASKS: {}}}
+    WIDGET_SPEC = json.dumps([{"key": "widget", "provider": "widgets", "address": "things.iac_widget",
+                               "identity": "id", "addressed_by": "id", "desired": {"color": "blue"}}])
+
+    def _prepare_iac_provider(self):
+        """A loopback widgets provider whose iac_widget resource converges
+        through GET (find) and POST (create).  post_delay slows a create;
+        fail_create answers it with HTTP 500."""
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        self.widget = None
+        self.creates = 0
+        self.post_delay = 0.0
+        self.fail_create = False
+        self.provider_lock = threading.Lock()
+        owner = self
+
+        class API(BaseHTTPRequestHandler):
+            def log_message(self, *_):
+                pass
+
+            def _reply(self, status, value):
+                payload = json.dumps(value).encode()
+                self.send_response(status)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+
+            def do_GET(self):
+                with owner.provider_lock:
+                    widget = owner.widget
+                self._reply(200, [widget] if widget else [])
+
+            def do_POST(self):
+                body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))) or b"{}")
+                with owner.provider_lock:
+                    owner.creates += 1
+                    delay, fail = owner.post_delay, owner.fail_create
+                time.sleep(delay)
+                if fail:
+                    self._reply(500, {"message": "widget service unavailable"})
+                    return
+                with owner.provider_lock:
+                    owner.widget = {**body, "id": "iac-widget-1"}
+                    widget = owner.widget
+                self._reply(200, widget)
+
+        self.provider = ThreadingHTTPServer(("127.0.0.1", 0), API)
+        self.provider.daemon_threads = True
+        self.provider_worker = threading.Thread(target=self.provider.serve_forever, daemon=True)
+        self.provider_worker.start()
+        widget = {"type": "object", "properties": {"id": {"type": "string"}, "color": {"type": "string"}}}
+
+        def media(schema):
+            return {"content": {"application/json": {"schema": schema}}}
+
+        prefix = "#/components/x-stackQL-resources/iac_widget/methods/"
+        document = {
+            "openapi": "3.0.0", "info": {"title": "things", "version": "v1"},
+            "servers": [{"url": "http://127.0.0.1:" + str(self.provider.server_port)}],
+            "paths": {"/iac-widget": {
+                "get": {"operationId": "read_iac_widget",
+                        "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+                        "responses": {"200": media({"type": "array", "items": widget})}},
+                "post": {"operationId": "create_iac_widget", "requestBody": media(widget),
+                         "responses": {"200": media(widget)}},
+            }},
+            "components": {"x-stackQL-resources": {"iac_widget": {
+                "id": "widgets.things.iac_widget", "name": "iac_widget",
+                "methods": {name: {"operation": {"$ref": "#/paths/~1iac-widget/" + verb},
+                                   "response": {"mediaType": "application/json", "openAPIDocKey": "200"}}
+                            for name, verb in {"find": "get", "create": "post"}.items()},
+                "sqlVerbs": {"select": [{"$ref": prefix + "find"}], "insert": [{"$ref": prefix + "create"}]},
+            }}},
+        }
+        provider = {"id": "widgets", "name": "widgets", "version": "v00.00.00000",
+                    "providerServices": {"things": {"id": "things:v00.00.00000", "name": "things", "preferred": True,
+                                                     "service": {"$ref": "widgets/v00.00.00000/services/things.yaml"}}},
+                    "config": {"auth": {"type": "bearer"}}}
+        version = self.root / "registry" / "src" / "widgets" / "v00.00.00000"
+        (version / "services").mkdir(parents=True)
+        (version / "provider.yaml").write_text(json.dumps(provider), encoding="utf-8")
+        (version / "services" / "things.yaml").write_text(json.dumps(document), encoding="utf-8")
+        self.auth = {"widgets": {"type": "bearer", "credentialsenvvar": "ROBOT_IAC_FIXTURE_TOKEN"}}
+        self.env["ROBOT_IAC_FIXTURE_TOKEN"] = "iac-fixture-token"
+
+    def _converge_sql(self, collection):
+        return ("INSERT INTO stackql_preview.iac.run (collection, resources) VALUES ('" + collection + "', '"
+                + self.WIDGET_SPEC + "') RETURNING *")
+
+    @staticmethod
+    def _call_args(sql, tool="run_mutation_query"):
+        return {"name": tool, "arguments": {"sql": sql, "format": "json"}}
+
+    def _create_task(self, client, sql, capabilities=None):
+        created = self._result(client.request("tools/call", self._call_args(sql),
+                                              capabilities=capabilities or self.DECLARES_TASKS))
+        assert created.get("resultType") == "task", created
+        assert created["status"] == "working" and created["statusMessage"], created
+        assert 0 < len(created["taskId"]) <= 128 and " " not in created["taskId"], created
+        for field in ("createdAt", "lastUpdatedAt"):
+            assert created[field].endswith("Z"), created
+        assert created["ttlMs"] == (30 + 60) * 60 * 1000 and created["pollIntervalMs"] == 5000, created
+        assert "content" not in created and "isError" not in created, created
+        return created["taskId"]
+
+    def _poll(self, client, task_id, timeout=60):
+        deadline = time.monotonic() + timeout
+        while True:
+            got = self._result(client.request("tasks/get", {"taskId": task_id}))
+            assert got["resultType"] == "complete" and got["taskId"] == task_id, got
+            if got["status"] != "working":
+                return got
+            assert time.monotonic() < deadline, ("task still working", got)
+            time.sleep(0.1)
+
+    @staticmethod
+    def _rows_and_messages(result):
+        structured = result["structuredContent"]
+        return structured.get("rows"), structured.get("messages")
+
+    def iac_run_returns_task_when_client_declares_tasks(self):
+        self._prepare_iac_provider()
+        for transport in ("stdio", "http"):
+            with self.provider_lock:
+                self.widget, self.creates = None, 0
+            run = self.root / ("audit-" + transport)
+            run.mkdir()
+            audit_path = run / "audit.jsonl"
+            server = {"extensions": {"tasks": {"enabled": True}},
+                      "audit": {"failure_mode": "strict", "file": {"path": str(audit_path)}}}
+            with self._transport(transport, server, preview=True) as client:
+                sql = self._converge_sql("tasks-" + transport)
+                task_id = self._create_task(client, sql)
+                done = self._poll(client, task_id)
+                assert done["status"] == "completed" and "error" not in done, done
+                assert not done["result"].get("isError"), done
+                rows, messages = self._rows_and_messages(done["result"])
+                assert rows == [{"identity": "iac-widget-1", "key": "tasks-" + transport + "/widget",
+                                 "status": "applied"}], rows
+                synchronous = self._result(client.request("tools/call", self._call_args(sql)))
+                assert synchronous.get("resultType") != "task", synchronous
+                assert self._rows_and_messages(synchronous) == (rows, messages), (synchronous, done)
+                assert self.creates == 1, self.creates
+            records = [json.loads(line) for line in audit_path.read_text(encoding="utf-8").splitlines()]
+            task_records = [record for record in records if record.get("task_id") == task_id]
+            assert [record["task_status"] for record in task_records] == ["working", "completed"], records
+            assert all(record["sql"] == sql and record["decision"] == "allow" for record in task_records), records
+
+    def iac_run_stays_synchronous_without_tasks_capability(self):
+        self._prepare_iac_provider()
+        with self._stdio({"extensions": {"tasks": {"enabled": True}}}, preview=True) as client:
+            for capabilities in ({}, {"extensions": {TASKS: {"revision": "next"}}}):
+                result = self._result(client.request("tools/call", self._call_args(self._converge_sql("sync")),
+                                                     capabilities=capabilities))
+                assert result.get("resultType") != "task" and "taskId" not in result, result
+                assert not result.get("isError"), result
+                rows, _ = self._rows_and_messages(result)
+                assert rows[0]["status"] == "applied", rows
+
+    def ordinary_mutation_stays_synchronous_with_tasks_capability(self):
+        self._prepare_iac_provider()
+        recover = ("UPDATE stackql_preview.iac.recover SET outcome = 'absent' WHERE collection = 'none' "
+                   "AND resource_key = 'widget' AND version = '1' RETURNING *")
+        plan = ("SELECT resource_key, action FROM stackql_preview.iac.plan WHERE collection = 'plan' "
+                "AND resources = '" + self.WIDGET_SPEC + "'")
+        batch = self._converge_sql("first") + "; " + self._converge_sql("second")
+        with self._stdio({"extensions": {"tasks": {"enabled": True}}}, preview=True) as client:
+            for tool, sql in (("run_mutation_query", recover),
+                              ("run_lifecycle_operation", self._converge_sql("lifecycle")),
+                              ("run_select_query", plan),
+                              ("run_mutation_query", batch)):
+                result = self._result(client.request("tools/call", self._call_args(sql, tool),
+                                                     capabilities=self.DECLARES_TASKS))
+                assert result.get("resultType") != "task" and "taskId" not in result, (tool, sql, result)
+                assert "content" in result, result
+
+    def task_outlives_request_timeout(self):
+        self._prepare_iac_provider()
+        self.post_delay = 3.0
+        server = {"request_timeout": "1s", "extensions": {"tasks": {"enabled": True}}}
+        with self._stdio(server, preview=True) as client:
+            done = self._poll(client, self._create_task(client, self._converge_sql("timeout-task")))
+            assert done["status"] == "completed" and not done["result"].get("isError"), done
+            rows, _ = self._rows_and_messages(done["result"])
+            assert rows[0]["status"] == "applied", rows
+            limited = self._result(client.request("tools/call", self._call_args(self._converge_sql("timeout-sync"))))
+            assert limited.get("isError") and "server.request_timeout of 1s exceeded" in json.dumps(limited), limited
+
+    def task_approval_precedes_task_creation(self):
+        self._prepare_iac_provider()
+        capabilities = {"elicitation": {"form": {}}, **self.DECLARES_TASKS}
+        with self._stdio({"mode": "safe", "extensions": {"tasks": {"enabled": True}}}, preview=True) as client:
+            for action in ("decline", "accept"):
+                sql = self._converge_sql("approval-" + action)
+                prompt = self._result(client.request("tools/call", self._call_args(sql), capabilities=capabilities))
+                assert prompt.get("inputRequests") and prompt.get("requestState"), prompt
+                assert prompt.get("resultType") != "task" and "taskId" not in prompt, prompt
+                assert self.creates == 0, self.creates
+                retry = dict(self._call_args(sql), requestState=prompt["requestState"],
+                             inputResponses={key: {"action": action} for key in prompt["inputRequests"]})
+                answered = self._result(client.request("tools/call", retry, capabilities=capabilities))
+                if action == "decline":
+                    assert answered.get("isError") and "declined" in json.dumps(answered), answered
+                    assert "taskId" not in answered and self.creates == 0, answered
+                else:
+                    assert answered.get("resultType") == "task", answered
+                    done = self._poll(client, answered["taskId"])
+                    assert done["status"] == "completed" and self.creates == 1, done
+
+    def tasks_get_unknown_id_is_invalid_params(self):
+        with self._stdio({"extensions": {"tasks": {"enabled": True}}}) as client:
+            for method in ("tasks/get", "tasks/update", "tasks/cancel"):
+                for task_id in ("no-such-task", ""):
+                    code = self._error_code(client.request(method, {"taskId": task_id}))
+                    assert code == -32602, (method, task_id, code)
+        with self._stdio({}) as client:
+            assert self._error_code(client.request("tasks/get", {"taskId": "x"})) == -32601
+
+    def task_tool_error_completes_with_the_synchronous_error_result(self):
+        self._prepare_iac_provider()
+        self.fail_create = True
+        with self._stdio({"extensions": {"tasks": {"enabled": True}}}, preview=True) as client:
+            done = self._poll(client, self._create_task(client, self._converge_sql("failing")))
+            assert done["status"] == "completed" and "error" not in done, done
+            assert done["result"]["isError"] is True, done
+            assert done["statusMessage"] == "completed with a tool error", done
+            failing_sync = self._converge_sql("failing-sync")
+            synchronous = self._result(client.request("tools/call", self._call_args(failing_sync)))
+            assert synchronous["isError"] is True, synchronous
+            assert done["result"]["content"][0]["type"] == synchronous["content"][0]["type"] == "text", done
+
+    def task_cancel_acknowledges_and_run_completes(self):
+        self._prepare_iac_provider()
+        self.post_delay = 2.0
+        with self._stdio({"extensions": {"tasks": {"enabled": True}}}, preview=True) as client:
+            task_id = self._create_task(client, self._converge_sql("cancel"))
+            ack = self._result(client.request("tasks/cancel", {"taskId": task_id}))
+            assert ack.get("resultType") == "complete" and set(ack) <= {"resultType", "_meta"}, ack
+            working = self._result(client.request("tasks/get", {"taskId": task_id}))
+            assert working["status"] == "working" and "cancellation requested" in working["statusMessage"], working
+            update = self._result(client.request("tasks/update", {"taskId": task_id, "inputResponses": {"x": {}}}))
+            assert update["resultType"] == "complete", update
+            done = self._poll(client, task_id)
+            assert done["status"] == "completed" and not done["result"].get("isError"), done
+            assert "cancellation was requested" in done["statusMessage"], done
+            assert self.creates == 1, self.creates

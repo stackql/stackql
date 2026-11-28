@@ -247,3 +247,33 @@ func indexOf(s, sub string) int {
 	}
 	return -1
 }
+
+func TestIsLongRunningIaC(t *testing.T) {
+	cases := []struct {
+		sql  string
+		want bool
+	}{
+		{"INSERT INTO stackql_preview.iac.run (collection, resources) VALUES ('c', '[]') RETURNING *", true},
+		{"insert into stackql_preview.iac.run (collection, resources_file) values ('c', 'r.json')", true},
+		{"DELETE FROM stackql_preview.iac.run WHERE collection = 'c' AND state = 'demo' RETURNING *", true},
+		{"INSERT INTO stackql_preview.iac.plan (collection, change_set) VALUES ('c', '{}') RETURNING status", true},
+		{"INSERT INTO stackql_preview.iac.run (collection, resources) VALUES ('c', '[]');", true},
+		{"SELECT resource_key FROM stackql_preview.iac.plan WHERE collection = 'c' AND resources = '[]'", false},
+		{"DELETE FROM stackql_preview.iac.plan WHERE collection = 'c'", false},
+		{"UPDATE stackql_preview.iac.recover SET outcome = 'absent' WHERE collection = 'c'", false},
+		{"SELECT * FROM stackql_preview.iac.ledger WHERE collection = 'c'", false},
+		{"INSERT INTO iac.run (collection, resources) VALUES ('c', '[]')", false},
+		{"INSERT INTO run (collection, resources) VALUES ('c', '[]')", false},
+		{"INSERT INTO google.compute.instances (project, zone, name) VALUES ('p', 'z', 'n')", false},
+		{"DELETE FROM google.compute.instances WHERE project = 'p'", false},
+		{"INSERT INTO stackql_preview.iac.run (collection, resources) VALUES ('c', '[]'); " +
+			"DELETE FROM stackql_preview.iac.run WHERE collection = 'c'", false},
+		{"", false},
+		{"not sql at all", false},
+	}
+	for _, tc := range cases {
+		if got := policy.IsLongRunningIaC(tc.sql); got != tc.want {
+			t.Errorf("IsLongRunningIaC(%q) = %v, want %v", tc.sql, got, tc.want)
+		}
+	}
+}

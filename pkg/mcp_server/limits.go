@@ -44,7 +44,12 @@ type limitedBackend struct {
 	slots   *semaphore.Weighted // nil when concurrency is unbounded
 	limit   int
 	timeout time.Duration // non-positive when calls carry no deadline
+	// timeoutSetting names the setting behind timeout in error messages.
+	timeoutSetting string
 }
+
+// requestTimeoutSetting names the deadline of the synchronous path.
+const requestTimeoutSetting = "server.request_timeout"
 
 // newLimitedBackend wraps inner with the configured limits.  A non-positive
 // value disables that limit; with both disabled inner is returned unwrapped.
@@ -52,9 +57,25 @@ func newLimitedBackend(inner Backend, maxConcurrent int, timeout time.Duration) 
 	if maxConcurrent <= 0 && timeout <= 0 {
 		return inner
 	}
-	rv := &limitedBackend{inner: inner, limit: maxConcurrent, timeout: timeout}
+	rv := &limitedBackend{inner: inner, limit: maxConcurrent, timeout: timeout, timeoutSetting: requestTimeoutSetting}
 	if maxConcurrent > 0 {
 		rv.slots = semaphore.NewWeighted(int64(maxConcurrent))
+	}
+	return rv
+}
+
+// withTaskTimeout returns the backend for task-path work: it shares the
+// concurrency slots of backend (when backend is limited) but applies timeout,
+// server.extensions.tasks.timeout, in place of server.request_timeout.
+func withTaskTimeout(backend Backend, timeout time.Duration) Backend {
+	if b, ok := backend.(*limitedBackend); ok {
+		return &limitedBackend{
+			inner: b.inner, slots: b.slots, limit: b.limit, timeout: timeout, timeoutSetting: taskTimeoutSetting,
+		}
+	}
+	rv := newLimitedBackend(backend, 0, timeout)
+	if b, ok := rv.(*limitedBackend); ok {
+		b.timeoutSetting = taskTimeoutSetting
 	}
 	return rv
 }
@@ -94,13 +115,13 @@ func (b *limitedBackend) refusal(ctx context.Context, acquireErr error) error {
 	}
 	return &requestLimitError{message: fmt.Sprintf(
 		"server busy: all %d request slots (server.max_concurrent_requests) stayed in use for the %s "+
-			"server.request_timeout; the call did not run, retry later", b.limit, b.timeout)}
+			"%s; the call did not run, retry later", b.limit, b.timeout, b.timeoutSetting)}
 }
 
 // timeoutError names the setting that ended the call.  A write may already
 // have reached the provider, so the client is told not to retry it blindly.
 func (b *limitedBackend) timeoutError(cause error, isWrite bool) error {
-	message := fmt.Sprintf("server.request_timeout of %s exceeded", b.timeout)
+	message := fmt.Sprintf("%s of %s exceeded", b.timeoutSetting, b.timeout)
 	if isWrite {
 		message += "; the statement may already have taken effect, check before retrying"
 	}
