@@ -303,9 +303,6 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false positive
 				}
 				rowsArr, err = tabulateResults(r, tw.ci)
-				if err != nil {
-					return err
-				}
 				for _, rs := range rowsArr {
 					table.Append(rs)
 				}
@@ -313,7 +310,7 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 					tw.configureTable(table)
 					table.Render()
 				}
-				return nil
+				return err
 			}
 			if hasColumns {
 				tw.configureTable(table)
@@ -333,6 +330,10 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 			table.Append(rs)
 		}
 		if err != nil {
+			if hasColumns {
+				tw.configureTable(table)
+				table.Render()
+			}
 			return err
 		}
 	}
@@ -369,7 +370,7 @@ func tabulateResults(r sqldata.ISQLResult, ci *pgtype.ConnInfo) ([][]string, err
 	for _, v := range r.GetRows() {
 		rd, err := decodeRow(colz, v, ci)
 		if err != nil {
-			return nil, err
+			return retVal, err
 		}
 		if rd == nil {
 			continue
@@ -403,14 +404,13 @@ func (csvw *CSVWriter) Write(res sqldata.ISQLResultStream) error {
 					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false +ve
 				}
 				rowsArr, err = tabulateResults(r, csvw.ci)
-				if err != nil {
-					w.Flush()
-					return err
-				}
 				for _, rs := range rowsArr {
 					w.Write(rs) //nolint:errcheck // output stream is not critical
 				}
 				w.Flush()
+				if err != nil {
+					return err
+				}
 				return w.Error()
 			}
 			if w != nil {
@@ -428,12 +428,12 @@ func (csvw *CSVWriter) Write(res sqldata.ISQLResultStream) error {
 			isHeaderRead = true
 		}
 		rowsArr, err = tabulateResults(r, csvw.ci)
+		for _, rs := range rowsArr {
+			w.Write(rs) //nolint:errcheck // output stream is not critical
+		}
 		if err != nil {
 			w.Flush()
 			return err
-		}
-		for _, rs := range rowsArr {
-			w.Write(rs) //nolint:errcheck // output stream is not critical
 		}
 	}
 }
@@ -458,14 +458,11 @@ func (rw *RawWriter) Write(res sqldata.ISQLResultStream) error {
 					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false +ve
 				}
 				rowsArr, err = tabulateResults(r, rw.ci)
-				if err != nil {
-					return err
-				}
 				for _, rs := range rowsArr {
 					//nolint:errcheck // output stream is not critical
 					w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rs, ","), fmt.Sprintln(""))))
 				}
-				return nil
+				return err
 			}
 			return err
 		}
@@ -479,12 +476,12 @@ func (rw *RawWriter) Write(res sqldata.ISQLResultStream) error {
 			isHeaderRead = true
 		}
 		rowsArr, err = tabulateResults(r, rw.ci)
-		if err != nil {
-			return err
-		}
 		for _, rs := range rowsArr {
 			//nolint:errcheck // output stream is not critical
 			w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rs, ","), fmt.Sprintln(""))))
+		}
+		if err != nil {
+			return err
 		}
 	}
 }
@@ -509,9 +506,6 @@ func (rw *PrettyWriter) Write(res sqldata.ISQLResultStream) error {
 					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false +ve
 				}
 				rowsArr, err = tabulateResults(r, rw.ci)
-				if err != nil {
-					return err
-				}
 				for _, rs := range rowsArr {
 					rowSlice := make([]string, len(rs))
 					for i, c := range rs {
@@ -526,7 +520,7 @@ func (rw *PrettyWriter) Write(res sqldata.ISQLResultStream) error {
 					//nolint:errcheck // output stream is not critical
 					w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rowSlice, ","), fmt.Sprintln(""))))
 				}
-				return nil
+				return err
 			}
 			return err
 		}
@@ -540,9 +534,6 @@ func (rw *PrettyWriter) Write(res sqldata.ISQLResultStream) error {
 			isHeaderRead = true
 		}
 		rowsArr, err = tabulateResults(r, rw.ci)
-		if err != nil {
-			return err
-		}
 		for _, rs := range rowsArr {
 			rowSlice := make([]string, len(rs))
 			for i, c := range rs {
@@ -556,6 +547,9 @@ func (rw *PrettyWriter) Write(res sqldata.ISQLResultStream) error {
 			}
 			//nolint:errcheck // output stream is not critical
 			w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rowSlice, ","), fmt.Sprintln(""))))
+		}
+		if err != nil {
+			return err
 		}
 	}
 }

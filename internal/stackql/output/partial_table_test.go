@@ -4,6 +4,7 @@ package output
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -103,5 +104,70 @@ func TestCSVWriterRetainsEarlierChunksOnUndecodableChunk(t *testing.T) {
 	}
 	if !strings.Contains(output.String(), "one") {
 		t.Fatalf("rows from earlier chunks were discarded: %q", output.String())
+	}
+}
+
+func TestTableWriterRetainsEarlierChunksOnUndecodableChunk(t *testing.T) {
+	table := sqldata.NewSQLTable(0, "partial")
+	column := sqldata.NewSQLColumn(table, "id", 0, 25, 1024, 0, "TextFormat")
+	cols := []sqldata.ISQLColumn{column}
+	good := sqldata.NewSQLResult(cols, 1, 0, []sqldata.ISQLRow{sqldata.NewSQLRow([]interface{}{"one"})})
+	// two values for a single column: tabulateResults fails on this chunk
+	bad := sqldata.NewSQLResult(cols, 1, 0, []sqldata.ISQLRow{sqldata.NewSQLRow([]interface{}{"x", "y"})})
+	stream := &batchedStream{batches: []sqldata.ISQLResult{good, bad}}
+	var output, stderr bytes.Buffer
+	writer, err := GetOutputWriter(&output, &stderr, internaldto.OutputContext{RuntimeContext: dto.RuntimeCtx{OutputFormat: "table"}, Result: stream})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Write(stream); err == nil {
+		t.Fatal("expected decode error for malformed chunk")
+	}
+	if !strings.Contains(output.String(), "one") {
+		t.Fatalf("rows from earlier chunks were discarded: %q", output.String())
+	}
+}
+
+// eofStream delivers its only batch together with io.EOF.
+type eofStream struct {
+	sqldata.ISQLResultStream
+	batch sqldata.ISQLResult
+}
+
+func (s *eofStream) Read() (sqldata.ISQLResult, error) { return s.batch, io.EOF }
+
+func TestTextWritersRetainRowsBeforeUndecodableRow(t *testing.T) {
+	table := sqldata.NewSQLTable(0, "partial")
+	column := sqldata.NewSQLColumn(table, "id", 0, 25, 1024, 0, "TextFormat")
+	cols := []sqldata.ISQLColumn{column}
+	// the second row has two values for a single column, so decoding fails on it
+	batch := sqldata.NewSQLResult(cols, 1, 0, []sqldata.ISQLRow{
+		sqldata.NewSQLRow([]interface{}{"one"}),
+		sqldata.NewSQLRow([]interface{}{"x", "y"}),
+	})
+	for _, format := range []string{"table", "csv", "text", "pptext"} {
+		// midStream: the batch arrives with a nil error; otherwise it arrives with io.EOF
+		for _, midStream := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%s/midStream=%t", format, midStream), func(t *testing.T) {
+				var stream sqldata.ISQLResultStream = &batchedStream{batches: []sqldata.ISQLResult{batch}}
+				if !midStream {
+					stream = &eofStream{batch: batch}
+				}
+				var output, stderr bytes.Buffer
+				writer, err := GetOutputWriter(&output, &stderr, internaldto.OutputContext{
+					RuntimeContext: dto.RuntimeCtx{OutputFormat: format, Delimiter: ","},
+					Result:         stream,
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := writer.Write(stream); err == nil {
+					t.Fatal("expected decode error for malformed row")
+				}
+				if !strings.Contains(output.String(), "one") {
+					t.Fatalf("rows before the malformed one were discarded: %q", output.String())
+				}
+			})
+		}
 	}
 }
