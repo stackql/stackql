@@ -366,6 +366,11 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 	if resourcesErr := registerEmbeddedResources(server, config); resourcesErr != nil {
 		return nil, resourcesErr
 	}
+	if config.Server.Extensions.Skills.Enabled {
+		if skillsErr := registerSkills(server, config); skillsErr != nil {
+			return nil, skillsErr
+		}
+	}
 
 	return &simpleMCPServer{
 		config:    config,

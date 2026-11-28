@@ -141,7 +141,13 @@ class _HTTPClient:
         except HTTPError as error:
             with error:
                 body = error.read().decode(errors="replace")
-            raise AssertionError("MCP HTTP " + str(error.code) + ": " + body) from None
+            # At 2026-07-28 a JSON-RPC error travels with a 4xx status.
+            try:
+                result = json.loads(body)
+            except ValueError:
+                result = None
+            if not isinstance(result, dict) or result.get("id") != request_id or "error" not in result:
+                raise AssertionError("MCP HTTP " + str(error.code) + ": " + body) from None
         assert result.get("id") == request_id, result
         return result
 
@@ -295,3 +301,90 @@ class MCPExtensionsLibrary:
                     BASELINE_CAPABILITIES, (name, capabilities)
         discover, _, _ = self._surface({"extensions": {"files": {"enabled": True, "max_inline_bytes": 2048}}})
         assert discover["extensions"] == {FILES: {"maxInlineBytes": 2048}}, discover
+
+    # --- Group B: skills -----------------------------------------------------
+
+    SKILL_MIME_TYPES = {".md": "text/markdown", ".yml": "application/yaml", ".iql": "text/plain"}
+
+    @contextlib.contextmanager
+    def _transport(self, transport, server, **kwargs):
+        opener = self._stdio if transport == "stdio" else self._http
+        with opener(server, **kwargs) as client:
+            yield client
+
+    def _check_skill_entry(self, client, entry):
+        import hashlib
+        name = entry["frontmatter"]["name"]
+        assert entry["uri"] == "skill://" + name + "/SKILL.md", entry["uri"]
+        assert entry["frontmatter"]["description"], entry
+        uris = [resource["uri"] for resource in entry["resources"]]
+        assert entry["uri"] in uris, uris
+        assert uris == sorted(uris) and len(uris) == len(set(uris)), uris
+        for resource in entry["resources"]:
+            assert set(resource) == {"uri", "digest", "size"}, resource
+            assert resource["uri"].startswith("skill://" + name + "/"), resource
+            read = self._result(client.request("resources/read", {"uri": resource["uri"]}))
+            content = read["contents"][0]
+            data = content["text"].encode("utf-8")
+            assert resource["digest"] == "sha256:" + hashlib.sha256(data).hexdigest(), resource
+            assert resource["size"] == len(data), resource
+            suffix = "." + resource["uri"].rsplit(".", 1)[-1]
+            assert content["mimeType"] == self.SKILL_MIME_TYPES[suffix], content
+            assert content["uri"] == resource["uri"], content
+
+    def skills_list_returns_complete_entries_with_valid_digests(self):
+        server = {"extensions": {"skills": {"enabled": True}}}
+        for transport in ("stdio", "http"):
+            with self._transport(transport, server) as client:
+                listed = self._result(client.request("skills/list"))
+                assert listed["resultType"] == "complete", listed
+                assert listed["ttlMs"] == 30000 and listed["cacheScope"] == "private", listed
+                assert "nextCursor" not in listed, listed
+                names = sorted(entry["frontmatter"]["name"] for entry in listed["skills"])
+                assert names == ["stackql-deploy", "stackql-iac"], names
+                for entry in listed["skills"]:
+                    self._check_skill_entry(client, entry)
+                    got = self._result(client.request("skills/get", {"uri": entry["uri"]}))
+                    assert got["skill"] == entry, (got, entry)
+                    assert got["resultType"] == "complete" and got["ttlMs"] == 30000, got
+        with self._stdio(server) as client:
+            client.initialize()
+            legacy = self._result(client.request("skills/list"))
+            assert not {"resultType", "ttlMs", "cacheScope"} & set(legacy), legacy
+            assert len(legacy["skills"]) == 2, legacy
+
+    def skills_get_unknown_uri_is_invalid_params(self):
+        server = {"extensions": {"skills": {"enabled": True}}}
+        for transport in ("stdio", "http"):
+            with self._transport(transport, server) as client:
+                for uri in ("skill://no-such-skill/SKILL.md", "skill://stackql-iac/references/walkthrough.md", ""):
+                    assert self._error_code(client.request("skills/get", {"uri": uri})) == -32602, uri
+                assert self._error_code(client.request("skills/list", {"cursor": "next"})) == -32602
+                assert "error" in client.request("resources/read", {"uri": "skill://stackql-iac/missing.md"})
+
+    def skills_absent_when_disabled(self):
+        for transport in ("stdio", "http"):
+            with self._transport(transport, {}) as client:
+                assert self._error_code(client.request("skills/list")) == -32601
+                assert self._error_code(client.request("skills/get", {"uri": "skill://stackql-iac/SKILL.md"})) == -32601
+                discover = self._result(client.request("server/discover"))["capabilities"]
+                assert "extensions" not in discover, discover
+                disabled = self._result(client.request("resources/list"))["resources"]
+                templates = self._result(client.request("resources/templates/list"))["resourceTemplates"]
+                assert templates == [], templates
+            with self._transport(transport, {"extensions": {"skills": {"enabled": True}}}) as client:
+                enabled = self._result(client.request("resources/list"))["resources"]
+                templates = self._result(client.request("resources/templates/list"))["resourceTemplates"]
+                assert [t["uriTemplate"] for t in templates] == ["skill://{+path}"], templates
+            assert enabled == disabled, (enabled, disabled)
+
+    def skills_allowlist_filters_entries(self):
+        server = {"extensions": {"skills": {"enabled": True, "enabled_skills": ["stackql-iac"]}}}
+        for transport in ("stdio", "http"):
+            with self._transport(transport, server) as client:
+                listed = self._result(client.request("skills/list"))["skills"]
+                assert [entry["frontmatter"]["name"] for entry in listed] == ["stackql-iac"], listed
+                self._check_skill_entry(client, listed[0])
+                code = self._error_code(client.request("skills/get", {"uri": "skill://stackql-deploy/SKILL.md"}))
+                assert code == -32602, code
+                assert "error" in client.request("resources/read", {"uri": "skill://stackql-deploy/SKILL.md"})

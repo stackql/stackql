@@ -25,3 +25,22 @@ MCP Discover Advertises Enabled Extensions
     [Documentation]    Each extension toggled on alone is advertised on both revisions and nothing else changes.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Discover Advertises Enabled Extensions
+
+MCP Skills List Returns Complete Entries With Valid Digests
+    [Documentation]    Over stdio and stateless HTTP every manifest file's sha256 and size are recomputed from
+    ...                resources/read output; 2026-07-28 results carry resultType, ttlMs and cacheScope.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Skills List Returns Complete Entries With Valid Digests
+
+MCP Skills Get Unknown URI Is Invalid Params
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Skills Get Unknown URI Is Invalid Params
+
+MCP Skills Absent When Disabled
+    [Documentation]    No skills/list handler (-32601), no extension advertised, resources/list unchanged.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Skills Absent When Disabled
+
+MCP Skills Allowlist Filters Entries
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Skills Allowlist Filters Entries
