@@ -304,6 +304,10 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 				}
 				rowsArr, err = tabulateResults(r, tw.ci)
 				if err != nil {
+					if hasColumns {
+						tw.configureTable(table)
+						table.Render()
+					}
 					return err
 				}
 				for _, rs := range rowsArr {
@@ -333,6 +337,10 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 			table.Append(rs)
 		}
 		if err != nil {
+			if hasColumns {
+				tw.configureTable(table)
+				table.Render()
+			}
 			return err
 		}
 	}

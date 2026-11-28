@@ -105,3 +105,24 @@ func TestCSVWriterRetainsEarlierChunksOnUndecodableChunk(t *testing.T) {
 		t.Fatalf("rows from earlier chunks were discarded: %q", output.String())
 	}
 }
+
+func TestTableWriterRetainsEarlierChunksOnUndecodableChunk(t *testing.T) {
+	table := sqldata.NewSQLTable(0, "partial")
+	column := sqldata.NewSQLColumn(table, "id", 0, 25, 1024, 0, "TextFormat")
+	cols := []sqldata.ISQLColumn{column}
+	good := sqldata.NewSQLResult(cols, 1, 0, []sqldata.ISQLRow{sqldata.NewSQLRow([]interface{}{"one"})})
+	// two values for a single column: tabulateResults fails on this chunk
+	bad := sqldata.NewSQLResult(cols, 1, 0, []sqldata.ISQLRow{sqldata.NewSQLRow([]interface{}{"x", "y"})})
+	stream := &batchedStream{batches: []sqldata.ISQLResult{good, bad}}
+	var output, stderr bytes.Buffer
+	writer, err := GetOutputWriter(&output, &stderr, internaldto.OutputContext{RuntimeContext: dto.RuntimeCtx{OutputFormat: "table"}, Result: stream})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Write(stream); err == nil {
+		t.Fatal("expected decode error for malformed chunk")
+	}
+	if !strings.Contains(output.String(), "one") {
+		t.Fatalf("rows from earlier chunks were discarded: %q", output.String())
+	}
+}
