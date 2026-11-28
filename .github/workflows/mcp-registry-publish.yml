@@ -41,9 +41,9 @@ jobs:
           v="${{ inputs.version }}"
           fail=0
           curl -fsSL "https://registry.npmjs.org/@stackql/mcp-server/$v" >/dev/null \
-            || { echo "::error::npm @stackql/mcp-server@$v not published (release doc step 7a)"; fail=1; }
+            || { echo "::error::npm @stackql/mcp-server@$v not published (release doc step 8a)"; fail=1; }
           curl -fsSL "https://pypi.org/pypi/stackql-mcp-server/$v/json" >/dev/null \
-            || { echo "::error::PyPI stackql-mcp-server $v not published (release doc step 7b)"; fail=1; }
+            || { echo "::error::PyPI stackql-mcp-server $v not published (release doc step 8b)"; fail=1; }
           docker manifest inspect "docker.io/stackql/stackql-mcp:$v" >/dev/null \
             || { echo "::error::OCI image stackql/stackql-mcp:$v not on Docker Hub (mcp-packaging oci-publish job)"; fail=1; }
           for target in linux-x64 linux-arm64 windows-x64 windows-arm64 darwin-universal; do

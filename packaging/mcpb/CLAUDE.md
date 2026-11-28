@@ -16,7 +16,7 @@ Around the `.mcpb` bundles this directory owns six thin, version-locked wrappers
 
 | Vector | Dir | Registry / coordinate | Publish |
 |---|---|---|---|
-| npm | `npm/` | `@stackql/mcp-server` | manual (2FA), `make npm-pack` |
+| npm | `npm/` | `@stackql/mcp-server` | CI dispatch (`mcp-packaging`, npm Trusted Publishing); `make npm-pack` for the manual fallback |
 | pypi | `pypi/` | `stackql-mcp-server` | manual (token), `make pypi-build` |
 | oci | `oci/` | `stackql/stackql-mcp` | CI dispatch, `make oci-push` |
 | cargo | `cargo/` | crates.io `stackql-mcp` | CI dispatch / `make cargo-publish` |
@@ -39,11 +39,11 @@ The contract every wrapper follows:
 - Canonical launch argv `mcp --mcp.server.type=stdio --approot <home>/.stackql --mcp.config {"server":{"mode":"<mode>","audit":{"disabled":true}}} [--auth=<json>]`; SDKs default to `read_only`.
 - Every SDK ships a launcher `scripts/smoke-test.py --cmd` can drive with no code (`make <vector>-smoke`): cargo `cargo run --example launcher --`, go `go run ./cmd/stackql-mcp-launch`, dotnet `dotnet run --project samples/Launcher --`. Extra argv passes through to the server.
 
-Ordering rules (one-way, see `docs/stackql_release_process.md` step 7):
+Ordering rules (one-way, see `docs/stackql_release_process.md` steps 6 to 9):
 
 1. Bundles first: `.mcpb` + `.sha256` on the GitHub release (`mcp-packaging` dispatch, or `make publish`).
 2. Only then render (`make manifests VERSION=`) - the renderer fetches the canonical `.sha256` from the release; never pin locally built bundle hashes.
-3. Then publish wrappers in any order (npm, pypi manual; oci + cargo/go/dotnet from the `mcp-packaging` dispatch, which validates every SDK slice with a real proxy download before any publish job runs).
+3. Then publish wrappers in any order (pypi manual; npm, oci and cargo/go/dotnet from the `mcp-packaging` dispatch, which validates every SDK slice with a real proxy download before any publish job runs).
 4. The registry entry strictly last (`mcp-registry-publish`).
 5. Release assets are immutable once a wrapper has pinned them; if a bundle must be rebuilt, cut a new patch release.
 
@@ -55,7 +55,7 @@ Cache layout note: the npm/PyPI wrappers and the Go SDK extract only the entry p
 
 SDK vector targets (all take `VERSION=X.Y.Z`; see "The six wrapper vectors" above): `make manifests`, `make <vector>-manifest`, `make <vector>-build` (lint + unit tests + package), `make <vector>-smoke` (`smoke-test.py --cmd` against the launcher; `PYTHON=python` on Windows), `make <vector>-publish` (credentials from the environment, listed in the Makefile header). Toolchains: Rust stable (MSRV 1.88), Go 1.27.3, .NET 8+9 SDKs.
 
-Post-release assurance: `make check-published [VERSION=X.Y.Z]` (`scripts/check-published.py`, stdlib only, read-only) probes every distribution target for the version (default: the latest GitHub release) and prints PASS/FAIL per venue - release assets, releases.stackql.io, Docker Hub (incl. `:latest`), npm, PyPI, crates.io, Go mirror + proxy, NuGet, the Official MCP Registry (incl. sha256 pins vs the release `.sha256` files and the package set vs `server.template.json`) and the GitHub MCP Registry. It never publishes; a non-zero exit means at least one venue is behind. The GitHub MCP Registry row trails `mcp-registry-publish` by up to 2 hours: GitHub syncs from the Official MCP Registry on an hourly sweep (runs can abort and retry) and its read API caches the listing for about 20 minutes (measured 2026-09-08: registry publish 02:54Z, GitHub entry updated 03:47Z, visible via the API between 04:00Z and 04:09Z). A FAIL there inside that window is expected; a FAIL after it means the sync is broken on GitHub's side.
+Post-release assurance: `make check-published [VERSION=X.Y.Z]` (`scripts/check-published.py`, stdlib only, read-only) probes every distribution target for the version (default: the latest GitHub release) and prints PASS/FAIL per venue - release assets, releases.stackql.io, Docker Hub (incl. `:latest`), npm, PyPI, crates.io, Go mirror + proxy, NuGet, the Official MCP Registry (incl. sha256 pins vs the release `.sha256` files and the package set vs `server.template.json`) and the GitHub MCP Registry (the listed version, plus two rows: the entry carries the pinned `repository.id`, and its stored star count is within `STAR_COUNT_TOLERANCE` of the live count). It never publishes; a non-zero exit means at least one venue is behind. The GitHub MCP Registry row trails `mcp-registry-publish` by up to 2 hours: GitHub syncs from the Official MCP Registry on an hourly sweep (runs can abort and retry) and its read API caches the listing for about 20 minutes (measured 2026-09-08: registry publish 02:54Z, GitHub entry updated 03:47Z, visible via the API between 04:00Z and 04:09Z). A FAIL there inside that window is expected; a FAIL after it means the sync is broken on GitHub's side.
 
 
 A [Makefile](Makefile) wraps `scripts/package.sh` for the common flows. The script is still the source of truth; `make` is convenience.
@@ -114,7 +114,7 @@ python scripts/smoke-test.py --docker stackql/stackql-mcp:X.Y.Z
 make oci-push VERSION=X.Y.Z     # multi-arch (amd64+arm64) build + push
 ```
 
-Build the npm wrapper package (`@stackql/mcp-server`, an npx-able launcher that downloads the platform's published `.mcpb`, verifies the sha256 pins baked into the package, caches the binary under `~/.stackql/mcp-server-bin/`, and spawns it). ORDERING RULE: `make npm-manifest` fetches the canonical `.sha256` files from the published release - it must run AFTER the `.mcpb` assets for the version are published, same as `make server-json`. Publishing to npmjs is manual (2FA):
+Build the npm wrapper package (`@stackql/mcp-server`, an npx-able launcher that downloads the platform's published `.mcpb`, verifies the sha256 pins baked into the package, caches the binary under `~/.stackql/mcp-server-bin/`, and spawns it). ORDERING RULE: `make npm-manifest` fetches the canonical `.sha256` files from the published release - it must run AFTER the `.mcpb` assets for the version are published, same as `make server-json`. `mcp-packaging` publishes it through npm Trusted Publishing; the manual fallback is:
 
 ```bash
 make npm-manifest VERSION=X.Y.Z   # render npm/platforms.json + stamp version
