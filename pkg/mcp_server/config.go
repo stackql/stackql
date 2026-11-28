@@ -282,6 +282,119 @@ type ServerConfig struct {
 	// Audit configures the audit subsystem.  Audit is enabled by default
 	// (Disabled is false) and writes to a file sink.
 	Audit AuditConfig `json:"audit,omitempty" yaml:"audit,omitempty"`
+
+	// Extensions opts into MCP extensions (skills, tasks, file uploads).
+	// Every extension is off by default; with all of them off the server's
+	// wire behaviour is unchanged.
+	Extensions ExtensionsConfig `json:"extensions,omitempty" yaml:"extensions,omitempty"`
+}
+
+const (
+	defaultTaskTimeout      = 30 * time.Minute
+	defaultTaskRetention    = time.Hour
+	defaultTaskPollInterval = 5 * time.Second
+	defaultMaxInlineBytes   = 1 << 20
+	// maxMaxInlineBytes keeps a base64-encoded inline file (4/3 of the
+	// decoded size) inside the SDK's 4 MiB HTTP request body limit.
+	maxMaxInlineBytes = 2 << 20
+)
+
+// ExtensionsConfig opts into MCP extensions.  Every extension is off by default.
+type ExtensionsConfig struct {
+	Skills SkillsExtensionConfig `json:"skills,omitempty" yaml:"skills,omitempty"`
+	Tasks  TasksExtensionConfig  `json:"tasks,omitempty" yaml:"tasks,omitempty"`
+	Files  FilesExtensionConfig  `json:"files,omitempty" yaml:"files,omitempty"`
+}
+
+// AnyEnabled reports whether at least one extension is enabled.
+func (e ExtensionsConfig) AnyEnabled() bool {
+	return e.Skills.Enabled || e.Tasks.Enabled || e.Files.Enabled
+}
+
+// SkillsExtensionConfig configures Skills over MCP (io.modelcontextprotocol/skills).
+type SkillsExtensionConfig struct {
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	// EnabledSkills restricts the served skills by name, the same way
+	// enabled_prompts and enabled_resources work: nil or empty serves all.
+	EnabledSkills []string `json:"enabled_skills,omitempty" yaml:"enabled_skills,omitempty"`
+}
+
+// IsSkillEnabled reports whether the named skill is served.
+func (s SkillsExtensionConfig) IsSkillEnabled(name string) bool {
+	return nameEnabled(s.EnabledSkills, name)
+}
+
+// TasksExtensionConfig configures task-augmented tool calls
+// (io.modelcontextprotocol/tasks).  Zero durations take the defaults.
+type TasksExtensionConfig struct {
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	// Timeout is the wall clock for one task's backend work; on the task
+	// path it replaces server.request_timeout.  Default 30m.
+	Timeout Duration `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	// Retention is how long a terminal task stays readable.  Default 1h.
+	Retention Duration `json:"retention,omitempty" yaml:"retention,omitempty"`
+	// PollInterval is the advertised pollIntervalMs.  Default 5s.
+	PollInterval Duration `json:"poll_interval,omitempty" yaml:"poll_interval,omitempty"`
+}
+
+// GetTimeout returns the task timeout with the default substituted for zero.
+func (t TasksExtensionConfig) GetTimeout() time.Duration {
+	return durationOrDefault(t.Timeout, defaultTaskTimeout)
+}
+
+// GetRetention returns the task retention with the default substituted for zero.
+func (t TasksExtensionConfig) GetRetention() time.Duration {
+	return durationOrDefault(t.Retention, defaultTaskRetention)
+}
+
+// GetPollInterval returns the poll interval with the default substituted for zero.
+func (t TasksExtensionConfig) GetPollInterval() time.Duration {
+	return durationOrDefault(t.PollInterval, defaultTaskPollInterval)
+}
+
+// FilesExtensionConfig configures inline file transfer
+// (io.modelcontextprotocol/files).
+type FilesExtensionConfig struct {
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	// MaxInlineBytes is the advertised maxInlineBytes and the per-file
+	// maxSize of attach_policy_document.  Default 1 MiB, at most 2 MiB.
+	MaxInlineBytes int64 `json:"max_inline_bytes,omitempty" yaml:"max_inline_bytes,omitempty"`
+}
+
+// GetMaxInlineBytes returns the inline limit with the default substituted for zero.
+func (f FilesExtensionConfig) GetMaxInlineBytes() int64 {
+	if f.MaxInlineBytes <= 0 {
+		return defaultMaxInlineBytes
+	}
+	return f.MaxInlineBytes
+}
+
+func durationOrDefault(d Duration, fallback time.Duration) time.Duration {
+	if d <= 0 {
+		return fallback
+	}
+	return time.Duration(d)
+}
+
+func (e ExtensionsConfig) validate() error {
+	for _, setting := range []struct {
+		key   string
+		value Duration
+	}{
+		{"tasks.timeout", e.Tasks.Timeout},
+		{"tasks.retention", e.Tasks.Retention},
+		{"tasks.poll_interval", e.Tasks.PollInterval},
+	} {
+		if setting.value < 0 {
+			return fmt.Errorf("invalid server.extensions.%s %s (must not be negative)",
+				setting.key, time.Duration(setting.value))
+		}
+	}
+	if e.Files.MaxInlineBytes < 0 || e.Files.MaxInlineBytes > maxMaxInlineBytes {
+		return fmt.Errorf("invalid server.extensions.files.max_inline_bytes %d (legal: 0 for the default, up to %d)",
+			e.Files.MaxInlineBytes, maxMaxInlineBytes)
+	}
+	return nil
 }
 
 // serverConfigWire mirrors ServerConfig with the legacy `read_only` flag
@@ -307,6 +420,7 @@ type serverConfigWire struct {
 	Mode                  string                     `json:"mode,omitempty" yaml:"mode,omitempty"`
 	Render                string                     `json:"render,omitempty" yaml:"render,omitempty"`
 	Audit                 AuditConfig                `json:"audit,omitempty" yaml:"audit,omitempty"`
+	Extensions            ExtensionsConfig           `json:"extensions,omitempty" yaml:"extensions,omitempty"`
 	// LegacyReadOnly preserves the PR1 `read_only: true` wire form.
 	LegacyReadOnly *bool `json:"read_only,omitempty" yaml:"read_only,omitempty"`
 }
@@ -336,6 +450,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.Mode = w.Mode
 	s.Render = w.Render
 	s.Audit = w.Audit
+	s.Extensions = w.Extensions
 	// Legacy: `read_only: true` with no `mode` -> Mode = "read_only".
 	// `mode` always wins.
 	if s.Mode == "" && w.LegacyReadOnly != nil && *w.LegacyReadOnly {
@@ -537,6 +652,9 @@ func (c *Config) Validate() error {
 	default:
 		return fmt.Errorf("invalid server.audit.failure_mode %q (legal: strict, strict_mutations, best_effort)",
 			c.Server.Audit.FailureMode)
+	}
+	if err := c.Server.Extensions.validate(); err != nil {
+		return err
 	}
 	return c.validateOAuth()
 }

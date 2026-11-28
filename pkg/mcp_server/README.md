@@ -199,9 +199,38 @@ logging:
   enable_request_logging: false
 ```
 
+### MCP Extensions
+
+The `server.extensions` block opts into MCP extensions; every key is optional and every extension is
+off by default. See [MCP extensions in docs/mcp.md](/docs/mcp.md#mcp-extensions) for behaviour.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `server.extensions.skills.enabled` | `false` | Serve the skills under `content/skills` over `skills/list`, `skills/get` and `resources/read` (`skill://{+path}`). |
+| `server.extensions.skills.enabled_skills` | all | Allowlist of skill names, like `enabled_prompts`. |
+| `server.extensions.tasks.enabled` | `false` | Run IaC converge, destroy and apply calls of `run_mutation_query` as tasks for clients that declare the extension; adds `tasks/get`, `tasks/update`, `tasks/cancel`. |
+| `server.extensions.tasks.timeout` | `30m` | Wall clock for one task's backend work; replaces `request_timeout` on the task path. |
+| `server.extensions.tasks.retention` | `1h` | How long a finished task stays readable. |
+| `server.extensions.tasks.poll_interval` | `5s` | Advertised `pollIntervalMs`. |
+| `server.extensions.files.enabled` | `false` | Advertise inline file transfer and publish `attach_policy_document`. |
+| `server.extensions.files.max_inline_bytes` | `1048576` | Advertised `maxInlineBytes` and the tool's per-file `maxSize`; at most 2 MiB. |
+
+```yaml
+server:
+  extensions:
+    skills:
+      enabled: true
+      enabled_skills: ["stackql-iac"]
+    tasks:
+      enabled: true
+      timeout: 45m
+    files:
+      enabled: true
+```
+
 ### Published Tools
 
-The server publishes the following 15 tools. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
+The server publishes the following 15 tools, plus `attach_policy_document` when `server.extensions.files.enabled` is set. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
 
 Tools carry MCP behavioural annotations derived from the policy-gate classification in `addToolWithGate` (`gate.go`), so the advertised hints and the enforced behaviour share one source of truth: statically select-classified tools get `readOnlyHint: true`, mutation/lifecycle tools an explicit `destructiveHint: true`, and `pull_provider` / `reload_credentials` are marked idempotent and non-destructive (they write only local cache / process env). SQL-carrying tools (`run_select_query` included) make no read-only claim because their effect depends on the submitted statement. Annotations are advisory per the MCP spec; the policy gate remains the enforcement point.
 

@@ -22,7 +22,11 @@ Checks (V = the release version, defaulting to the latest GitHub release):
   github-mcp    GitHub MCP Registry (api.mcp.github.com) lists the server at V. It syncs
                 from the Official MCP Registry on an hourly sweep and its read API caches
                 the listing for ~20 min, so this row can trail a registry publish by up
-                to 2 hours (measured 2026-09-08: published 02:54Z, visible 04:0xZ)
+                to 2 hours (measured 2026-09-08: published 02:54Z, visible 04:0xZ).
+                Two more rows: the entry's server.repository.id equals the pinned GitHub
+                repository ID (without it the listing keeps a stale star snapshot), and
+                its stored x-github.stargazer_count is within STAR_COUNT_TOLERANCE of the
+                live stargazers_count from api.github.com (the count orders the listing)
 
 Usage:
   scripts/check-published.py                  # latest stackql release
@@ -30,7 +34,7 @@ Usage:
   scripts/check-published.py --json           # machine-readable report
 
 GH_TOKEN / GITHUB_TOKEN, when set, authenticate the api.github.com calls
-(3 per run) to avoid the anonymous rate limit; nothing else needs credentials.
+(4 per run) to avoid the anonymous rate limit; nothing else needs credentials.
 
 Exit status: 0 all checks pass, 1 at least one check failed, 2 usage or
 version-resolution error.
@@ -65,6 +69,12 @@ NUGET_PACKAGES = ("StackQL.Mcp", "StackQL.Mcp.AgentFramework")
 MCP_SERVER_NAME = "io.github.stackql/stackql-mcp"
 MCP_REGISTRY = "https://registry.modelcontextprotocol.io/v0"
 GITHUB_MCP_REGISTRY = "https://api.mcp.github.com/v0"
+# GitHub's repository ID for stackql/stackql (gh api repos/stackql/stackql --jq .id),
+# pinned as repository.id in registry/server.template.json.
+GITHUB_REPO_ID = "443987542"
+# Largest accepted gap between the GitHub MCP Registry's stored star count and the
+# live repository count.
+STAR_COUNT_TOLERANCE = 10
 
 PLATFORM_TARGETS = ("linux-x64", "linux-arm64", "windows-x64", "windows-arm64", "darwin-universal")
 BUNDLE_TARGETS = PLATFORM_TARGETS + ("multiplatform",)
@@ -218,7 +228,7 @@ def check_oci(version, report):
 def check_npm(version, report):
     status, _ = fetch_json("https://registry.npmjs.org/%s/%s" % (NPM_PACKAGE, version))
     if status != 200:
-        report.add("npm", False, "%s@%s not published (%s) (release doc step 7a)" % (NPM_PACKAGE, version, describe(status)))
+        report.add("npm", False, "%s@%s not published (%s) (release doc step 8a)" % (NPM_PACKAGE, version, describe(status)))
         return
     report.add("npm", True, "%s@%s published" % (NPM_PACKAGE, version))
     status, meta = fetch_json("https://registry.npmjs.org/%s" % NPM_PACKAGE)
@@ -229,7 +239,7 @@ def check_npm(version, report):
 def check_pypi(version, report):
     status, _ = fetch_json("https://pypi.org/pypi/%s/%s/json" % (PYPI_PACKAGE, version))
     if status != 200:
-        report.add("pypi", False, "%s %s not published (%s) (release doc step 7b)" % (PYPI_PACKAGE, version, describe(status)))
+        report.add("pypi", False, "%s %s not published (%s) (release doc step 8b)" % (PYPI_PACKAGE, version, describe(status)))
         return
     report.add("pypi", True, "%s %s published" % (PYPI_PACKAGE, version))
     status, meta = fetch_json("https://pypi.org/pypi/%s/json" % PYPI_PACKAGE)
@@ -240,7 +250,7 @@ def check_pypi(version, report):
 def check_cargo(version, report):
     status, data = fetch_json("https://crates.io/api/v1/crates/%s/%s" % (CRATE, version))
     if status != 200 or not data:
-        report.add("cargo", False, "crates.io %s %s not published (%s) (release doc step 7d)" % (CRATE, version, describe(status)))
+        report.add("cargo", False, "crates.io %s %s not published (%s) (release doc step 6)" % (CRATE, version, describe(status)))
         return
     yanked = (data.get("version") or {}).get("yanked", False)
     report.add("cargo", not yanked, "crates.io %s %s %s" % (CRATE, version, "is yanked" if yanked else "published"))
@@ -253,7 +263,7 @@ def check_go(version, report):
     tag = "v" + version
     status, _ = fetch_json("https://api.github.com/repos/%s/git/ref/tags/%s" % (GO_MIRROR_REPO, tag))
     if status != 200:
-        report.add("go", False, "%s has no tag %s (%s) (release doc step 7e)" % (GO_MIRROR_REPO, tag, describe(status)))
+        report.add("go", False, "%s has no tag %s (%s) (release doc step 6)" % (GO_MIRROR_REPO, tag, describe(status)))
     else:
         report.add("go", True, "%s tagged %s" % (GO_MIRROR_REPO, tag))
     status, info = fetch_json("https://proxy.golang.org/%s/@v/%s.info" % (GO_MODULE, tag))
@@ -274,7 +284,7 @@ def check_dotnet(version, report):
         if status != 200 or version not in versions:
             have = ", ".join(versions) if versions else "none"
             why = describe(status) if status != 200 else "have: " + have
-            report.add("dotnet", False, "NuGet %s %s not published (%s) (release doc step 7f)" % (pkg, version, why))
+            report.add("dotnet", False, "NuGet %s %s not published (%s) (release doc step 6)" % (pkg, version, why))
             continue
         highest = max(versions, key=version_key)
         if highest != version:
@@ -294,7 +304,7 @@ def check_mcp_registry(version, pins, report):
     name = urllib.parse.quote(MCP_SERVER_NAME, safe="")
     status, data = fetch_json("%s/servers/%s/versions/%s" % (MCP_REGISTRY, name, version))
     if status != 200 or not data:
-        report.add("mcp-registry", False, "Official MCP Registry has no %s %s (%s) (release doc step 7c)"
+        report.add("mcp-registry", False, "Official MCP Registry has no %s %s (%s) (release doc step 9)"
                    % (MCP_SERVER_NAME, version, describe(status)))
         return
     server = data.get("server", data)
@@ -343,7 +353,7 @@ def check_mcp_registry(version, pins, report):
 def check_github_mcp_registry(version, report):
     """api.mcp.github.com ignores ?search= and exposes only a paged listing,
     so walk it (100 per page) until the server name turns up."""
-    entry = None
+    item = None
     cursor = None
     for _ in range(50):
         url = "%s/servers?limit=100" % GITHUB_MCP_REGISTRY
@@ -354,24 +364,56 @@ def check_github_mcp_registry(version, report):
             report.add("github-mcp", False, "GitHub MCP Registry listing failed (%s)" % describe(status))
             return
         for s in data.get("servers", []):
-            server = s.get("server", s)
-            if server.get("name") == MCP_SERVER_NAME:
-                entry = server
+            # Keep the whole list item: x-github sits next to server, not inside it.
+            if s.get("server", s).get("name") == MCP_SERVER_NAME:
+                item = s
                 break
-        if entry:
+        if item:
             break
         cursor = (data.get("metadata") or {}).get("next_cursor")
         if not cursor:
             break
-    if not entry:
+    if not item:
         report.add("github-mcp", False, "GitHub MCP Registry does not list %s (ingests from the Official MCP Registry)" % MCP_SERVER_NAME)
         return
+    entry = item.get("server", item)
+    check_github_mcp_version(entry, version, report)
+    check_github_mcp_repo_id(entry, report)
+    check_github_mcp_stars(item.get("x-github") or {}, report)
+
+
+def check_github_mcp_version(entry, version, report):
     got = (entry.get("version_detail") or {}).get("version")
     if got == version:
         report.add("github-mcp", True, "GitHub MCP Registry lists %s at %s" % (MCP_SERVER_NAME, version))
     else:
         report.add("github-mcp", False, "GitHub MCP Registry lists %s at %s, expected %s (syncs from the Official MCP Registry hourly, plus read-side caching: allow up to 2 hours after mcp-registry-publish)"
                    % (MCP_SERVER_NAME, got or "unknown", version))
+
+
+def check_github_mcp_repo_id(entry, report):
+    got = (entry.get("repository") or {}).get("id")
+    if got == GITHUB_REPO_ID:
+        report.add("github-mcp", True, "GitHub MCP Registry entry carries repository.id %s" % GITHUB_REPO_ID)
+    else:
+        report.add("github-mcp", False, "GitHub MCP Registry entry has repository.id %r, expected %r: the star count is a stale "
+                   "snapshot until a published version carries it (set in registry/server.template.json)" % (got, GITHUB_REPO_ID))
+
+
+def check_github_mcp_stars(x_github, report):
+    stored = x_github.get("stargazer_count")
+    status, repo = fetch_json("https://api.github.com/repos/%s" % STACKQL_REPO)
+    if status != 200 or not repo:
+        report.add("github-mcp", False, "live star count for %s unavailable (%s)" % (STACKQL_REPO, describe(status)))
+        return
+    live = repo.get("stargazers_count")
+    if not isinstance(stored, int) or not isinstance(live, int):
+        report.add("github-mcp", False, "GitHub MCP Registry star count %r, live %r: cannot compare" % (stored, live))
+        return
+    gap = live - stored
+    report.add("github-mcp", abs(gap) <= STAR_COUNT_TOLERANCE,
+               "GitHub MCP Registry stores %d stars, live repository has %d (gap %d, tolerance %d)"
+               % (stored, live, gap, STAR_COUNT_TOLERANCE))
 
 
 # --- main ---------------------------------------------------------------------

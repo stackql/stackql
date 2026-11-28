@@ -172,7 +172,7 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 
 ## Canonical agent tools
 
-The server publishes 15 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
+The server publishes 15 tools, plus `attach_policy_document` when the files extension is on (see [MCP extensions](#mcp-extensions)).  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
 
 Tools also carry a `title` and every MCP behavioural hint as an explicit boolean (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`), derived from the same policy-gate classification that enforces the server [mode](#server-modes): statically read-only tools claim `readOnlyHint`, mutation/lifecycle tools claim `destructiveHint`, and SQL-carrying tools make no read-only claim because their effect depends on the submitted statement. `run_select_query` claims `destructiveHint: false` because it refuses INSERT, UPDATE, DELETE and EXEC in every mode. `openWorldHint` is true for tools that reach provider or registry endpoints (`run_*`, `list_registry`, `pull_provider`) and false for tools that read only local state. Titles and `openWorldHint` are mastered in the frontmatter of `pkg/mcp_server/content/tools/*.md`. Annotations are advisory hints for client UX; enforcement always remains with the policy gate.
 
@@ -193,6 +193,7 @@ Tools also carry a `title` and every MCP behavioural hint as an explicit boolean
 | `reload_credentials` | Table | Live-reload credentials: re-source the [`--env.file`](#credential-resourcing---envfile--reload_credentials) file into the process environment, invalidate cached auth contexts and report resolution status (with a `changed` flag) for every installed provider.  Never returns secret values.  Optional `provider` filters the report.  Recovery and rotation only, never a pre-query step.  Allowed in every mode. |
 | `query_library_search` | Table | Search the curated query library by natural-language `intent` (optional `provider` / `service` / `tags` filters).  Consult before composing SQL from scratch.  Read-only, no credentials. |
 | `query_library_get` | KV | Retrieve one library entry by `id`; with `params` the server validates them and returns rendered SQL plus the tool to execute it with.  Read-only, no credentials. |
+| `attach_policy_document` | Text + resource link | Files extension only.  Accept one policy or compliance document inline as a `FileInput` and expose it as `stackql://policies/<id>`.  Server memory only.  Allowed in every mode. |
 
 Method discovery resolves recursive schemas but expands only the requested depth (maximum 4096
 nodes). `shape` contains JSON schema properties/items, enums, wire names, child counts and truncation
@@ -248,6 +249,9 @@ statements are unknown effects: `read_only` refuses them, `safe` and
 qualified provider names for ordinary SELECTs. `run_select_query` retains its
 existing refusal of known write/lifecycle classes in every mode; use a
 mutation/lifecycle tool for approved effectful SQL.
+
+`attach_policy_document` (files extension) is classified like `pull_provider`: a select, allowed
+in every mode, because it touches no cloud resource and writes only server memory.
 
 This is not a complete semantic effect classifier or a closure of #818.
 Fully qualified names can still resolve to persisted or provider-document views
@@ -332,7 +336,10 @@ The root module and Go launcher use MCP Go SDK v1.8.0, released on
 | OAuth Client Credentials, stable revision `2026-07-28` | The opt-in HTTP resource server validates signed JWTs issued by an external authorization server. It does not acquire tokens or implement an authorization server, so this alone is not full extension conformance. See [OAuth JWT resource-server authentication](#oauth-jwt-resource-server-authentication). |
 | Enterprise-Managed Authorization | Not implemented. Centralized identity assertion and its trust model require separate design. |
 | MCP Apps | Not implemented. The desktop bundle packages a server but does not implement the Apps UI protocol. |
-| MCP Tasks, Skills over MCP, and Server Cards | Beta extensions are not enabled or advertised. Existing tool calls remain synchronous. |
+| Skills over MCP (`io.modelcontextprotocol/skills`) | Implemented, off by default (`server.extensions.skills`). Serves the embedded `stackql-deploy` and `stackql-iac` skills over `skills/list`, `skills/get` and `resources/read`. HTTP needs `stateless: true` for `2026-07-28` clients. Claude Code v2.1.331 or later. See [MCP extensions](#mcp-extensions). |
+| Tasks (`io.modelcontextprotocol/tasks`) | Implemented, off by default (`server.extensions.tasks`). IaC converge, destroy and apply through `run_mutation_query` run as tasks for clients that declare the extension; everything else stays synchronous. In-memory and single-instance. Claude Code CLI v2.1.304 or later. See [MCP extensions](#mcp-extensions). |
+| File Uploads (`io.modelcontextprotocol/files`) | Implemented for inline transfer only, off by default (`server.extensions.files`). Adds `attach_policy_document`. No upload targets or downloads. Claude transfers files only for Directory-listed connectors. See [MCP extensions](#mcp-extensions). |
+| Server Cards | Beta extension not enabled or advertised. |
 
 The SDK's `ClientCredentialsHandler` is a client-side token acquisition helper,
 not resource-server verification. In v1.8.0 it requires a client secret and
@@ -348,6 +355,119 @@ PR1 had a single `read_only: true/false` flag with a default of "no enforcement;
 
 The legacy `read_only: true` JSON / YAML key still parses for back-compat and is treated as equivalent to `mode: read_only`.  `mode` wins when both are set.
 
+
+## MCP extensions
+
+The server implements three MCP extensions on Go MCP SDK v1.8.0 public API. Every extension is off
+by default and is enabled in the `server.extensions` block of `--mcp.config`. With all three off,
+the advertised capabilities, the tool, prompt, resource and template lists, and every result are
+the same as without the block. The always-on server instructions, prompts, resources and tool
+descriptions are unchanged, so clients without extension support keep full coverage.
+
+```json
+{"server": {"extensions": {
+  "skills": {"enabled": false, "enabled_skills": []},
+  "tasks":  {"enabled": false, "timeout": "30m", "retention": "1h", "poll_interval": "5s"},
+  "files":  {"enabled": false, "max_inline_bytes": 1048576}
+}}}
+```
+
+An enabled extension is advertised under `capabilities.extensions` in `server/discover` and
+`initialize`. A client declares one in `io.modelcontextprotocol/clientCapabilities` (per request
+on `2026-07-28`, in `initialize` on older revisions). The server knows only the initial revision of
+each extension, so a client declaration that carries a `revision` field is treated as not declared.
+
+Transport notes: stdio serves every revision. On Streamable HTTP, serve `2026-07-28` with
+`"stateless": true` (or `--mcp.protocol.version 2026-07-28`); a stateful server negotiates current
+clients down to `2025-11-25`, where only clients that declare an extension in `initialize` use it.
+
+### Skills over MCP (`io.modelcontextprotocol/skills`)
+
+Serves the skills embedded under `pkg/mcp_server/content/skills`: `stackql-deploy` (authoring
+stackql-deploy v2 stacks with live-tested read anchors) and `stackql-iac` (the native IaC SQL
+verbs). Advertised as `{}` (no `directoryRead`) together with the `resources` capability.
+
+- `skills/list` returns every enabled skill as one complete entry: `uri`
+  (`skill://<name>/SKILL.md`), the YAML `frontmatter` unchanged, and the full manifest in
+  `resources` (`uri`, `digest` as `sha256:<hex>` of the exact bytes served, `size`), SKILL.md
+  included. All skills fit one page.
+- `skills/get` takes `{"uri": ...}` and returns `{"skill": <entry>}`; an unknown URI is `-32602`.
+- On `2026-07-28` both results carry `resultType`, `ttlMs` (30000) and `cacheScope` (`private`),
+  the list policy of the server; older revisions leave them out.
+- Skill files are read with `resources/read` through one resource template, `skill://{+path}`, so
+  `resources/list` does not change. `.md` is `text/markdown`, `.yml` is `application/yaml` and
+  `.iql` is `text/plain`.
+- `enabled_skills` restricts the served skills by name, like `enabled_prompts`.
+
+```bash
+./build/stackql mcp --mcp.server.type=stdio --mcp.config '{"server": {"transport": "stdio", "extensions": {"skills": {"enabled": true}}}}'
+```
+
+Claude Code loads skills from MCP servers from v2.1.331 on `2026-07-28` (public beta; see "Use
+skills from MCP servers" in the Claude Code MCP documentation for plan requirements).
+
+### Tasks for native IaC runs (`io.modelcontextprotocol/tasks`)
+
+A long IaC converge would otherwise be cut off by `server.request_timeout`. With tasks enabled, a
+`tools/call` becomes a task only when all of these hold: the request declares the extension, the
+tool is `run_mutation_query`, and the SQL is a single `INSERT` or `DELETE` on
+`stackql_preview.iac.run` or `INSERT` on `stackql_preview.iac.plan`. Every other call stays
+synchronous and unchanged.
+
+- The mode gate, including the approval round trip, completes first; only a call cleared to run
+  becomes a task. A refusal or decline is the normal synchronous error.
+- The result is a `CreateTaskResult`: `resultType: "task"`, `taskId`, `status: "working"`,
+  `statusMessage`, `createdAt`, `lastUpdatedAt` (RFC 3339 UTC), `ttlMs` (timeout plus retention)
+  and `pollIntervalMs`. The task is readable through `tasks/get` before the result is sent.
+- The work runs in the background through the same concurrency slots as synchronous calls, with
+  `tasks.timeout` in place of `server.request_timeout`.
+- `tasks/get` returns the task; a completed task carries `result`, the same `CallToolResult` a
+  synchronous call returns, including an `isError` result for a provider or SQL error. A task fails
+  (`status: "failed"` with an `error` object) only for a JSON-RPC error, an internal fault, or an
+  audit-write failure on completion under a strict `failure_mode`. An unknown or expired task, or
+  one created by another caller, is `-32602`.
+- `tasks/update` acknowledges a known task. `tasks/cancel` acknowledges and records the request in
+  `statusMessage` but does not interrupt the run: stopping mid-converge can leave a partial
+  deployment, so the run reaches its own terminal status.
+- Each task belongs to the caller that created it: the OAuth subject, the `AuthenticateRequest`
+  caller, the shared bearer token, or the stdio process.
+- Audit: the decision record is written when the task starts (`task_status: "working"`), the
+  execution record when the work finishes (terminal `task_status`); both carry `task_id`.
+- Tasks are held in memory: they do not survive a restart and are not shared between HTTP
+  instances, so a multi-instance HTTP deployment does not support tasks.
+- Not implemented: `notifications/tasks`, `tasks/list` and `tasks/result`.
+
+```bash
+./build/stackql mcp --mcp.server.type=stdio --preview '{"unstable":true}' --mcp.config '{"server": {"transport": "stdio", "mode": "safe", "extensions": {"tasks": {"enabled": true, "timeout": "45m"}}}}'
+```
+
+Claude Code runs MCP tasks from CLI v2.1.304, from the main conversation (not a subagent); tasks
+do not run in the VS Code extension or the desktop app.
+
+### File uploads, inline only (`io.modelcontextprotocol/files`)
+
+Advertised as `{"maxInlineBytes": <files.max_inline_bytes>}` without `upload`, so a compliant
+client sends files inline (base64 `data` in a `FileInput`) and never needs an upload target.
+`max_inline_bytes` defaults to 1 MiB and is at most 2 MiB, which keeps an encoded file inside the
+4 MiB HTTP request body limit.
+
+With files enabled the server publishes one more tool, `attach_policy_document`. It accepts an
+OPA/Rego policy, a compliance control set or a GRC document as UTF-8 text in its `document`
+argument (an MCP `FileInput` whose schema carries `x-mcp-file` with the accepted types and a
+`maxSize` of `max_inline_bytes`), plus an optional `label`. A missing `data`, invalid base64, a
+`size` that does not match the decoded bytes, a file over the limit, a wrong sha-256 `digest`,
+binary content or an empty file returns an `isError` result and stores nothing. Inline data is
+accepted whether or not the request declared the extension. The document is stored in server
+memory and exposed read-only as `stackql://policies/<id>`; the result carries a one-line summary
+and a `resource_link`. Stored documents do not survive a restart (the oldest is dropped past 100).
+The audit record keeps only the document's `name`, `mimeType`, `size` and `digest`, never its data.
+
+```bash
+./build/stackql mcp --mcp.server.type=stdio --mcp.config '{"server": {"transport": "stdio", "extensions": {"files": {"enabled": true}}}}'
+```
+
+Claude transfers files only for connectors listed in the Connectors Directory with approved storage
+hosts, so a local stackql server does not receive files from Claude yet.
 
 ## Audit log
 

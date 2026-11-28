@@ -6,7 +6,8 @@
   "websiteUrl": "https://stackql.io",
   "repository": {
     "url": "https://github.com/stackql/stackql",
-    "source": "github"
+    "source": "github",
+    "id": "443987542"
   },
   "version": "__VERSION__",
   "packages": [

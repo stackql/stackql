@@ -48,9 +48,12 @@ func TestEmbeddedContent_LoadsAndValidates(t *testing.T) {
 
 // TestToolDescriptions_CoverPublishedTools pins the two directions of the
 // content/tools contract: every published tool carries its mastered
-// description, and every description file names a published tool.
+// description, and every description file names a published tool.  The
+// files extension is on so its opt-in tool is published too.
 func TestToolDescriptions_CoverPublishedTools(t *testing.T) {
-	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
+	cfg := DefaultConfig()
+	cfg.Server.Extensions.Files.Enabled = true
+	cs := connectInProcess(t, cfg, &testBackend{})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	list, err := cs.ListTools(ctx, nil)

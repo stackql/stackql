@@ -1,0 +1,57 @@
+/*+ exists */
+SELECT COUNT(*) AS count
+FROM github.issues.labels
+WHERE owner = '{{ owner }}'
+AND repo = '{{ repo }}'
+AND name = '{{ label_name }}'
+
+/*+ create */
+INSERT INTO github.issues.labels (
+  owner,
+  repo,
+  name,
+  color,
+  description
+)
+SELECT
+  '{{ owner }}',
+  '{{ repo }}',
+  '{{ label_name }}',
+  '{{ label_color }}',
+  '{{ label_description }}'
+
+/*+ statecheck, retries=3, retry_delay=3 */
+SELECT COUNT(*) AS count FROM
+(
+  SELECT name, color, description
+  FROM github.issues.labels
+  WHERE owner = '{{ owner }}'
+  AND repo = '{{ repo }}'
+) t
+WHERE name = '{{ label_name }}'
+AND color = '{{ label_color }}'
+AND description = '{{ label_description }}'
+
+/*+ update */
+UPDATE github.issues.labels
+SET color = '{{ label_color }}',
+    description = '{{ label_description }}'
+WHERE owner = '{{ owner }}'
+AND repo = '{{ repo }}'
+AND name = '{{ label_name }}'
+
+/*+ exports */
+SELECT id AS run_label_id, url AS run_label_url FROM
+(
+  SELECT id, url, name
+  FROM github.issues.labels
+  WHERE owner = '{{ owner }}'
+  AND repo = '{{ repo }}'
+) t
+WHERE name = '{{ label_name }}'
+
+/*+ delete */
+DELETE FROM github.issues.labels
+WHERE owner = '{{ owner }}'
+AND repo = '{{ repo }}'
+AND name = '{{ label_name }}'

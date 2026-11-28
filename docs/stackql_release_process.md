@@ -219,7 +219,7 @@ python -m twine upload pypi/dist/*
 
 ### 9. Official MCP Registry (`io.github.stackql/stackql-mcp`) - dispatch last
 
-Semi-automatic. Run [mcp-registry-publish](https://github.com/stackql/stackql/actions/workflows/mcp-registry-publish.yml) from `main` with the same version without `v`. The five platform MCPB packages (including `windows-arm64`), OCI image, npm package (published by `mcp-packaging`), and PyPI package must already be published at that version. The registry entry pins each platform bundle's published checksum. Aggregators that ingest from the registry (GitHub MCP Registry, PulseMCP, mcp.directory, mcpservers.org) update on their own within hours.
+Semi-automatic. Run [mcp-registry-publish](https://github.com/stackql/stackql/actions/workflows/mcp-registry-publish.yml) from `main` with the same version without `v`. The five platform MCPB packages (including `windows-arm64`), OCI image, npm package (published by `mcp-packaging`), and PyPI package must already be published at that version. The registry entry pins each platform bundle's published checksum. The template also pins `repository.id` (the GitHub repository ID), which keeps the GitHub MCP Registry star count, and therefore the listing position, live. Aggregators that ingest from the registry (GitHub MCP Registry, PulseMCP, mcp.directory, mcpservers.org) update on their own within hours.
 
 Manual fallback (if the workflow fails or an out-of-band publish is needed):
 
@@ -318,7 +318,7 @@ Manual, read-only. To check publication across all MCP distribution targets, inc
 make check-published VERSION=0.12.778
 ```
 
-Use the version being released; omit `VERSION` to check the latest release. The GitHub MCP Registry row can trail the registry publish by up to two hours. The two vendor directories and Chocolatey are not probed: confirm the directories in their portals (platform.openai.com/plugins, claude.ai/directory/manage) and the package with `choco info stackql`.
+Use the version being released; omit `VERSION` to check the latest release. The GitHub MCP Registry row can trail the registry publish by up to two hours. Two more `github-mcp` rows check that the entry carries the pinned `repository.id` and that its stored star count is within a small tolerance of the live repository count. The two vendor directories and Chocolatey are not probed: confirm the directories in their portals (platform.openai.com/plugins, claude.ai/directory/manage) and the package with `choco info stackql`.
 
 ### Credentials and access, by step
 

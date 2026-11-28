@@ -296,3 +296,43 @@ func NewPolicy(mode, sql string, defaultClass QueryClass) Policy {
 	decision, reason := GateDecision(mode, class)
 	return policy{class: class, decision: decision, reason: reason}
 }
+
+// IsLongRunningIaC reports whether sql is exactly one statement that
+// converges or destroys a deployment, or applies a saved change set: an
+// INSERT or DELETE whose target is the fully qualified
+// stackql_preview.iac.run, or an INSERT into stackql_preview.iac.plan.  The
+// MCP server may run such a call as a task.  Anything else, including a
+// payload of several statements, is not eligible.
+func IsLongRunningIaC(sql string) bool {
+	statements := sqlsplit.Statements(sql)
+	if len(statements) != 1 {
+		return false
+	}
+	node, err := sqlparser.Parse(statements[0])
+	if err != nil {
+		return false
+	}
+	switch stmt := node.(type) {
+	case *sqlparser.Insert:
+		return isIaCRelation(stmt.Table, "run") || isIaCRelation(stmt.Table, "plan")
+	case *sqlparser.Delete:
+		if len(stmt.Targets) != 0 || len(stmt.TableExprs) != 1 {
+			return false
+		}
+		aliased, ok := stmt.TableExprs[0].(*sqlparser.AliasedTableExpr)
+		if !ok {
+			return false
+		}
+		table, ok := aliased.Expr.(sqlparser.TableName)
+		return ok && isIaCRelation(table, "run")
+	}
+	return false
+}
+
+// isIaCRelation matches stackql_preview.iac.<resource>, fully qualified.
+func isIaCRelation(table sqlparser.TableName, resource string) bool {
+	return table.QualifierThird.IsEmpty() &&
+		strings.EqualFold(table.QualifierSecond.GetRawVal(), "stackql_preview") &&
+		strings.EqualFold(table.Qualifier.GetRawVal(), "iac") &&
+		strings.EqualFold(table.Name.GetRawVal(), resource)
+}

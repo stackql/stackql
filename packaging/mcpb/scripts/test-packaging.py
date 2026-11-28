@@ -115,7 +115,12 @@ class PackagingTests(unittest.TestCase):
         out = self.root / "server.json"
         self.run_script("render-server-json.sh", "--version", "0.0.1",
                         env={**self.env, "OUT": out.as_posix()})
-        packages = json.loads(out.read_text())["packages"]
+        rendered = json.loads(out.read_text())
+        # A pinned repository.id keeps the GitHub MCP Registry star count live.
+        self.assertEqual(rendered["repository"],
+                         {"url": "https://github.com/stackql/stackql", "source": "github", "id": "443987542"})
+        self.assertIsInstance(rendered["repository"]["id"], str)
+        packages = rendered["packages"]
         arm = next(p for p in packages if p["identifier"].endswith("windows-arm64.mcpb"))
         digest = hashlib.sha256((self.dist / "stackql-mcp-windows-arm64.mcpb").read_bytes()).hexdigest()
         self.assertEqual(arm["fileSha256"], digest)

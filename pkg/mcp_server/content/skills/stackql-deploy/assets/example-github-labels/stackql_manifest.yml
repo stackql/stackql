@@ -1,0 +1,63 @@
+version: 1
+name: sqld-live-github
+description: |
+  Live integration stack for stackql-deploy built on GitHub repository labels
+  (free, and removed again on teardown). Exercises the plain REST provider
+  path - INSERT / UPDATE / DELETE without RETURNING, a 404-as-not-found
+  exists check, and an exists -> statecheck -> update cycle driven by an
+  input that the test harness changes between builds.
+
+  Inputs (pass with -e): GITHUB_OWNER, GITHUB_REPO, RUN_ID, LABEL_COLOR.
+  Credentials: STACKQL_GITHUB_USERNAME / STACKQL_GITHUB_PASSWORD (a token
+  with issues:write on the repository).
+providers:
+  - github::v26.05.00393
+
+globals:
+  - name: owner
+    value: "{{ GITHUB_OWNER }}"
+  - name: repo
+    value: "{{ GITHUB_REPO }}"
+  - name: run_id
+    description: unique suffix per run (for example the CI run id)
+    value: "{{ RUN_ID }}"
+  - name: label_color
+    description: changed between builds by the test harness to drive the update path
+    value: "{{ LABEL_COLOR }}"
+
+resources:
+
+  - name: run_label
+    description: a temporary label identifying this run
+    file: label.iql
+    props:
+      - name: label_name
+        value: "stackql-deploy-live-{{ run_id }}"
+      - name: label_color
+        value: "{{ label_color }}"
+      - name: label_description
+        values:
+          ci:
+            value: "temporary label created by the stackql-deploy live test suite"
+          dev:
+            value: "temporary label created by a stackql-deploy developer run"
+    exports:
+      - run_label_id
+      - run_label_url
+
+  - name: repo_label_count
+    description: total labels on the repository, including the one above
+    type: query
+    props: []
+    sql: |
+      SELECT COUNT(*) AS label_count
+      FROM github.issues.labels
+      WHERE owner = '{{ owner }}'
+      AND repo = '{{ repo }}'
+    exports:
+      - label_count
+
+exports:
+  - run_label_id
+  - run_label_url
+  - label_count

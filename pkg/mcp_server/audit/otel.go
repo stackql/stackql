@@ -71,6 +71,12 @@ func (e Event) OTelLogRecords() []sink.OTelLogRecord {
 	if e.Wire.RowsReturned >= 0 {
 		invocation = append(invocation, sink.OTelInt("stackql.rows_returned", int64(e.Wire.RowsReturned)))
 	}
+	if e.TaskID != "" {
+		invocation = append(invocation,
+			sink.OTelString("stackql.task.id", e.TaskID),
+			sink.OTelString("stackql.task.status", e.TaskStatus),
+		)
+	}
 	severity := sink.OTelSeverityInfo
 	if e.Error != "" {
 		severity = sink.OTelSeverityError
