@@ -638,3 +638,119 @@ class MCPExtensionsLibrary:
             assert done["status"] == "completed" and not done["result"].get("isError"), done
             assert "cancellation was requested" in done["statusMessage"], done
             assert self.creates == 1, self.creates
+
+    # --- Group D: file uploads, inline -------------------------------------
+
+    REGO = "package stackql.guardrails\n\ndeny[msg] {\n  input.bucket.public\n  msg := \"bucket is public\"\n}\n"
+    DECLARES_FILES = {"extensions": {FILES: {}}}
+
+    @staticmethod
+    def _file_input(content, mime_type="text/plain", name="guardrails.rego"):
+        import base64
+        import hashlib
+        digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
+        return {"id": "file-1", "name": name, "mimeType": mime_type, "size": len(content),
+                "digest": {"algorithm": "sha-256", "value": digest},
+                "data": base64.b64encode(content).decode()}
+
+    def _attach(self, client, document, capabilities=None, label=None):
+        arguments = {"document": document}
+        if label:
+            arguments["label"] = label
+        return self._result(client.request("tools/call", {"name": "attach_policy_document", "arguments": arguments},
+                                           capabilities=self.DECLARES_FILES if capabilities is None else capabilities))
+
+    def _assert_round_trip(self, client, result, content):
+        assert not result.get("isError"), result
+        assert result["content"][0]["type"] == "text" and "do not survive a restart" in result["content"][0]["text"], result
+        link = result["content"][1]
+        assert link["type"] == "resource_link" and link["uri"].startswith("stackql://policies/"), link
+        assert link["size"] == len(content), link
+        read = self._result(client.request("resources/read", {"uri": link["uri"]}))["contents"][0]
+        assert read["text"].encode("utf-8") == content and read["uri"] == link["uri"], read
+        return link
+
+    def attach_policy_document_inline_round_trip(self):
+        content = self.REGO.encode()
+        server = {"extensions": {"files": {"enabled": True}}}
+        for transport in ("stdio", "http"):
+            with self._transport(transport, server) as client:
+                tools = {t["name"]: t for t in self._result(client.request("tools/list"))["tools"]}
+                schema = tools["attach_policy_document"]["inputSchema"]
+                assert "x-mcp-file" not in schema, schema
+                assert schema["properties"]["document"]["x-mcp-file"]["maxSize"] == 1048576, schema
+                templates = self._result(client.request("resources/templates/list"))["resourceTemplates"]
+                assert [t["uriTemplate"] for t in templates] == ["stackql://policies/{id}"], templates
+                link = self._assert_round_trip(client, self._attach(client, self._file_input(content),
+                                                                    label="guardrails"), content)
+                assert "guardrails" in link["name"], link
+                missing = client.request("resources/read", {"uri": "stackql://policies/not-a-document"})
+                assert "error" in missing, missing
+
+    def attach_policy_document_rejects(self, case):
+        content = self.REGO.encode()
+        document = self._file_input(content)
+        server = {"extensions": {"files": {"enabled": True}}}
+        if case == "size mismatch":
+            document["size"] = len(content) + 1
+            expected = "decodes to"
+        elif case == "digest mismatch":
+            document["digest"]["value"] = self._file_input(b"other")["digest"]["value"]
+            expected = "digest does not match"
+        elif case == "over inline limit":
+            server["extensions"]["files"]["max_inline_bytes"] = 32
+            expected = "inline limit"
+        elif case == "missing data":
+            del document["data"]
+            expected = "document.data is missing"
+        elif case == "binary content":
+            document = self._file_input(bytes([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff, 0xfe]), "application/octet-stream")
+            expected = "binary"
+        else:
+            raise AssertionError("unknown case " + case)
+        with self._stdio(server) as client:
+            result = self._attach(client, document)
+            assert result.get("isError") is True and expected in json.dumps(result), (case, result)
+            assert all(item["type"] == "text" for item in result["content"]), result
+
+    def attach_policy_document_accepts_undeclared_inline_call(self):
+        content = self.REGO.encode()
+        with self._stdio({"extensions": {"files": {"enabled": True}}}) as client:
+            self._assert_round_trip(client, self._attach(client, self._file_input(content), capabilities={}), content)
+        with self._stdio({"extensions": {"files": {"enabled": True}}}) as client:
+            client.initialize()
+            self._assert_round_trip(client, self._attach(client, self._file_input(content)), content)
+
+    def attach_policy_document_allowed_in_read_only_mode(self):
+        content = self.REGO.encode()
+        with self._stdio({"mode": "read_only", "extensions": {"files": {"enabled": True}}}) as client:
+            self._assert_round_trip(client, self._attach(client, self._file_input(content)), content)
+            refused = self._result(client.request("tools/call", {
+                "name": "run_mutation_query", "arguments": {"sql": "INSERT INTO t (a) VALUES (1)"}}))
+            assert refused.get("isError") and "read_only" in json.dumps(refused), refused
+
+    def policy_document_data_never_audited(self):
+        import base64
+        marker = "do-not-log-" + uuid.uuid4().hex
+        content = (self.REGO + "# " + marker + "\n").encode()
+        run = self.root / "audit-files"
+        run.mkdir()
+        audit_path = run / "audit.jsonl"
+        server = {"extensions": {"files": {"enabled": True}},
+                  "audit": {"failure_mode": "strict", "file": {"path": str(audit_path)}}}
+        document = self._file_input(content)
+        with self._stdio(server) as client:
+            self._assert_round_trip(client, self._attach(client, document), content)
+            mismatch = dict(document, size=len(content) + 3)
+            assert self._attach(client, mismatch).get("isError") is True
+            diagnostics = "".join(client.diagnostics)
+        text = audit_path.read_text(encoding="utf-8")
+        encoded = base64.b64encode(content).decode()
+        for secret in (marker, encoded, encoded[:40], "stackql.guardrails"):
+            assert secret not in text and secret not in diagnostics, ("document data logged", secret)
+        records = [json.loads(line) for line in text.splitlines()]
+        attaches = [record for record in records if record["tool"] == "attach_policy_document"]
+        assert len(attaches) == 2, records
+        for record in attaches:
+            assert set(record["args"]) == {"name", "mimeType", "size", "digest"}, record
+            assert record["args"]["digest"] == "sha-256:" + document["digest"]["value"], record

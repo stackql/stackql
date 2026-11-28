@@ -84,3 +84,45 @@ MCP Task Tool Error Completes With The Synchronous Error Result
 MCP Task Cancel Acknowledges And Run Completes
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Task Cancel Acknowledges And Run Completes
+
+MCP Attach Policy Document Inline Round Trip
+    [Documentation]    stdio and stateless HTTP: attach a small Rego file inline and read the same bytes back
+    ...                through resources/read; x-mcp-file sits on the document property only.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Attach Policy Document Inline Round Trip
+
+MCP Attach Policy Document Rejects Size Mismatch
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Attach Policy Document Rejects    size mismatch
+
+MCP Attach Policy Document Rejects Digest Mismatch
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Attach Policy Document Rejects    digest mismatch
+
+MCP Attach Policy Document Rejects Over Inline Limit
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Attach Policy Document Rejects    over inline limit
+
+MCP Attach Policy Document Rejects Missing Data
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Attach Policy Document Rejects    missing data
+
+MCP Attach Policy Document Rejects Binary Content
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Attach Policy Document Rejects    binary content
+
+MCP Attach Policy Document Accepts Undeclared Inline Call
+    [Documentation]    Inline data is never rejected because the request did not declare the extension (2026-07-28
+    ...                without the declaration, and a 2025-11-25 session).
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Attach Policy Document Accepts Undeclared Inline Call
+
+MCP Attach Policy Document Allowed In Read Only Mode
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Attach Policy Document Allowed In Read Only Mode
+
+MCP Policy Document Data Never Audited
+    [Documentation]    Neither the base64 data nor the decoded text reaches the audit file or stderr; args keep
+    ...                only name, mimeType, size and digest.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Policy Document Data Never Audited

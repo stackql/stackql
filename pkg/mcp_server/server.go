@@ -669,6 +669,9 @@ func registerTools(
 	))
 
 	errs = append(errs, registerQueryLibraryTools(server, cfg, auditSink, approvals, descriptions))
+	if cfg.Server.Extensions.Files.Enabled {
+		errs = append(errs, registerPolicyDocumentTool(server, cfg, auditSink, approvals, descriptions))
+	}
 	return errors.Join(errs...)
 }
 
